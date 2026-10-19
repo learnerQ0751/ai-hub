@@ -132,6 +132,18 @@ mvn -Pquality verify
 
 > 注意：GitHub squash merge 可能丢 notes；本仓库单人开发，建议用 merge commit 或直接提交。
 
+### 4.3 Prompt 追溯的两个前提
+
+1. **安装后重启 agent**：git-ai 安装时若 Claude Code / Cursor 正在运行，需要重启会话。
+2. **agent 从仓库根目录启动**：在 `E:\pro\ai-hub` 下启动 Cursor，或在仓库根目录的终端运行 `claude`。如果从知识库目录启动，行级归因仍可能工作，但 prompt 文本为空（git-ai issue #871 的 cwd 行为）。
+
+检查：
+
+```bash
+git-ai log --raw
+git-ai show-prompt <session::task-id>
+```
+
 ## 5. 常见问题
 
 | 问题 | 处理 |
