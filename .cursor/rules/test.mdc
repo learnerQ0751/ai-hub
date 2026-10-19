@@ -1,0 +1,20 @@
+---
+description: test 编码规则（项目 7 适用，自动生成）
+globs:
+  - src/test/java/**/*.java
+alwaysApply: false
+---
+
+> 由 `standards/generator/generate.py` 从 `standards/rules/*.yaml` 生成，请勿手改。
+
+## rule-l0-test-001 · 新增或修改 service 方法必须有单测
+
+- 级别：must
+- 规则：新增或修改 service 层方法时，必须同步新增单测，覆盖成功场景与关键异常场景 （参数校验、重复校验、状态校验等）。
+- 执行：auto / jacoco
+
+## rule-test-001 · 单测覆盖成功与关键异常场景
+
+- 级别：must
+- 规则：单测必须覆盖方法的成功场景与关键异常场景（参数校验、重复校验、状态校验）； 测试命名表达意图。
+- 执行：auto / jacoco

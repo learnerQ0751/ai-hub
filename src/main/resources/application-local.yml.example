@@ -1,0 +1,7 @@
+gateway:
+  master-key: sk-local-master-key
+  model-list:
+    chat-default:
+      - api-base: https://api.deepseek.com
+        api-key: ${DEEPSEEK_API_KEY:}
+        model: deepseek-chat

@@ -1,0 +1,272 @@
+version: 1
+layer: L2
+name: 项目 7 专属（LLM 网关）
+rules:
+  - id: rule-p7-openai-001
+    title: 响应必须为 OpenAI ChatCompletion 结构且字段不丢
+    statement: >-
+      /chat/completions 与 /v1/chat/completions 返回 OpenAI ChatCompletion 结构；
+      上游响应的 id/object/model/choices/usage 等字段必须原样保留，禁止因序列化丢字段。
+    level: must
+    category: api
+    scope: [project7]
+    source:
+      doc: 06-LiteLLM行为基线.md
+      section: 2.2 POST /chat/completions
+      page: null
+    rationale: 客户端按 OpenAI SDK 解析；丢字段会导致兼容性失败。
+    examples:
+      good: |
+        使用 String/JsonNode 原样透传上游响应。
+      bad: |
+        只映射 id 与 choices，丢掉 usage。
+    enforcement:
+      type: auto
+      tool: custom
+      config: src/test/java/com/qtua/aihub/gateway/ChatCompletionControllerTest.java
+    applicability:
+      project7: true
+      data-submission: false
+    priority: P0
+
+  - id: rule-p7-error-001
+    title: 错误体对齐 OpenAI 格式
+    statement: >-
+      错误响应统一为 {"error":{"message","type","param","code"}}；
+      HTTP 状态码与 LiteLLM 基线一致（400/401/403/429/502/504）。
+    level: must
+    category: api
+    scope: [project7]
+    source:
+      doc: 06-LiteLLM行为基线.md
+      section: 2.3 错误格式 / 4.3 未授权模型
+      page: null
+    rationale: 统一错误体便于客户端与 SDK 处理。
+    examples:
+      good: |
+        {"error":{"message":"Invalid model name","type":"invalid_request_error","param":"model","code":"400"}}
+      bad: |
+        {"msg":"error"}
+    enforcement:
+      type: auto
+      tool: custom
+      config: src/main/java/com/qtua/aihub/gateway/ErrorResponse.java
+    applicability:
+      project7: true
+      data-submission: false
+    priority: P0
+
+  - id: rule-p7-models-001
+    title: /models 只暴露别名
+    statement: >-
+      GET /models 只返回配置中的模型别名，不暴露上游真实模型名与 api_base/api_key。
+    level: must
+    category: security
+    scope: [project7]
+    source:
+      doc: 06-LiteLLM行为基线.md
+      section: 2.1 GET /models
+      page: null
+    rationale: 暴露上游细节会泄露供应商与密钥配置。
+    examples:
+      good: |
+        {"data":[{"id":"chat-default","object":"model"}],"object":"list"}
+      bad: |
+        {"data":[{"id":"deepseek-chat","api_base":"https://api.deepseek.com"}]}
+    enforcement:
+      type: auto
+      tool: custom
+      config: src/test/java/com/qtua/aihub/gateway/ModelsControllerTest.java
+    applicability:
+      project7: true
+      data-submission: false
+    priority: P1
+
+  - id: rule-p7-keyhash-001
+    title: 虚拟 Key 只存哈希
+    statement: >-
+      虚拟 Key 明文只在创建时返回一次；数据库只存哈希，禁止存明文；
+      Auth 校验使用哈希比对。
+    level: must
+    category: security
+    scope: [project7]
+    source:
+      doc: 09-交接（下会话起点）.md
+      section: 资产与环境
+      page: null
+    rationale: 数据库泄露时明文 key 会直接失效；哈希存储可止损。
+    examples:
+      good: |
+        INSERT INTO api_keys(key_hash) VALUES(sha256(key))
+      bad: |
+        INSERT INTO api_keys(key_plain) VALUES(key)
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: false
+    priority: P0
+
+  - id: rule-p7-master-001
+    title: 无 master key 拒绝启动
+    statement: >-
+      网关启动时必须校验 master key 已配置；缺失则拒绝启动并输出明确错误。
+    level: must
+    category: security
+    scope: [project7]
+    source:
+      doc: 06-LiteLLM行为基线.md
+      section: 一、部署形态
+      page: null
+    rationale: 无鉴权启动会使网关成为开放代理。
+    examples:
+      good: |
+        if (masterKey == null) throw new IllegalStateException("LITELLM_MASTER_KEY is required");
+      bad: |
+        masterKey 为空时继续启动。
+    enforcement:
+      type: auto
+      tool: custom
+      config: src/main/java/com/qtua/aihub/config/GatewayProperties.java
+    applicability:
+      project7: true
+      data-submission: false
+    priority: P0
+
+  - id: rule-p7-alias-001
+    title: 请求 model 字段是别名，不是上游模型
+    statement: >-
+      请求中的 model 是用户侧别名；网关按配置映射到部署列表；
+      别名与上游真实模型名必须分别存储、不得混用。
+    level: must
+    category: routing
+    scope: [project7]
+    source:
+      doc: 06-LiteLLM行为基线.md
+      section: 3.1 别名与多部署
+      page: null
+    rationale: 别名是网关的稳定契约；上游模型名会随供应商演进变化。
+    examples:
+      good: |
+        model-list.chat-default[0].model = deepseek-chat
+      bad: |
+        直接把请求 model 当上游模型名转发。
+    enforcement:
+      type: auto
+      tool: custom
+      config: src/main/java/com/qtua/aihub/config/ModelProperties.java
+    applicability:
+      project7: true
+      data-submission: false
+    priority: P0
+
+  - id: rule-p7-cost-001
+    title: 计价必须显式配置
+    statement: >-
+      模型价格必须在配置中显式声明（输入/输出单价，按 1M tokens 换算）；
+      禁止依赖内置价格表；spend 必须可按日志复算。
+    level: must
+    category: cost
+    scope: [project7]
+    source:
+      doc: 06-LiteLLM行为基线.md
+      section: 4.4 GET /key/info
+      page: null
+    rationale: 实测 DeepSeek 未匹配 LiteLLM 默认价格表，spend 恒为 0；Java 版必须显式计价。
+    examples:
+      good: |
+        pricing:
+          deepseek-chat: {input-per-1m: 0.27, output-per-1m: 1.10}
+      bad: |
+        依赖框架默认价格表。
+    enforcement:
+      type: auto
+      tool: custom
+      config: src/main/java/com/qtua/aihub/service/CostCalculator.java
+    applicability:
+      project7: true
+      data-submission: false
+    priority: P1
+
+  - id: rule-p7-ratelimit-001
+    title: 限流计数必须并发安全
+    statement: >-
+      内存版 rpm/tpm 滑动窗口计数必须加锁或使用原子结构；
+      预留 Redis 接口供二期替换。
+    level: must
+    category: concurrency
+    scope: [project7]
+    source:
+      doc: 05-项目7-第1期-LLM网关核心.md
+      section: 需求 1.4
+      page: null
+    rationale: 并发下非原子计数会放行超额请求。
+    examples:
+      good: |
+        使用 synchronized 或 AtomicLong + 滑动窗口。
+      bad: |
+        直接 counter++ 无同步。
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: false
+    priority: P1
+
+  - id: rule-p7-fallback-001
+    title: fallback 语义与 model 字段策略必须显式决策
+    statement: >-
+      fallback 成功时响应 model 字段保留上游名还是统一改写为别名，
+      必须在需求决策记录中显式选择并写测试。
+    level: must
+    category: routing
+    scope: [project7]
+    source:
+      doc: 06-LiteLLM行为基线.md
+      section: 3.2 fallback
+      page: null
+    rationale: LiteLLM 实测 fallback 时 model 返回上游真实名，与正常路径不一致；Java 版需明确契约。
+    examples:
+      good: |
+        决策：统一改写为请求别名，并有测试覆盖。
+      bad: |
+        未决策，行为随机。
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: false
+    priority: P1
+
+  - id: rule-p7-sse-001
+    title: SSE 流式 usage 在末块且断开释放连接
+    statement: >-
+      stream=true 时按 SSE 分块透传，usage 在最后一个数据块；
+      客户端断开时必须释放上游连接，日志/计量在流结束后补记。
+    level: should
+    category: api
+    scope: [project7]
+    source:
+      doc: 05-项目7-第1期-LLM网关核心.md
+      section: 需求 1.7
+      page: null
+    rationale: 流式场景的连接泄漏与计量遗漏是常见生产问题。
+    examples:
+      good: |
+        onCompletion/onError 中释放资源并记录 usage。
+      bad: |
+        流断开后上游连接悬挂。
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: false
+    priority: P2

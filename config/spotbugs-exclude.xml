@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- 启动类无业务逻辑，跳过检查 -->
+    <Match>
+        <Class name="com.qtua.aihub.AiHubApplication"/>
+    </Match>
+</FindBugsFilter>

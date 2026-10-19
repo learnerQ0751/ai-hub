@@ -1,0 +1,24 @@
+{
+  // Java 语言服务器使用 JDK 21（本机系统默认是 JDK 8，需显式指定）
+  "java.jdt.ls.java.home": "C:\\Program Files\\Java\\jdk-21.0.12.1",
+
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "C:\\Program Files\\Java\\jdk-21.0.12.1",
+      "default": true
+    }
+  ],
+
+  "terminal.integrated.env.windows": {
+    "JAVA_HOME": "C:\\Program Files\\Java\\jdk-21.0.12.1"
+  },
+
+  "java.configuration.maven.userSettings": "D:\\developtools\\maven\\apache-maven-3.6.3\\conf\\settings.xml",
+  "java.configuration.maven.globalSettings": "D:\\developtools\\maven\\apache-maven-3.6.3\\conf\\settings.xml",
+
+  "java.saveActions.organizeImports": true,
+
+  // DeepSeek 直连超时，Java 进程需要显式代理参数（不读系统代理）
+  "java.debug.settings.vmArgs": "-Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7897 -Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7897"
+}

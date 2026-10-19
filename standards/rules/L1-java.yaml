@@ -1,0 +1,681 @@
+version: 1
+layer: L1
+name: 通用 Java/Spring
+rules:
+  - id: rule-java-null-001
+    title: 空值判断统一使用 ObjectUtils/StringUtils
+    statement: >-
+      禁止 == null / != null 判空；统一使用 ObjectUtils.isEmpty() / StringUtils.isBlank()。
+      MyBatis XML 的 if test 表达式除外。
+    level: must
+    category: null-safety
+    scope: [java, spring]
+    source:
+      doc: data-submission-standards.md
+      section: "1. 空值判断"
+      page: null
+    rationale: 统一判空语义，避免空串与 null 判断不一致导致 NPE 或逻辑漏洞。
+    examples:
+      good: |
+        if (ObjectUtils.isEmpty(dto.getPageNum())) { ... }
+      bad: |
+        if (dto.getPageNum() == null) { ... }
+    enforcement:
+      type: auto
+      tool: checkstyle
+      config: config/checkstyle.xml
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-java-magic-001
+    title: 禁止魔法值
+    statement: >-
+      状态值使用枚举；其他常量定义在类级别 private static final；代码中禁止硬编码字符串/数字。
+    level: must
+    category: naming
+    scope: [java]
+    source:
+      doc: data-submission-standards.md
+      section: "3. 魔法值 / 码值"
+      page: null
+    rationale: 魔法值降低可读性，修改时容易遗漏。
+    examples:
+      good: |
+        entityManager.updateStatus(id, StatusEnum.VALID.getCode());
+      bad: |
+        entityManager.updateStatus(id, "VALID");
+    enforcement:
+      type: auto
+      tool: checkstyle
+      config: config/checkstyle.xml
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-java-methodlen-001
+    title: 单个方法不超过 70 行
+    statement: >-
+      单个方法（含注释和空行）不超过 70 行；超出须拆分为子方法。
+    level: must
+    category: maintainability
+    scope: [java]
+    source:
+      doc: data-submission-standards.md
+      section: "4. 方法行数"
+      page: null
+    rationale: 长方法难以理解、测试和维护。
+    examples:
+      good: |
+        方法拆分后每个不超过 70 行。
+      bad: |
+        一个方法 200 行。
+    enforcement:
+      type: auto
+      tool: checkstyle
+      config: config/checkstyle.xml
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-java-naming-001
+    title: 类/方法/常量命名规范
+    statement: >-
+      类名 UpperCamelCase；方法/变量 lowerCamelCase；常量 UPPER_SNAKE_CASE；
+      包名小写；禁止拼音与无意义缩写。
+    level: must
+    category: naming
+    scope: [java]
+    source:
+      doc: Java开发手册_2022_黄山版.pdf
+      section: 编程规约
+      page: null
+    rationale: 统一命名降低阅读成本。
+    examples:
+      good: |
+        public class ChatCompletionService { private static final int MAX_RETRIES = 3; }
+      bad: |
+        public class chatService { private static final int maxRetries = 3; }
+    enforcement:
+      type: auto
+      tool: checkstyle
+      config: config/checkstyle.xml
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-java-dto-001
+    title: DTO 必须声明 serialVersionUID
+    statement: >-
+      每个 DTO 必须声明 private static final long serialVersionUID。
+    level: must
+    category: dto
+    scope: [java]
+    source:
+      doc: data-submission-standards.md
+      section: "8. DTO 规范"
+      page: null
+    rationale: 显式序列化版本号，避免反序列化不兼容。
+    examples:
+      good: |
+        private static final long serialVersionUID = 1L;
+      bad: |
+        没有 serialVersionUID。
+    enforcement:
+      type: auto
+      tool: pmd
+      config: config/pmd-ruleset.xml
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P2
+
+  - id: rule-java-interface-comment-001
+    title: Service 接口注释格式
+    statement: >-
+      Service 接口类必须按 @api/@ClassName/@Author/@date/@desc 格式注释；
+      @Author 填实际开发人。
+    level: should
+    category: comment
+    scope: [java, spring]
+    source:
+      doc: data-submission-standards.md
+      section: "9. Service 接口注释"
+      page: null
+    rationale: 统一接口文档格式，便于生成与检索。
+    examples:
+      good: |
+        /**
+         * @api 风险核查
+         * @ClassName RiskVerificationService
+         * @Author qiuzhijun
+         * @date 2026/4/27 19:40
+         * @desc 风险核查
+         */
+      bad: |
+        public interface RiskVerificationService {}
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: false
+      data-submission: true
+    priority: P2
+
+  - id: rule-java-method-comment-001
+    title: 方法注释位于注解上方
+    statement: >-
+      方法注释必须放在 @Override、@MLog 等方法注解的上面，不放在注解与签名之间。
+    level: should
+    category: comment
+    scope: [java]
+    source:
+      doc: data-submission-standards.md
+      section: "10. 方法注释"
+      page: null
+    rationale: 统一注释位置，避免注解阻断注释与方法的关联。
+    examples:
+      good: |
+        /**
+         * 查询字段列表
+         */
+        @Override
+        public Result<List<Field>> query() { ... }
+      bad: |
+        @Override
+        /**
+         * 查询字段列表
+         */
+        public Result<List<Field>> query() { ... }
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P2
+
+  - id: rule-java-layering-001
+    title: 分层调用规则
+    statement: >-
+      Controller → Service → Repository/DAL；禁止跨层调用、禁止反向依赖；
+      包依赖必须无环。
+    level: must
+    category: layering
+    scope: [java, spring]
+    source:
+      doc: data-submission-standards.md
+      section: "11. 分层调用规则"
+      page: null
+    rationale: 清晰的分层边界是可维护性与可测试性的基础。
+    examples:
+      good: |
+        Controller 调 Service，Service 调 Repository。
+      bad: |
+        Controller 直接调 Repository。
+    enforcement:
+      type: auto
+      tool: archunit
+      config: src/test/java/com/qtua/aihub/ArchitectureTest.java
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-java-validate-001
+    title: 参数校验与 DTO 转换放 service 层
+    statement: >-
+      参数非空/格式/存在性/唯一性校验与 DTO→BO 转换统一放 service 层；
+      core/repository 层只做领域逻辑。
+    level: should
+    category: layering
+    scope: [java, spring]
+    source:
+      doc: data-submission-standards.md
+      section: "12. 业务校验与参数整理分层"
+      page: null
+    rationale: 避免校验逻辑分散在多层，造成重复与遗漏。
+    examples:
+      good: |
+        Service 中校验后转换再调用 Core。
+      bad: |
+        Controller 与 Core 各校验一遍。
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P2
+
+  - id: rule-java-tx-001
+    title: 事务注解位置与回滚规则
+    statement: >-
+      @Transactional 只放在事务边界；rollbackFor 必须指定 Throwable；
+      非事务方法不得标注。
+    level: must
+    category: transaction
+    scope: [java, spring]
+    source:
+      doc: data-submission-standards.md
+      section: "2. 注解位置 / 15. Core 写操作返回值与事务粒度"
+      page: null
+    rationale: 事务边界不清会导致数据不一致或长事务。
+    examples:
+      good: |
+        @Transactional(rollbackFor = Throwable.class, propagation = Propagation.REQUIRED)
+      bad: |
+        @Transactional
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-java-sql-update-001
+    title: UPDATE 使用业务主键定位
+    statement: >-
+      UPDATE 操作必须使用业务主键（如 entity_code、key_id）定位，
+      不使用数据库自增 id；编辑入参必须做非空校验。
+    level: must
+    category: sql
+    scope: [java, sql]
+    source:
+      doc: data-submission-standards.md
+      section: "5. 编辑 SQL 规范"
+      page: null
+    rationale: 业务主键跨环境稳定，避免自增 id 迁移后错位。
+    examples:
+      good: |
+        UPDATE api_keys SET blocked = true WHERE key_hash = #{keyHash}
+      bad: |
+        UPDATE api_keys SET blocked = true WHERE id = #{id}
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-java-logical-delete-001
+    title: 逻辑删除方法命名与状态参数
+    statement: >-
+      逻辑删除方法命名 updateStatusByXXX(code, operator, fromStatus, toStatus)；
+      状态值通过参数传入，禁止硬编码。
+    level: should
+    category: sql
+    scope: [java, sql]
+    source:
+      doc: data-submission-standards.md
+      section: "6. 逻辑删除"
+      page: null
+    rationale: 统一逻辑删除语义，便于审计与恢复。
+    examples:
+      good: |
+        int updateStatusByEntityCode(entityCode, fromStatus, toStatus, operator);
+      bad: |
+        int deleteById(Long id);
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: false
+      data-submission: true
+    priority: P2
+
+  - id: rule-java-jdbctype-001
+    title: MyBatis XML 字符串字段必须加 jdbcType
+    statement: >-
+      result 与 if test 中的字符串字段必须加 jdbcType=VARCHAR；
+      时间字段 TIMESTAMP；id 字段 BIGINT。
+    level: must
+    category: sql
+    scope: [java, sql]
+    source:
+      doc: data-submission-standards.md
+      section: "7.1 jdbcType"
+      page: null
+    rationale: 避免 null 值导致 JDBC 驱动无法推断类型。
+    examples:
+      good: |
+        <result column="key_hash" property="keyHash" jdbcType="VARCHAR"/>
+      bad: |
+        <result column="key_hash" property="keyHash"/>
+    enforcement:
+      type: auto
+      tool: custom
+      config: scripts/standards-check.ps1
+    applicability:
+      project7: false
+      data-submission: true
+    priority: P2
+
+  - id: rule-java-collection-001
+    title: 集合初始化容量与遍历规范
+    statement: >-
+      已知容量的集合初始化时指定容量；遍历时禁止在循环中调用 size()；
+      禁止在 foreach 中删除元素。
+    level: should
+    category: collection
+    scope: [java]
+    source:
+      doc: Java开发手册_2022_黄山版.pdf
+      section: 集合处理
+      page: null
+    rationale: 减少扩容与并发修改异常。
+    examples:
+      good: |
+        new ArrayList<>(list.size());
+      bad: |
+        循环中 list.remove(x);
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P2
+
+  - id: rule-java-threadpool-001
+    title: 禁止使用 Executors 创建线程池
+    statement: >-
+      必须使用 ThreadPoolExecutor 显式指定核心参数；禁止 Executors.newFixedThreadPool /
+      newCachedThreadPool 等无界队列工厂方法。
+    level: must
+    category: concurrency
+    scope: [java]
+    source:
+      doc: Java开发手册_2022_黄山版.pdf
+      section: 并发处理
+      page: null
+    rationale: Executors 工厂方法容易创建无界队列，导致 OOM。
+    examples:
+      good: |
+        new ThreadPoolExecutor(core, max, keepAlive, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100));
+      bad: |
+        Executors.newFixedThreadPool(10);
+    enforcement:
+      type: auto
+      tool: pmd
+      config: config/pmd-ruleset.xml
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-java-exception-flow-001
+    title: 不要用异常控制流程
+    statement: >-
+      禁止用异常做正常分支控制；异常必须转换为业务异常并保留原始 cause。
+    level: should
+    category: exception
+    scope: [java]
+    source:
+      doc: Java开发手册_2022_黄山版.pdf
+      section: 异常日志
+      page: null
+    rationale: 异常控制流程性能差且难以阅读。
+    examples:
+      good: |
+        throw new GatewayException("UPSTREAM_TIMEOUT", e);
+      bad: |
+        try { parse(); } catch (Exception e) { return defaultValue; }
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P2
+
+  - id: rule-java-logging-001
+    title: 使用 SLF4J，禁止 System.out
+    statement: >-
+      统一使用 SLF4J 占位符日志；禁止 System.out/System.err、禁止字符串拼接日志。
+    level: must
+    category: logging
+    scope: [java, spring]
+    source:
+      doc: Java开发手册_2022_黄山版.pdf
+      section: 异常日志
+      page: null
+    rationale: 统一日志门面便于采集与级别控制。
+    examples:
+      good: |
+        log.info("model routed, alias={}", alias);
+      bad: |
+        System.out.println("alias=" + alias);
+    enforcement:
+      type: auto
+      tool: checkstyle
+      config: config/checkstyle.xml
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-java-equals-001
+    title: 对象比较使用 equals / Objects.equals
+    statement: >-
+      对象相等比较必须用 equals 或 Objects.equals；禁止用 == 比较包装类型/字符串。
+    level: must
+    category: correctness
+    scope: [java]
+    source:
+      doc: Java开发手册_2022_黄山版.pdf
+      section: OOP 规约
+      page: null
+    rationale: == 比较引用地址，包装类型缓存范围外会得到错误结果。
+    examples:
+      good: |
+        Objects.equals(a, b)
+      bad: |
+        a == b
+    enforcement:
+      type: auto
+      tool: checkstyle
+      config: config/checkstyle.xml
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-java-money-001
+    title: 金额使用 BigDecimal
+    statement: >-
+      金额、费用、价格计算必须使用 BigDecimal；禁止 double/float；
+      除法必须指定精度与舍入模式。
+    level: must
+    category: correctness
+    scope: [java]
+    source:
+      doc: Java开发手册_2022_黄山版.pdf
+      section: 编程规约
+      page: null
+    rationale: 浮点数精度丢失会导致计费错误。
+    examples:
+      good: |
+        new BigDecimal("0.000001").multiply(tokens)
+      bad: |
+        double cost = tokens * 0.000001;
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P0
+
+  - id: rule-java-time-001
+    title: 时间处理使用 java.time
+    statement: >-
+      使用 java.time（Instant/LocalDateTime/Duration）；禁止静态共享 SimpleDateFormat。
+    level: should
+    category: correctness
+    scope: [java]
+    source:
+      doc: Java开发手册_2022_黄山版.pdf
+      section: 编程规约
+      page: null
+    rationale: SimpleDateFormat 非线程安全，静态共享会导致数据错乱。
+    examples:
+      good: |
+        Instant.now()
+      bad: |
+        private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd");
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P2
+
+  - id: rule-sql-select-001
+    title: 禁止 SELECT *
+    statement: >-
+      查询必须显式列出所需字段；禁止 SELECT *。
+    level: must
+    category: sql
+    scope: [sql]
+    source:
+      doc: 数据库研发规范.pdf
+      section: 设计规范
+      page: null
+    rationale: 避免无用字段传输与表结构变更导致的隐式错误。
+    examples:
+      good: |
+        SELECT id, model_name FROM model_config
+      bad: |
+        SELECT * FROM model_config
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P2
+
+  - id: rule-sql-index-001
+    title: 查询必须有索引或分区依据
+    statement: >-
+      高频查询必须走索引或分区键；上线前用 EXPLAIN 验证执行计划。
+    level: must
+    category: sql
+    scope: [sql]
+    source:
+      doc: 金融科技开发技术规范.pdf
+      section: 数据库规范
+      page: null
+    rationale: 无索引查询在数据量增长后会导致慢查询与生产故障。
+    examples:
+      good: |
+        EXPLAIN SELECT ... WHERE key_hash = ?
+      bad: |
+        全表扫描。
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-db-table-001
+    title: 表命名、注释与字段数限制
+    statement: >-
+      表名必须小写、必须有注释；单表字段数不超过 50；表名/字段名使用业务语义。
+    level: should
+    category: database
+    scope: [sql]
+    source:
+      doc: 数据库研发规范.pdf
+      section: 设计规范
+      page: null
+    rationale: 统一表结构规范，降低维护成本。
+    examples:
+      good: |
+        CREATE TABLE api_keys ( ... ) COMMENT '虚拟 Key 表';
+      bad: |
+        CREATE TABLE API_KEYS (...);
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P2
+
+  - id: rule-db-charset-001
+    title: 字符集统一
+    statement: >-
+      MySQL/OceanBase 使用 utf8mb4 + utf8mb4_bin；PostgreSQL 使用 UTF8；
+      禁止混用字符集。
+    level: must
+    category: database
+    scope: [sql]
+    source:
+      doc: 数据库研发规范.pdf
+      section: 1.1 数据库
+      page: null
+    rationale: 字符集不一致会导致索引失效与乱码。
+    examples:
+      good: |
+        CREATE DATABASE ai_hub ENCODING 'UTF8';
+      bad: |
+        使用 latin1 或混合字符集。
+    enforcement:
+      type: manual
+      tool: review
+      config: null
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
+
+  - id: rule-test-001
+    title: 单测覆盖成功与关键异常场景
+    statement: >-
+      单测必须覆盖方法的成功场景与关键异常场景（参数校验、重复校验、状态校验）；
+      测试命名表达意图。
+    level: must
+    category: testing
+    scope: [java, spring]
+    source:
+      doc: data-submission-standards.md
+      section: "16. Service 方法单测"
+      page: null
+    rationale: 异常路径往往是最容易出错、也最容易被遗漏的部分。
+    examples:
+      good: |
+        @Test void invalid_model_returns_openai_error_body() { ... }
+      bad: |
+        只测 happy path。
+    enforcement:
+      type: auto
+      tool: jacoco
+      config: pom.xml
+    applicability:
+      project7: true
+      data-submission: true
+    priority: P1
