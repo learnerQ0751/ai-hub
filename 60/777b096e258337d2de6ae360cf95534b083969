@@ -1,0 +1,80 @@
+specs/001-chat-completions/tasks.md
+  s_22010045ff98a6::t_6d0d8285480668 105
+  s_22010045ff98a6::t_2d03ca076c0555 1-104,106-121
+specs/001-chat-completions/contracts/openapi.yaml
+  s_22010045ff98a6::t_10579f3b8e5042 7
+  s_22010045ff98a6::t_22dfb1b2a301af 1-6,8-160
+src/test/java/com/qtua/aihub/filter/RequestIdFilterTest.java
+  s_22010045ff98a6::t_35bb517ce1460d 1-24
+src/main/java/com/qtua/aihub/AiHubApplication.java
+  s_22010045ff98a6::t_1055949f605e5a 5,8
+src/main/java/com/qtua/aihub/gateway/ErrorResponse.java
+  s_22010045ff98a6::t_851b71a2a6143e 1-11
+src/main/java/com/qtua/aihub/gateway/ChatCompletionController.java
+  s_22010045ff98a6::t_973c4c62e694d2 1-26
+src/main/java/com/qtua/aihub/config/GatewayProperties.java
+  s_22010045ff98a6::t_91cf5172b22c11 1-61
+src/main/java/com/qtua/aihub/filter/AuthFilter.java
+  s_22010045ff98a6::t_b0c7b99d8cbfff 1-52
+src/test/java/com/qtua/aihub/gateway/ChatCompletionControllerTest.java
+  s_22010045ff98a6::t_8ab1947400d4c8 1-106
+src/main/java/com/qtua/aihub/filter/RequestIdFilter.java
+  s_22010045ff98a6::t_fcf635b15df58a 1-35
+src/test/java/com/qtua/aihub/gateway/ChatCompletionServiceTest.java
+  s_22010045ff98a6::t_f8c79c2fe38ab4 1-54,67-98
+  s_22010045ff98a6::t_19c029faa614d2 55-66
+src/test/java/com/qtua/aihub/gateway/ErrorResponseTest.java
+  s_22010045ff98a6::t_be889e4a34f8d0 1-23
+specs/001-chat-completions/research.md
+  s_22010045ff98a6::t_6d3d4c422f11b0 1-67
+specs/001-chat-completions/spec.md
+  s_22010045ff98a6::t_cd18c55a857a46 1-106
+src/main/resources/application.yml
+  s_22010045ff98a6::t_b1ae6bcd14ebb4 7-14
+  s_22010045ff98a6::t_870cd593867ed8 6
+specs/001-chat-completions/plan.md
+  s_22010045ff98a6::t_464276f434bbe1 1-88
+src/test/java/com/qtua/aihub/ArchitectureTest.java
+  s_22010045ff98a6::t_00a258db58fd23 5,12-14
+config/spotbugs-exclude.xml
+  s_22010045ff98a6::t_1666a5d5ee8ab8 7-13
+  s_22010045ff98a6::t_34a8b1fab89e44 14-22
+src/main/java/com/qtua/aihub/gateway/GatewayExceptionHandler.java
+  s_22010045ff98a6::t_90abf6f5617a55 1-40
+specs/001-chat-completions/data-model.md
+  s_22010045ff98a6::t_f4a30c37bb95fc 1-80
+src/main/java/com/qtua/aihub/gateway/ChatCompletionService.java
+  s_22010045ff98a6::t_4443e3d95ed303 1-5,7-41,69-105
+  s_22010045ff98a6::t_6109973b952c75 43-58
+  s_22010045ff98a6::t_4a00a44a7097b0 42,59-68
+  s_22010045ff98a6::t_91591414453a38 6
+src/test/java/com/qtua/aihub/config/GatewayPropertiesTest.java
+  s_22010045ff98a6::t_c04f897053b248 1-39
+src/main/java/com/qtua/aihub/gateway/UpstreamClient.java
+  s_22010045ff98a6::t_5ba329e890cbc9 1-55
+specs/001-chat-completions/quickstart.md
+  s_22010045ff98a6::t_a3e38c8e7d020b 25,36,41
+  s_22010045ff98a6::t_c859b5e7e47353 1-24,26-35,37-40,42-50
+pom.xml
+  s_22010045ff98a6::t_c8d3ad29b7ca4e 145
+src/test/java/com/qtua/aihub/gateway/UpstreamClientTest.java
+  s_22010045ff98a6::t_82156f325ae4e2 1-76
+src/main/java/com/qtua/aihub/gateway/ChatCompletionException.java
+  s_22010045ff98a6::t_1a533edb4be007 1-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "60777b096e258337d2de6ae360cf95534b083969",
+  "prompts": {},
+  "sessions": {
+    "s_22010045ff98a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03243dd6-6c47-4457-b219-64983b0532b6",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
