@@ -3,4 +3,12 @@ spring:
     name: ai-hub
 
 server:
-  port: 8080
+  port: 18080
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{request_id:-}] %logger{36} - %msg%n"
+
+gateway:
+  master-key: ${GATEWAY_MASTER_KEY:}
+  model-list: {}
