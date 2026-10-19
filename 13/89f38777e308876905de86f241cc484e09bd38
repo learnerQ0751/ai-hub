@@ -1,0 +1,35 @@
+CLAUDE.md
+  s_22010045ff98a6::t_0a54de332411e2 56-64,67,73
+docs/attribution/README.md
+  s_22010045ff98a6::t_aa1cbaa0e3e901 1-52
+.cursor/rules/workflow.mdc
+  s_22010045ff98a6::t_2051998a4b28db 1-29
+docs/WORKFLOW.md
+  s_22010045ff98a6::t_7167aa054d860a 22-23
+  s_22010045ff98a6::t_a15c2afb273756 1-21,24-140,142-155
+  s_22010045ff98a6::t_c50786ddf74289 141
+README.md
+  s_22010045ff98a6::t_576002ea70b763 34
+  s_22010045ff98a6::t_ece420c1589749 5-13
+  s_22010045ff98a6::t_37e4e20992b5de 35
+scripts/acceptance.ps1
+  s_22010045ff98a6::t_f1a1af7dc4440a 1-33
+standards/README.md
+  s_22010045ff98a6::t_9b949c559bdcd8 1-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1389f38777e308876905de86f241cc484e09bd38",
+  "prompts": {},
+  "sessions": {
+    "s_22010045ff98a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03243dd6-6c47-4457-b219-64983b0532b6",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
