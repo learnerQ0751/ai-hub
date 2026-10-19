@@ -1,0 +1,23 @@
+docs/attribution/README.md
+  s_22010045ff98a6::t_4f7933a9529148 46-58
+docs/attribution/M1-summary.md
+  s_22010045ff98a6::t_bf2693bd5c34b0 1-69
+docs/WORKFLOW.md
+  s_22010045ff98a6::t_8a2b2f24537360 135-146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2cef0cf5ebf3ad432b0185c5cb7a6ede523dab85",
+  "prompts": {},
+  "sessions": {
+    "s_22010045ff98a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03243dd6-6c47-4457-b219-64983b0532b6",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
