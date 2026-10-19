@@ -2,6 +2,15 @@
 
 项目 7（Agent 与 MCP 集群）Java 重实现——LLM 网关核心。
 
+**当前进度**：需求 1.1（统一入口 + 单模型转发）已完成并通过真实验收。
+
+## 快速入口
+
+- 工作流使用指南：[`docs/WORKFLOW.md`](docs/WORKFLOW.md)
+- 规范库维护：[`standards/README.md`](standards/README.md)
+- git-ai 归因：[`docs/attribution/README.md`](docs/attribution/README.md)
+- 需求 1.1 规格：[`specs/001-chat-completions/`](specs/001-chat-completions/)
+
 ## 工作流
 
 - **0→1（新模块）**：spec-kit（`specs/`）
@@ -21,6 +30,8 @@ cp src/main/resources/application-local.yml.example src/main/resources/applicati
 
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
+
+默认端口 `18080`（避免与本机 8080 上的其他服务冲突）。
 
 ## 质量门禁
 

@@ -53,11 +53,21 @@
 
 <!-- GENERATED:END -->
 
+## 工作流入口
+
+- **0→1（新模块）**：Claude Code 中 `/speckit-specify → /speckit-clarify → /speckit-plan → /speckit-tasks → /speckit-analyze → /speckit-implement`
+- **1→100（存量迭代）**：Cursor 中 `/opsx:explore → /opsx:propose → /opsx:apply → /opsx:archive`
+- **规范维护**：编辑 `standards/rules/*.yaml` → `python standards/generator/validate.py` → `python standards/generator/generate.py`
+- **质量门禁**：`mvn -Pquality verify`
+- **归因**：`git-ai stats --json` / `git-ai blame <file>`
+- **详细指南**：`docs/WORKFLOW.md`
+
 ## 项目约定
 
-- Java 21 / Spring Boot 3.3.11 / Maven
+- Java 21 / Spring Boot 3.3.11 / Maven；默认端口 18080
 - 包结构：`config` / `gateway` / `filter` / `service`
 - 密钥只放 `application-local.yml`（gitignored）或环境变量
 - 提交信息：`feat/fix/refactor/docs/test/chore: 简述`；禁止模型署名
 - 代码作者：qtua
 - 硬门禁：`mvn -Pquality verify`
+- 当前进度：需求 1.1 已完成；下一步需求 1.2（模型路由）

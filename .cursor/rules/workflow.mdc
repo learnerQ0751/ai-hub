@@ -1,0 +1,29 @@
+---
+description: ai-hub AI 开发工作流（0→1 spec-kit / 1→100 OpenSpec + Superpowers）
+alwaysApply: true
+---
+
+# ai-hub 开发工作流
+
+## 模式选择
+
+- **新模块 / 新仓库（0→1）**：使用 spec-kit 命令
+  `/speckit-specify → /speckit-clarify → /speckit-plan → /speckit-tasks → /speckit-analyze → /speckit-implement`
+- **存量代码迭代 / bug / 重构（1→100）**：使用 OpenSpec
+  `/opsx:explore → /opsx:propose → /opsx:apply → /opsx:archive`
+- **极小改动**：直接改 + 测试，不套仪式。
+
+## 强制约束
+
+- 每个实现任务先写失败测试，再写最小实现，测试通过后再重构。
+- 每个任务结束运行 `mvn -Pquality verify`，失败不得提交。
+- 提交信息：`feat/fix/refactor/docs/test/chore: 简述`；禁止模型署名；代码作者 qtua。
+- 密钥只放 `application-local.yml`（gitignored）或环境变量，禁止硬编码/打印。
+- 响应必须原样透传上游 JSON；错误体对齐 `{"error":{"message","type","param","code"}}`。
+- 规范唯一真源：`standards/rules/*.yaml`；修改后运行 `python standards/generator/validate.py` 与 `generate.py`。
+
+## 任务完成后
+
+- `git-ai stats --json` 记录归因
+- 更新 `specs/` 或 `openspec/` 产物
+- 提交前检查 `git status`，不要提交 `application-local.yml` / `target/`
