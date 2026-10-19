@@ -19,19 +19,18 @@
 
 **Purpose**: 配置绑定、错误体、请求追踪基础。
 
-- [ ] T005 写 `GatewayPropertiesTest`：绑定 `gateway.model-list` 为 `Map<String, List<Deployment>>`，断言别名与部署字段
+- [x] T005 写 `GatewayPropertiesTest`：绑定 `gateway.model-list` 为 `Map<String, List<Deployment>>`，断言别名与部署字段
   - Test: `src/test/java/com/qtua/aihub/config/GatewayPropertiesTest.java`
   - 运行：`mvn -q -Dtest=GatewayPropertiesTest test`（预期失败：类不存在）
-- [ ] T006 实现 `GatewayProperties` + `Deployment`
+- [x] T006 实现 `GatewayProperties` + `Deployment`
   - Create: `src/main/java/com/qtua/aihub/config/GatewayProperties.java`
   - 运行：`mvn -q -Dtest=GatewayPropertiesTest test`（预期 PASS）
-- [ ] T007 写 `ErrorResponseTest`：JSON 结构包含 `error.message/type/code`
+- [x] T007 写 `ErrorResponseTest`：JSON 结构包含 `error.message/type/code`
   - Test: `src/test/java/com/qtua/aihub/gateway/ErrorResponseTest.java`
-- [ ] T008 实现 `ErrorResponse` + `ChatCompletionException` 体系
+- [x] T008 实现 `ErrorResponse` + `ChatCompletionException`（静态工厂：invalidModel / invalidRequest / upstreamAuthError / upstreamTimeout / upstreamError）
   - Create: `src/main/java/com/qtua/aihub/gateway/ErrorResponse.java`
-  - Create: `src/main/java/com/qtua/aihub/gateway/InvalidModelException.java`
-  - Create: `src/main/java/com/qtua/aihub/gateway/UpstreamException.java`
-- [ ] T009 实现 `RequestIdFilter`（MDC + `X-Request-Id`）
+  - Create: `src/main/java/com/qtua/aihub/gateway/ChatCompletionException.java`
+- [x] T009 实现 `RequestIdFilter`（MDC + `X-Request-Id`）
   - Create: `src/main/java/com/qtua/aihub/filter/RequestIdFilter.java`
 
 **Checkpoint**: 配置、错误体、请求 ID 就绪。
@@ -46,26 +45,26 @@
 
 ### Tests
 
-- [ ] T010 [US1] 写 `ChatCompletionControllerTest`：200 场景，断言 `object/usage.total_tokens`
+- [x] T010 [US1] 写 `ChatCompletionControllerTest`：200 场景，断言 `object/usage.total_tokens`
   - Test: `src/test/java/com/qtua/aihub/gateway/ChatCompletionControllerTest.java`
   - 运行：`mvn -q -Dtest=ChatCompletionControllerTest test`（预期失败）
-- [ ] T011 [US1] 写 `UpstreamClientTest`：MockWebServer 验证路径 `/chat/completions`、Authorization、响应原样返回
+- [x] T011 [US1] 写 `UpstreamClientTest`：MockWebServer 验证路径 `/chat/completions`、Authorization、响应原样返回
   - Test: `src/test/java/com/qtua/aihub/gateway/UpstreamClientTest.java`
 
 ### Implementation
 
-- [ ] T012 [US1] 实现 `UpstreamClient`
+- [x] T012 [US1] 实现 `UpstreamClient`
   - Create: `src/main/java/com/qtua/aihub/gateway/UpstreamClient.java`
   - 依赖：T006（GatewayProperties）
-- [ ] T013 [US1] 实现 `ChatCompletionService`
+- [x] T013 [US1] 实现 `ChatCompletionService`
   - Create: `src/main/java/com/qtua/aihub/gateway/ChatCompletionService.java`
   - 依赖：T012
-- [ ] T014 [US1] 实现 `ChatCompletionController`
+- [x] T014 [US1] 实现 `ChatCompletionController`
   - Create: `src/main/java/com/qtua/aihub/gateway/ChatCompletionController.java`
   - 依赖：T013
-- [ ] T015 [US1] 配置 `application.yml` / `application-local.yml.example`
+- [x] T015 [US1] 配置 `application.yml` / `application-local.yml.example`
   - Modify: `src/main/resources/application.yml`
-- [ ] T016 [US1] 运行单测与硬门禁
+- [x] T016 [US1] 运行单测与硬门禁
   - `mvn -q -Dtest=ChatCompletionControllerTest,UpstreamClientTest test`
   - `mvn -Pquality verify`
 
@@ -75,14 +74,14 @@
 
 ## Phase 4: User Story 2 - 规范错误体 (P2)
 
-- [ ] T017 [US2] 写错误场景测试：未知模型 400、messages 空 400、stream=true 400、上游 401/超时
+- [x] T017 [US2] 写错误场景测试：未知模型 400、messages 空 400、stream=true 400、上游 401/超时
   - Modify: `src/test/java/com/qtua/aihub/gateway/ChatCompletionControllerTest.java`
-- [ ] T018 [US2] 实现全局异常处理 `@RestControllerAdvice`
+- [x] T018 [US2] 实现全局异常处理 `@RestControllerAdvice`
   - Create: `src/main/java/com/qtua/aihub/gateway/GatewayExceptionHandler.java`
-- [ ] T019 [US2] 实现上游异常映射（401/超时/其他）
+- [x] T019 [US2] 实现上游异常映射（401/超时/其他）
   - Modify: `src/main/java/com/qtua/aihub/gateway/UpstreamClient.java`
   - Modify: `src/main/java/com/qtua/aihub/gateway/ChatCompletionService.java`
-- [ ] T020 [US2] 运行错误场景测试与硬门禁
+- [x] T020 [US2] 运行错误场景测试与硬门禁
   - `mvn -Pquality verify`
 
 **Checkpoint**: 四类错误均可复现。
@@ -91,21 +90,21 @@
 
 ## Phase 5: User Story 3 - 请求追踪 (P3)
 
-- [ ] T021 [US3] 写 `RequestIdFilterTest`：响应头存在 `X-Request-Id`
-- [ ] T022 [US3] 验证日志包含 request_id（启动后 curl + 查日志）
-- [ ] T023 [US3] 运行硬门禁
+- [x] T021 [US3] 写 `RequestIdFilterTest`：响应头存在 `X-Request-Id`
+- [x] T022 [US3] 验证日志包含 request_id（启动后 curl + 查日志）
+- [x] T023 [US3] 运行硬门禁
   - `mvn -Pquality verify`
 
 ---
 
 ## Phase 6: Polish & Validation
 
-- [ ] T024 启动应用并 curl 验收（对照 LiteLLM 基线）
+- [x] T024 启动应用并 curl 验收（对照 LiteLLM 基线）
   - `mvn spring-boot:run -Dspring-boot.run.profiles=local -Dspring-boot.run.jvmArguments="..."`
   - `curl -s http://127.0.0.1:18080/v1/chat/completions ...`
-- [ ] T025 记录验收结果到任务目录 `13-需求1.1验收记录.md`
-- [ ] T026 git-ai 归因报告（`git-ai stats --json`）
-- [ ] T027 更新任务文件与复盘
+- [x] T025 记录验收结果到任务目录 `13-需求1.1验收记录.md`
+- [x] T026 git-ai 归因报告（`git-ai stats --json`）
+- [x] T027 更新任务文件与复盘
 
 ## Dependencies & Execution Order
 
