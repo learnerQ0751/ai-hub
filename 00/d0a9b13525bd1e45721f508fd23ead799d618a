@@ -1,0 +1,160 @@
+config/pmd-ruleset.xml
+  s_22010045ff98a6::t_0827b26a6abfd6 1-15
+standards/generator/validate.py
+  s_22010045ff98a6::t_11e7fffa71a26c 1-45
+config/spotbugs-exclude.xml
+  s_22010045ff98a6::t_76a5ae916ad350 1-7
+config/checkstyle.xml
+  s_22010045ff98a6::t_e9da044faa1eed 1-47
+standards/rules/L1-java.yaml
+  s_22010045ff98a6::t_49eb667dfdb2a2 1-357,359-681
+  s_22010045ff98a6::t_4592de37f04486 358
+scripts/standards-check.ps1
+  s_22010045ff98a6::t_62c2ff24068bdc 1-10
+standards/rules/L0-personal.yaml
+  s_22010045ff98a6::t_2bda85d5045b95 1-276
+pom.xml
+  s_22010045ff98a6::t_6d6b35f6bb335f 26,29-30,33-34,37-39,43-50
+  s_22010045ff98a6::t_51251cf98872c4 61-157
+  s_22010045ff98a6::t_fb8d49e34a24a1 23-25
+  s_22010045ff98a6::t_7dc484b8c9f490 27-28
+  s_22010045ff98a6::t_11cc6dec3434f1 31-32
+  s_22010045ff98a6::t_b6d9c9632ff43f 35-36
+  s_22010045ff98a6::t_a3faccf5e9a515 40-42
+  s_22010045ff98a6::t_7b7fb6bdc72dd0 51-53,58-60
+  s_22010045ff98a6::t_7973d460e69b85 158
+standards/generator/generate.py
+  s_22010045ff98a6::t_b3d887fbf3c3ab 1-237
+src/test/java/com/qtua/aihub/ArchitectureTest.java
+  s_22010045ff98a6::t_e2386efecae17a 19
+  s_22010045ff98a6::t_dce85f3ccbb8be 1-6,8-18,20-22
+  s_22010045ff98a6::t_72d323c19c4efa 7
+.gitignore
+  s_22010045ff98a6::t_59aeaf0143ca6e 5
+  s_22010045ff98a6::t_15e1485735ccf1 2-4
+  s_22010045ff98a6::t_c8bda14caf4dca 6-8
+standards/rules/L2-project7.yaml
+  s_22010045ff98a6::t_3fc20fd0fe96e1 1-272
+src/main/resources/application-local.yml.example
+  s_22010045ff98a6::t_327c3e40bd173f 1-7
+.claude/commands/opsx/apply.md
+  s_22010045ff98a6::t_8e5f160917743f 1-152
+.claude/commands/opsx/archive.md
+  s_22010045ff98a6::t_bc360ad0de2bf5 1-157
+.claude/commands/opsx/explore.md
+  s_22010045ff98a6::t_bd102fffaef368 1-173
+.claude/commands/opsx/propose.md
+  s_22010045ff98a6::t_a812ea42953a06 1-106
+.claude/skills/openspec-apply-change/SKILL.md
+  s_22010045ff98a6::t_c29b62fe9e73b4 1-156
+.claude/skills/openspec-archive-change/SKILL.md
+  s_22010045ff98a6::t_1d8fe3d7e76d5c 1-114
+.claude/skills/openspec-explore/SKILL.md
+  s_22010045ff98a6::t_2ba3776af9e3d5 1-288
+.claude/skills/openspec-propose/SKILL.md
+  s_22010045ff98a6::t_9fe99610f561f6 1-110
+.claude/skills/speckit-analyze/SKILL.md
+  s_22010045ff98a6::t_5c7f0922d92082 1-262
+.claude/skills/speckit-checklist/SKILL.md
+  s_22010045ff98a6::t_6a06ba5fe1f04c 1-386
+.claude/skills/speckit-clarify/SKILL.md
+  s_22010045ff98a6::t_c0262fa7ebff8c 1-294
+.claude/skills/speckit-constitution/SKILL.md
+  s_22010045ff98a6::t_b689af6d964181 1-182
+.claude/skills/speckit-converge/SKILL.md
+  s_22010045ff98a6::t_bfd72074bf69d4 1-285
+.claude/skills/speckit-implement/SKILL.md
+  s_22010045ff98a6::t_9e7f3df92a788b 1-229
+.claude/skills/speckit-plan/SKILL.md
+  s_22010045ff98a6::t_cd45aa5c5acbe4 1-169
+.claude/skills/speckit-specify/SKILL.md
+  s_22010045ff98a6::t_2ba83135ec76f8 1-348
+.claude/skills/speckit-tasks/SKILL.md
+  s_22010045ff98a6::t_ce4ee207c59320 1-218
+.claude/skills/speckit-taskstoissues/SKILL.md
+  s_22010045ff98a6::t_6705c572d2d182 1-120
+.cursor/commands/opsx-apply.md
+  s_22010045ff98a6::t_bb4d8d66d32e69 1-152
+.cursor/commands/opsx-archive.md
+  s_22010045ff98a6::t_18dbfb1f30cde9 1-157
+.cursor/commands/opsx-explore.md
+  s_22010045ff98a6::t_324cd54d717957 1-173
+.cursor/commands/opsx-propose.md
+  s_22010045ff98a6::t_7a6d05a518926d 1-106
+.cursor/rules/api.mdc
+  s_22010045ff98a6::t_4bd3737d6d4bb8 1-45
+.cursor/rules/java.mdc
+  s_22010045ff98a6::t_1021bdd5e2eec4 1-176
+.cursor/rules/sql.mdc
+  s_22010045ff98a6::t_b3f0c178bac5c2 1-45
+.cursor/rules/test.mdc
+  s_22010045ff98a6::t_441e40635df950 1-20
+.cursor/skills/openspec-apply-change/SKILL.md
+  s_22010045ff98a6::t_daca4d478e161f 1-156
+.cursor/skills/openspec-archive-change/SKILL.md
+  s_22010045ff98a6::t_af65eb917099c6 1-114
+.cursor/skills/openspec-explore/SKILL.md
+  s_22010045ff98a6::t_36c3f2dacaa3fb 1-288
+.cursor/skills/openspec-propose/SKILL.md
+  s_22010045ff98a6::t_6c917eac0b8142 1-110
+.specify/.gitignore
+  s_22010045ff98a6::t_6f36cf8e12f3b3 1-14
+.specify/init-options.json
+  s_22010045ff98a6::t_8684cdfa815e13 1-10
+.specify/integration.json
+  s_22010045ff98a6::t_ff0556cf274ccc 1-15
+.specify/integrations/claude.manifest.json
+  s_22010045ff98a6::t_f9853737f3ee2f 1-17
+.specify/integrations/speckit.manifest.json
+  s_22010045ff98a6::t_ae663077befd0c 1-19
+.specify/memory/.constitution-template.json
+  s_22010045ff98a6::t_1edaf42f4958f2 1-4
+.specify/memory/constitution.md
+  s_22010045ff98a6::t_ee9cfd47701b66 1-62
+.specify/scripts/powershell/check-prerequisites.ps1
+  s_22010045ff98a6::t_0f94294282f17a 1-194
+.specify/scripts/powershell/common.ps1
+  s_22010045ff98a6::t_4e34f2c69cddb5 1-813
+.specify/scripts/powershell/create-new-feature.ps1
+  s_22010045ff98a6::t_901f84929282af 1-357
+.specify/scripts/powershell/resolve-template.ps1
+  s_22010045ff98a6::t_b3cf04a22c8812 1-38
+.specify/scripts/powershell/setup-plan.ps1
+  s_22010045ff98a6::t_4b0b0349c92cf4 1-90
+.specify/scripts/powershell/setup-tasks.ps1
+  s_22010045ff98a6::t_0476f1b9343bed 1-93
+.specify/templates/checklist-template.md
+  s_22010045ff98a6::t_11f386aabc9553 1-45
+.specify/templates/constitution-template.md
+  s_22010045ff98a6::t_58a61aafefe4a3 1-50
+.specify/templates/plan-template.md
+  s_22010045ff98a6::t_6e8f55abc9b754 1-113
+.specify/templates/spec-template.md
+  s_22010045ff98a6::t_bcd71ea95fa96c 1-131
+.specify/templates/tasks-template.md
+  s_22010045ff98a6::t_dbbc446cd8e840 1-252
+.specify/workflows/speckit/workflow.yml
+  s_22010045ff98a6::t_fe49948435ed2b 1-74
+.specify/workflows/workflow-registry.json
+  s_22010045ff98a6::t_d189dbc37de5f0 1-13
+CLAUDE.md
+  s_22010045ff98a6::t_a7d0487ec97e7d 1-63
+standards/index.md
+  s_22010045ff98a6::t_4d933489a0cb81 1-378
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "00d0a9b13525bd1e45721f508fd23ead799d618a",
+  "prompts": {},
+  "sessions": {
+    "s_22010045ff98a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03243dd6-6c47-4457-b219-64983b0532b6",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
