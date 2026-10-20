@@ -9,6 +9,8 @@
 | 开发规范 | `STANDARDS.md`（通用）+ `PROJECT.md`（项目专属） |
 | 开发流程 | `WORKFLOW.md` |
 | 需求/决策/验收/复盘 | `records/REQ-*.md`（从 `templates/REQ.md` 复制） |
+| 项目完成态 | `STATUS.md`（需求/接口/测试/下一步） |
+| 更新看板 | `scripts/status.ps1` |
 | Agent 接入 | `install.ps1 -Agent claude\|cursor\|both\|generic` |
 | 归因（可选） | `ATTRIBUTION.md` |
 
@@ -21,6 +23,7 @@
    ```
    按公司环境把 `both` 换成 `claude`、`cursor` 或 `generic`。
 3. 编辑 `PROJECT.md`（技术栈/包名/端口/项目专属规则），然后复制 `templates/REQ.md` → `records/REQ-xxx.md` 开始第一个需求。
+4. 每次收尾运行 `.\ai-workflow\scripts\status.ps1`，看 `STATUS.md`。
 
 ## 工具解耦
 
@@ -52,6 +55,8 @@ ai-workflow/
 ├── templates/REQ.md
 ├── templates/PROJECT.template.md
 ├── records/REQ-*.md
+├── STATUS.md                     # 一页看板（脚本生成）
+├── scripts/status.ps1            # 扫描需求/接口/测试，更新看板
 ├── adapters/{claude,cursor,generic}/
 ├── install.ps1
 └── REFERENCE/legacy-standards/   # 历史全量规则库，默认不加载
