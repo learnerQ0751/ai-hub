@@ -1,0 +1,29 @@
+ai-workflow/PROJECT.md
+  s_22010045ff98a6::t_77f69f2bc1fd06 3,7,12-26,29-31,39
+ai-workflow/STANDARDS.md
+  s_22010045ff98a6::t_07ccdaea5078fc 3,6,16,18-101,114,121-235,237,244,246,249,251,253,259,263,265,267,274,279-290,294,296-301
+ai-workflow/templates/PROJECT.template.md
+  s_22010045ff98a6::t_f3840ae19b81b2 3,7,12-24
+  s_22010045ff98a6::t_1b12c4dfce70bd 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c880bd25ecf3528284e8a9f987fa1830da39f8a1",
+  "prompts": {},
+  "humans": {
+    "h_b8fad2c42ba7f8": {
+      "author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  },
+  "sessions": {
+    "s_22010045ff98a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03243dd6-6c47-4457-b219-64983b0532b6",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
