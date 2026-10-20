@@ -1,6 +1,6 @@
 package com.qtua.aihub.core.routing;
 
-import com.qtua.aihub.config.GatewayProperties.Deployment;
+import com.qtua.aihub.common.config.GatewayProperties.Deployment;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

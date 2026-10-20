@@ -1,7 +1,7 @@
 package com.qtua.aihub.integration;
 
-import com.qtua.aihub.common.ChatCompletionException;
-import com.qtua.aihub.config.GatewayProperties.Deployment;
+import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.config.GatewayProperties.Deployment;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;

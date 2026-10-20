@@ -3,7 +3,7 @@ package com.qtua.aihub.api.controller;
 import com.qtua.aihub.api.error.GatewayExceptionHandler;
 import com.qtua.aihub.api.filter.AuthFilter;
 import com.qtua.aihub.api.filter.RequestIdFilter;
-import com.qtua.aihub.config.GatewayProperties;
+import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.config.JacksonConfig;
 import com.qtua.aihub.service.ModelService;
 import com.qtua.aihub.start.AiHubApplication;

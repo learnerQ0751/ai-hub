@@ -1,7 +1,7 @@
 package com.qtua.aihub.integration;
 
-import com.qtua.aihub.common.ChatCompletionException;
-import com.qtua.aihub.config.GatewayProperties.Deployment;
+import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.config.GatewayProperties.Deployment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

@@ -1,6 +1,6 @@
 package com.qtua.aihub.api.error;
 
-import com.qtua.aihub.common.ChatCompletionException;
+import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,4 @@
-package com.qtua.aihub.config;
+package com.qtua.aihub.common.config;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

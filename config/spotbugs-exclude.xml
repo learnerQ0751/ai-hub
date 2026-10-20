@@ -6,10 +6,10 @@
     </Match>
     <!-- 配置绑定 Bean 需要暴露可变 Map/List 供 Spring Binder 使用 -->
     <Match>
-        <Class name="com.qtua.aihub.config.GatewayProperties"/>
+        <Class name="com.qtua.aihub.common.config.GatewayProperties"/>
     </Match>
     <Match>
-        <Class name="com.qtua.aihub.config.GatewayProperties$Deployment"/>
+        <Class name="com.qtua.aihub.common.config.GatewayProperties$Deployment"/>
     </Match>
     <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露 -->
     <Match>

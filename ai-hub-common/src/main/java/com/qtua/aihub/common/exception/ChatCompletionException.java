@@ -1,4 +1,4 @@
-package com.qtua.aihub.common;
+package com.qtua.aihub.common.exception;
 
 import org.springframework.http.HttpStatus;
 

@@ -1,6 +1,6 @@
 package com.qtua.aihub.service;
 
-import com.qtua.aihub.config.GatewayProperties;
+import com.qtua.aihub.common.config.GatewayProperties;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

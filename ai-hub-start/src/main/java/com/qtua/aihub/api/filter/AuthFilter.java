@@ -2,7 +2,7 @@ package com.qtua.aihub.api.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.common.ErrorResponse;
-import com.qtua.aihub.config.GatewayProperties;
+import com.qtua.aihub.common.config.GatewayProperties;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

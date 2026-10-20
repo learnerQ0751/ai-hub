@@ -2,8 +2,8 @@ package com.qtua.aihub.core;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.qtua.aihub.common.ChatCompletionException;
-import com.qtua.aihub.config.GatewayProperties.Deployment;
+import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.config.GatewayProperties.Deployment;
 import com.qtua.aihub.core.routing.DeploymentSelector;
 import com.qtua.aihub.integration.UpstreamClient;
 import org.junit.jupiter.api.BeforeEach;
