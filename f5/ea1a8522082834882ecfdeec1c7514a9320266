@@ -1,0 +1,20 @@
+ai-workflow/records/REQ-1.2.md
+  s_22010045ff98a6::t_bd8427f864ef11 8
+  s_22010045ff98a6::t_5cf562e5a0e31f 79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f5ea1a8522082834882ecfdeec1c7514a9320266",
+  "prompts": {},
+  "sessions": {
+    "s_22010045ff98a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03243dd6-6c47-4457-b219-64983b0532b6",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
