@@ -1,8 +1,9 @@
 # 开发规范（通用）
 
-> 适用：Java / Spring 项目。项目专属规则见 `PROJECT.md`。
+> 适用：Java / Spring 企业项目。项目专属规则见 `PROJECT.md`。
 > 级别：**MUST**（必须）、**SHOULD**（推荐）、**MAY**（可选）。
 > 优先级：安全红线 > 项目规则 > 通用规则；强制 > 推荐 > 参考。
+> 接口契约的完整字段与示例见项目接口文档（由 `PROJECT.md` 指定）；本文件给出骨架与强制规则。
 
 ## 1. 安全底线（MUST）
 
@@ -12,93 +13,289 @@
 - 日志不得打印 API Key、密码、完整令牌、身份证号、银行卡号等敏感字段。
 - 提交前检查 `git status`，不提交本地配置、密钥、`target/`、日志和临时文件。
 
-## 2. Java / Spring
+## 2. 分层架构（MUST）
 
-### 2.1 强制（MUST）
+### 2.1 六层结构（参考监管报送 / Drip 技术栈）
+
+| 层 | 职责 | 允许依赖 | 禁止 |
+|---|---|---|---|
+| `start/task` | 启动、定时任务入口 | service | 写业务逻辑 |
+| `service` | 参数校验、DTO↔BO、编排 core | core | 碰 dal；业务编排下沉；跳过 core 直调 manager |
+| `core/trigger` | 业务编排、事务边界、事件 | manager | 碰 dal/api/trigger |
+| `manager/integration/api` | BO↔DO、Mapper 封装、外部集成、接口契约 | dal / 外部 SDK | 调 core/service；业务编排 |
+| `dal` | 纯 SQL / 数据访问 | — | 业务逻辑 |
+| `common` | 枚举、异常、工具、常量底座 | — | 依赖业务模块 |
+
+调用方向：`start/task → service → core/trigger → manager/integration/api → dal → common`。**只能上层依赖下层，禁止反向依赖、跨层调用和包循环。**
+
+### 2.2 边界规则
+
+- `api`：只放接口契约 + ReqDTO/ResDTO；DTO 不得引用 BO/DO；不依赖业务模块。
+- `service`：参数非空/格式/存在性/唯一性校验 + DTO↔BO 转换 + 调用 Core；不碰 DAL。
+- `core`：业务编排、状态流转、幂等、事务边界、事件发布；不碰 DAL/API/trigger。
+- `manager`：薄 DAL 门面，只做 BO↔DO 与 Mapper 封装；不做业务编排。
+- `dal`：单表 SQL / 数据访问；不写业务逻辑。
+- `integration`：外部 SDK/HTTP/RPC 封装；外部异常转业务异常，禁止静默吞没。
+- `common`：枚举、异常、工具、常量；不依赖任何业务模块。
+- 异步：不得在事务内；必须 clone/清理上下文（如项目有 EventContext/ThreadLocal）。
+- 事务：`@Transactional` 只在 core/service 的事务边界；`rollbackFor = Throwable.class`；单 SQL 写操作不加事务。
+
+### 2.3 非 Drip 项目的映射
+
+Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain → Repository/DAL → common`。
+
+仍须遵守：
+
+- Controller 只做契约、参数接收、响应包装；不直接调 DAL。
+- 业务编排与事务在 Service/Core；Repository 不做业务。
+- 数据访问只在一层；禁止 Controller/Service 混写 SQL。
+- 分包按职责，不按技术层堆大文件；包依赖无环（ArchUnit 检查）。
+
+## 3. Java / Spring 编码规范
+
+### 3.1 基类与 DTO（MUST，标准网关类项目）
+
+- **请求 DTO**：`*ReqDTO extends BaseReqDTO`（新增/删除/编辑/不分页查询）。
+- **分页查询 DTO**：`*QueryDTO extends PageReqDTO`；不分页查询可继承 `BaseReqDTO`。
+- **`BaseReqDTO` 公共字段**：`operator`、`tntId`、`remark`、`ext`。
+- **`PageReqDTO` 公共字段**：`pageNum`（Long，默认 1）、`pageSize`（Long，默认 20，服务端上限 100）+ operator 相关字段。
+- **响应 DTO**：`*ResDTO extends BaseResDTO`；`BaseResDTO` 承载平台公共字段：`id`、`createdAt`、`createdBy`、`updatedAt`、`updatedBy`、`tntId`、`ext`、`env`、`shadow`、`remark`（`status` 已废弃则按项目约定）。
+- **分页响应**：统一 `PageResDTO<T>`：`pageNum` / `pageSize` / `totalPages` / `totalRecords` / `results(List<T>)`。
+- **统一响应**：`Result<T>`；`T` 是业务响应参数 DTO；无业务数据时 `result.t` 返回空对象 `{}`，**禁止返回 null**。
+- 每个 DTO 声明 `private static final long serialVersionUID`。
+- DTO 不引用 BO/DO；api 层只放契约与 DTO。
+
+> OpenAI 兼容等非标准网关契约的项目，由 `PROJECT.md` 覆盖本节（例如 ai-hub 使用 OpenAI ChatCompletion 结构）。
+
+### 3.2 命名规范
+
+**方法名（MUST）**
+
+- 查询：`query` 开头（`queryByPage`、`queryByCondition`、`queryById`）。
+- 删除：`remove`；编辑：`modify`；新增：`save`。
+- 启停/状态：`enable` / `disable` / `updateStatusByXXX`（按项目语义）。
+- Service 方法名与接口路径最后一段保持一致（如 `queryReportSpecByPage`）。
+
+**请求参数名（MUST）**
+
+- 字段 lowerCamelCase；DTO 后缀 `*ReqDTO` / `*QueryDTO`。
+- 分页：`pageNum` / `pageSize`；身份：`operator` / `tntId`。
+- 布尔：`xxxFlag`（如 `businessSourceFlag`、`executionStrategyFlag`）。
+- 业务唯一键：`businessCode` / `versionNo` / `frequency`（项目按实际命名）。
+- 枚举值 UPPER_SNAKE_CASE（`DAILY` / `MONTHLY` / `COMPLETED`）。
+
+**响应参数名（MUST）**
+
+- 字段 lowerCamelCase；DTO 后缀 `*ResDTO`。
+- 布尔：`xxxFlag` / `hasXxx`；列表：`xxxList` / `results`。
+- 平台时间字段：`createdAt` / `updatedAt` 用毫秒时间戳；业务日期用 `yyyy-MM-dd`。
+- 金额/费用：`BigDecimal`；禁止 `double/float`。
+- `status` 已废弃时不得新增使用；新状态用明确枚举字段。
+
+**接口路径（MUST）**
+
+- 标准网关格式：`/系统名/service/方法名`，例如 `/api/ReportSpecService/queryReportSpecByPage`。
+- 路径最后一段与 Service 方法名一致；变更路径必须同步接口文档与 Apifox。
+- 网关「当前生效路径」与代码路径不一致时，文档同时给出两套，实际调用以网关为准。
+
+### 3.3 编码强制（MUST）
 
 - 空值判断用 `ObjectUtils.isEmpty()` / `StringUtils.isBlank()`；禁止 `== null` / `!= null` 判空。
 - 禁止魔法值：状态用枚举，其他常量用 `private static final`。
 - 单个方法 ≤ 70 行；超出拆分为子方法。
 - 类名 UpperCamelCase；方法/变量 lowerCamelCase；常量 UPPER_SNAKE_CASE；包名小写。
-- 分层：Controller → Service → Repository/DAL；禁止跨层调用、反向依赖、包循环。
 - 参数校验与 DTO 转换放 service 层；repository/DAL 只做数据访问。
-- `@Transactional` 只放事务边界；`rollbackFor = Throwable.class`；单 SQL 写操作不加事务。
 - 日志用 SLF4J 占位符；禁止 `System.out/err`、`printStackTrace`、字符串拼接日志。
 - 对象比较用 `equals` / `Objects.equals`；禁止用 `==` 比较包装类型/字符串。
 - 金额、费用、价格用 `BigDecimal`；禁止 `double/float`；除法指定精度与舍入。
 - 线程池用 `ThreadPoolExecutor` 显式参数；禁止 `Executors.newFixedThreadPool` / `newCachedThreadPool`。
 - 返回集合/数组时，无数据返回空集合/空数组，禁止返回 null。
 
-### 2.2 推荐（SHOULD）
+### 3.4 编码推荐（SHOULD）
 
-- DTO 声明 `private static final long serialVersionUID`。
 - 集合已知容量时指定初始容量；禁止在 foreach 中删除元素。
 - 时间处理用 `java.time`；禁止静态共享 `SimpleDateFormat`。
 - 方法注释放在注解上方；Service 接口注释说明用途、作者、日期。
 - 不要用异常控制正常流程；异常转换为业务异常并保留 cause。
 - 外部配置外部化；禁止硬编码环境地址、端口、模型名。
+- 外部 SDK/HTTP/RPC 调用封装在 integration；异常转业务异常，禁止静默吞没。
 
-## 3. SQL / 数据库
+## 4. 请求 / 响应契约（标准网关类项目，MUST）
 
-### 3.1 强制（MUST）
+> 适用于采用标准网关报文的项目；OpenAI 兼容等其它契约由 `PROJECT.md` 覆盖。
+> 完整字段与示例见项目接口文档（由 `PROJECT.md` 指定）。
+
+### 4.1 请求结构
+
+- 外层为公共上下文，业务参数统一放在 `data` 字段内。
+- 业务参数不得放在顶层；`data` 内同时携带随链路传入的身份/链路字段。
+- 公共上下文字段（按项目实际报文为准）：
+
+| 字段 | 说明 |
+|---|---|
+| `timestamp` | 请求时间戳 |
+| `app_id` / `tnt_id` / `env` | 应用、租户、环境 |
+| `operator_app_code` / `operatorAppCode` | 操作人应用编码 |
+| `target_type` / `target_code` | 操作目标类型/编码 |
+| `target_org_code` / `target_org_name` / `target_org_node` | 目标机构 |
+| `ybyh_app_name` | 调用应用名 |
+| `user_id` / `sessionToken` | 用户与会话 |
+| `page_path` | 来源页面路径 |
+
+请求骨架：
+
+```json
+{
+  "data": {
+    "operator": "zhangsan",
+    "tntId": "0101",
+    "pageNum": 1,
+    "pageSize": 20
+  },
+  "timestamp": "2026-09-20 10:00:00",
+  "app_id": "98001000000000304",
+  "tnt_id": "0101",
+  "env": "DEV_xxx",
+  "operator_app_code": "INTERNAL001",
+  "target_type": "DEPT",
+  "target_code": "0010010009",
+  "target_org_code": "8900000001",
+  "target_org_name": "中国电信集团",
+  "ybyh_app_name": "starsyufeng",
+  "user_id": "admin",
+  "sessionToken": "xxx",
+  "page_path": "/xxx"
+}
+```
+
+### 4.2 响应结构（Result<T>）
+
+- 统一包装：`Result<T>`；`T` 是业务响应参数 DTO。
+- 顶层字段：`code`、`success`、`message`、`result`、`traceId`、`sign`。
+- `result` 内：`ok`（业务是否成功）、`t`（业务数据区，即 `T`）、错误字段（`errCd` / `errMsg` / `errLocation` / `errCdTrace` 等，按项目基类）。
+- **两层成功判断**：第一层 `success`（网关转发成功）+ 第二层 `result.ok`（业务处理成功）；两层均成功时 `result.t` 才是有效业务数据。
+- 无业务数据时：`result.t` 返回空对象 `{}`，**禁止 null**。
+- 业务失败：`success=false`，`code` = 网关前缀 + 业务错误码（如 `98438259P002`），`message` 为描述；`result` 可能是处置策略标识（如 `"ABANDON"`）。
+- 网关校验层失败：`code` 为 `9843xxx` 系列（如时间戳/上下文校验），`result` 为提示文本。
+
+响应骨架：
+
+```json
+{
+  "code": "10000",
+  "success": true,
+  "message": "SUCCESS",
+  "result": {
+    "ok": true,
+    "t": {},
+    "errCd": null,
+    "errMsg": null
+  },
+  "traceId": "xxx",
+  "sign": null
+}
+```
+
+### 4.3 错误码
+
+- 错误码项目级统一维护，不随单个接口变动；维护以 `ErrorCodeEnum` 为准。
+- 返回码 = 网关前缀 `98438259` + 业务错误码（如 `98438259P002`）。
+- 分类：`P` 参数类、`B` 业务类、`4xx` 采集执行类、`R` RPC 类、`E` 系统类。
+- 新增错误码必须同步接口文档；不得复用已有码承载新语义。
+
+### 4.4 接口路径与兼容
+
+- 标准网关路径：`/系统名/service/方法名`。
+- 代码路径与网关当前生效路径不一致时：文档同时给出，实际调用以网关为准；切换完成后同步更新。
+- 所有接口按项目约定使用 `POST` / `application/json`（监管报送网关当前全部 POST）。
+- 对外接口只暴露稳定别名/编码，不暴露上游供应商细节。
+
+### 4.5 校验与序列化
+
+- 校验框架：公司网关类项目用 **OVAL**（`@NotNull`、`@NotNegative`、`@Length` 等）；Spring Boot 新项目可用 Jakarta Validation；**同一项目只用一套**。
+- 序列化框架：公司网关类项目用 **fastjson**；Spring Boot 新项目用 Jackson；**同一项目只用一套**，不得混用。
+- 统一处理 null/空集合/时间格式；`Result<T>` 与业务 DTO 的序列化规则在项目中保持一致。
+- 外部接口报文变更必须同步：DTO、校验注解、接口文档、Apifox/测试用例。
+
+## 5. 技术栈约定
+
+> 具体选型在 `PROJECT.md` 写明；同一项目内不得混用同类框架。
+
+| 领域 | 常见选型 | 约定 |
+|---|---|---|
+| JDK / 构建 | Java 8/11/17/21、Maven | 按公司项目版本；新项目默认 Java 21 + Spring Boot 3.x |
+| Web / RPC | Spring MVC、RestClient、Dubbo | 接口层不写业务；RPC 契约与 DTO 分离 |
+| 校验 | OVAL、Jakarta Validation | 网关类项目 OVAL；新项目 Jakarta Validation |
+| 序列化 | fastjson、Jackson | 网关类项目 fastjson；新项目 Jackson；禁止混用 |
+| 持久层 | MyBatis、MyBatis-Plus | SQL 在 mapper/dal；多数据源见 §6 |
+| 配置 | Nacos、application.yml | 配置外部化；同 key 只放一处 |
+| 日志 | SLF4J + Log4j2 | 占位符日志；不打印敏感信息 |
+| 测试 | JUnit、MockMvc、MockWebServer、ArchUnit | service 方法必须有单测；架构规则用 ArchUnit |
+
+## 6. SQL / 数据库
+
+### 6.1 强制（MUST）
 
 - UPDATE 使用业务主键定位（如 `key_hash`、`entity_code`），不使用自增 id；编辑入参判空。
 - 禁止 `SELECT *`；查询显式列出字段。
 - 高频查询必须有索引或分区依据；上线前用 `EXPLAIN` 验证。
 - 表名小写、必须有注释；单表字段数 ≤ 50；字符集统一。
 - 使用 MyBatis 时，XML 中字符串字段加 `jdbcType=VARCHAR`，时间字段 `TIMESTAMP`，id 字段 `BIGINT`。
+- 多数据源：SQL 语法必须兼容目标数据库；无法兼容时写两套并保证语义一致。
 
-### 3.2 推荐（SHOULD）
+### 6.2 推荐（SHOULD）
 
 - 逻辑删除方法命名 `updateStatusByXXX(code, operator, fromStatus, toStatus)`；状态值通过参数传入。
-- 修改 SQL 时同步维护 MySQL/PostgreSQL 两套 mapper（如项目存在双写）。
+- 如项目存在多数据源适配，SQL 语法要兼容/写两套（如 MySQL/PostgreSQL 的 mapper 双写），并保证两边语义一致；修改一侧必须同步另一侧。
 
-## 4. API / HTTP
+## 7. 测试
 
-### 4.1 强制（MUST）
-
-- 对外接口契约稳定；错误体统一：`{"error":{"message","type","param","code"}}`。
-- 上游 JSON 原样透传，不得因序列化丢字段；如需改写，只改约定字段并写测试。
-- 输入校验：必填字段、类型、范围；未实现的能力明确拒绝（如 `stream=true` 返回 400）。
-- 每个请求生成 `X-Request-Id` 并写入日志，便于排障。
-- 上游错误/超时不泄露上游密钥；状态码与错误类型对齐约定。
-
-### 4.2 推荐（SHOULD）
-
-- 对外暴露别名/稳定标识，不暴露上游供应商细节。
-- 错误消息可操作：说明哪个字段、期望什么、下一步怎么做。
-
-## 5. 测试
-
-### 5.1 强制（MUST）
+### 7.1 强制（MUST）
 
 - 新增/修改 service 方法必须有单测，覆盖成功场景 + 关键异常场景。
 - 先写失败测试，再写最小实现，测试通过后再重构（TDD）。
 - 提交前运行项目质量门禁（如 `mvn -Pquality verify`）；失败不得提交。
 
-### 5.2 推荐（SHOULD）
+### 7.2 推荐（SHOULD）
 
 - Controller 用 MockMvc；外部依赖用 MockWebServer/WireMock；架构规则用 ArchUnit。
 - 覆盖率门槛由项目决定；新项目建议首个功能后提升到 70%。
+- 单测命名表达意图；异常路径与成功路径同等重要。
 
-## 6. Git / 提交
+## 8. Git / 提交
 
-### 6.1 强制（MUST）
+### 8.1 强制（MUST）
 
 - 提交信息：`feat/fix/refactor/docs/test/chore: 简述`。
 - 禁止在提交信息中包含模型署名；作者按公司/项目要求。
 - 一个需求/任务一个提交或逻辑组；提交前检查 diff，不提交无关文件。
 - 代码与对应 `records/REQ-*.md` 一起提交。
 
-### 6.2 推荐（SHOULD）
+### 8.2 推荐（SHOULD）
 
 - 提交前跑一次 `git diff` 人工复核；避免全文件重写。
 - 大改动先建分支；小改动可直接在当前分支完成。
 
-## 7. 项目专属规则
+## 9. 设计原则（摘要，SHOULD）
+
+- **SOLID**：单一职责、开闭、里氏替换、接口隔离、依赖倒置。
+- **高内聚低耦合**：按职责分包；依赖指向抽象；包依赖无环；稳定依赖。
+- **为变化预留空间但不过度设计**：新功能优先通过“增加”而不是“修改”实现（开闭原则）。
+- **质量属性**：可维护、可测试、可观测、安全；架构评审时逐项检查。
+- **TDD**：先测试后实现；小步提交，持续集成。
+- **代码审查**：安全 → 性能 → 正确性 → 可维护性 → 测试（可参考仓库/知识库的 code-reviewer 规则）。
+
+> 理论参考：`20-Learning/编程与开发/系统设计/06-软件架构设计与实现/`（4+1 视图、CBSE、ABSD、DSSA、质量属性、架构评估等）。这些是设计理论，不逐条搬进编码规范；需要时查阅。
+
+## 10. 项目专属规则
 
 见 `PROJECT.md`。项目规则优先于本文件中的通用规则。
 
-## 8. 历史全量规则
+## 11. 参考来源与历史规则
 
-`REFERENCE/legacy-standards/` 保留了此前的 45 条 YAML 规则卡与生成器，仅供查阅，**默认不加载**。
+- 监管报送编码规约（data-submission-standards，17 节）
+- 阿里巴巴 Java 开发手册（黄山版）
+- 数据库研发规范
+- 金融科技开发技术规范（技术红线）
+- 监管报送接口文档（02-接口文档（对外版））——请求/响应/错误码完整示例
+- `REFERENCE/legacy-standards/`：历史 45 条 YAML 规则库，仅供查阅，默认不加载
