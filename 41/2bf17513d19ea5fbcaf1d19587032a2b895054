@@ -1,0 +1,50 @@
+ai-hub-start/src/main/java/com/qtua/aihub/AiHubApplication.java
+  s_c79baf63be364e::t_4565dae726abb0 10-14
+ai-hub-start/pom.xml
+  s_c79baf63be364e::t_a1b7778f0552bb 101-104
+ai-hub-tests/pom.xml
+  s_c79baf63be364e::t_c5bdacc92decb4 17-44
+  s_c79baf63be364e::t_b29d3aeb2f1f15 66-134
+ai-hub-tests/src/test/java/com/qtua/aihub/ArchitectureTest.java
+  s_c79baf63be364e::t_6e2d9d852d22a9 8-50
+ai-hub-tests/src/main/java/com/qtua/aihub/tests/package-info.java
+  s_c79baf63be364e::t_6ecd7e55b47c6d 1-6
+ai-hub-start/src/main/java/com/qtua/aihub/start/config/JacksonConfig.java
+  s_c79baf63be364e::t_edc038cced0b37 1
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/ChatCompletionController.java
+  s_c79baf63be364e::t_c77826ccc70f8b 1
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/ModelController.java
+  s_c79baf63be364e::t_d7c7039431258e 1
+ai-hub-start/src/main/java/com/qtua/aihub/start/error/GatewayExceptionHandler.java
+  s_c79baf63be364e::t_2084bb9adcd69e 1
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/AuthFilter.java
+  s_c79baf63be364e::t_b8b63a62837a8f 1
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/RequestIdFilter.java
+  s_c79baf63be364e::t_847b27e1ac5a31 1
+ai-hub-start/src/test/java/com/qtua/aihub/start/controller/ChatCompletionControllerTest.java
+  s_c79baf63be364e::t_95195396e904b7 1,3-5,8,12
+ai-hub-start/src/test/java/com/qtua/aihub/start/controller/ModelControllerTest.java
+  s_c79baf63be364e::t_e3e672f47a19f8 1,3-5,7,10
+ai-hub-start/src/test/java/com/qtua/aihub/start/filter/RequestIdFilterTest.java
+  s_c79baf63be364e::t_5698b0e69e3d7d 1
+ai-hub-tests/src/test/java/com/qtua/aihub/GatewayRoutingIntegrationTest.java
+  s_c79baf63be364e::t_3ae98612097bcb 1,7
+config/spotbugs-exclude.xml
+  s_c79baf63be364e::t_9591727610ae70 5,16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "412bf17513d19ea5fbcaf1d19587032a2b895054",
+  "prompts": {},
+  "sessions": {
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
