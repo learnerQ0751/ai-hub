@@ -2,21 +2,18 @@
 
 项目 7（Agent 与 MCP 集群）Java 重实现——LLM 网关核心。
 
-**当前进度**：需求 1.1（统一入口 + 单模型转发）已完成并通过真实验收。
+## 入口（先看这个）
 
-## 快速入口
-
-- 工作流使用指南：[`docs/WORKFLOW.md`](docs/WORKFLOW.md)
-- 规范库维护：[`standards/README.md`](standards/README.md)
-- git-ai 归因：[`docs/attribution/README.md`](docs/attribution/README.md)
+- AI 工作流：[`ai-workflow/README.md`](ai-workflow/README.md)
+- 开发规范：[`ai-workflow/STANDARDS.md`](ai-workflow/STANDARDS.md) + [`ai-workflow/PROJECT.md`](ai-workflow/PROJECT.md)
+- 开发流程：[`ai-workflow/WORKFLOW.md`](ai-workflow/WORKFLOW.md)
+- 需求记录：[`ai-workflow/records/`](ai-workflow/records/)
 - 需求 1.1 规格：[`specs/001-chat-completions/`](specs/001-chat-completions/)
+- AI 归因报告：[`docs/attribution/`](docs/attribution/)
 
-## 工作流
+## 当前进度
 
-- **0→1（新模块）**：spec-kit（`specs/`）
-- **1→100（存量迭代）**：OpenSpec（`openspec/`）+ Superpowers 技能
-- **归因**：git-ai（行级 agent/model/prompt 归因）
-- **规范**：`standards/` 规则卡 → 生成 constitution / CLAUDE.md / Cursor rules / lint 配置
+需求 1.1（统一入口 + 单模型转发）已完成并通过真实验收；下一步需求 1.2（模型路由）。
 
 ## 本地启动
 
@@ -38,8 +35,3 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```bash
 mvn -Pquality verify
 ```
-
-## 参照物
-
-- LiteLLM 行为基线：知识库任务目录 `06-LiteLLM行为基线`
-- 需求卡：`05-项目7-第1期-LLM网关核心`
