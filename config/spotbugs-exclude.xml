@@ -17,6 +17,10 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
+        <Class name="com.qtua.aihub.integration.protocol.OpenAiProtocolAdapter"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
         <Class name="com.qtua.aihub.service.ChatCompletionService"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
