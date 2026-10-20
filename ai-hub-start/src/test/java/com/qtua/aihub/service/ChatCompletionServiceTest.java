@@ -1,11 +1,12 @@
 package com.qtua.aihub.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.common.config.GatewayProperties.Deployment;
 import com.qtua.aihub.core.ChatCompletionCore;
+import com.qtua.aihub.manager.model.ChatCompletionBO;
+import com.qtua.aihub.manager.model.ChatCompletionResultBO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -16,8 +17,6 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -40,7 +39,8 @@ class ChatCompletionServiceTest {
         when(properties.getModelList()).thenReturn(Map.of("chat-default", List.of(deployment)));
 
         core = mock(ChatCompletionCore.class);
-        when(core.chat(anyString(), anyList(), any())).thenReturn("{\"object\":\"chat.completion\"}");
+        when(core.chat(any(ChatCompletionBO.class)))
+                .thenReturn(new ChatCompletionResultBO("{\"object\":\"chat.completion\"}"));
 
         service = new ChatCompletionService(properties, core, new ObjectMapper());
     }
@@ -52,9 +52,12 @@ class ChatCompletionServiceTest {
         String response = service.chat(body);
 
         assertThat(response).contains("chat.completion");
-        ArgumentCaptor<JsonNode> requestCaptor = ArgumentCaptor.forClass(JsonNode.class);
-        verify(core).chat(eq("chat-default"), eq(List.of(deployment)), requestCaptor.capture());
-        assertThat(requestCaptor.getValue().get("model").asText()).isEqualTo("chat-default");
+        ArgumentCaptor<ChatCompletionBO> boCaptor = ArgumentCaptor.forClass(ChatCompletionBO.class);
+        verify(core).chat(boCaptor.capture());
+        ChatCompletionBO bo = boCaptor.getValue();
+        assertThat(bo.getAlias()).isEqualTo("chat-default");
+        assertThat(bo.getRequestBody()).contains("\"model\":\"chat-default\"");
+        assertThat(bo.getDeployments()).containsExactly(deployment);
     }
 
     @Test

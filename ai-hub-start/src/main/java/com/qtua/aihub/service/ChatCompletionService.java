@@ -7,6 +7,8 @@ import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.common.config.GatewayProperties.Deployment;
 import com.qtua.aihub.core.ChatCompletionCore;
+import com.qtua.aihub.manager.model.ChatCompletionBO;
+import com.qtua.aihub.manager.model.ChatCompletionResultBO;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -60,7 +62,9 @@ public class ChatCompletionService {
         if (ObjectUtils.isEmpty(deployments)) {
             throw ChatCompletionException.invalidModel(alias);
         }
-        return chatCompletionCore.chat(alias, deployments, root);
+        ChatCompletionBO bo = new ChatCompletionBO(alias, deployments, requestBody);
+        ChatCompletionResultBO result = chatCompletionCore.chat(bo);
+        return result.getResponseBody();
     }
 
     /**
