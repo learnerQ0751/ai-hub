@@ -1,0 +1,25 @@
+ai-workflow/README.md
+  s_22010045ff98a6::t_5c3a2c746e0b0b 34-35,37,40-41
+ai-workflow/WORKFLOW.md
+  s_22010045ff98a6::t_2ab5b8f37b84a6 63,65-66,70-71
+README.md
+  s_22010045ff98a6::t_e1bebfbad0c423 18-25
+ai-workflow/PROJECT.md
+  s_22010045ff98a6::t_78dc35d65f0067 12-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "140a050d5e028b4e054c4464f32dc80de8b0aef2",
+  "prompts": {},
+  "sessions": {
+    "s_22010045ff98a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03243dd6-6c47-4457-b219-64983b0532b6",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
