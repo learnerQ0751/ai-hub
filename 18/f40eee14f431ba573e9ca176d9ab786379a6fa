@@ -1,0 +1,113 @@
+src/test/java/com/qtua/aihub/gateway/ModelControllerTest.java
+  s_d53c7863cb3aec::t_a680b3e4f4dd0d 1-76
+specs/002-model-router/checklists/requirements.md
+  s_d53c7863cb3aec::t_8b450cf5c00c9a 1-15,17-33
+  s_d53c7863cb3aec::t_8e42728ce5b399 16
+  s_d53c7863cb3aec::t_943ac5e8ae2d60 34
+src/test/java/com/qtua/aihub/config/GatewayPropertiesTest.java
+  s_d53c7863cb3aec::t_a7ea3035305568 68-72
+  s_d53c7863cb3aec::t_49e45457c0861d 35-38,40-44,46-67,73-115
+  s_d53c7863cb3aec::t_019a980a35d7fb 39,45
+src/main/java/com/qtua/aihub/gateway/router/DeploymentSelector.java
+  s_d53c7863cb3aec::t_41ef5e2da3cc1a 1-10
+src/main/java/com/qtua/aihub/gateway/ModelListResponse.java
+  s_d53c7863cb3aec::t_9865d22ec996fc 1-9,14-28
+  s_d53c7863cb3aec::t_ce87826c0f8863 10-13
+specs/002-model-router/contracts/openapi.yaml
+  s_d53c7863cb3aec::t_4ab290414cd7c6 1-102
+src/test/java/com/qtua/aihub/gateway/router/SmoothWeightedSelectorTest.java
+  s_d53c7863cb3aec::t_028b0f70ebea11 19
+  s_d53c7863cb3aec::t_1a5f0bc159616b 1-18,20-116
+src/main/resources/application-local.yml.example
+  s_d53c7863cb3aec::t_8a7bed596197d4 4,8-16
+src/test/java/com/qtua/aihub/gateway/ModelServiceTest.java
+  s_d53c7863cb3aec::t_9fdd3eccfe9a63 1-57
+ai-workflow/WORKFLOW.md
+  s_22010045ff98a6::t_ca2be04f8b15dd 43-45
+src/test/java/com/qtua/aihub/gateway/GatewayRoutingIntegrationTest.java
+  s_d53c7863cb3aec::t_09de770f153d7f 66-68,72
+  s_d53c7863cb3aec::t_44d8434cd68a65 1-11,14,16-65,69-71,73-108
+  s_d53c7863cb3aec::t_21ff1dc694b8e9 12-13,15
+specs/002-model-router/research.md
+  s_d53c7863cb3aec::t_2912418109b582 1-84
+src/main/java/com/qtua/aihub/gateway/ModelController.java
+  s_d53c7863cb3aec::t_2ea70e8decde26 1-20
+src/test/java/com/qtua/aihub/gateway/ChatCompletionServiceTest.java
+  s_d53c7863cb3aec::t_790dff316f75f0 25-26,31,42-45
+  s_d53c7863cb3aec::t_77c20a58de12b5 73-86
+  s_d53c7863cb3aec::t_b08049e2dd5bf9 97-105
+  s_d53c7863cb3aec::t_12f69907197cb4 6
+  s_d53c7863cb3aec::t_0fe2caa131301d 72
+  s_d53c7863cb3aec::t_2b822f6e4ed383 96
+specs/002-model-router/tasks.md
+  s_d53c7863cb3aec::t_ab496ca0a98dec 1-25,27-35,40-54,57-59,62-72,76-88,91-93,97-107,110-116,121-192
+  s_d53c7863cb3aec::t_965d026739670c 26,36-39,55-56,60-61,73-75,89-90,94-96,108-109,117-120
+src/main/java/com/qtua/aihub/config/GatewayProperties.java
+  s_d53c7863cb3aec::t_5b4e0935e7aa02 3-5,7,16-17
+  s_d53c7863cb3aec::t_26ccdc6963aeed 38-79
+  s_d53c7863cb3aec::t_24031bf7ec37a2 85-86
+  s_d53c7863cb3aec::t_4e0ce7b997f3f5 111-126
+  s_d53c7863cb3aec::t_6985b6622a5166 18
+specs/002-model-router/spec.md
+  s_d53c7863cb3aec::t_c9683e9c352c5b 87,89
+  s_d53c7863cb3aec::t_c368833c085138 103
+  s_d53c7863cb3aec::t_894837a1186d46 140-141
+  s_d53c7863cb3aec::t_edc68e562992fe 11-17
+  s_d53c7863cb3aec::t_caf9899a888a5b 1-10,18-86,90-102,105-139,142-143
+  s_d53c7863cb3aec::t_92026e5ce1e149 88
+  s_d53c7863cb3aec::t_bad7c859dc25a8 104
+specs/002-model-router/quickstart.md
+  s_d53c7863cb3aec::t_a1e122a3a9ea6c 1-109
+ai-workflow/records/REQ-1.2.md
+  s_d53c7863cb3aec::t_598efb674e44bf 46
+  s_d53c7863cb3aec::t_ccaf128ce49100 4-5,7-8,22-27,36-39,45,47-49,54-55,57-59,61,66-68
+ai-workflow/PROJECT.md
+  s_22010045ff98a6::t_378b01e00b44bb 7-15,18
+  s_22010045ff98a6::t_4f98014b361593 27,30-32,42-43,45,47-51,53-56,58-59,61
+  s_22010045ff98a6::t_fa925c6699332a 29,33-41,44,46,52,57,60
+src/main/java/com/qtua/aihub/gateway/ModelService.java
+  s_d53c7863cb3aec::t_2d0b5c0f45c149 1-20
+src/main/java/com/qtua/aihub/gateway/router/SmoothWeightedSelector.java
+  s_d53c7863cb3aec::t_6a04ef66212085 1-71
+specs/002-model-router/plan.md
+  s_d53c7863cb3aec::t_36328e7c44d5c8 2,4,6-8,10-12,14,16,18,20,22,24,26,28,30-34,42-47,57-61,83-84,86,90,105
+  s_d53c7863cb3aec::t_19b9632fcf1509 1,3,5,9,13,15,17,19,21,23,25,27,29,35-41,48-56,62-82,85,87-89,91-104,106
+specs/002-model-router/data-model.md
+  s_d53c7863cb3aec::t_c1c71e30368069 1-120
+config/spotbugs-exclude.xml
+  s_d53c7863cb3aec::t_f0874d14cec327 23-31
+ai-workflow/STANDARDS.md
+  s_22010045ff98a6::t_d88c4188e18812 54-55,58-60,69-70,73,75-99
+  s_22010045ff98a6::t_4b76b06abe88f8 56-57,61-68,71-72,74
+  s_22010045ff98a6::t_d55a9d1c127cc0 169-181
+  s_22010045ff98a6::t_2c4d403e413f9d 285-286,290-292
+src/main/java/com/qtua/aihub/gateway/ChatCompletionService.java
+  s_d53c7863cb3aec::t_9184ee8cfe327c 48-50
+  s_d53c7863cb3aec::t_3431057a993c3e 9-11,21,29,32,36
+ai-workflow/STATUS.md
+  s_d53c7863cb3aec::t_ba59994362d75d 6,13,20,22,26,35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "18f40eee14f431ba573e9ca176d9ab786379a6fa",
+  "prompts": {},
+  "sessions": {
+    "s_22010045ff98a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03243dd6-6c47-4457-b219-64983b0532b6",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_d53c7863cb3aec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f30bc1ef-c501-4ecd-84bd-a4d947cc5c20",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
