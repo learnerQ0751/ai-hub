@@ -1,0 +1,21 @@
+ai-hub-integration/src/test/java/com/qtua/aihub/integration/protocol/OpenAiProtocolAdapterTest.java
+  s_c79baf63be364e::t_d15c5e386f6d82 1-43
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/protocol/OpenAiProtocolAdapter.java
+  s_c79baf63be364e::t_22de80b7cae85f 1-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6c208e30ee4e745d5ec769a92bcbb50afc1b80cc",
+  "prompts": {},
+  "sessions": {
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
