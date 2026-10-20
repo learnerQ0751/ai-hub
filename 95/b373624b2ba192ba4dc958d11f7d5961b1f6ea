@@ -1,0 +1,23 @@
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/package-info.java
+  s_c79baf63be364e::t_5c160622844f0e 1-6
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ChatCompletionBO.java
+  s_c79baf63be364e::t_e385999f992809 1-42
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ChatCompletionResultBO.java
+  s_c79baf63be364e::t_5dee629643c576 1-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "95b373624b2ba192ba4dc958d11f7d5961b1f6ea",
+  "prompts": {},
+  "sessions": {
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
