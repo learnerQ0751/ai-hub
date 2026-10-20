@@ -1,0 +1,122 @@
+src/main/java/com/qtua/aihub/start/AiHubApplication.java
+  s_22010045ff98a6::t_62d9f8942ec344 1-25
+src/test/java/com/qtua/aihub/api/controller/ChatCompletionControllerTest.java
+  s_22010045ff98a6::t_1f343c2b3b945c 28
+  s_22010045ff98a6::t_9a1516781ee448 8
+  s_22010045ff98a6::t_0be4b56e92edac 29
+  s_22010045ff98a6::t_995493a27479e9 1-7,9,11-15,17-27,30-113
+  s_22010045ff98a6::t_231acfa1fade5a 10,16
+src/test/java/com/qtua/aihub/core/routing/WeightedRandomSelectorTest.java
+  s_22010045ff98a6::t_21525a437dbd29 1-104
+src/main/java/com/qtua/aihub/manager/package-info.java
+  s_22010045ff98a6::t_4095188ce2639d 1-6
+ai-workflow/records/REQ-1.1.md
+  s_22010045ff98a6::t_f5916f65451d97 43-48
+src/main/java/com/qtua/aihub/service/ChatCompletionService.java
+  s_22010045ff98a6::t_2929133e1fe4fc 1-122
+docker-compose.yml
+  s_22010045ff98a6::t_1e9e2130705bf9 1-26
+src/test/java/com/qtua/aihub/api/filter/RequestIdFilterTest.java
+  s_22010045ff98a6::t_07f7336d0ad4a9 1-24
+config/spotbugs-exclude.xml
+  s_22010045ff98a6::t_d39a6c98361787 5
+  s_22010045ff98a6::t_af34567d1918ff 16,20,24-32,37
+src/main/java/com/qtua/aihub/api/filter/RequestIdFilter.java
+  s_22010045ff98a6::t_74c77913a4a4c5 1-48
+src/main/resources/application.yml
+  s_22010045ff98a6::t_5d4c7f0eee0831 4-8
+src/test/java/com/qtua/aihub/api/controller/ModelControllerTest.java
+  s_22010045ff98a6::t_b04757a800665b 29
+  s_22010045ff98a6::t_57eaba95cc70f9 43,56,65,76
+  s_22010045ff98a6::t_6aa05dc9ca7f73 9,14
+  s_22010045ff98a6::t_08fc861de21999 7
+  s_22010045ff98a6::t_8b145706665e91 1-6,8,10-13,15-27,30-42,44-55,57-64,66-75,77-82
+  s_22010045ff98a6::t_eef4937019d63f 28
+src/main/java/com/qtua/aihub/dal/package-info.java
+  s_22010045ff98a6::t_37cc8741937c5b 1-6
+ai-workflow/records/REQ-1.2.md
+  s_22010045ff98a6::t_c60e8186ec2978 88
+  s_22010045ff98a6::t_cb8f8724323b16 47-48,50-51
+  s_22010045ff98a6::t_7f9ed20112bd00 38,40
+  s_22010045ff98a6::t_14ad95d5988ad3 22
+  s_22010045ff98a6::t_bd090425530370 4
+  s_22010045ff98a6::t_f543cad2bbf509 61-62,65
+  s_22010045ff98a6::t_b5e699229e62e3 69
+  s_22010045ff98a6::t_f553eca9c548a4 15
+src/main/java/com/qtua/aihub/config/GatewayProperties.java
+  s_22010045ff98a6::t_a78c6831c1246d 13-18,25,27,46-51,57-62,78-85,93-98,106-107,115-117,120,122,124,126,128
+src/main/java/com/qtua/aihub/api/controller/ChatCompletionController.java
+  s_22010045ff98a6::t_31fc323a98c8a0 1-45
+src/test/java/com/qtua/aihub/integration/UpstreamClientTest.java
+  s_22010045ff98a6::t_807c5e291db9b0 1-77
+src/main/java/com/qtua/aihub/api/filter/AuthFilter.java
+  s_22010045ff98a6::t_490309282efbf8 1-77
+src/test/java/com/qtua/aihub/common/ErrorResponseTest.java
+  s_22010045ff98a6::t_55992a46e37803 1-23
+src/test/java/com/qtua/aihub/service/ChatCompletionServiceTest.java
+  s_22010045ff98a6::t_7fcaa8d1a0d726 1-99
+src/test/java/com/qtua/aihub/core/ChatCompletionCoreTest.java
+  s_22010045ff98a6::t_cbc6d172dd7078 1-92
+pom.xml
+  s_22010045ff98a6::t_f08b9cdb09febe 33-34
+  s_22010045ff98a6::t_b932c1420724e2 10
+  s_22010045ff98a6::t_8b91ad3f76ae1f 26,29,35-51,53-70,76-80,89
+src/main/java/com/qtua/aihub/common/ErrorResponse.java
+  s_22010045ff98a6::t_01594eaa0f6863 1-35
+ai-workflow/PROJECT.md
+  s_22010045ff98a6::t_ce951980017759 45
+  s_22010045ff98a6::t_bdd22ac15c4b07 55,57-63
+  s_22010045ff98a6::t_d1b7a5780d3382 85
+  s_22010045ff98a6::t_50dfe7c974c665 7,9,12-15,18
+src/main/java/com/qtua/aihub/core/routing/WeightedRandomSelector.java
+  s_22010045ff98a6::t_09aa993b36001e 1-85
+ai-workflow/STANDARDS.md
+  s_22010045ff98a6::t_6e803675a8f550 285,288
+src/main/java/com/qtua/aihub/api/dto/ModelListResponse.java
+  s_22010045ff98a6::t_d4a70638ae62b9 1-51
+src/test/java/com/qtua/aihub/integration/GatewayRoutingIntegrationTest.java
+  s_22010045ff98a6::t_705c467e5d8a54 1-6,8-23,26-123
+  s_22010045ff98a6::t_46b1280e81d573 7
+  s_22010045ff98a6::t_ce174a3a0e7fc4 24-25
+src/main/java/com/qtua/aihub/service/ModelService.java
+  s_22010045ff98a6::t_a85f1a37d1abdb 1-29,31,34-35
+  s_22010045ff98a6::t_a29c641e2ae9dd 30,32-33
+src/main/java/com/qtua/aihub/common/ChatCompletionException.java
+  s_22010045ff98a6::t_d18582fc9b3f8e 1-112
+README.md
+  s_22010045ff98a6::t_caaaec92a02542 16-17
+src/main/java/com/qtua/aihub/config/JacksonConfig.java
+  s_22010045ff98a6::t_c1f2de7c8ca543 1-26
+src/main/java/com/qtua/aihub/api/controller/ModelController.java
+  s_22010045ff98a6::t_d7c5ca641dd501 35
+  s_22010045ff98a6::t_7b4b66915981f7 1-34,36-37
+src/main/java/com/qtua/aihub/core/ChatCompletionCore.java
+  s_22010045ff98a6::t_1e175308a02cf4 1-104
+src/test/java/com/qtua/aihub/service/ModelServiceTest.java
+  s_22010045ff98a6::t_d1f1d64625eb17 1-24,28-35,37,39-48
+  s_22010045ff98a6::t_8a656df6ba3ddd 25-27,36,38
+src/main/java/com/qtua/aihub/integration/UpstreamClient.java
+  s_22010045ff98a6::t_4e22899e94eeda 1-80
+src/main/java/com/qtua/aihub/api/error/GatewayExceptionHandler.java
+  s_22010045ff98a6::t_57e81fd2666805 1-66
+src/main/java/com/qtua/aihub/core/routing/DeploymentSelector.java
+  s_22010045ff98a6::t_f18f70c2dc69f4 1-22
+ai-workflow/STATUS.md
+  s_22010045ff98a6::t_e56a4a9908aa9b 6,13,26,35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e75732e9fc23511be56e8ebf59ad2ff918b41d2b",
+  "prompts": {},
+  "sessions": {
+    "s_22010045ff98a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03243dd6-6c47-4457-b219-64983b0532b6",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
