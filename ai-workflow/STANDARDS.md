@@ -51,6 +51,52 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 - 数据访问只在一层；禁止 Controller/Service 混写 SQL。
 - 分包按职责，不按技术层堆大文件；包依赖无环（ArchUnit 检查）。
 
+### 2.4 包结构（MUST）
+
+- **按层分包**，包名表达职责；禁止把 Controller、Service、异常、错误体、上游客户端、DTO 混在同一个包。
+- **统一使用 §2.1 的六层结构**，不要每个项目另起一套：
+
+```text
+com.<company>.<project>
+├── start/          # 启动类、定时任务入口
+├── api/            # 接口契约、Controller、ReqDTO/ResDTO、Filter、异常处理
+├── service/        # 参数校验、DTO↔BO、编排 core
+├── core/           # 业务编排、事务边界、事件、路由策略
+├── manager/        # BO↔DO、Repository/Mapper 封装（有 DB 时）
+├── integration/    # 外部 HTTP/RPC/SDK、Redis/LangChain4j 适配
+├── dal/            # MyBatis Mapper / SQL（有 DB 时）
+└── common/         # 异常、错误体、常量、工具
+```
+
+- `config` 作为跨层支撑包，可放 `start/config` 或根 `config`；`api/dto` 放 ReqDTO/ResDTO，`service/core` 放 BO，`manager/dal` 放 DO/Entity。
+- 复杂项目可在层内按 feature 再分子包（如 `core/routing`、`api/controller`），但层边界必须清晰。
+- 禁止 `gateway` / `biz` / `utils` 这类无边界大包承载多种职责；新增类必须能回答“它属于哪一层”。
+- 测试包与被测包镜像；包依赖必须无环（ArchUnit 检查）。
+
+### 2.5 多实例与状态（MUST）
+
+- **默认无状态**：Controller / Service / Integration 不得持有可变业务状态（成员变量 Map/List/计数器/缓存）。
+- 允许的成员变量：不可变配置、线程安全且无业务语义的基础设施（如 `ObjectMapper`、`RestClient`、`Logger`）。
+- 跨请求状态必须外置：
+  - 计数器、限流、预算、路由状态、冷却、会话 → Redis（原子操作/Lua）或数据库。
+  - 持久化数据 → PostgreSQL / MySQL。
+  - 本地缓存只允许只读/配置/可容忍过期的数据，并注明失效策略。
+- 锁：
+  - 本地锁（`synchronized` / `ReentrantLock`）只能保护本机内存中的非共享状态，**不得用于跨实例互斥**。
+  - 跨实例互斥用分布式锁（Redis/Redisson 或数据库锁），必须设置超时、防死锁、幂等。
+- 负载均衡：
+  - 多实例优先用**无状态算法**（加权随机）；如必须用有状态算法（平滑轮询），状态必须共享，或明确接受“每实例独立计数”并在 `PROJECT.md` 记录限制。
+- 定时任务：多实例下必须 leader 选举，或用分布式锁/幂等保证只执行一次。
+- 本地缓存/本地队列不得承载不可丢失的业务数据。
+
+**多实例检查清单（每个需求收尾必答）**
+
+- [ ] 是否有可变成员变量？是否线程安全、是否跨实例一致？
+- [ ] 计数器/限流/预算/冷却是否在 Redis/数据库？
+- [ ] 锁是否分布式？是否有超时、防死锁、幂等？
+- [ ] 定时任务是否只执行一次？
+- [ ] 本地缓存是否可容忍过期/不一致？
+
 ## 3. Java / Spring 编码规范
 
 ### 3.1 基类与 DTO（MUST，标准网关类项目）
@@ -119,6 +165,19 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 - 不要用异常控制正常流程；异常转换为业务异常并保留 cause。
 - 外部配置外部化；禁止硬编码环境地址、端口、模型名。
 - 外部 SDK/HTTP/RPC 调用封装在 integration；异常转业务异常，禁止静默吞没。
+
+### 3.5 注释（MUST）
+
+- **类级注释**：说明职责、所属层、关键约束（Controller / Service / Integration / Selector 等）。
+- **方法注释**：public / service / integration 方法必须有 Javadoc 或注释，说明用途、参数、返回、异常；简单 getter/setter 除外。
+- **行级注释**：复杂逻辑必须注释“为什么”，至少覆盖：
+  - 路由、权重、负载均衡算法；
+  - 锁、并发、状态、缓存；
+  - 重试、fallback、超时、幂等；
+  - 计价、预算、限流；
+  - 协议兼容、字段改写、特殊分支。
+- 注释使用中文，与代码同步更新；禁止注释掉的死代码、禁止与实现矛盾的注释。
+- AI 生成代码必须带注释；reviewer 把“关键逻辑无注释”视为 Important。
 
 ## 4. 请求 / 响应契约（标准网关类项目，MUST）
 
@@ -223,11 +282,14 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 
 | 领域 | 常见选型 | 约定 |
 |---|---|---|
-| JDK / 构建 | Java 8/11/17/21、Maven | 按公司项目版本；新项目默认 Java 21 + Spring Boot 3.x |
-| Web / RPC | Spring MVC、RestClient、Dubbo | 接口层不写业务；RPC 契约与 DTO 分离 |
+| JDK / 构建 | Java 8/11/17/21、Maven | 按公司项目版本；新项目默认 Java 21 + Spring Boot 3.5+（LangChain4j starter 要求 3.5+；3.3 可用 core library） |
+| Web / RPC | Spring MVC、RestClient、WebClient、Dubbo | 接口层不写业务；网关转发保持原始 JSON；RPC 契约与 DTO 分离 |
 | 校验 | OVAL、Jakarta Validation | 网关类项目 OVAL；新项目 Jakarta Validation |
 | 序列化 | fastjson、Jackson | 网关类项目 fastjson；新项目 Jackson；禁止混用 |
 | 持久层 | MyBatis、MyBatis-Plus | SQL 在 mapper/dal；多数据源见 §6 |
+| 缓存 / 共享状态 | Redis（Lettuce）、Redisson | 限流/预算/冷却/共享路由状态/分布式锁；禁止本地 Map 承载跨实例业务状态 |
+| AI 应用 | LangChain4j | MCP/AiServices/RAG/Memory；网关透传层保持原生 HTTP，避免字段丢失 |
+| Agent 编排 | LangGraph4j（可选） | 仅在有状态多步骤/多 Agent 图编排时引入；网关阶段不强制 |
 | 配置 | Nacos、application.yml | 配置外部化；同 key 只放一处 |
 | 日志 | SLF4J + Log4j2 | 占位符日志；不打印敏感信息 |
 | 测试 | JUnit、MockMvc、MockWebServer、ArchUnit | service 方法必须有单测；架构规则用 ArchUnit |

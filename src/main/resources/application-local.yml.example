@@ -1,7 +1,16 @@
 gateway:
   master-key: sk-local-master-key
   model-list:
-    chat-default:
+    chat:
       - api-base: https://api.deepseek.com
         api-key: ${DEEPSEEK_API_KEY:}
         model: deepseek-chat
+        rpm: 600
+      - api-base: https://api.deepseek.com
+        api-key: ${DEEPSEEK_API_KEY_2:}
+        model: deepseek-chat
+        rpm: 200
+    reasoner:
+      - api-base: https://api.deepseek.com
+        api-key: ${DEEPSEEK_API_KEY:}
+        model: deepseek-reasoner

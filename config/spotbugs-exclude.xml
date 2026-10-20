@@ -20,4 +20,13 @@
         <Class name="com.qtua.aihub.gateway.ChatCompletionService"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <Match>
+        <Class name="com.qtua.aihub.gateway.ModelService"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <!-- 响应 DTO：List 已在紧凑构造器中 List.copyOf 防御性拷贝 -->
+    <Match>
+        <Class name="com.qtua.aihub.gateway.ModelListResponse"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
 </FindBugsFilter>

@@ -3,6 +3,7 @@ package com.qtua.aihub.gateway;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.config.GatewayProperties;
 import com.qtua.aihub.config.GatewayProperties.Deployment;
+import com.qtua.aihub.gateway.router.DeploymentSelector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -21,11 +22,13 @@ class ChatCompletionServiceTest {
 
     private GatewayProperties properties;
     private UpstreamClient upstreamClient;
+    private DeploymentSelector selector;
+    private Deployment deployment;
     private ChatCompletionService service;
 
     @BeforeEach
     void setUp() {
-        Deployment deployment = new Deployment();
+        deployment = new Deployment();
         deployment.setApiBase("https://example.com");
         deployment.setApiKey("test-key");
         deployment.setModel("deepseek-flash");
@@ -36,7 +39,10 @@ class ChatCompletionServiceTest {
         upstreamClient = mock(UpstreamClient.class);
         when(upstreamClient.chat(any(), any())).thenReturn("{\"object\":\"chat.completion\"}");
 
-        service = new ChatCompletionService(properties, upstreamClient, new ObjectMapper());
+        selector = mock(DeploymentSelector.class);
+        when(selector.select(eq("chat-default"), any())).thenReturn(deployment);
+
+        service = new ChatCompletionService(properties, upstreamClient, new ObjectMapper(), selector);
     }
 
     @Test
@@ -64,12 +70,37 @@ class ChatCompletionServiceTest {
     }
 
     @Test
+    void forwards_to_deployment_selected_by_selector() {
+        Deployment second = new Deployment();
+        second.setApiBase("https://example.org");
+        second.setApiKey("test-key-2");
+        second.setModel("deepseek-flash-2");
+        when(selector.select(eq("chat-default"), any())).thenReturn(second);
+
+        service.chat("{\"model\":\"chat-default\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}");
+
+        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(upstreamClient).chat(eq(second), bodyCaptor.capture());
+        assertThat(bodyCaptor.getValue()).contains("\"model\":\"deepseek-flash-2\"");
+    }
+
+    @Test
     void rejects_unknown_model() {
         assertThatThrownBy(() -> service.chat(
                 "{\"model\":\"no-such-model\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getType())
                         .isEqualTo("invalid_request_error"));
+    }
+
+    @Test
+    void rejects_alias_with_empty_deployments() {
+        when(properties.getModelList()).thenReturn(java.util.Map.of("empty", List.of()));
+
+        assertThatThrownBy(() -> service.chat(
+                "{\"model\":\"empty\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
+                .isInstanceOf(ChatCompletionException.class)
+                .satisfies(ex -> assertThat(((ChatCompletionException) ex).getParam()).isEqualTo("model"));
     }
 
     @Test

@@ -1,0 +1,102 @@
+openapi: 3.0.3
+info:
+  title: ai-hub Model Catalog (需求 1.2 增量)
+  version: 0.1.0
+  description: >-
+    需求 1.2 新增的模型目录契约。聊天接口 `/v1/chat/completions`、
+    `/chat/completions` 的契约与错误体见
+    `specs/001-chat-completions/contracts/openapi.yaml`，本期保持不变。
+servers:
+  - url: http://localhost:18080
+paths:
+  /models:
+    get:
+      summary: 列出可用模型别名
+      operationId: listModels
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 模型别名列表；不包含上游模型名与部署参数
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelListResponse'
+        '401':
+          description: 鉴权失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/models:
+    get:
+      summary: 同 /models（OpenAI 版本前缀）
+      operationId: listModelsV1
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 模型别名列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelListResponse'
+        '401':
+          description: 鉴权失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ModelListResponse:
+      type: object
+      required: [object, data]
+      properties:
+        object:
+          type: string
+          example: list
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModelInfo'
+    ModelInfo:
+      type: object
+      required: [id, object, created, owned_by]
+      properties:
+        id:
+          type: string
+          description: 模型别名
+          example: chat
+        object:
+          type: string
+          example: model
+        created:
+          type: integer
+          example: 0
+        owned_by:
+          type: string
+          example: ai-hub
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [message, type, code]
+          properties:
+            message:
+              type: string
+            type:
+              type: string
+              example: auth_error
+            param:
+              type: string
+              nullable: true
+            code:
+              type: string
+              example: '401'
