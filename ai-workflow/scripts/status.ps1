@@ -55,12 +55,21 @@ function Get-Records {
     return $records
 }
 
+function Get-ModuleSourceDirs {
+    param([string]$Child)
+    Get-ChildItem -Path $ProjectRoot -Directory -Filter 'ai-hub-*' | ForEach-Object {
+        $candidate = Join-Path $_.FullName $Child
+        if (Test-Path $candidate) { $candidate }
+    }
+}
+
 function Get-Endpoints {
     $endpoints = @()
-    $srcDir = Join-Path $ProjectRoot 'src\main\java'
-    if (-not (Test-Path $srcDir)) {
+    $srcDirs = @(Get-ModuleSourceDirs 'src\main\java')
+    if ($srcDirs.Count -eq 0) {
         return $endpoints
     }
+    foreach ($srcDir in $srcDirs) {
     Get-ChildItem -Path $srcDir -Recurse -Filter '*Controller.java' | ForEach-Object {
         $file = $_
         $lines = Get-Content -Path $file.FullName -Encoding UTF8
@@ -107,15 +116,16 @@ function Get-Endpoints {
             }
         }
     }
+    }
     return @($endpoints | Sort-Object Path, Method -Unique)
 }
 
 function Get-TestSummary {
-    $testDir = Join-Path $ProjectRoot 'src\test\java'
-    if (-not (Test-Path $testDir)) {
+    $testDirs = @(Get-ModuleSourceDirs 'src\test\java')
+    if ($testDirs.Count -eq 0) {
         return '未找到测试目录'
     }
-    $files = @(Get-ChildItem -Path $testDir -Recurse -Filter '*Test.java')
+    $files = @($testDirs | ForEach-Object { Get-ChildItem -Path $_ -Recurse -Filter '*Test.java' })
     $methods = 0
     foreach ($file in $files) {
         $raw = Get-Content -Path $file.FullName -Raw -Encoding UTF8

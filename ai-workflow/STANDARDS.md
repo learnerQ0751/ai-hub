@@ -51,26 +51,17 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 - 数据访问只在一层；禁止 Controller/Service 混写 SQL。
 - 分包按职责，不按技术层堆大文件；包依赖无环（ArchUnit 检查）。
 
-### 2.4 包结构（MUST）
+### 2.4 多模块结构（MUST）
 
-- **按层分包**，包名表达职责；禁止把 Controller、Service、异常、错误体、上游客户端、DTO 混在同一个包。
-- **统一使用 §2.1 的六层结构**，不要每个项目另起一套：
-
-```text
-com.<company>.<project>
-├── start/          # 启动类、定时任务入口
-├── api/            # 接口契约、Controller、ReqDTO/ResDTO、Filter、异常处理
-├── service/        # 参数校验、DTO↔BO、编排 core
-├── core/           # 业务编排、事务边界、事件、路由策略
-├── manager/        # BO↔DO、Repository/Mapper 封装（有 DB 时）
-├── integration/    # 外部 HTTP/RPC/SDK、Redis/LangChain4j 适配
-├── dal/            # MyBatis Mapper / SQL（有 DB 时）
-└── common/         # 异常、错误体、常量、工具
-```
-
-- `config` 作为跨层支撑包，可放 `start/config` 或根 `config`；`api/dto` 放 ReqDTO/ResDTO，`service/core` 放 BO，`manager/dal` 放 DO/Entity。
-- 复杂项目可在层内按 feature 再分子包（如 `core/routing`、`api/controller`），但层边界必须清晰。
+- 中大型 Java 项目按监管报送（data-submission）模式采用 **Maven 多模块**，模块即层：`start / service / core / manager / integration / dal / common`；对外契约单独 `api`；集成测试与架构校验放 `tests`。
+- 模块依赖方向固定：`start → service → core → manager/integration/api → dal → common`；禁止反向依赖与模块循环，ArchUnit 检查。
+- 模块内包结构：`com.<company>.<project>.<layer>`；feature 子包（如 `core/routing`）只允许在层内。
+- `api` 放 Service 接口 + ReqDTO/ResDTO；`service` 放 ServiceImpl；`core` 类用 `@Component`（`@Service` 归 service 层）。
+- `start` 收口入口层：启动类放根包（`com.<company>.<project>`），Controller / Filter / 异常处理 / 框架配置放 `start` 的子包。
+- 可执行包只由 `start` 模块产出；主 artifact 保持普通 jar（`spring-boot-maven-plugin` 配置 `classifier`），便于 `tests` 模块依赖。
+- `config` 作为跨层支撑放在 `start/config`（框架配置）；业务配置模型（如 `GatewayProperties`）下移 `common`，不得让 core/service 依赖 start。
 - 禁止 `gateway` / `biz` / `utils` 这类无边界大包承载多种职责；新增类必须能回答“它属于哪一层”。
+- 单模块项目按 §2.1 的包结构映射执行；模块化时按本结构拆分。
 - 测试包与被测包镜像；包依赖必须无环（ArchUnit 检查）。
 
 ### 2.5 多实例与状态（MUST）

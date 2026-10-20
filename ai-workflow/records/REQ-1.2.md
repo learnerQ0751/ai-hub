@@ -38,6 +38,7 @@
 | `simple-shuffle` 采用无状态加权随机 | 不保存轮询历史，多实例部署天然安全；严格平滑轮询如需实现，状态放 Redis | 2026-10-20 |
 | 路由选择抽象为 `DeploymentSelector` | 为 least-busy 等策略预留扩展点 | 2026-10-20 |
 | 基础重构为六层包 + Spring Boot 4.1.1 + LangChain4j 1.22.0 + Redis | 与 ai-coder-help 技术栈对齐；多实例/后续限流预算需要 Redis | 2026-10-20 |
+| 多模块分层（对齐监管报送）：9 模块、start 收口入口、api 接口+契约、service 实现、core 仅编排、协议适配下沉 integration | 用户评审指正：单模块包分层不符合公司规范；start 包不应放启动类 | 2026-10-20 |
 
 ## 执行日志
 
@@ -48,7 +49,8 @@
 - 测试：41 个，覆盖配置绑定、混用/部分配置启动失败、权重比例、单部署、空部署列表、`/models` 不泄露、端到端路由。
 - `mvn -Pquality verify` 通过；端到端集成测试使用 MockWebServer，不依赖外网与真实密钥。
 - **2026-10-20 基础重构**：`gateway` 混合包拆为六层（start/api/service/core/integration/common/config）；`SmoothWeightedSelector` 替换为无状态 `WeightedRandomSelector`；升级 Spring Boot 4.1.1、LangChain4j 1.22.0、Redis/Lettuce；补类/方法/关键行注释；41 测试与质量门禁通过。
-- 待办：本地真实 DeepSeek 冒烟 + 理解验收（讲解/5 题/亲手改）。
+- **2026-10-20 多模块重构**（对齐监管报送 data-submission）：Maven 9 模块（common/api/manager/dal/integration/core/service/start/tests）；start 收口入口层（启动类根包 + start/controller|filter|error|config）；api 放 Service 接口+契约、service 放 Impl；core 改 `@Component` + BO 编排，JSON 协议改写下沉 integration `OpenAiProtocolAdapter`；配置模型下移 common；JaCoCo 聚合门禁置于 tests 模块；45 测试全绿、真实 DeepSeek 冒烟 200。提交范围 `011327d..412bf17`。
+- 待办：理解验收（按新模块结构讲解/5 题/亲手改）。
 
 ## 复盘
 

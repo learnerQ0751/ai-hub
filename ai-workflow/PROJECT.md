@@ -22,28 +22,31 @@
 - 推荐 **IntelliJ IDEA**：打开 `E:\pro\ai-hub`（或 `pom.xml`）作为 Maven 项目，Project SDK 选 JDK 21。
 - Claude Code 插件从项目根目录启动；读取根目录 `CLAUDE.md` → `ai-workflow/`。
 - Maven 使用本机 settings.xml；终端运行 `mvn -Pquality verify`。
+- 本地运行：`mvn -pl ai-hub-start -am package -DskipTests` 后执行 `ai-hub-start/target/ai-hub-start-*-exec.jar`。
 - `.vscode/settings.json` 是 Cursor 兼容配置，IDEA 不使用。
 
-## 分层与包结构（覆盖通用 §2）
+## 模块结构（覆盖通用 §2，对齐监管报送 data-submission）
 
-目标包结构（**统一六层**，不另起一套）：
+**Maven 多模块（9 个模块）**：
 
 ```text
-com.qtua.aihub
-├── start/          # AiHubApplication、定时任务入口
-├── api/            # controller、filter、error、dto（HTTP 契约）
-├── service/        # ChatCompletionService / ModelService（校验、DTO↔BO、编排 core）
-├── core/           # ChatCompletionCore / routing（路由、编排、事务边界）
-├── manager/        # BO↔DO、Repository 门面（1.3+ 有 DB 时）
-├── integration/    # UpstreamClient、Redis/LangChain4j 适配
-├── dal/            # MyBatis/Repository（1.3+ 有 DB 时）
-└── common/         # ErrorResponse、ChatCompletionException、常量、工具
-config/             # GatewayProperties、RestClient/Redis 配置（支撑包）
+ai-hub（父 POM）
+├── ai-hub-common       异常/常量/配置模型（GatewayProperties）
+├── ai-hub-api          Service 接口 + OpenAI 契约 DTO
+├── ai-hub-manager      BO（ChatCompletionBO / ChatCompletionResultBO）
+├── ai-hub-dal          数据访问（1.3 起填充）
+├── ai-hub-integration  上游 HTTP + OpenAI 协议适配
+├── ai-hub-core         业务编排 + 路由策略
+├── ai-hub-service      ServiceImpl（校验 + DTO↔BO + 编排 core）
+├── ai-hub-start        启动类（根包）+ start/controller、filter、error、config
+└── ai-hub-tests        集成测试 + ArchUnit + JaCoCo 聚合
 ```
 
-- Controller/API 只做 HTTP 契约与响应；Service 做校验、DTO↔BO、编排 Core；Core 做路由/业务编排；Integration 只做外部 HTTP/Redis/LangChain4j 适配；Common 放异常/错误体/常量。
-- **2026-10-20 已按六层重构**：`gateway` 混合包已移除；版本与依赖与 ai-coder-help 对齐。
-- 本期无数据库；1.3 起引入 PostgreSQL/Redis（Redis 已在技术栈基线）。
+- 依赖方向：`start → service → core → manager/integration → dal → common`；禁止反向与跨层，ArchUnit 检查
+- `api`：Service 接口 + Req/Res DTO；`service`：Impl；`core`：`@Component` 编排 + 路由，不碰报文；`integration`：协议改写 + HTTP；`common`：异常/常量/配置模型
+- Controller 只依赖 `api` 接口，实现由 `service` 模块提供；启动类 `com.qtua.aihub.AiHubApplication`（start 模块根包）
+- 可执行包：`ai-hub-start/target/ai-hub-start-*-exec.jar`（主 artifact 为普通 jar，供 tests 模块依赖）
+- 本期无数据库；1.3 起在 manager/dal 引入 PostgreSQL
 
 ## 多实例约束（覆盖通用 §2.5）
 
@@ -54,12 +57,12 @@ config/             # GatewayProperties、RestClient/Redis 配置（支撑包）
 
 ## 质量债务与待办
 
-- [x] `gateway` 包按六层拆分为 `start/api/service/core/manager/integration/dal/common`
+- [x] 单模块包分层 → Maven 多模块（9 模块，对齐监管报送）
 - [x] `SmoothWeightedSelector` 替换为无状态 `WeightedRandomSelector`
 - [x] 补类/方法/关键行注释
 - [x] 技术栈补齐：Spring Boot 4.1.1、Redis + Lettuce、LangChain4j 1.22.0、docker-compose（Redis/PostgreSQL）
-- [x] 1.2 重构 + 多实例/权重测试（41 个测试）
-- [ ] 1.2 理解验收（讲解 / 5 题自测 / 亲手改一个口子）
+- [x] 1.2 重构 + 多实例/权重测试（41 → 45 个测试）
+- [ ] 1.2 理解验收（按新模块结构讲解 / 5 题自测 / 亲手改一个口子）
 - [ ] 严格平滑轮询如需：用 Redis 共享状态，不引入单机 Map
 
 ## 接口契约（覆盖通用 §4）
@@ -82,7 +85,7 @@ config/             # GatewayProperties、RestClient/Redis 配置（支撑包）
 mvn -Pquality verify
 ```
 
-Checkstyle + SpotBugs + ArchUnit + JaCoCo（行覆盖率 ≥ 70%）。当前 41 个测试。
+Checkstyle + SpotBugs（每模块）+ ArchUnit（层依赖/无环）+ JaCoCo 聚合行覆盖率 ≥ 70%（ai-hub-tests）。当前 45 个测试。
 
 ## 配置与密钥
 

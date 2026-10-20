@@ -40,7 +40,7 @@
 
 - [ ] `records/REQ-<编号>.md` 已更新（状态/验收/日志/复盘/我学到的 3 条）
 - [ ] `STATUS.md` 已更新，需求/接口/测试/下一步准确
-- [ ] 包结构符合分层（无 `gateway` / `biz` 大杂烩；Controller/Service/Integration/Common 分包）
+- [ ] 模块结构与依赖方向符合 `PROJECT.md`（Maven 多模块；`start→service→core→manager/integration→dal→common`，无反向依赖）
 - [ ] 多实例检查：无单机业务状态/本地锁；计数器/限流/预算/冷却已外置
 - [ ] 类/方法/关键行注释齐全（路由/并发/状态/重试/计价/协议改写）
 - [ ] AI 给出一页变更汇报：本次完成了哪些需求/接口、核心文件、请求链路、3 个关键决策
