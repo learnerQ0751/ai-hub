@@ -1,0 +1,37 @@
+pom.xml
+  s_c79baf63be364e::t_a45205f0887db4 17,21-32,36-38,41-96,115,137
+ai-hub-integration/pom.xml
+  s_c79baf63be364e::t_0a893897ad232a 1-40
+ai-hub-common/pom.xml
+  s_c79baf63be364e::t_694f68fa805876 1-23
+ai-hub-dal/pom.xml
+  s_c79baf63be364e::t_de76e81c1c7fa0 1-23
+ai-hub-api/pom.xml
+  s_c79baf63be364e::t_c1da0e3256f4e5 1-27
+ai-hub-service/pom.xml
+  s_c79baf63be364e::t_49fdb7775d32e5 1-43
+ai-hub-tests/pom.xml
+  s_c79baf63be364e::t_250efde06cb274 1-38
+ai-hub-core/pom.xml
+  s_c79baf63be364e::t_b26c49843470a8 1-35
+ai-hub-manager/pom.xml
+  s_c79baf63be364e::t_51b1ef693ec7d2 1-23
+ai-hub-start/pom.xml
+  s_c79baf63be364e::t_1d215e93d40851 1-104
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "011327d187d46b931ae84a695e9f1e8e2f33727a",
+  "prompts": {},
+  "sessions": {
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
