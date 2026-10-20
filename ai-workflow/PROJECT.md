@@ -4,18 +4,18 @@
 
 ## 基本信息
 
-- 技术栈基线：
+- 技术栈基线（与 `E:\learing_demo\ai-coder-help` 对齐）：
   - Java 21 / Maven
-  - Spring Boot **3.5.x（目标）**；当前 3.3.11 待升级（LangChain4j 最新 Spring Boot starter 要求 3.5+；若暂不升级则用 LangChain4j core library，不用 starter）
+  - Spring Boot **4.1.1**
   - Spring MVC + RestClient/WebClient（网关转发保持原始 JSON，不经过 LangChain4j 归一化）
   - PostgreSQL（1.3+：虚拟 Key / 日志 / 预算）
-  - Redis + Lettuce（共享状态/限流/预算/冷却）；Redisson（分布式锁）
-  - LangChain4j（2 期起：MCP / Prompt / RAG / Memory；网关透传层不替换为 LangChain4j）
-  - LangGraph4j（暂不引入；多步骤/多 Agent 有状态编排出现时再评估）
-  - Jackson / Jakarta Validation
+  - Redis + Lettuce（共享状态/限流/预算/冷却）；分布式锁用 Redis Lua（1.6 视需要引入 Redisson）
+  - LangChain4j **1.22.0**：core + `langchain4j-open-ai-spring-boot4-starter` 1.22.0-beta32 + `langchain4j-mcp` 1.22.0-beta32 + `langchain4j-reactor` 1.1.0-beta7（2 期起使用）
+  - LangGraph4j 暂不引入；多步骤/多 Agent 有状态编排出现时再评估
+  - Jackson 2（业务对象/网关内部 JSON）+ Spring Boot 4 默认 Jackson 3（Web 序列化）；显式 Jackson 2 Bean 避免注入歧义
 - 包名：`com.qtua.aihub`
 - 默认端口：`18080`（本机 8080 被其他服务占用）
-- 当前进度：需求 1.1 已完成；需求 1.2 实现中
+- 当前进度：需求 1.1 已完成；需求 1.2 代码完成，待理解验收；下一步需求 1.3
 
 ## IDE / 运行
 
@@ -42,7 +42,7 @@ config/             # GatewayProperties、RestClient/Redis 配置（支撑包）
 ```
 
 - Controller/API 只做 HTTP 契约与响应；Service 做校验、DTO↔BO、编排 Core；Core 做路由/业务编排；Integration 只做外部 HTTP/Redis/LangChain4j 适配；Common 放异常/错误体/常量。
-- 当前实现仍在 `gateway` 单包中，属于质量债务，1.2 收尾后统一重构。
+- **2026-10-20 已按六层重构**：`gateway` 混合包已移除；版本与依赖与 ai-coder-help 对齐。
 - 本期无数据库；1.3 起引入 PostgreSQL/Redis（Redis 已在技术栈基线）。
 
 ## 多实例约束（覆盖通用 §2.5）
@@ -52,13 +52,15 @@ config/             # GatewayProperties、RestClient/Redis 配置（支撑包）
 - 分布式锁用 Redisson/Redis；本地锁只保护本机状态，不用于跨实例互斥。
 - 定时任务/批处理必须 leader 选举或幂等。
 
-## 质量债务（待重构）
+## 质量债务与待办
 
-- [ ] `gateway` 包按六层拆分为 `start/api/service/core/manager/integration/dal/common`
-- [ ] `SmoothWeightedSelector` 去单机状态（无状态加权随机或 Redis 共享）
-- [ ] 补类/方法/关键行注释
-- [ ] 技术栈补齐：Spring Boot 3.5.x（或 LangChain4j core）、Redis + Lettuce/Redisson、LangChain4j 依赖、docker-compose（Redis/PostgreSQL）
-- [ ] 1.2 完成后统一重构并补多实例测试
+- [x] `gateway` 包按六层拆分为 `start/api/service/core/manager/integration/dal/common`
+- [x] `SmoothWeightedSelector` 替换为无状态 `WeightedRandomSelector`
+- [x] 补类/方法/关键行注释
+- [x] 技术栈补齐：Spring Boot 4.1.1、Redis + Lettuce、LangChain4j 1.22.0、docker-compose（Redis/PostgreSQL）
+- [x] 1.2 重构 + 多实例/权重测试（41 个测试）
+- [ ] 1.2 理解验收（讲解 / 5 题自测 / 亲手改一个口子）
+- [ ] 严格平滑轮询如需：用 Redis 共享状态，不引入单机 Map
 
 ## 接口契约（覆盖通用 §4）
 
@@ -80,7 +82,7 @@ config/             # GatewayProperties、RestClient/Redis 配置（支撑包）
 mvn -Pquality verify
 ```
 
-Checkstyle + SpotBugs + ArchUnit + JaCoCo（行覆盖率 ≥ 70%）。
+Checkstyle + SpotBugs + ArchUnit + JaCoCo（行覆盖率 ≥ 70%）。当前 41 个测试。
 
 ## 配置与密钥
 

@@ -40,6 +40,12 @@
 - 真实链路：200 / 400 / 401 / 400（stream）全部符合预期。
 - 提交：`60777b0` 功能；`1389f38` 文档；`2cef0cf` 归因；`aa59b16` 任务勾选。
 
+### 2026-10-20 基础重构
+
+- 代码从 `gateway` 混合包迁至六层结构（start/api/service/core/integration/common/config）；接口与行为不变。
+- 技术栈升级：Spring Boot 4.1.1 + LangChain4j 1.22.0 + Redis/Lettuce；Jackson 2/3 分层处理。
+- 当前 41 个测试、Checkstyle 0 违规、SpotBugs/覆盖率门禁通过。
+
 ## 复盘
 
 - 做对了：TDD + 硬门禁 + 真实链路验收；单测全绿仍可能被真实上游暴露问题。

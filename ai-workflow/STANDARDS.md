@@ -282,10 +282,10 @@ com.<company>.<project>
 
 | 领域 | 常见选型 | 约定 |
 |---|---|---|
-| JDK / 构建 | Java 8/11/17/21、Maven | 按公司项目版本；新项目默认 Java 21 + Spring Boot 3.5+（LangChain4j starter 要求 3.5+；3.3 可用 core library） |
+| JDK / 构建 | Java 8/11/17/21、Maven | 按公司项目版本；新项目参考 Java 21 + Spring Boot 4.1.1（ai-coder-help 同版） |
 | Web / RPC | Spring MVC、RestClient、WebClient、Dubbo | 接口层不写业务；网关转发保持原始 JSON；RPC 契约与 DTO 分离 |
 | 校验 | OVAL、Jakarta Validation | 网关类项目 OVAL；新项目 Jakarta Validation |
-| 序列化 | fastjson、Jackson | 网关类项目 fastjson；新项目 Jackson；禁止混用 |
+| 序列化 | Jackson 3、Jackson 2、fastjson | Spring Boot 4 默认 Jackson 3；若业务/LangChain4j 依赖 Jackson 2，显式提供 Jackson 2 Bean，避免注入歧义；网关类项目可用 fastjson；同一项目明确选型 |
 | 持久层 | MyBatis、MyBatis-Plus | SQL 在 mapper/dal；多数据源见 §6 |
 | 缓存 / 共享状态 | Redis（Lettuce）、Redisson | 限流/预算/冷却/共享路由状态/分布式锁；禁止本地 Map 承载跨实例业务状态 |
 | AI 应用 | LangChain4j | MCP/AiServices/RAG/Memory；网关透传层保持原生 HTTP，避免字段丢失 |

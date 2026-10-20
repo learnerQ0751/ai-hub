@@ -2,7 +2,7 @@
 <FindBugsFilter>
     <!-- 启动类无业务逻辑，跳过检查 -->
     <Match>
-        <Class name="com.qtua.aihub.AiHubApplication"/>
+        <Class name="com.qtua.aihub.start.AiHubApplication"/>
     </Match>
     <!-- 配置绑定 Bean 需要暴露可变 Map/List 供 Spring Binder 使用 -->
     <Match>
@@ -13,20 +13,28 @@
     </Match>
     <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露 -->
     <Match>
-        <Class name="com.qtua.aihub.filter.AuthFilter"/>
+        <Class name="com.qtua.aihub.api.filter.AuthFilter"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
-        <Class name="com.qtua.aihub.gateway.ChatCompletionService"/>
+        <Class name="com.qtua.aihub.service.ChatCompletionService"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
-        <Class name="com.qtua.aihub.gateway.ModelService"/>
+        <Class name="com.qtua.aihub.service.ModelService"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.core.ChatCompletionCore"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.core.routing.WeightedRandomSelector"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <!-- 响应 DTO：List 已在紧凑构造器中 List.copyOf 防御性拷贝 -->
     <Match>
-        <Class name="com.qtua.aihub.gateway.ModelListResponse"/>
+        <Class name="com.qtua.aihub.api.dto.ModelListResponse"/>
         <Bug pattern="EI_EXPOSE_REP"/>
     </Match>
 </FindBugsFilter>
