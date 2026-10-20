@@ -1,4 +1,4 @@
-package com.qtua.aihub.api.filter;
+package com.qtua.aihub.start.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.api.model.res.ErrorResponse;

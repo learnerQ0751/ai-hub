@@ -1,4 +1,4 @@
-package com.qtua.aihub.api.filter;
+package com.qtua.aihub.start.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

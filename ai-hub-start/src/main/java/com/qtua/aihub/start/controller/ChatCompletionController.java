@@ -1,4 +1,4 @@
-package com.qtua.aihub.api.controller;
+package com.qtua.aihub.start.controller;
 
 import com.qtua.aihub.api.ChatCompletionService;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;

@@ -1,10 +1,10 @@
-package com.qtua.aihub.integration;
+package com.qtua.aihub;
 
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import com.qtua.aihub.start.AiHubApplication;
+import com.qtua.aihub.AiHubApplication;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

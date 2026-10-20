@@ -1,4 +1,4 @@
-package com.qtua.aihub.start;
+package com.qtua.aihub;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -7,11 +7,11 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 /**
  * ai-hub 启动入口。
  *
- * <p>显式指定扫描根包，保证 start 之外的 api/service/core/integration/config/common 层
- * 都能被 Spring 加载。</p>
+ * <p>位于根包，默认扫描 {@code com.qtua.aihub} 下全部模块（start/api/service/core/
+ * manager/integration/common）。</p>
  */
-@SpringBootApplication(scanBasePackages = "com.qtua.aihub")
-@ConfigurationPropertiesScan(basePackages = "com.qtua.aihub")
+@SpringBootApplication
+@ConfigurationPropertiesScan("com.qtua.aihub")
 public class AiHubApplication {
 
     /**

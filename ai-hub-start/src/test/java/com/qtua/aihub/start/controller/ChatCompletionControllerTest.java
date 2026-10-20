@@ -1,15 +1,15 @@
-package com.qtua.aihub.api.controller;
+package com.qtua.aihub.start.controller;
 
-import com.qtua.aihub.api.error.GatewayExceptionHandler;
-import com.qtua.aihub.api.filter.AuthFilter;
-import com.qtua.aihub.api.filter.RequestIdFilter;
+import com.qtua.aihub.start.error.GatewayExceptionHandler;
+import com.qtua.aihub.start.filter.AuthFilter;
+import com.qtua.aihub.start.filter.RequestIdFilter;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.config.GatewayProperties;
-import com.qtua.aihub.config.JacksonConfig;
+import com.qtua.aihub.start.config.JacksonConfig;
 import com.qtua.aihub.api.ChatCompletionService;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
 import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
-import com.qtua.aihub.start.AiHubApplication;
+import com.qtua.aihub.AiHubApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;

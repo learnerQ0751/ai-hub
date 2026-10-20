@@ -1,4 +1,4 @@
-package com.qtua.aihub.api.error;
+package com.qtua.aihub.start.error;
 
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.api.model.res.ErrorResponse;

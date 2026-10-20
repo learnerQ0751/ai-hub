@@ -15,6 +15,34 @@
             <artifactId>ai-hub-start</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.qtua</groupId>
+            <artifactId>ai-hub-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.qtua</groupId>
+            <artifactId>ai-hub-service</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.qtua</groupId>
+            <artifactId>ai-hub-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.qtua</groupId>
+            <artifactId>ai-hub-manager</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.qtua</groupId>
+            <artifactId>ai-hub-integration</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.qtua</groupId>
+            <artifactId>ai-hub-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.qtua</groupId>
+            <artifactId>ai-hub-dal</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
@@ -35,4 +63,73 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>merge-exec</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>merge</goal>
+                        </goals>
+                        <configuration>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>${maven.multiModuleProjectDirectory}</directory>
+                                    <includes>
+                                        <include>*/target/jacoco.exec</include>
+                                    </includes>
+                                </fileSet>
+                            </fileSets>
+                            <destFile>${project.build.directory}/jacoco-merged.exec</destFile>
+                            <skipNonExistingFiles>true</skipNonExistingFiles>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>check-coverage</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <dataFile>${project.build.directory}/jacoco-merged.exec</dataFile>
+                            <classFiles>
+                                <file>${project.basedir}/../ai-hub-common/target/classes</file>
+                                <file>${project.basedir}/../ai-hub-api/target/classes</file>
+                                <file>${project.basedir}/../ai-hub-manager/target/classes</file>
+                                <file>${project.basedir}/../ai-hub-dal/target/classes</file>
+                                <file>${project.basedir}/../ai-hub-integration/target/classes</file>
+                                <file>${project.basedir}/../ai-hub-core/target/classes</file>
+                                <file>${project.basedir}/../ai-hub-service/target/classes</file>
+                                <file>${project.basedir}/../ai-hub-start/target/classes</file>
+                            </classFiles>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.70</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>aggregate-report</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
