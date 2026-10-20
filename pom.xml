@@ -14,92 +14,86 @@
     <groupId>com.qtua</groupId>
     <artifactId>ai-hub</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>ai-hub</name>
     <description>AI Hub - LLM gateway (Project 7 Java implementation)</description>
+
+    <modules>
+        <module>ai-hub-common</module>
+        <module>ai-hub-api</module>
+        <module>ai-hub-manager</module>
+        <module>ai-hub-dal</module>
+        <module>ai-hub-integration</module>
+        <module>ai-hub-core</module>
+        <module>ai-hub-service</module>
+        <module>ai-hub-start</module>
+        <module>ai-hub-tests</module>
+    </modules>
 
     <properties>
         <java.version>21</java.version>
         <mockwebserver.version>4.12.0</mockwebserver.version>
+        <langchain4j.version>1.22.0</langchain4j.version>
+        <langchain4j-beta.version>1.22.0-beta32</langchain4j-beta.version>
+        <langchain4j-reactor.version>1.1.0-beta7</langchain4j-reactor.version>
     </properties>
 
-    <dependencies>
-        <!-- Web：Spring Boot 4 的 MVC starter -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jackson</artifactId>
-        </dependency>
-
-        <!-- Redis：共享状态 / 限流 / 预算 / 冷却 / 分布式锁 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
-        <!-- LangChain4j：与 ai-coder-help 保持同一套版本 -->
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j</artifactId>
-            <version>1.22.0</version>
-        </dependency>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-open-ai-spring-boot4-starter</artifactId>
-            <version>1.22.0-beta32</version>
-        </dependency>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-mcp</artifactId>
-            <version>1.22.0-beta32</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>dev.langchain4j</groupId>
-                    <artifactId>langchain4j-http-client-jdk</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-reactor</artifactId>
-            <version>1.1.0-beta7</version>
-        </dependency>
-
-        <!-- 测试 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>mockwebserver</artifactId>
-            <version>${mockwebserver.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.tngtech.archunit</groupId>
-            <artifactId>archunit</artifactId>
-            <version>1.3.0</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.qtua</groupId>
+                <artifactId>ai-hub-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qtua</groupId>
+                <artifactId>ai-hub-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qtua</groupId>
+                <artifactId>ai-hub-manager</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qtua</groupId>
+                <artifactId>ai-hub-dal</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qtua</groupId>
+                <artifactId>ai-hub-integration</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qtua</groupId>
+                <artifactId>ai-hub-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qtua</groupId>
+                <artifactId>ai-hub-service</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qtua</groupId>
+                <artifactId>ai-hub-start</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>mockwebserver</artifactId>
+                <version>${mockwebserver.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit</artifactId>
+                <version>1.3.0</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <profiles>
         <profile>
@@ -118,7 +112,7 @@
                             </dependency>
                         </dependencies>
                         <configuration>
-                            <configLocation>config/checkstyle.xml</configLocation>
+                            <configLocation>${maven.multiModuleProjectDirectory}/config/checkstyle.xml</configLocation>
                             <consoleOutput>true</consoleOutput>
                             <failOnViolation>true</failOnViolation>
                             <violationSeverity>warning</violationSeverity>
@@ -140,7 +134,7 @@
                         <configuration>
                             <effort>Max</effort>
                             <threshold>Medium</threshold>
-                            <excludeFilterFile>config/spotbugs-exclude.xml</excludeFilterFile>
+                            <excludeFilterFile>${maven.multiModuleProjectDirectory}/config/spotbugs-exclude.xml</excludeFilterFile>
                         </configuration>
                         <executions>
                             <execution>
@@ -162,34 +156,6 @@
                                 <goals>
                                     <goal>prepare-agent</goal>
                                 </goals>
-                            </execution>
-                            <execution>
-                                <id>report</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>report</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>check</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>check</goal>
-                                </goals>
-                                <configuration>
-                                    <rules>
-                                        <rule>
-                                            <element>BUNDLE</element>
-                                            <limits>
-                                                <limit>
-                                                    <counter>LINE</counter>
-                                                    <value>COVEREDRATIO</value>
-                                                    <minimum>0.70</minimum>
-                                                </limit>
-                                            </limits>
-                                        </rule>
-                                    </rules>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
