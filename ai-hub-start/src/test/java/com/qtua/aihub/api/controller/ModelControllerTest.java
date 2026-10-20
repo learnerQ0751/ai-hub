@@ -5,7 +5,8 @@ import com.qtua.aihub.api.filter.AuthFilter;
 import com.qtua.aihub.api.filter.RequestIdFilter;
 import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.config.JacksonConfig;
-import com.qtua.aihub.service.ModelService;
+import com.qtua.aihub.api.ModelService;
+import com.qtua.aihub.api.model.res.ModelListResDTO;
 import com.qtua.aihub.start.AiHubApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ class ModelControllerTest {
 
     @Test
     void lists_models() throws Exception {
-        when(modelService.listModels()).thenReturn(List.of("chat", "reasoner"));
+        when(modelService.listModels()).thenReturn(ModelListResDTO.of(List.of("chat", "reasoner")));
 
         mockMvc.perform(get("/models"))
                 .andExpect(status().isOk())
@@ -53,7 +54,7 @@ class ModelControllerTest {
 
     @Test
     void supports_v1_prefix() throws Exception {
-        when(modelService.listModels()).thenReturn(List.of("chat"));
+        when(modelService.listModels()).thenReturn(ModelListResDTO.of(List.of("chat")));
 
         mockMvc.perform(get("/v1/models"))
                 .andExpect(status().isOk())
@@ -62,7 +63,7 @@ class ModelControllerTest {
 
     @Test
     void does_not_expose_upstream_details() throws Exception {
-        when(modelService.listModels()).thenReturn(List.of("chat"));
+        when(modelService.listModels()).thenReturn(ModelListResDTO.of(List.of("chat")));
 
         MvcResult result = mockMvc.perform(get("/models")).andReturn();
         String body = result.getResponse().getContentAsString();
@@ -73,7 +74,7 @@ class ModelControllerTest {
     @Test
     void requires_bearer_token_when_master_key_is_configured() throws Exception {
         when(gatewayProperties.getMasterKey()).thenReturn("secret-master");
-        when(modelService.listModels()).thenReturn(List.of("chat"));
+        when(modelService.listModels()).thenReturn(ModelListResDTO.of(List.of("chat")));
 
         mockMvc.perform(get("/models"))
                 .andExpect(status().isUnauthorized())

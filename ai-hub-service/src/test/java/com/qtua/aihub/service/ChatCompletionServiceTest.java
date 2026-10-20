@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.common.config.GatewayProperties.Deployment;
+import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
+import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
 import com.qtua.aihub.core.ChatCompletionCore;
 import com.qtua.aihub.manager.model.ChatCompletionBO;
 import com.qtua.aihub.manager.model.ChatCompletionResultBO;
@@ -26,7 +28,7 @@ class ChatCompletionServiceTest {
 
     private Deployment deployment;
     private ChatCompletionCore core;
-    private ChatCompletionService service;
+    private ChatCompletionServiceImpl service;
 
     @BeforeEach
     void setUp() {
@@ -42,16 +44,16 @@ class ChatCompletionServiceTest {
         when(core.chat(any(ChatCompletionBO.class)))
                 .thenReturn(new ChatCompletionResultBO("{\"object\":\"chat.completion\"}"));
 
-        service = new ChatCompletionService(properties, core, new ObjectMapper());
+        service = new ChatCompletionServiceImpl(properties, core, new ObjectMapper());
     }
 
     @Test
     void parses_validates_and_delegates_to_core() {
         String body = "{\"model\":\"chat-default\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}";
 
-        String response = service.chat(body);
+        ChatCompletionResDTO response = service.chat(new ChatCompletionReqDTO(body));
 
-        assertThat(response).contains("chat.completion");
+        assertThat(response.getRawResponse()).contains("chat.completion");
         ArgumentCaptor<ChatCompletionBO> boCaptor = ArgumentCaptor.forClass(ChatCompletionBO.class);
         verify(core).chat(boCaptor.capture());
         ChatCompletionBO bo = boCaptor.getValue();
@@ -62,8 +64,8 @@ class ChatCompletionServiceTest {
 
     @Test
     void rejects_unknown_model() {
-        assertThatThrownBy(() -> service.chat(
-                "{\"model\":\"no-such-model\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
+        assertThatThrownBy(() -> service.chat(new ChatCompletionReqDTO(
+                "{\"model\":\"no-such-model\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}")))
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getType())
                         .isEqualTo("invalid_request_error"));
@@ -71,23 +73,25 @@ class ChatCompletionServiceTest {
 
     @Test
     void rejects_streaming() {
-        assertThatThrownBy(() -> service.chat(
+        assertThatThrownBy(() -> service.chat(new ChatCompletionReqDTO(
                 "{\"model\":\"chat-default\",\"stream\":true,"
-                        + "\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
+                        + "\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}")))
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getParam()).isEqualTo("stream"));
     }
 
     @Test
     void rejects_empty_messages() {
-        assertThatThrownBy(() -> service.chat("{\"model\":\"chat-default\",\"messages\":[]}"))
+        assertThatThrownBy(() -> service.chat(new ChatCompletionReqDTO(
+                "{\"model\":\"chat-default\",\"messages\":[]}")))
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getParam()).isEqualTo("messages"));
     }
 
     @Test
     void rejects_invalid_json() {
-        assertThatThrownBy(() -> service.chat("not-json"))
+        assertThatThrownBy(() -> service.chat(new ChatCompletionReqDTO(
+                "not-json")))
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getType())
                         .isEqualTo("invalid_request_error"));
@@ -95,7 +99,8 @@ class ChatCompletionServiceTest {
 
     @Test
     void rejects_missing_model() {
-        assertThatThrownBy(() -> service.chat("{\"messages\":[]}"))
+        assertThatThrownBy(() -> service.chat(new ChatCompletionReqDTO(
+                "{\"messages\":[]}")))
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getParam()).isEqualTo("model"));
     }

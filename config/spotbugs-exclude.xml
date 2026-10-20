@@ -21,11 +21,11 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
-        <Class name="com.qtua.aihub.service.ChatCompletionService"/>
+        <Class name="com.qtua.aihub.service.ChatCompletionServiceImpl"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
-        <Class name="com.qtua.aihub.service.ModelService"/>
+        <Class name="com.qtua.aihub.service.ModelServiceImpl"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
@@ -38,7 +38,7 @@
     </Match>
     <!-- 响应 DTO：List 已在紧凑构造器中 List.copyOf 防御性拷贝 -->
     <Match>
-        <Class name="com.qtua.aihub.api.dto.ModelListResponse"/>
+        <Class name="com.qtua.aihub.api.model.res.ModelListResDTO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
     </Match>
 </FindBugsFilter>

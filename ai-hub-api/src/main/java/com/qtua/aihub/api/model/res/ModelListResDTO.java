@@ -1,4 +1,4 @@
-package com.qtua.aihub.api.dto;
+package com.qtua.aihub.api.model.res;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -10,7 +10,7 @@ import java.util.List;
  * @param object 固定为 "list"
  * @param data   模型别名列表
  */
-public record ModelListResponse(String object, List<ModelInfo> data) {
+public record ModelListResDTO(String object, List<ModelInfo> data) {
 
     private static final String LIST_OBJECT = "list";
     private static final String MODEL_OBJECT = "model";
@@ -20,7 +20,7 @@ public record ModelListResponse(String object, List<ModelInfo> data) {
     /**
      * 防御性复制，避免调用方修改内部列表。
      */
-    public ModelListResponse {
+    public ModelListResDTO {
         data = List.copyOf(data);
     }
 
@@ -30,11 +30,11 @@ public record ModelListResponse(String object, List<ModelInfo> data) {
      * @param aliases 模型别名
      * @return /models 响应
      */
-    public static ModelListResponse of(List<String> aliases) {
+    public static ModelListResDTO of(List<String> aliases) {
         List<ModelInfo> models = aliases.stream()
                 .map(alias -> new ModelInfo(alias, MODEL_OBJECT, NO_CREATED_TIME, OWNER))
                 .toList();
-        return new ModelListResponse(LIST_OBJECT, models);
+        return new ModelListResDTO(LIST_OBJECT, models);
     }
 
     /**

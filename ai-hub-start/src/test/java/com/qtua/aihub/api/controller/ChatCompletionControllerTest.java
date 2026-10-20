@@ -6,7 +6,9 @@ import com.qtua.aihub.api.filter.RequestIdFilter;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.config.JacksonConfig;
-import com.qtua.aihub.service.ChatCompletionService;
+import com.qtua.aihub.api.ChatCompletionService;
+import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
+import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
 import com.qtua.aihub.start.AiHubApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +19,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -50,7 +52,8 @@ class ChatCompletionControllerTest {
 
     @Test
     void returns_openai_response_and_preserves_fields() throws Exception {
-        when(chatCompletionService.chat(anyString())).thenReturn(OPENAI_RESPONSE);
+        when(chatCompletionService.chat(any(ChatCompletionReqDTO.class)))
+                .thenReturn(new ChatCompletionResDTO(OPENAI_RESPONSE));
 
         mockMvc.perform(post("/v1/chat/completions")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -64,7 +67,8 @@ class ChatCompletionControllerTest {
 
     @Test
     void accepts_path_without_v1_prefix() throws Exception {
-        when(chatCompletionService.chat(anyString())).thenReturn(OPENAI_RESPONSE);
+        when(chatCompletionService.chat(any(ChatCompletionReqDTO.class)))
+                .thenReturn(new ChatCompletionResDTO(OPENAI_RESPONSE));
 
         mockMvc.perform(post("/chat/completions")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -75,7 +79,7 @@ class ChatCompletionControllerTest {
 
     @Test
     void unknown_model_returns_openai_error_body() throws Exception {
-        when(chatCompletionService.chat(anyString()))
+        when(chatCompletionService.chat(any(ChatCompletionReqDTO.class)))
                 .thenThrow(ChatCompletionException.invalidModel("no-such-model"));
 
         mockMvc.perform(post("/v1/chat/completions")
@@ -89,7 +93,7 @@ class ChatCompletionControllerTest {
 
     @Test
     void rejects_streaming_for_now() throws Exception {
-        when(chatCompletionService.chat(anyString()))
+        when(chatCompletionService.chat(any(ChatCompletionReqDTO.class)))
                 .thenThrow(ChatCompletionException.invalidRequest("Streaming is not supported yet", "stream"));
 
         mockMvc.perform(post("/v1/chat/completions")

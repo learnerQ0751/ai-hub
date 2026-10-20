@@ -1,7 +1,7 @@
 package com.qtua.aihub.api.error;
 
 import com.qtua.aihub.common.exception.ChatCompletionException;
-import com.qtua.aihub.common.ErrorResponse;
+import com.qtua.aihub.api.model.res.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;

@@ -1,6 +1,8 @@
 package com.qtua.aihub.api.controller;
 
-import com.qtua.aihub.service.ChatCompletionService;
+import com.qtua.aihub.api.ChatCompletionService;
+import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
+import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,8 +40,9 @@ public class ChatCompletionController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> chat(@RequestBody String requestBody) {
+        ChatCompletionResDTO resDTO = chatCompletionService.chat(new ChatCompletionReqDTO(requestBody));
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(chatCompletionService.chat(requestBody));
+                .body(resDTO.getRawResponse());
     }
 }

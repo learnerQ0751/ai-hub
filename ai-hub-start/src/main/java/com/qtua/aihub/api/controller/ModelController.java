@@ -1,7 +1,7 @@
 package com.qtua.aihub.api.controller;
 
-import com.qtua.aihub.api.dto.ModelListResponse;
-import com.qtua.aihub.service.ModelService;
+import com.qtua.aihub.api.ModelService;
+import com.qtua.aihub.api.model.res.ModelListResDTO;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,7 +31,7 @@ public class ModelController {
      * @return OpenAI /models 兼容结构
      */
     @GetMapping(path = {"/models", "/v1/models"}, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ModelListResponse listModels() {
-        return ModelListResponse.of(modelService.listModels());
+    public ModelListResDTO listModels() {
+        return modelService.listModels();
     }
 }

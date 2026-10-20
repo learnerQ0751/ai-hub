@@ -1,4 +1,4 @@
-package com.qtua.aihub.common;
+package com.qtua.aihub.api.model.res;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

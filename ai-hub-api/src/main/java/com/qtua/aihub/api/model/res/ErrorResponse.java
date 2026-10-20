@@ -1,4 +1,4 @@
-package com.qtua.aihub.common;
+package com.qtua.aihub.api.model.res;
 
 /**
  * OpenAI 兼容错误体。
