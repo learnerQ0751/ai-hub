@@ -1,0 +1,62 @@
+ai-hub-start/src/main/java/com/qtua/aihub/api/controller/ChatCompletionController.java
+  s_c79baf63be364e::t_a35b5398c922e6 43,46
+  s_c79baf63be364e::t_899593458c7afa 3-5
+ai-hub-api/src/main/java/com/qtua/aihub/api/ModelService.java
+  s_c79baf63be364e::t_10dd4a09043286 1-16
+ai-hub-service/src/test/java/com/qtua/aihub/service/ModelServiceTest.java
+  s_c79baf63be364e::t_05ca191d1d9adb 1-53
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/ChatCompletionResDTO.java
+  s_c79baf63be364e::t_7a65528ae0c74c 1-22
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/ModelListResDTO.java
+  s_c79baf63be364e::t_b9b7dc511102b9 1-51
+ai-hub-service/src/test/java/com/qtua/aihub/service/ChatCompletionServiceTest.java
+  s_c79baf63be364e::t_2b9cb22996018f 103
+  s_c79baf63be364e::t_7c09298c6558be 86
+  s_c79baf63be364e::t_c0a136a649c5f0 76-78
+  s_c79baf63be364e::t_98b7d0809ee887 7-68,85,93,102
+  s_c79baf63be364e::t_38d19ed13a204f 94
+ai-hub-service/src/main/java/com/qtua/aihub/service/ModelServiceImpl.java
+  s_c79baf63be364e::t_3caffa16d02fff 1-38
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/ErrorResponse.java
+  s_c79baf63be364e::t_cccfbd52770aff 1
+ai-hub-start/src/main/java/com/qtua/aihub/api/controller/ModelController.java
+  s_c79baf63be364e::t_17198c11ad9dc4 34-35
+  s_c79baf63be364e::t_3b25e1def43bd8 3-4
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/ChatCompletionReqDTO.java
+  s_c79baf63be364e::t_0b6c0bab4544ea 1-24
+ai-hub-api/src/main/java/com/qtua/aihub/api/ChatCompletionService.java
+  s_c79baf63be364e::t_22d631d76eec56 1-18
+ai-hub-start/src/main/java/com/qtua/aihub/api/filter/AuthFilter.java
+  s_c79baf63be364e::t_01688f55515fc9 4
+ai-hub-api/pom.xml
+  s_c79baf63be364e::t_e80c6165cc2722 22-25
+  s_c79baf63be364e::t_420ebe2c2d64fb 21
+ai-hub-service/src/main/java/com/qtua/aihub/service/ChatCompletionServiceImpl.java
+  s_c79baf63be364e::t_a9a2a0997e66ae 1-128
+ai-hub-start/src/main/java/com/qtua/aihub/api/error/GatewayExceptionHandler.java
+  s_c79baf63be364e::t_1534214de337a5 4
+ai-hub-api/src/test/java/com/qtua/aihub/api/model/res/ErrorResponseTest.java
+  s_c79baf63be364e::t_26b18f345b1d83 1
+ai-hub-start/src/test/java/com/qtua/aihub/api/controller/ChatCompletionControllerTest.java
+  s_c79baf63be364e::t_e0b39d9e0dc9db 9-11,22,55-56,70-71,82,96
+ai-hub-start/src/test/java/com/qtua/aihub/api/controller/ModelControllerTest.java
+  s_c79baf63be364e::t_4fc59a9af08b12 8-9,44,57,66,77
+config/spotbugs-exclude.xml
+  s_c79baf63be364e::t_2ffc32ec4cfd54 24,28,41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ce13449cad4f39446927da01edc8799a392509f5",
+  "prompts": {},
+  "sessions": {
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
