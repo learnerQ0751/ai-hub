@@ -60,11 +60,14 @@
 
 ## 5. Agent 适配
 
-| Agent | 入口文件 | 说明 |
+| Agent / IDE | 入口文件 | 说明 |
 |---|---|---|
-| Claude Code | `CLAUDE.md` | 由 `install.ps1 -Agent claude` 生成/追加 |
+| **JetBrains IDEA + Claude Code 插件** | `CLAUDE.md` | 插件从项目根目录读取；与 Claude Code CLI 相同 |
+| Claude Code CLI | `CLAUDE.md` | 由 `install.ps1 -Agent claude` 生成/追加 |
 | Cursor | `.cursor/rules/ai-workflow.mdc` | 由 `install.ps1 -Agent cursor` 生成 |
 | 其他 | `AGENTS.md` | 由 `install.ps1 -Agent generic` 生成 |
+
+> IDEA 里请打开**项目根目录**（不是只看 ai-workflow），确保 Claude Code 会话的 cwd 是仓库根；否则 git-ai 的 prompt 归因可能为空。
 
 所有入口只指向本目录的核心文件，不复制规范内容。
 

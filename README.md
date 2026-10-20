@@ -15,6 +15,14 @@
 
 需求 1.1（统一入口 + 单模型转发）已完成并通过真实验收；下一步需求 1.2（模型路由）。
 
+## 在 IDEA 中开发
+
+- 用 IntelliJ IDEA 打开 `E:\pro\ai-hub`（或 `pom.xml`）作为 Maven 项目；Project SDK 选 JDK 21。
+- 安装 Claude Code 插件，从项目根目录启动；它会读取根目录 `CLAUDE.md` → `ai-workflow/`。
+- Maven 使用本机 `D:\developtools\maven\apache-maven-3.6.3\conf\settings.xml`。
+- 终端运行 `mvn -Pquality verify`。
+- 不需要 Cursor 的 `.cursor/rules`；它是跨 IDE 兼容层，IDEA 可忽略。
+
 ## 本地启动
 
 ```bash

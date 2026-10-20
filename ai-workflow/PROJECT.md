@@ -9,6 +9,13 @@
 - 默认端口：`18080`（本机 8080 被其他服务占用）
 - 当前进度：需求 1.1 已完成；下一步需求 1.2（模型路由）
 
+## IDE / 运行
+
+- 推荐 **IntelliJ IDEA**：打开 `E:\pro\ai-hub`（或 `pom.xml`）作为 Maven 项目，Project SDK 选 JDK 21。
+- Claude Code 插件从项目根目录启动；读取根目录 `CLAUDE.md` → `ai-workflow/`。
+- Maven 使用本机 settings.xml；终端运行 `mvn -Pquality verify`。
+- `.vscode/settings.json` 是 Cursor 兼容配置，IDEA 不使用。
+
 ## 分层结构（覆盖通用 §2）
 
 - 本项目是轻量网关，不采用 Drip 六层；分层为：

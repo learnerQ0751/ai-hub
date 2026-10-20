@@ -31,10 +31,13 @@
 
 | 环境 | 安装命令 | 生成 |
 |---|---|---|
-| 只允许 Claude Code | `-Agent claude` | `CLAUDE.md` |
+| **JetBrains IDEA + Claude Code 插件** | `-Agent claude` | `CLAUDE.md`（插件从项目根目录读取） |
+| Claude Code CLI / 其他 IDE 插件 | `-Agent claude` | `CLAUDE.md` |
 | 只用 Cursor | `-Agent cursor` | `.cursor/rules/ai-workflow.mdc` |
-| 两者都用 | `-Agent both` | 两个都生成 |
+| Claude Code + Cursor 都用 | `-Agent both` | 两个都生成 |
 | 其他 agent | `-Agent generic` | `AGENTS.md` |
+
+> IDEA 用户：用 `-Agent claude` 即可；不需要 Cursor 的 `.mdc`。打开项目根目录，让 Claude Code 插件的 cwd 指向仓库根。
 
 换公司/换工具只换适配层，不改规范。
 
