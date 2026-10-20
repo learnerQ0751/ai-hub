@@ -1,0 +1,28 @@
+ai-hub-start/src/test/java/com/qtua/aihub/service/ChatCompletionServiceTest.java
+  s_c79baf63be364e::t_7769beac2707f4 42-43
+  s_c79baf63be364e::t_729c682f9814cd 55-60
+  s_c79baf63be364e::t_289a6dfbfd46f4 8-9
+ai-hub-core/src/main/java/com/qtua/aihub/core/ChatCompletionCore.java
+  s_c79baf63be364e::t_74acf9237049c2 1-57
+ai-hub-start/src/main/java/com/qtua/aihub/service/ChatCompletionService.java
+  s_c79baf63be364e::t_ab1b512235d4b4 10-11
+  s_c79baf63be364e::t_48fa2a6a14dcd4 65-67
+ai-hub-core/src/test/java/com/qtua/aihub/core/ChatCompletionCoreTest.java
+  s_c79baf63be364e::t_a792a2f17c7146 1-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a74a684b9d03d06618d7a6c61b46512b3112f222",
+  "prompts": {},
+  "sessions": {
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
