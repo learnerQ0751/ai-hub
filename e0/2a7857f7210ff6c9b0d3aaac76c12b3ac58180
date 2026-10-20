@@ -1,0 +1,39 @@
+ai-workflow/scripts/status.ps1
+  s_22010045ff98a6::t_97a52f699e9dff 184
+  s_22010045ff98a6::t_e0c8bb8840bc9e 126-127
+  s_22010045ff98a6::t_8161cf1254c381 6
+  s_22010045ff98a6::t_52a1114ff425d9 2-5,8-124,128-182,186-202
+  s_22010045ff98a6::t_eadda3ebe9e396 1
+  s_22010045ff98a6::t_391fe039188aec 7
+  s_22010045ff98a6::t_ef4ae89474ced2 125
+  s_22010045ff98a6::t_f5cf4daea61683 183
+  s_22010045ff98a6::t_ded9b11eae712e 185
+ai-workflow/records/REQ-1.1.md
+  s_22010045ff98a6::t_690de291da070b 6-7
+  s_22010045ff98a6::t_52b3e5564c3f3e 49-57
+ai-workflow/templates/REQ.md
+  s_22010045ff98a6::t_a8c3235620d236 40-48
+  s_22010045ff98a6::t_a2e492ff857d06 6-7
+ai-workflow/WORKFLOW.md
+  s_22010045ff98a6::t_171aa1193d4a69 30,32-35,39-60
+ai-workflow/README.md
+  s_22010045ff98a6::t_9ad095abaf2ebf 58-59
+  s_22010045ff98a6::t_5ce132133f378c 12-13
+  s_22010045ff98a6::t_6cac9652885dec 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e02a7857f7210ff6c9b0d3aaac76c12b3ac58180",
+  "prompts": {},
+  "sessions": {
+    "s_22010045ff98a6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03243dd6-6c47-4457-b219-64983b0532b6",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
