@@ -26,6 +26,7 @@ function Get-Records {
         $title = $file.BaseName
         if ($raw -match '(?m)^#\s+(.+)$') {
             $title = $Matches[1].Trim()
+            $title = $title -replace '^REQ-[^：]+：\s*', ''
         }
         $status = '未知'
         if ($raw -match '(?m)^-\s*状态：\s*(.+)$') {
@@ -195,6 +196,7 @@ if (Test-Path $StatusPath) {
     $new = "# 项目状态`r`n`r`n" + $generated + $manual
 }
 
+$new = $new -replace '<!-- STATUS:GENERATED:END -->\s*## 手工备注', "<!-- STATUS:GENERATED:END -->`r`n`r`n## 手工备注"
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText($StatusPath, $new, $utf8)
 
