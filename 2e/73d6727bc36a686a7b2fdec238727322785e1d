@@ -1,0 +1,59 @@
+config/spotbugs-exclude.xml
+  s_c79baf63be364e::t_a0c25dbe9b6c2a 9,12
+ai-hub-common/src/main/java/com/qtua/aihub/common/constant/JsonFields.java
+  s_c79baf63be364e::t_737d26d2792239 1-14
+ai-hub-common/pom.xml
+  s_c79baf63be364e::t_a2f85cb25dbbe1 17-21
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/GatewayProperties.java
+  s_c79baf63be364e::t_e7591f2ba52ef3 1
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  s_c79baf63be364e::t_acee6164fdac29 1
+ai-hub-common/src/test/java/com/qtua/aihub/common/config/GatewayPropertiesTest.java
+  s_c79baf63be364e::t_2e7d255eda0d72 1
+ai-hub-start/src/main/java/com/qtua/aihub/api/error/GatewayExceptionHandler.java
+  s_c79baf63be364e::t_76f76515b9b33f 3
+ai-hub-start/src/main/java/com/qtua/aihub/api/filter/AuthFilter.java
+  s_c79baf63be364e::t_d5f1dcc2436d22 5
+ai-hub-start/src/main/java/com/qtua/aihub/core/ChatCompletionCore.java
+  s_c79baf63be364e::t_9657c64b2f1420 7-8
+ai-hub-start/src/main/java/com/qtua/aihub/core/routing/DeploymentSelector.java
+  s_c79baf63be364e::t_804abe32bdd0e4 3
+ai-hub-start/src/main/java/com/qtua/aihub/core/routing/WeightedRandomSelector.java
+  s_c79baf63be364e::t_ed81c41e624e30 3
+ai-hub-start/src/main/java/com/qtua/aihub/integration/UpstreamClient.java
+  s_c79baf63be364e::t_905af125133ab7 3-4
+ai-hub-start/src/main/java/com/qtua/aihub/service/ChatCompletionService.java
+  s_c79baf63be364e::t_894113b9c52a83 6-8
+ai-hub-start/src/main/java/com/qtua/aihub/service/ModelService.java
+  s_c79baf63be364e::t_c6b6f189f2e6db 3
+ai-hub-start/src/test/java/com/qtua/aihub/api/controller/ChatCompletionControllerTest.java
+  s_c79baf63be364e::t_eba8ef9ae8bd26 6-7
+ai-hub-start/src/test/java/com/qtua/aihub/api/controller/ModelControllerTest.java
+  s_c79baf63be364e::t_7b1a91ed1b7ab3 6
+ai-hub-start/src/test/java/com/qtua/aihub/core/ChatCompletionCoreTest.java
+  s_c79baf63be364e::t_cf7465c776577e 5-6
+ai-hub-start/src/test/java/com/qtua/aihub/core/routing/WeightedRandomSelectorTest.java
+  s_c79baf63be364e::t_54590e11b7c405 3
+ai-hub-start/src/test/java/com/qtua/aihub/integration/UpstreamClientTest.java
+  s_c79baf63be364e::t_b5950933c095fe 3-4
+ai-hub-start/src/test/java/com/qtua/aihub/service/ChatCompletionServiceTest.java
+  s_c79baf63be364e::t_10d905a054d0a1 5-7
+ai-hub-start/src/test/java/com/qtua/aihub/service/ModelServiceTest.java
+  s_c79baf63be364e::t_14726b56d7d66e 3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2e73d6727bc36a686a7b2fdec238727322785e1d",
+  "prompts": {},
+  "sessions": {
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
