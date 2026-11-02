@@ -1,0 +1,44 @@
+ai-workflow/records/REQ-1.6.md
+  s_6f27c834d45972::t_c25d01d61d41e5 59-119,125-126
+  s_6f27c834d45972::t_cc249873a20771 12-46
+  s_5ceb4aedec88e9::t_ab1cc7598d0f48 58
+ai-workflow/acceptance/REQ-1.4.md
+  s_6f27c834d45972::t_32753562f8ec1f 48-65
+ai-workflow/acceptance/REQ-1.5.md
+  s_6f27c834d45972::t_21b800272cae13 51-62
+ai-workflow/acceptance/REQ-1.6.md
+  s_6f27c834d45972::t_e39d9c89782730 46-82
+ai-workflow/records/REQ-1.7.md
+  s_6f27c834d45972::t_be1d9a93328bd7 12-40
+  s_6f27c834d45972::t_2888f71e2964ae 53-105,108-114
+  s_5ceb4aedec88e9::t_94298d17e7b823 52
+ai-workflow/DESIGN.md
+  s_6f27c834d45972::t_2a35f601cd9b32 98-115
+  s_6f27c834d45972::t_f6c82ac949b0bc 131-153
+ai-workflow/acceptance/REQ-1.7.md
+  s_6f27c834d45972::t_dd17a2a428e1b9 44-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ff469ebf64fb3ff5763114929d4e4d24f88df095",
+  "prompts": {},
+  "sessions": {
+    "s_5ceb4aedec88e9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5f377c20-1092-447d-bcd8-c1be895f2123",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_6f27c834d45972": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "88fb38b7-5c04-4180-9a86-a4f45f407a6f",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
