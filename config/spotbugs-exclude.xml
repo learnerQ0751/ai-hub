@@ -79,6 +79,10 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
+        <Class name="com.qtua.aihub.start.controller.ChatCompletionController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
         <Class name="com.qtua.aihub.service.KeyServiceImpl"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
@@ -95,5 +99,22 @@
     <Match>
         <Class name="com.qtua.aihub.api.model.res.ModelListResDTO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <!-- 流式结果：AtomicReference 是单次请求的流上下文，故意暴露给 Controller 读取 usage -->
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.ChatCompletionStreamResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.ChatCompletionStreamResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.model.ChatCompletionStreamResultBO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.model.ChatCompletionStreamResultBO"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
 </FindBugsFilter>

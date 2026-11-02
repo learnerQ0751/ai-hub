@@ -10,6 +10,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * 上游 OpenAI 兼容 HTTP 客户端。
@@ -26,14 +30,17 @@ public class UpstreamClient {
     private static final int CLIENT_ERROR_MAX_EXCLUSIVE = 500;
 
     private final RestClient restClient;
+    private final WebClient webClient;
 
     /**
      * 构造客户端。
      *
-     * @param builder Spring 自动配置的 RestClient.Builder
+     * @param builder            Spring 自动配置的 RestClient.Builder（同步调用）
+     * @param webClientBuilder   Spring 自动配置的 WebClient.Builder（流式调用）
      */
-    public UpstreamClient(RestClient.Builder builder) {
+    public UpstreamClient(RestClient.Builder builder, WebClient.Builder webClientBuilder) {
         this.restClient = builder.build();
+        this.webClient = webClientBuilder.build();
     }
 
     /**
@@ -74,6 +81,54 @@ public class UpstreamClient {
         } catch (ResourceAccessException ex) {
             throw ChatCompletionException.upstreamTimeout(ex);
         }
+    }
+
+    /**
+     * 流式调用上游 /chat/completions（SSE）。
+     *
+     * <p>返回的每个元素是 SSE 的 data 内容（不含 {@code data:} 前缀）；
+     * 错误响应在订阅时映射为统一的 {@link ChatCompletionException}。
+     * 调用方负责取消订阅以释放上游连接。</p>
+     *
+     * @param deployment  模型部署
+     * @param requestBody 已改写的请求 JSON（stream=true）
+     * @return SSE data 流
+     */
+    public Flux<String> stream(ModelDeployment deployment, String requestBody) {
+        return webClient.post()
+                .uri(normalize(deployment.apiBase()) + CHAT_COMPLETIONS_PATH)
+                .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + deployment.apiKey())
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.TEXT_EVENT_STREAM)
+                .bodyValue(requestBody)
+                .retrieve()
+                .onStatus(status -> status.isError(), response -> response.bodyToMono(String.class)
+                        .defaultIfEmpty("")
+                        .flatMap(body -> Mono.<ChatCompletionException>error(
+                                mapStreamError(response.statusCode().value()))))
+                .bodyToFlux(String.class)
+                .onErrorMap(WebClientRequestException.class, ChatCompletionException::upstreamTimeout);
+    }
+
+    /**
+     * 流式请求的错误映射；分类规则与同步调用一致。
+     *
+     * @param upstreamStatus 上游状态码
+     * @return 业务异常
+     */
+    private ChatCompletionException mapStreamError(int upstreamStatus) {
+        Throwable cause = new IllegalStateException("upstream status " + upstreamStatus);
+        if (upstreamStatus == HttpStatus.UNAUTHORIZED.value()) {
+            return ChatCompletionException.upstreamAuthError(cause);
+        }
+        if (upstreamStatus == HttpStatus.TOO_MANY_REQUESTS.value()) {
+            return ChatCompletionException.upstreamRateLimited(cause);
+        }
+        if (upstreamStatus >= CLIENT_ERROR_MIN && upstreamStatus < CLIENT_ERROR_MAX_EXCLUSIVE) {
+            return ChatCompletionException.upstreamClientError(upstreamStatus, cause);
+        }
+        return ChatCompletionException.upstreamError(
+                "Upstream request failed with status " + upstreamStatus, cause);
     }
 
     /**

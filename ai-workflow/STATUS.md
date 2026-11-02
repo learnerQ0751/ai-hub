@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-02 17:30
+**最后更新**：2026-11-02 17:51
 
 ## 需求进度
 
@@ -15,7 +15,7 @@
 | REQ-1.4 | 限流与预算（Redis 实现） | 已完成 | additive | 已验收（2026-11-02，理解默认通过）（7/7） | REQ-1.3、REQ-1.5 | 0257305（初版）+ 1d1154c（网关治理解耦重构）+ b4b8442（Filter 统一治理）+ 7b798a7（删除 ChatExecutor 假出口） |
 | REQ-1.5 | 调用日志 + Token 计量 + `/key/info` | 已完成 | additive | 已验收（2026-11-02，理解默认通过）（7/7） | REQ-1.3 | e7edf54 |
 | REQ-1.6 | 容错（重试 / fallback / 冷却） | 已完成 | extension | 已验收（2026-11-02，理解默认通过）（8/8） | REQ-1.5 | — |
-| REQ-1.7 | 流式（SSE）透传 | 进行中 | extension | 待实现（0/7） | REQ-1.1、REQ-1.6 | — |
+| REQ-1.7 | 流式（SSE）透传 | 已完成 | extension | 已验收（2026-11-02，理解默认通过）（7/7） | REQ-1.1、REQ-1.6 | — |
 
 ## 接口清单（来自 Controller）
 
@@ -68,11 +68,11 @@
 
 ## 测试
 
-- 179 个 @Test / 33 个测试类
+- 191 个 @Test / 35 个测试类
 
 ## 下一步
 
-- 验收 REQ-1.7 流式（SSE）透传 → 打开 `acceptance/REQ-1.7.md`
+- 实现 REQ-2.1 MCP Server 注册与发现（待实现）→ 需求卡：`11-项目7-第2期-MCP与Prompt中心.md`
 
 <!-- STATUS:GENERATED:END -->
 

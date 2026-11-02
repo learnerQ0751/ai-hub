@@ -12,7 +12,7 @@
 | REQ-1.4 | 限流与预算 | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | REQ-1.3, REQ-1.5 | additive | `acceptance/REQ-1.4.md` |
 | REQ-1.5 | 调用日志与 Token 计量 | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | REQ-1.3 | additive | `acceptance/REQ-1.5.md` |
 | REQ-1.6 | 容错（重试/fallback/冷却） | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | REQ-1.5 | extension | `acceptance/REQ-1.6.md` |
-| REQ-1.7 | SSE 流式 | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 待实现 | REQ-1.6 | additive | `acceptance/REQ-1.7.md` |
+| REQ-1.7 | SSE 流式 | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | REQ-1.6 | extension | `acceptance/REQ-1.7.md` |
 | REQ-2.1 | MCP Server 注册与发现 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 待实现 | — | — | — |
 | REQ-2.2 | MCP 工具发现与聚合 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 待实现 | REQ-2.1 | — | — |
 | REQ-2.3 | MCP 调用代理 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 待实现 | REQ-2.1 | — | — |

@@ -36,6 +36,8 @@ public class GatewayContext {
     private volatile int status;
     private volatile String errorType;
     private volatile boolean failed;
+    /** 流式请求：Filter 只预占，由 Controller 在流结束后收尾。 */
+    private volatile boolean streaming;
 
     /**
      * 构造上下文。
@@ -147,6 +149,19 @@ public class GatewayContext {
 
     public boolean isFallbackUsed() {
         return fallbackUsed;
+    }
+
+    public boolean isStreaming() {
+        return streaming;
+    }
+
+    /**
+     * 标记流式请求：Filter 不再自动结算，由 Controller 在流结束时调用治理服务。
+     *
+     * @param streaming 是否流式
+     */
+    public void setStreaming(boolean streaming) {
+        this.streaming = streaming;
     }
 
     public int getStatus() {

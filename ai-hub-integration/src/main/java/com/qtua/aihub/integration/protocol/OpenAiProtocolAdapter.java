@@ -21,6 +21,8 @@ public class OpenAiProtocolAdapter {
 
     /** 粗略 token 估算：约 4 个字符折合 1 个 token。 */
     private static final int CHARS_PER_TOKEN = 4;
+    /** OpenAI 流结束标记。 */
+    private static final String DONE_MARKER = "[DONE]";
 
     private final ObjectMapper objectMapper;
 
@@ -51,6 +53,63 @@ public class OpenAiProtocolAdapter {
             return objectMapper.writeValueAsString(objectNode);
         } catch (JsonProcessingException ex) {
             throw ChatCompletionException.invalidRequest("Invalid JSON request body", null);
+        }
+    }
+
+    /**
+     * 流式请求改写：模型名改为上游真实名，并强制注入
+     * {@code stream_options.include_usage=true}，保证末块携带 usage 供计量。
+     *
+     * @param requestBody   原始请求 JSON（stream=true）
+     * @param upstreamModel 上游真实模型名
+     * @return 改写后的请求 JSON
+     */
+    public String rewriteStreamRequest(String requestBody, String upstreamModel) {
+        try {
+            JsonNode requestNode = objectMapper.readTree(requestBody);
+            if (ObjectUtils.isEmpty(requestNode) || !requestNode.isObject()) {
+                throw ChatCompletionException.invalidRequest("Request body must be a JSON object", null);
+            }
+            ObjectNode objectNode = (ObjectNode) requestNode;
+            objectNode.put(JsonFields.MODEL, upstreamModel);
+            JsonNode existing = objectNode.get(JsonFields.STREAM_OPTIONS);
+            ObjectNode streamOptions = existing instanceof ObjectNode
+                    ? (ObjectNode) existing : objectMapper.createObjectNode();
+            // 覆盖客户端配置：没有 usage 就无法按实际 Token 计量与预算结算。
+            streamOptions.put(JsonFields.INCLUDE_USAGE, true);
+            objectNode.set(JsonFields.STREAM_OPTIONS, streamOptions);
+            return objectMapper.writeValueAsString(objectNode);
+        } catch (JsonProcessingException ex) {
+            throw ChatCompletionException.invalidRequest("Invalid JSON request body", null);
+        }
+    }
+
+    /**
+     * 流式响应改写：把 chunk 的 model 回写为请求别名；非 JSON 事件
+     * （如 {@code [DONE]}）原样透传，不阻断流。
+     *
+     * @param data  上游 SSE data 内容
+     * @param alias 请求别名
+     * @return 改写后的 data
+     */
+    public String rewriteStreamResponseModel(String data, String alias) {
+        if (ObjectUtils.isEmpty(data) || DONE_MARKER.equals(data.trim())) {
+            return data;
+        }
+        try {
+            JsonNode responseNode = objectMapper.readTree(data);
+            if (ObjectUtils.isEmpty(responseNode) || !responseNode.isObject()) {
+                return data;
+            }
+            ObjectNode objectNode = (ObjectNode) responseNode;
+            if (!objectNode.has(JsonFields.MODEL)) {
+                return data;
+            }
+            objectNode.put(JsonFields.MODEL, alias);
+            return objectMapper.writeValueAsString(objectNode);
+        } catch (JsonProcessingException ex) {
+            // 非 JSON 事件（心跳/注释等）原样透传。
+            return data;
         }
     }
 

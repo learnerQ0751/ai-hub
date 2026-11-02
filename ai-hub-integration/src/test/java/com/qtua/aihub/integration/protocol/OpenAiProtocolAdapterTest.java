@@ -95,4 +95,43 @@ class OpenAiProtocolAdapterTest {
     void estimates_zero_input_for_invalid_json() {
         assertEquals(TokenEstimate.of(0, 256), adapter.estimateTokens("not-json", 256));
     }
+
+    @Test
+    void rewrites_stream_request_model_and_injects_include_usage() throws Exception {
+        String body = "{\"model\":\"chat\",\"stream\":true,"
+                + "\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}";
+
+        String rewritten = adapter.rewriteStreamRequest(body, "deepseek-chat");
+
+        JsonNode node = objectMapper.readTree(rewritten);
+        assertEquals("deepseek-chat", node.get("model").asText());
+        assertEquals(true, node.get("stream").asBoolean());
+        assertEquals(true, node.get("stream_options").get("include_usage").asBoolean());
+    }
+
+    @Test
+    void keeps_existing_stream_options_when_injecting_include_usage() throws Exception {
+        String body = "{\"model\":\"chat\",\"stream\":true,"
+                + "\"stream_options\":{\"include_usage\":false,\"other\":\"x\"}}";
+
+        String rewritten = adapter.rewriteStreamRequest(body, "deepseek-chat");
+
+        JsonNode options = objectMapper.readTree(rewritten).get("stream_options");
+        assertEquals(true, options.get("include_usage").asBoolean());
+        assertEquals("x", options.get("other").asText());
+    }
+
+    @Test
+    void rewrites_stream_chunk_model_to_alias() throws Exception {
+        String chunk = "{\"id\":\"x\",\"model\":\"deepseek-chat\",\"choices\":[]}";
+
+        String rewritten = adapter.rewriteStreamResponseModel(chunk, "chat");
+
+        assertEquals("chat", objectMapper.readTree(rewritten).get("model").asText());
+    }
+
+    @Test
+    void keeps_done_marker_unchanged() {
+        assertEquals("[DONE]", adapter.rewriteStreamResponseModel("[DONE]", "chat"));
+    }
 }

@@ -89,6 +89,8 @@ public class GatewayGovernanceService {
         if (ObjectUtils.isEmpty(root)) {
             return;
         }
+        JsonNode streamNode = root.get(JsonFields.STREAM);
+        context.setStreaming(!ObjectUtils.isEmpty(streamNode) && streamNode.asBoolean(false));
         JsonNode modelNode = root.get(JsonFields.MODEL);
         if (ObjectUtils.isEmpty(modelNode) || modelNode.isNull()
                 || !StringUtils.hasText(modelNode.asText())) {

@@ -95,6 +95,21 @@ ChatCompletionCore.chat
 - 冷却状态：`{resilience}:fails:<deployment>` 与 `{resilience}:cooldown:<deployment>`；部署标识 = SHA-256(alias|upstreamModel|apiBase|apiKey)。
 - 全部部署冷却时 fail-open；Redis 故障 fail-open 并 WARN。
 
+### 3.7 流式 SSE（REQ-1.7）
+
+```text
+AuthFilter → GatewayGovernanceFilter（预占后标记 streaming，跳过同步收尾）
+→ Controller 解析 stream=true → Service/Core
+→ WebClient 订阅上游 text/event-stream（请求注入 stream_options.include_usage）
+→ 逐块改写 model 为请求别名 → SseEmitter 透传 data
+→ 末块 usage 累积到单次请求的 AtomicReference
+→ 流完成/失败：Controller 回调 GatewayGovernanceService 结算/写日志
+→ 客户端断开/超时：取消上游订阅释放连接
+```
+
+- 流式不做请求内重试/fallback：一旦开始发送 SSE 无法切换部署；流开始前的错误仍走标准 JSON 错误。
+- WebClient.Builder 在 `start/config/WebClientConfig` 提供；项目保持 Spring MVC，不启用 WebFlux Server。
+
 ### 3.5 计量与日志（REQ-1.5）
 
 ```text
@@ -153,6 +168,9 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 容错顺序：同别名重试/主备 → 别名级 fallback 链 | 先解决单点，再跨模型降级 | REQ-1.6 | 2026-11-02 |
 | 部署标识 = SHA-256(alias + upstreamModel + apiBase + apiKey) | 同别名主备可能模型/base 相同、仅 key 不同；不含 key 会共享冷却 | REQ-1.6 | 2026-11-02 |
 | 一次请求只写 1 条日志、只计费一次；轨迹用 retry_count/fallback_used/served_alias | 重试不重复计费，审计可还原降级路径 | REQ-1.6 | 2026-11-02 |
+| 流式用 Spring MVC SseEmitter + WebClient 客户端，不引入 WebFlux Server | 与现有 MVC 栈一致；只增加流式客户端能力 | REQ-1.7 | 2026-11-02 |
+| 流式治理延迟收尾：Filter 只预占，Controller 流结束回调结算 | 同步 Filter 无法感知异步流结束；复用统一治理服务 | REQ-1.7 | 2026-11-02 |
+| 流式请求强制注入 `stream_options.include_usage=true` | 保证末块 usage，计量/预算可结算 | REQ-1.7 | 2026-11-02 |
 | 未来物理拆分时用 HTTP 契约（OpenAI 请求/响应或内部 `ChatCommand`），当前 Service 直接调 Core | `ChatExecutor` 是假出口：绑定内部 BO、含模型部署密钥，不能作为跨服务契约；YAGNI 删除 | 架构重构 | 2026-11-02 |
 
 ## 5. 演进记录
@@ -167,6 +185,7 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 2026-11-02 | REQ-1.4 | Key 级 RPM/TPM 滑动窗口 + 预算预占结算 + 限流命中留痕 |
 | 2026-11-02 | 重构 | 网关治理解耦：GatewayGovernanceFilter + GatewayGovernanceService 统一入口；业务 Service 直接调 Core，不感知治理 |
 | 2026-11-02 | REQ-1.6 | 容错：同别名重试/主备 + 别名级 fallback + Redis 冷却；日志新增容错轨迹 |
+| 2026-11-02 | REQ-1.7 | 流式 SSE：WebClient 透传 + SseEmitter + 末块 usage 结算 + 治理延迟收尾 |
 
 ## 6. 与 LiteLLM 的差异
 

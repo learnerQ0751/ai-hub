@@ -18,7 +18,7 @@
 - 包名：`com.qtua.aihub`
 - 模型目录端口：`common/catalog`（`ModelCatalog`/`ModelDeployment`），YAML 实现 `manager/catalog/YamlModelCatalog`；业务层禁止直接依赖 `GatewayProperties`
 - 默认端口：`18080`（本机 8080 被其他服务占用）
-- 当前进度：需求 1.1 已完成；1.2 / 1.3 代码完成待验收（`ai-workflow/acceptance/REQ-1.2.md`、`REQ-1.3.md`）；项目 7 完整需求体系见知识库（03/05/11/12/13），下一步 REQ-1.5（1.4 预算依赖 1.5 价格表）
+- 当前进度：第 1 期 REQ-1.1 ~ REQ-1.7 全部完成并验收；下一步第 2 期 MCP 与 Prompt 中心（REQ-2.1 起）
 - 验收入口：每个需求的人向验收文档在 `ai-workflow/acceptance/REQ-x.y.md`；全局状态看 `ai-workflow/STATUS.md`，设计基线看 `ai-workflow/DESIGN.md`
 - 数据模型与表速查：`ai-workflow/docs/DATA-MODEL.md`（STATUS 的「数据表速查」由此生成）
 
@@ -82,7 +82,8 @@ ai-hub（父 POM）
 - [x] 技术栈补齐：Spring Boot 4.1.1、Redis + Lettuce、LangChain4j 1.22.0、docker-compose（Redis/PostgreSQL）
 - [x] 1.2 重构 + 多实例/权重测试（41 → 45 个测试）
 - [x] 1.3 虚拟 Key：api_keys/哈希鉴权/白名单/封禁/info（88 个测试）
-- [ ] 1.2 / 1.3 理解验收（按新模块结构讲解 / 5 题自测 / 亲手改一个口子）
+- [x] 1.2 / 1.3 理解验收（2026-10-30，默认通过）
+- [x] 1.4 限流预算 / 1.5 日志计量 / 1.6 容错 / 1.7 流式（第 1 期完成）
 - [ ] 严格平滑轮询如需：用 Redis 共享状态，不引入单机 Map
 
 ## 接口契约（覆盖通用 §4）

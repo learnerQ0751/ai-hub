@@ -11,10 +11,12 @@ import com.qtua.aihub.integration.UpstreamClient;
 import com.qtua.aihub.integration.protocol.OpenAiProtocolAdapter;
 import com.qtua.aihub.manager.model.ChatCompletionBO;
 import com.qtua.aihub.manager.model.ChatCompletionResultBO;
+import com.qtua.aihub.manager.model.ChatCompletionStreamResultBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
+import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,6 +24,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * 聊天补全业务编排。
@@ -122,6 +125,46 @@ public class ChatCompletionCore {
             throw lastError;
         }
         throw ChatCompletionException.invalidModel(bo.getAlias());
+    }
+
+    /**
+     * 执行一次流式聊天补全转发。
+     *
+     * <p>流式选择部署时复用冷却过滤与 priority 主备，但不在流内重试或切换：
+     * 一旦开始向下游发送 SSE，错误只能以流事件形式传达。流结束后记录部署健康状态。</p>
+     *
+     * @param bo 聊天补全业务对象
+     * @return SSE data 流、usage 引用与部署信息
+     */
+    public ChatCompletionStreamResultBO chatStream(ChatCompletionBO bo) {
+        if (ObjectUtils.isEmpty(bo.getDeployments())) {
+            throw ChatCompletionException.invalidModel(bo.getAlias());
+        }
+        ModelDeployment deployment = choose(bo.getDeployments(), Set.of());
+        if (Objects.isNull(deployment)) {
+            throw ChatCompletionException.invalidModel(bo.getAlias());
+        }
+        LOG.debug("stream routed alias={} upstreamModel={}",
+                bo.getAlias(), deployment.upstreamModel());
+        String upstreamBody = protocolAdapter.rewriteStreamRequest(
+                bo.getRequestBody(), deployment.upstreamModel());
+        AtomicReference<TokenUsage> usage = new AtomicReference<>(TokenUsage.ZERO);
+        Flux<String> events = upstreamClient.stream(deployment, upstreamBody)
+                .map(data -> {
+                    TokenUsage parsed = protocolAdapter.extractUsage(data);
+                    if (Objects.nonNull(parsed) && parsed.totalTokens() > 0) {
+                        usage.set(parsed);
+                    }
+                    return protocolAdapter.rewriteStreamResponseModel(data, bo.getAlias());
+                })
+                .doOnError(ChatCompletionException.class, ex -> {
+                    if (ex.isRetryable()) {
+                        healthStore.recordFailure(deployment);
+                    }
+                })
+                .doOnComplete(() -> healthStore.recordSuccess(deployment));
+        return new ChatCompletionStreamResultBO(events, usage, bo.getAlias(),
+                deployment.upstreamModel());
     }
 
     /**

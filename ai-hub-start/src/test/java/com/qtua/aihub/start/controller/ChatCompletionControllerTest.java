@@ -11,6 +11,8 @@ import com.qtua.aihub.api.KeyService;
 import com.qtua.aihub.service.gateway.GatewayGovernanceService;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
 import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
+import com.qtua.aihub.api.model.res.ChatCompletionStreamResDTO;
+import com.qtua.aihub.common.metering.TokenUsage;
 import com.qtua.aihub.AiHubApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +24,17 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.mockito.ArgumentCaptor;
+import reactor.core.publisher.Flux;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -122,16 +129,20 @@ class ChatCompletionControllerTest {
     }
 
     @Test
-    void rejects_streaming_for_now() throws Exception {
-        when(chatCompletionService.chat(any(ChatCompletionReqDTO.class)))
-                .thenThrow(ChatCompletionException.invalidRequest("Streaming is not supported yet", "stream"));
+    void streams_sse_events() throws Exception {
+        when(chatCompletionService.chatStream(any(ChatCompletionReqDTO.class)))
+                .thenReturn(new ChatCompletionStreamResDTO(
+                        Flux.just("{\"model\":\"chat-default\"}", "[DONE]"),
+                        new AtomicReference<>(new TokenUsage(10, 20, 30)),
+                        "chat-default", "upstream"));
 
         mockMvc.perform(post("/v1/chat/completions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"model\":\"chat-default\",\"stream\":true,"
                                 + "\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.param").value("stream"));
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM))
+                .andExpect(content().string(containsString("[DONE]")));
     }
 
     @Test

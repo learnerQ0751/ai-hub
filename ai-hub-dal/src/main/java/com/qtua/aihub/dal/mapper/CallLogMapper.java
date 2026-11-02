@@ -4,6 +4,7 @@ import com.qtua.aihub.dal.model.CallLogDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -36,4 +37,14 @@ public interface CallLogMapper {
      * @return 调用次数
      */
     int countByKeyId(@Param("keyId") String keyId);
+
+    /**
+     * 查询某个虚拟 Key 最近的调用日志。
+     *
+     * @param keyId 虚拟 Key 的 SHA-256
+     * @param limit 返回条数
+     * @return 按发生时间倒序的日志
+     */
+    List<CallLogDO> selectRecentByKeyId(@Param("keyId") String keyId,
+                                        @Param("limit") int limit);
 }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.api.ChatCompletionService;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
 import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
+import com.qtua.aihub.api.model.res.ChatCompletionStreamResDTO;
 import com.qtua.aihub.common.catalog.ModelCatalog;
 import com.qtua.aihub.common.catalog.ModelDeployment;
 import com.qtua.aihub.common.constant.JsonFields;
@@ -13,6 +14,7 @@ import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.core.ChatCompletionCore;
 import com.qtua.aihub.manager.model.ChatCompletionBO;
 import com.qtua.aihub.manager.model.ChatCompletionResultBO;
+import com.qtua.aihub.manager.model.ChatCompletionStreamResultBO;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -70,6 +72,43 @@ public class ChatCompletionServiceImpl implements ChatCompletionService {
         return new ChatCompletionResDTO(result.getResponseBody(), result.getUsage(),
                 result.getDeploymentModel(), result.getServedAlias(),
                 result.getRetryCount(), result.isFallbackUsed());
+    }
+
+    /**
+     * 处理一次流式聊天补全请求。
+     *
+     * @param reqDTO 原始请求（stream=true）
+     * @return SSE data 流与计量上下文
+     */
+    @Override
+    public ChatCompletionStreamResDTO chatStream(ChatCompletionReqDTO reqDTO) {
+        String requestBody = reqDTO.getRawBody();
+        JsonNode root = parse(requestBody);
+        String alias = requireModel(root);
+        requireStreaming(root);
+        requireMessages(root);
+        List<ModelDeployment> deployments = modelCatalog.findDeployments(alias);
+        if (ObjectUtils.isEmpty(deployments)) {
+            throw ChatCompletionException.invalidModel(alias);
+        }
+        ChatCompletionBO bo = new ChatCompletionBO(alias, deployments, requestBody,
+                reqDTO.getRequestId(), reqDTO.getAuth().keyHash());
+        ChatCompletionStreamResultBO result = chatCompletionCore.chatStream(bo);
+        return new ChatCompletionStreamResDTO(result.getEvents(), result.getUsage(),
+                result.getServedAlias(), result.getDeploymentModel());
+    }
+
+    /**
+     * 校验 stream 必须为 true（流式入口）。
+     *
+     * @param root 请求 JSON
+     */
+    private void requireStreaming(JsonNode root) {
+        JsonNode streamNode = root.get(JsonFields.STREAM);
+        if (ObjectUtils.isEmpty(streamNode) || !streamNode.asBoolean(false)) {
+            throw ChatCompletionException.invalidRequest(
+                    "Field 'stream' must be true", JsonFields.STREAM);
+        }
     }
 
     /**

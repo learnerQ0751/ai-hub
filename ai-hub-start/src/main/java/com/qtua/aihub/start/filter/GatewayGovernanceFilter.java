@@ -110,6 +110,10 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
                     "Gateway governance failed", ex));
             return;
         }
+        // 流式请求：响应尚未结束，usage 未知；由 Controller 在流结束回调中收尾。
+        if (context.isStreaming()) {
+            return;
+        }
         if (context.isFailed()) {
             governanceService.fail(context);
         } else {

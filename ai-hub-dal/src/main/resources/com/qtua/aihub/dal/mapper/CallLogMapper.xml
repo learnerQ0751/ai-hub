@@ -58,4 +58,15 @@
         FROM call_logs
         WHERE key_id = #{keyId,jdbcType=VARCHAR}
     </select>
+
+    <select id="selectRecentByKeyId" resultMap="CallLogResultMap">
+        SELECT id, request_id, key_id, model_alias, deployment_model,
+               prompt_tokens, completion_tokens, total_tokens, cost,
+               latency_ms, status, error_type, tenant_id, created_at,
+               retry_count, fallback_used, served_alias
+        FROM call_logs
+        WHERE key_id = #{keyId,jdbcType=VARCHAR}
+        ORDER BY id DESC
+        LIMIT #{limit,jdbcType=INTEGER}
+    </select>
 </mapper>

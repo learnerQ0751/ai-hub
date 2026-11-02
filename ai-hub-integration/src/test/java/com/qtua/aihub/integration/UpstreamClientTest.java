@@ -10,6 +10,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.time.Duration;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,7 +27,7 @@ class UpstreamClientTest {
     void setUp() throws Exception {
         server = new MockWebServer();
         server.start();
-        client = new UpstreamClient(RestClient.builder());
+        client = new UpstreamClient(RestClient.builder(), WebClient.builder());
     }
 
     @AfterEach
@@ -91,6 +95,30 @@ class UpstreamClientTest {
         assertThatThrownBy(() -> client.chat(deployment(server.url("/").toString()), "{}"))
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).isRetryable()).isFalse());
+    }
+
+    @Test
+    void streams_sse_data_events() {
+        server.enqueue(new MockResponse()
+                .setHeader("Content-Type", "text/event-stream")
+                .setBody("data: {\"a\":1}\n\ndata: [DONE]\n\n"));
+
+        List<String> events = client.stream(deployment(server.url("/").toString()), "{}")
+                .collectList()
+                .block(Duration.ofSeconds(5));
+
+        assertThat(events).containsExactly("{\"a\":1}", "[DONE]");
+    }
+
+    @Test
+    void maps_stream_auth_error() {
+        server.enqueue(new MockResponse().setResponseCode(HttpStatus.UNAUTHORIZED.value()));
+
+        assertThatThrownBy(() -> client.stream(deployment(server.url("/").toString()), "{}")
+                .blockLast(Duration.ofSeconds(5)))
+                .isInstanceOf(ChatCompletionException.class)
+                .satisfies(ex -> assertThat(((ChatCompletionException) ex).getStatus().value())
+                        .isEqualTo(HttpStatus.UNAUTHORIZED.value()));
     }
 
     private ModelDeployment deployment(String baseUrl) {

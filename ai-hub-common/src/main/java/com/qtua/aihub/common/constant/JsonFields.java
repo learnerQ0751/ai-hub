@@ -10,6 +10,8 @@ public final class JsonFields {
     public static final String CONTENT = "content";
     public static final String MAX_TOKENS = "max_tokens";
     public static final String STREAM = "stream";
+    public static final String STREAM_OPTIONS = "stream_options";
+    public static final String INCLUDE_USAGE = "include_usage";
     public static final String USAGE = "usage";
     public static final String PROMPT_TOKENS = "prompt_tokens";
     public static final String COMPLETION_TOKENS = "completion_tokens";
