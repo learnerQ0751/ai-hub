@@ -9,7 +9,35 @@
 
 ## 1. 是什么
 
-`stream=true` 时，网关以 SSE 逐块透传上游输出，不缓冲整包；客户端能尽快看到首字。流结束后按末块 `usage` 补记日志、结算预算与 spend；客户端中途断开时释放上游连接。
+`stream=true` 时，网关不等到整段回答生成完再返回，而是**上游每生成一小块，网关就转发一小块**（SSE，`text/event-stream`），客户端能尽快看到首字。流结束后用最后一块里的 `usage` 计一次价、写一条日志；客户端中途断开时取消上游请求。
+
+### 1.1 "订阅"到底在订阅什么
+
+这个词容易吓人，拆开就两句话：
+
+1. **WebClient 调上游后得到的不是数据，而是 `Flux<String>`（数据流说明书）**。它本身不会发请求；只有调用 `subscribe(...)` 注册回调，才真正开始 HTTP 请求并逐块收数据。这个动作叫"订阅"。
+2. **客户端也在订阅网关**：`POST ... stream=true` 的 HTTP 连接不会立刻结束，网关用 `SseEmitter` 保持连接，每收到一块就 `send()` 给客户端。客户端逐行读 `data:`。
+
+所以一次流式请求有**两段订阅**：
+
+```mermaid
+flowchart LR
+    Client["客户端"] -->|"HTTP 长连接：订阅网关"| Emitter["SseEmitter"]
+    Emitter -->|"send(data)"| Client
+    Ctrl["Controller"] -->|"subscribe：订阅上游 Flux"| Flux["Flux&lt;String&gt;（WebClient）"]
+    Flux -->|"onNext 逐块"| Ctrl
+    Flux -->|"HTTP SSE 请求"| Upstream["上游 LLM"]
+```
+
+`subscribe` 注册三个回调：
+
+| 回调 | 什么时候触发 | 网关做什么 |
+|---|---|---|
+| `onNext(data)` | 上游每来一块 | 用 `emitter.send()` 写给客户端 |
+| `onError(error)` | 上游/网络出错 | 写 SSE `error` 事件，标记治理失败 |
+| `onComplete()` | 上游发完 `[DONE]` 并关闭 | 读取末块 usage，结算/写日志，关闭 SSE |
+
+**为什么要用 Flux**：异步（不占用请求线程等上游）、支持取消传播（客户端断开 → `dispose()` → 取消上游 HTTP 连接，避免连接泄漏）、天然按块处理（不缓冲整包）。
 
 ## 2. 有什么用
 
@@ -21,16 +49,69 @@
 
 - 分层落点：`integration`（WebClient 流式上游调用）→ `core`（流式编排与 usage 提取）→ `service`（流式请求校验）→ `start`（SseEmitter + 治理收尾）。
 - 核心类：`UpstreamClient`、`ChatCompletionCore`、`ChatCompletionController`。
-- 请求链路：
+
+### 3.1 完整时序（谁在什么时候做什么）
+
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant F as 治理 Filter
+    participant Ctrl as Controller
+    participant Core as Core
+    participant W as WebClient
+    participant U as 上游 LLM
+    C->>F: POST /v1/chat/completions stream=true
+    F->>F: 鉴权 + 白名单 + 限流/预算预占
+    F->>Ctrl: 放行（标记 streaming，暂不结算）
+    Ctrl->>Core: chatStream(bo)
+    Core->>W: stream(deployment, body)
+    Note over W: 返回 Flux（只是说明书，尚未发请求）
+    Ctrl->>W: subscribe(onNext, onError, onComplete)
+    Note over Ctrl,W: 订阅后真正开始接收
+    W->>U: HTTP SSE 请求（注入 include_usage）
+    U-->>W: data: chunk1
+    W-->>Ctrl: onNext(chunk1)
+    Ctrl-->>C: SseEmitter.send(data: chunk1)
+    U-->>W: data: 末块（含 usage）
+    W-->>Ctrl: onNext(末块)
+    Ctrl-->>C: data: 末块
+    U-->>W: data: [DONE]
+    W-->>Ctrl: onNext([DONE])
+    Ctrl-->>C: data: [DONE]
+    W-->>Ctrl: onComplete
+    Ctrl->>Ctrl: 读取末块 usage
+    Ctrl->>F: governanceService.complete(context) 结算/写日志
+    Ctrl-->>C: 关闭 SSE
+```
+
+### 3.2 治理为什么"延迟收尾"
+
+普通请求：Filter 包住 Controller，Controller 返回时 Filter 就能结算。流式请求：Controller 很快返回 `SseEmitter`，但数据还在异步流动，此时 usage 还没产生。所以：
+
+1. Filter 检测到 `stream=true` → `context.setStreaming(true)`，做完预占后**不执行**同步结算；
+2. Controller 在 `onComplete` / `onError` 回调里调用 `GatewayGovernanceService.complete/fail`，用末块 usage 结算并写日志。
+
+### 3.3 关键实现点
+
+| 点 | 做法 | 原因 |
+|---|---|---|
+| 上游请求 | `WebClient` + `Accept: text/event-stream`，`bodyToFlux(String.class)` | 逐块接收 data，不缓冲整包 |
+| usage | 请求改写时强制注入 `stream_options.include_usage=true` | 不注入则末块可能没有 usage，无法计费 |
+| model 回写 | 每个 chunk 的 `model` 改成请求别名 | 客户端始终看到自己的模型名 |
+| 断开 | `SseEmitter.onCompletion/onError` → `Disposable.dispose()` | 取消上游 HTTP 连接，避免泄漏 |
+| 流内错误 | 写 `event:error` + `data:{...}` 后结束 | SSE 已发 200，无法再改 HTTP 状态码 |
+| 流前错误 | Controller 调 service 时抛异常 → 由 Filter 返回标准 JSON | 还没有开始 SSE，可以正常返回错误码 |
+
+### 3.4 请求链路（代码视角）
 
 ```text
-AuthFilter（不变）→ GatewayGovernanceFilter（预占；流式请求延迟收尾）
-→ Controller：stream=true → SseEmitter
-→ Service/Core：选部署 → 请求改写（注入 stream_options.include_usage）
-→ UpstreamClient.stream：WebClient 逐块透传
-→ Controller 写出 data: 分块 / [DONE]
-→ 流结束：解析末块 usage → 回填治理上下文 → Filter 治理服务结算/写日志
-→ 断开/超时：取消上游订阅，释放连接
+AuthFilter（不变）
+→ GatewayGovernanceFilter（预占；检测 stream=true → 标记 streaming，跳过同步结算）
+→ Controller.chat（同一入口，按 stream 参数分派）
+→ Service.chatStream → Core.chatStream（选部署 + rewriteStreamRequest 注入 include_usage）
+→ UpstreamClient.stream（WebClient 返回 Flux）
+→ Controller.subscribe（onNext 写 SseEmitter；onComplete 结算；onError 写 error 事件）
+→ Filter 治理服务按最终 usage 结算/写日志
 ```
 
 ## 4. 影响面

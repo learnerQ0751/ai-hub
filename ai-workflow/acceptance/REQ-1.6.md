@@ -43,6 +43,43 @@ mvn -pl ai-hub-core,ai-hub-integration,ai-hub-tests -am test -Dtest='*Resilience
 
 ## 3. 实现要点与参考答案（按需阅读）
 
+### 3.0 先看懂容错链路（一句话 + 一张图）
+
+**一句话**：别名是招牌，部署是后厨；同一别名内先换后厨（priority 主备），全趴了再按 `fallbacks` 去别的招牌；某个后厨连续失败就让它"歇业"（Redis 冷却）一段时间。
+
+```mermaid
+flowchart TD
+    A["请求 chat-default"] --> B["别名链 = chat-default + fallbacks"]
+    B --> C["过滤冷却中的部署"]
+    C --> D["priority 最小层 + 加权随机"]
+    D --> E["调用上游"]
+    E -->|"成功"| F["200；model 回写 chat-default"]
+    E -->|"401 / 5xx / 超时 / 429"| G["失败计数 +1；本次请求排除该部署"]
+    G --> H{"还有 num-retries?"}
+    H -->|"有"| C
+    H -->|"没有"| I{"还有 fallback 别名?"}
+    I -->|"有"| J["切到下一个别名"]
+    J --> C
+    I -->|"没有"| K["返回最后一次错误"]
+    G --> L["失败 ≥ allowed-fails → 冷却 60s"]
+    L --> C
+```
+
+**具体走查**（配置见 `records/REQ-1.6.md` §3.1）：
+
+| 步骤 | 发生了什么 | 日志/响应 |
+|---|---|---|
+| 1 | `chat-default` 主部署（错误 key，priority 0）被选中 | — |
+| 2 | 主部署返回 401（可重试） | 失败计数=1 ≥ allowed-fails=1 → 主部署冷却 60s；本次请求排除 |
+| 3 | 还有 `num-retries=1`，重新选：主部署冷却，选备部署（priority 1） | — |
+| 4 | 备部署 200 | 响应 `model=chat-default`；日志 `served_alias=chat-default`、`retry_count=1`、`fallback_used=false`、`cost` 按备部署 usage 计一次 |
+| 5 | 若备部署也失败，则进入 `chat-backup` 别名 | `served_alias=chat-backup`、`fallback_used=true`、`retry_count=2` |
+| 6 | 全部失败 | 返回最后一次真实错误，`status`/`error_type` 写日志，`cost=0` |
+
+**别名 fallback 与主备的区别**：主备是同一别名内的部署切换（priority）；fallback 是跨别名切换（`gateway.fallbacks`）。两者是串行关系：先主备，后 fallback。
+
+**冷却为什么放 Redis**：冷却和失败计数是跨请求、跨实例状态。放本地 Map 会导致每个实例判断不一致，故障部署仍会被其他实例打爆；实例重启后冷却还会丢。
+
 ### 3.1 三条关键实现要点
 
 1. 请求内排除 + 跨请求冷却两层机制：前者保证一次请求内主备真实切换，后者限制故障部署被持续打爆。

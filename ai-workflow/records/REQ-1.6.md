@@ -9,7 +9,41 @@
 
 ## 1. 是什么
 
-单个上游部署故障时，网关不再把错误直接抛给调用方：先在同一别名内按部署优先级切换主备并重试，再按配置的 fallback 别名链降级；连续失败的部署进入冷却期，冷却期内不再被选中。响应 `model` 始终回写请求别名，调用日志记录重试/fallback 轨迹，一次请求只按最终成功调用计费一次。
+先用一个类比：**别名是"店招牌"，部署是"后厨"**。客户端只认招牌（`model=chat-default`），后厨可以有多个：主厨（priority=0）、副厨（priority=1）。主厨今天请假（401/超时/5xx），店长自动换副厨；如果这个店的后厨全趴了，再按 `fallbacks` 去隔壁店（`chat-backup`）借人。客户端始终只看到招牌名，不知道后厨换过谁。
+
+三个概念先分清：
+
+| 概念 | 例子 | 作用 |
+|---|---|---|
+| 别名（alias） | `chat-default` | 客户端请求的 `model`；对外稳定名字 |
+| 部署（deployment） | `chat-default` 下配置的多个 api-base/api-key/model | 同一别名内部的主备/多活；`priority` 数值越小越优先 |
+| fallback 别名链 | `fallbacks: chat-default → [chat-backup]` | 整个别名不可用时的跨店降级；按列表顺序尝试 |
+
+完整决策顺序（**先主备、后 fallback**）：
+
+1. 在请求别名内，先过滤掉 Redis 中处于冷却期的部署；
+2. 剩下的按 `priority` 取最小的一层，同层按权重随机；
+3. 调用失败且错误可重试（超时/5xx/上游 401/上游 429）→ 本次请求排除该部署，消耗一次 `num-retries`，重新选；
+4. 同别名重试次数用完 → 按 `fallbacks` 顺序切到下一个别名，重复 1-3；
+5. 全部失败 → 抛最后一次真实错误。成功时响应 `model` 始终回写**请求别名**。
+
+```mermaid
+flowchart TD
+    A["请求 model=chat-default"] --> B["别名链 = [chat-default] + fallbacks"]
+    B --> C["取当前别名，过滤冷却中的部署"]
+    C --> D["priority 最小层 + 加权随机选部署"]
+    D --> E["调用上游"]
+    E -->|"成功"| F["返回 200；model 回写 chat-default"]
+    E -->|"可重试错误 401/5xx/超时/429"| G["Redis 失败计数 +1；本次请求排除该部署"]
+    G --> H{"还有 num-retries?"}
+    H -->|"有"| C
+    H -->|"没有"| I{"还有 fallback 别名?"}
+    I -->|"有"| J["切换到下一个别名（如 chat-backup）"]
+    J --> C
+    I -->|"没有"| K["返回最后一次错误"]
+    G --> L["失败次数 ≥ allowed-fails → 该部署冷却 60s"]
+    L --> C
+```
 
 ## 2. 有什么用
 
@@ -21,13 +55,75 @@
 
 - 分层落点：`common`（部署优先级 / 容错配置 / 模型目录端口扩展）→ `integration`（Redis 冷却与失败计数）→ `core`（容错编排与部署选择）→ `manager`（日志 BO）→ `dal`（call_logs 字段）→ `service/start`（回填轨迹并写日志）。
 - 核心类：`ChatCompletionCore`、`RedisDeploymentCooldownStore`、`YamlModelCatalog`。
-- 请求链路：
+
+### 3.1 配置长什么样
+
+```yaml
+gateway:
+  model-list:
+    chat-default:                 # 别名 1：对外招牌
+      - api-base: https://api.deepseek.com
+        api-key: sk-bad-key        # 主部署（priority 0，故意错误 key）
+        model: deepseek-flash
+        priority: 0
+      - api-base: https://api.deepseek.com
+        api-key: sk-good-key       # 备部署（priority 1，正确 key）
+        model: deepseek-flash
+        priority: 1
+    chat-backup:                   # 别名 2：跨店降级
+      - api-base: https://api.deepseek.com
+        api-key: sk-good-key
+        model: deepseek-flash
+        priority: 0
+  fallbacks:
+    chat-default: [chat-backup]    # chat-default 全趴 → 试 chat-backup
+  resilience:
+    num-retries: 1                 # 同别名内额外重试 1 次
+    allowed-fails: 1               # 失败 1 次即冷却（生产可设 3）
+    cooldown-seconds: 60           # 冷却 60 秒
+```
+
+### 3.2 一次请求的完整走查（对应上面的配置）
+
+```text
+请求：POST /v1/chat/completions {"model":"chat-default", ...}
+
+第 1 步：别名链 = [chat-default, chat-backup]
+第 2 步：chat-default 内选部署
+        - 冷却过滤：主/备都健康
+        - priority 最小层 = 0 → 选主部署（错误 key）
+第 3 步：调主部署 → 401（可重试）
+        - Redis 失败计数：主部署 1 次 ≥ allowed-fails=1 → 写冷却 key（60s）
+        - 本次请求排除主部署；retryCount=1
+第 4 步：还有 num-retries=1 → 重新选
+        - 冷却过滤：主部署已冷却，只剩备部署
+        - priority 最小层 = 1 → 选备部署（正确 key）
+第 5 步：调备部署 → 200
+        - recordSuccess(备部署) 清零失败计数
+        - 返回：model=chat-default（客户端无感知）
+          served_alias=chat-default、deployment_model=deepseek-flash
+          retry_count=1、fallback_used=false、cost 按备部署 usage 计一次
+```
+
+如果第 5 步备部署也失败：本次请求排除主/备 → chat-default 没有可用候选 → 进入 fallback 链 `chat-backup`；若 `chat-backup` 成功，则 `served_alias=chat-backup`、`fallback_used=true`、`retry_count=2`，响应 `model` 仍回写 `chat-default`。全部失败时返回最后一次错误。
+
+### 3.3 冷却与 Redis key
+
+| Key | 含义 | TTL |
+|---|---|---|
+| `{resilience}:fails:<deploymentKey>` | 连续失败计数；成功时删除 | 至少 60s（冷却时长×2） |
+| `{resilience}:cooldown:<deploymentKey>` | 冷却标记；存在即跳过该部署 | cooldown-seconds |
+
+`deploymentKey = SHA-256(alias + upstreamModel + apiBase + apiKey)`。**apiKey 必须参与哈希**：同别名的主备可能模型和 base 完全相同、只有 key 不同；不含 key 会让主备共享同一个冷却状态（真实链路曾暴露该缺陷，已修复并补测试）。
+
+### 3.4 请求链路（代码视角）
 
 ```text
 GatewayGovernanceFilter 预占（不变）
 → ChatCompletionCore.chat
   → 别名链 = [请求别名] + gateway.fallbacks[请求别名]
-  → 每个别名：选可用部署（过滤冷却 / 请求内排除）→ 按 priority 分层 + 加权随机
+  → 每个别名：choose(部署列表, 本次已失败集合)
+      = 冷却过滤 → 请求内失败排除 → priority 最小层 → 加权随机
   → 上游调用；可重试错误按 num-retries 重试，失败部署记冷却计数
   → 别名内仍失败 → 下一个 fallback 别名
   → 成功：响应 model 回写请求别名，返回 servedAlias / retryCount / fallbackUsed

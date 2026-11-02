@@ -95,6 +95,24 @@ ChatCompletionCore.chat
 - 冷却状态：`{resilience}:fails:<deployment>` 与 `{resilience}:cooldown:<deployment>`；部署标识 = SHA-256(alias|upstreamModel|apiBase|apiKey)。
 - 全部部署冷却时 fail-open；Redis 故障 fail-open 并 WARN。
 
+```mermaid
+flowchart TD
+    A["请求 chat-default"] --> B["别名链 = chat-default + fallbacks"]
+    B --> C["过滤冷却中的部署"]
+    C --> D["priority 最小层 + 加权随机"]
+    D --> E["调用上游"]
+    E -->|"成功"| F["200；model 回写 chat-default"]
+    E -->|"401 / 5xx / 超时 / 429"| G["失败计数 +1；本次请求排除该部署"]
+    G --> H{"还有 num-retries?"}
+    H -->|"有"| C
+    H -->|"没有"| I{"还有 fallback 别名?"}
+    I -->|"有"| J["切到下一个别名"]
+    J --> C
+    I -->|"没有"| K["返回最后一次错误"]
+    G --> L["失败 ≥ allowed-fails → 冷却"]
+    L --> C
+```
+
 ### 3.7 流式 SSE（REQ-1.7）
 
 ```text
@@ -109,6 +127,29 @@ AuthFilter → GatewayGovernanceFilter（预占后标记 streaming，跳过同�
 
 - 流式不做请求内重试/fallback：一旦开始发送 SSE 无法切换部署；流开始前的错误仍走标准 JSON 错误。
 - WebClient.Builder 在 `start/config/WebClientConfig` 提供；项目保持 Spring MVC，不启用 WebFlux Server。
+
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant F as 治理 Filter
+    participant Ctrl as Controller
+    participant W as WebClient
+    participant U as 上游 LLM
+    C->>F: POST stream=true
+    F->>F: 鉴权 + 限流/预算预占
+    F->>Ctrl: 放行（标记 streaming）
+    Ctrl->>W: stream(deployment, body)
+    Note over W: 返回 Flux（尚未发请求）
+    Ctrl->>W: subscribe(...)
+    W->>U: HTTP SSE（include_usage）
+    U-->>W: data chunk
+    W-->>Ctrl: onNext
+    Ctrl-->>C: SseEmitter.send
+    U-->>W: [DONE]
+    W-->>Ctrl: onComplete
+    Ctrl->>F: governanceService.complete(context)
+    Ctrl-->>C: 关闭 SSE
+```
 
 ### 3.5 计量与日志（REQ-1.5）
 

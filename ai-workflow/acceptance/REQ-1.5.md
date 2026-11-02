@@ -48,6 +48,18 @@ psql -U aihub -d aihub -c "select request_id, key_id, model_alias, deployment_mo
 
 ## 3. 实现要点与参考答案（按需阅读）
 
+### 3.0 先看懂计量与日志
+
+```mermaid
+flowchart LR
+    A["上游响应"] --> B["OpenAiProtocolAdapter.extractUsage"]
+    B --> C["YamlPricingCatalog：按 deployment_model 查价"]
+    C --> D["ModelPrice.costOf（BigDecimal，每 1M tokens）"]
+    D --> E["CallLogManager.addSpend：spend = spend + ?（原子）"]
+    D --> F["CallLogManager.record：有界线程池异步写 call_logs"]
+    F --> G["成功/失败都留痕；失败 cost=0"]
+```
+
 ### 3.1 三条关键实现要点
 
 1. 计量在 core：成功与失败都生成 `CallLogBO`，日志异步落库，spend 同步原子累加。

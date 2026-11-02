@@ -45,6 +45,24 @@ curl "http://localhost:18080/key/info?key=<虚拟 Key>" \
 
 ## 3. 实现要点与参考答案（按需阅读）
 
+### 3.0 先看懂限流与预算
+
+```mermaid
+flowchart TD
+    A["请求进入"] --> B["AuthFilter：KeyAuthDTO（rpm/tpm/maxBudget/budgetDuration）"]
+    B --> C["GatewayGovernanceFilter.reserve"]
+    C --> D["RPM：Redis ZSET 滑动窗口（key+model，60s）"]
+    D -->|"超限"| E["429 rate_limit_error"]
+    D --> F["TPM：预占 输入估算 + max_tokens"]
+    F -->|"超限"| E
+    F --> G["预算：预占 estimatedCost（micro）"]
+    G -->|"超限"| H["400 budget_exceeded"]
+    G --> I["放行 → 业务调用"]
+    I --> J["响应后：按实际 usage/cost 结算"]
+    J --> K["TPM 替换预占；预算释放预占并计入实际"]
+    I -->|"失败"| L["释放预占；call_logs 记 error_type"]
+```
+
 ### 3.1 三条关键实现要点
 
 1. 限流在请求路径：rpm/tpm 用 Redis ZSET + Lua 原子滑动窗口，按 `key + model` 维度，窗口 60s。

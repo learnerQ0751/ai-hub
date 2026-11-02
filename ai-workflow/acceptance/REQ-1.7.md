@@ -41,6 +41,49 @@ mvn -pl ai-hub-integration,ai-hub-tests -am test -Dtest='*Streaming*,*Stream*'
 
 ## 3. 实现要点与参考答案（按需阅读）
 
+### 3.0 先看懂流式（"订阅"是什么）
+
+**一句话**：流式请求有两个数据流——上游把 token 一块块发给网关（Flux），网关再一块块转发给客户端（SseEmitter）。"订阅"就是消费者注册回调、开始接收数据。
+
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant Ctrl as Controller
+    participant W as WebClient
+    participant U as 上游 LLM
+    C->>Ctrl: POST stream=true
+    Ctrl->>W: stream(deployment, body)
+    Note over W: 返回 Flux（尚未发请求）
+    Ctrl->>W: subscribe(onNext/onError/onComplete)
+    W->>U: HTTP SSE
+    U-->>W: data: chunk1
+    W-->>Ctrl: onNext(chunk1)
+    Ctrl-->>C: SseEmitter.send(chunk1)
+    U-->>W: data: 末块（usage）
+    W-->>Ctrl: onNext(末块)
+    Ctrl-->>C: data: 末块
+    U-->>W: data: [DONE]
+    W-->>Ctrl: onComplete
+    Ctrl->>Ctrl: 读取 usage
+    Ctrl-->>C: 关闭 SSE
+```
+
+- **不订阅就不会发请求**：`Flux` 是冷流，`subscribe` 才触发 WebClient 真正调用上游。
+- **三个回调**：`onNext`（来一块转一块）、`onError`（写 error 事件）、`onComplete`（拿末块 usage 结算）。
+- **两段订阅**：Controller 订阅上游 Flux；客户端通过 HTTP 长连接订阅网关 SseEmitter。
+- **为什么能断开释放**：客户端断开 → SseEmitter 回调 → `dispose()` → 上游 HTTP 请求取消。
+
+**具体走查**：
+
+| 步骤 | 发生了什么 | 结果 |
+|---|---|---|
+| 1 | 请求 `stream=true`，Filter 鉴权 + 限流/预算预占 | 标记 streaming，暂不结算 |
+| 2 | Controller 调 Core，Core 用 WebClient 拿到 Flux | 此时还没发上游请求 |
+| 3 | Controller `subscribe` | 真正发上游 SSE 请求，注入 `include_usage=true` |
+| 4 | 上游逐块返回 | 每块 model 回写别名，`emitter.send()` 给客户端 |
+| 5 | 末块含 usage | 流结束后结算 cost/spend/预算，写 1 条日志 |
+| 6 | 客户端断开 | 取消上游订阅，释放连接 |
+
 ### 3.1 三条关键实现要点
 
 1. 流式用 `SseEmitter` 逐块透传，绝不缓冲整包；请求注入 `stream_options.include_usage=true` 以拿到末块 usage。
