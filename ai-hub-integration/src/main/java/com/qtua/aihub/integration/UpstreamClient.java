@@ -1,7 +1,7 @@
 package com.qtua.aihub.integration;
 
+import com.qtua.aihub.common.catalog.ModelDeployment;
 import com.qtua.aihub.common.exception.ChatCompletionException;
-import com.qtua.aihub.common.config.GatewayProperties.Deployment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -37,15 +37,15 @@ public class UpstreamClient {
     /**
      * 调用上游 /chat/completions。
      *
-     * @param deployment  部署配置
+     * @param deployment  模型部署
      * @param requestBody 已改写的请求 JSON
      * @return 上游原始响应 JSON
      */
-    public String chat(Deployment deployment, String requestBody) {
+    public String chat(ModelDeployment deployment, String requestBody) {
         try {
             String response = restClient.post()
-                    .uri(normalize(deployment.getApiBase()) + CHAT_COMPLETIONS_PATH)
-                    .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + deployment.getApiKey())
+                    .uri(normalize(deployment.apiBase()) + CHAT_COMPLETIONS_PATH)
+                    .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + deployment.apiKey())
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestBody)
                     .retrieve()

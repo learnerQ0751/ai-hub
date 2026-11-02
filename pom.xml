@@ -36,6 +36,7 @@
         <langchain4j.version>1.22.0</langchain4j.version>
         <langchain4j-beta.version>1.22.0-beta32</langchain4j-beta.version>
         <langchain4j-reactor.version>1.1.0-beta7</langchain4j-reactor.version>
+        <mybatis-spring-boot.version>4.1.0</mybatis-spring-boot.version>
     </properties>
 
     <dependencyManagement>

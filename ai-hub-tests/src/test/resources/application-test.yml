@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:aihub;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  flyway:
+    enabled: false
+  sql:
+    init:
+      mode: always
+      schema-locations:
+        - classpath:db/h2-jsonb-domain.sql
+        - classpath:db/api-keys-schema.sql

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.ApiKeyMapper">
+
+    <resultMap id="ApiKeyResultMap" type="com.qtua.aihub.dal.model.ApiKeyDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="key_hash" property="keyHash" jdbcType="VARCHAR"/>
+        <result column="models" property="models" jdbcType="VARCHAR"/>
+        <result column="spend" property="spend" jdbcType="NUMERIC"/>
+        <result column="max_budget" property="maxBudget" jdbcType="NUMERIC"/>
+        <result column="rpm_limit" property="rpmLimit" jdbcType="INTEGER"/>
+        <result column="tpm_limit" property="tpmLimit" jdbcType="INTEGER"/>
+        <result column="expires_at" property="expiresAt" jdbcType="TIMESTAMP"/>
+        <result column="blocked" property="blocked" jdbcType="BOOLEAN"/>
+        <result column="metadata" property="metadata" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.qtua.aihub.dal.model.ApiKeyDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO api_keys
+            (key_hash, models, spend, max_budget, rpm_limit, tpm_limit,
+             expires_at, blocked, metadata, created_at)
+        VALUES
+            (#{keyHash,jdbcType=VARCHAR}, CAST(#{models,jdbcType=VARCHAR} AS JSONB),
+             #{spend,jdbcType=NUMERIC}, #{maxBudget,jdbcType=NUMERIC},
+             #{rpmLimit,jdbcType=INTEGER}, #{tpmLimit,jdbcType=INTEGER},
+             #{expiresAt,jdbcType=TIMESTAMP}, #{blocked,jdbcType=BOOLEAN},
+             CAST(#{metadata,jdbcType=VARCHAR} AS JSONB),
+             #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="selectByKeyHash" resultMap="ApiKeyResultMap">
+        SELECT id, key_hash, CAST(models AS VARCHAR) AS models, spend, max_budget,
+               rpm_limit, tpm_limit, expires_at, blocked,
+               CAST(metadata AS VARCHAR) AS metadata, created_at
+        FROM api_keys
+        WHERE key_hash = #{keyHash,jdbcType=VARCHAR}
+    </select>
+
+    <update id="updateBlocked">
+        UPDATE api_keys
+        SET blocked = #{blocked,jdbcType=BOOLEAN}
+        WHERE key_hash = #{keyHash,jdbcType=VARCHAR}
+    </update>
+</mapper>

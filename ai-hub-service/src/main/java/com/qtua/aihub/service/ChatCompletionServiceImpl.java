@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.api.ChatCompletionService;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
 import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
-import com.qtua.aihub.common.config.GatewayProperties;
-import com.qtua.aihub.common.config.GatewayProperties.Deployment;
+import com.qtua.aihub.common.catalog.ModelCatalog;
+import com.qtua.aihub.common.catalog.ModelDeployment;
 import com.qtua.aihub.common.constant.JsonFields;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.core.ChatCompletionCore;
@@ -23,26 +23,26 @@ import java.util.List;
  * 聊天补全应用服务实现。
  *
  * <p>负责请求解析、参数校验、DTO↔BO 转换与 core 编排；真正的路由/上游调用由 core 层完成。
- * 本类不保存请求级状态，可被多实例安全使用。</p>
+ * 模型目录通过 {@link ModelCatalog} 端口获取，不直接依赖配置类。本类不保存请求级状态，可被多实例安全使用。</p>
  */
 @Service
 public class ChatCompletionServiceImpl implements ChatCompletionService {
 
-    private final GatewayProperties properties;
+    private final ModelCatalog modelCatalog;
     private final ChatCompletionCore chatCompletionCore;
     private final ObjectMapper objectMapper;
 
     /**
      * 构造应用服务。
      *
-     * @param properties         网关配置
+     * @param modelCatalog       模型目录
      * @param chatCompletionCore 核心编排器
      * @param objectMapper       JSON 解析器
      */
-    public ChatCompletionServiceImpl(GatewayProperties properties,
+    public ChatCompletionServiceImpl(ModelCatalog modelCatalog,
                                      ChatCompletionCore chatCompletionCore,
                                      ObjectMapper objectMapper) {
-        this.properties = properties;
+        this.modelCatalog = modelCatalog;
         this.chatCompletionCore = chatCompletionCore;
         this.objectMapper = objectMapper;
     }
@@ -55,17 +55,21 @@ public class ChatCompletionServiceImpl implements ChatCompletionService {
      */
     @Override
     public ChatCompletionResDTO chat(ChatCompletionReqDTO reqDTO) {
+        //请求数据解析
         String requestBody = reqDTO.getRawBody();
         JsonNode root = parse(requestBody);
+        //从请求信息中拿取请求的模型别名
         String alias = requireModel(root);
+        //临时校验：拒绝流式输出
         rejectStreaming(root);
+        //校验空prompt请求
         requireMessages(root);
-        List<Deployment> deployments = properties.getModelList().get(alias);
-        if (ObjectUtils.isEmpty(deployments)) {
-            throw ChatCompletionException.invalidModel(alias);
-        }
-        ChatCompletionResultBO result = chatCompletionCore.chat(
-                new ChatCompletionBO(alias, deployments, requestBody));
+        //获取该别名下的模型实例
+        List<ModelDeployment> deployments = modelCatalog.findDeployments(alias);
+        // 授权与未知模型判断都下沉 core：虚拟 Key 越权优先返回 403。
+        ChatCompletionBO bo = new ChatCompletionBO(alias, deployments, requestBody,
+                reqDTO.getAuth().models(), reqDTO.getAuth().masterKey());
+        ChatCompletionResultBO result = chatCompletionCore.chat(bo);
         return new ChatCompletionResDTO(result.getResponseBody());
     }
 

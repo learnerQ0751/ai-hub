@@ -7,6 +7,7 @@ import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.start.config.JacksonConfig;
 import com.qtua.aihub.api.ChatCompletionService;
+import com.qtua.aihub.api.KeyService;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
 import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
 import com.qtua.aihub.AiHubApplication;
@@ -46,6 +47,9 @@ class ChatCompletionControllerTest {
 
     @MockitoBean
     private ChatCompletionService chatCompletionService;
+
+    @MockitoBean
+    private KeyService keyService;
 
     @MockitoBean
     private GatewayProperties gatewayProperties;
@@ -113,5 +117,19 @@ class ChatCompletionControllerTest {
                         .content(CHAT_BODY))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error.type").value("auth_error"));
+    }
+
+    @Test
+    void returns_403_when_model_is_not_allowed_for_key() throws Exception {
+        when(chatCompletionService.chat(any(ChatCompletionReqDTO.class)))
+                .thenThrow(ChatCompletionException.keyModelAccessDenied("chat-default"));
+
+        mockMvc.perform(post("/v1/chat/completions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(CHAT_BODY))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.type").value("key_model_access_denied"))
+                .andExpect(jsonPath("$.error.param").value("model"))
+                .andExpect(jsonPath("$.error.code").value("403"));
     }
 }

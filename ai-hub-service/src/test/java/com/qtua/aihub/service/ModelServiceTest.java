@@ -1,13 +1,10 @@
 package com.qtua.aihub.service;
 
 import com.qtua.aihub.api.model.res.ModelListResDTO;
-import com.qtua.aihub.common.config.GatewayProperties;
-import com.qtua.aihub.common.config.GatewayProperties.Deployment;
+import com.qtua.aihub.common.catalog.ModelCatalog;
 import org.junit.jupiter.api.Test;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.LinkedHashSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -17,13 +14,11 @@ class ModelServiceTest {
 
     @Test
     void lists_aliases_in_configuration_order() {
-        GatewayProperties properties = mock(GatewayProperties.class);
-        Map<String, List<Deployment>> modelList = new LinkedHashMap<>();
-        modelList.put("chat", List.of(deployment("deepseek-chat")));
-        modelList.put("reasoner", List.of(deployment("deepseek-reasoner")));
-        when(properties.getModelList()).thenReturn(modelList);
+        ModelCatalog modelCatalog = mock(ModelCatalog.class);
+        when(modelCatalog.listAliases()).thenReturn(
+                new LinkedHashSet<>(java.util.List.of("chat", "reasoner")));
 
-        ModelListResDTO response = new ModelServiceImpl(properties).listModels();
+        ModelListResDTO response = new ModelServiceImpl(modelCatalog).listModels();
 
         assertThat(response.data())
                 .extracting(ModelListResDTO.ModelInfo::id)
@@ -32,22 +27,13 @@ class ModelServiceTest {
 
     @Test
     void exposes_only_aliases_not_deployment_details() {
-        GatewayProperties properties = mock(GatewayProperties.class);
-        Map<String, List<Deployment>> modelList = Map.of("chat", List.of(deployment("deepseek-chat")));
-        when(properties.getModelList()).thenReturn(modelList);
+        ModelCatalog modelCatalog = mock(ModelCatalog.class);
+        when(modelCatalog.listAliases()).thenReturn(new LinkedHashSet<>(java.util.List.of("chat")));
 
-        ModelListResDTO response = new ModelServiceImpl(properties).listModels();
+        ModelListResDTO response = new ModelServiceImpl(modelCatalog).listModels();
 
         assertThat(response.data())
                 .extracting(ModelListResDTO.ModelInfo::id)
                 .containsExactly("chat");
-    }
-
-    private Deployment deployment(String model) {
-        Deployment deployment = new Deployment();
-        deployment.setApiBase("https://example.com");
-        deployment.setApiKey("test-key");
-        deployment.setModel(model);
-        return deployment;
     }
 }

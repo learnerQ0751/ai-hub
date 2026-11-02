@@ -83,6 +83,72 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * 虚拟 Key 无权访问该模型（403）。
+     *
+     * <p>错误体对齐 LiteLLM：type=key_model_access_denied、param=model、code=403。</p>
+     *
+     * @param model 请求中的模型别名
+     * @return 业务异常
+     */
+    public static ChatCompletionException keyModelAccessDenied(String model) {
+        String message = "The requested model '" + model + "' is not available for this API key, "
+                + "or the model name is invalid. Check the models available to you and try again.";
+        return new ChatCompletionException(HttpStatus.FORBIDDEN, message,
+                "key_model_access_denied", "model", "403", null);
+    }
+
+    /**
+     * 虚拟 Key 不存在或已失效（401）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException invalidApiKey() {
+        return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
+                "Authentication Error, invalid API key", "auth_error", null, "401", null);
+    }
+
+    /**
+     * 虚拟 Key 已封禁（401）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException blockedApiKey() {
+        return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
+                "Authentication Error, Key is blocked. Update via `/key/unblock` if you're an admin.",
+                "auth_error", null, "401", null);
+    }
+
+    /**
+     * 虚拟 Key 已过期（401）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException expiredApiKey() {
+        return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
+                "Authentication Error, Key is expired.", "auth_error", null, "401", null);
+    }
+
+    /**
+     * 管理接口要求 master key（401）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException masterKeyRequired() {
+        return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
+                "Authentication Error, master key required", "auth_error", null, "401", null);
+    }
+
+    /**
+     * 查询/封禁的 Key 不存在（404）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException apiKeyNotFound() {
+        return new ChatCompletionException(HttpStatus.NOT_FOUND,
+                "API key not found", "not_found_error", "key", "404", null);
+    }
+
+    /**
      * 网关内部错误（500）。
      *
      * @param message 错误描述

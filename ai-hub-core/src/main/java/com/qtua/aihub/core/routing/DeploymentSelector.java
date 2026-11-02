@@ -1,6 +1,6 @@
 package com.qtua.aihub.core.routing;
 
-import com.qtua.aihub.common.config.GatewayProperties.Deployment;
+import com.qtua.aihub.common.catalog.ModelDeployment;
 
 import java.util.List;
 
@@ -18,5 +18,5 @@ public interface DeploymentSelector {
      * @param deployments 部署列表（非空）
      * @return 选中的部署
      */
-    Deployment select(String alias, List<Deployment> deployments);
+    ModelDeployment select(String alias, List<ModelDeployment> deployments);
 }

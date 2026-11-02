@@ -43,5 +43,10 @@
             <property name="ignoreNumbers" value="-1,0,1,2"/>
             <property name="ignoreHashCodeMethod" value="true"/>
         </module>
+        <!-- 持久层统一使用 MyBatis（PROJECT.md 技术栈约束）；禁止替代数据访问框架 -->
+        <module name="IllegalImport">
+            <property name="illegalPkgs"
+                      value="org.springframework.jdbc,jakarta.persistence,org.hibernate"/>
+        </module>
     </module>
 </module>

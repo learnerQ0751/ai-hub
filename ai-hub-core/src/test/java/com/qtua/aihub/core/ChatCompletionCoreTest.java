@@ -1,6 +1,6 @@
 package com.qtua.aihub.core;
 
-import com.qtua.aihub.common.config.GatewayProperties.Deployment;
+import com.qtua.aihub.common.catalog.ModelDeployment;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.core.routing.DeploymentSelector;
 import com.qtua.aihub.integration.UpstreamClient;
@@ -31,7 +31,7 @@ class ChatCompletionCoreTest {
     private static final String FINAL_RESPONSE =
             "{\"id\":\"x\",\"object\":\"chat.completion\",\"model\":\"chat\",\"choices\":[]}";
 
-    private Deployment deployment;
+    private ModelDeployment deployment;
     private DeploymentSelector selector;
     private UpstreamClient upstreamClient;
     private OpenAiProtocolAdapter protocolAdapter;
@@ -39,10 +39,8 @@ class ChatCompletionCoreTest {
 
     @BeforeEach
     void setUp() {
-        deployment = new Deployment();
-        deployment.setApiBase("https://example.com");
-        deployment.setApiKey("test-key");
-        deployment.setModel("deepseek-flash");
+        deployment = new ModelDeployment("chat", "https://example.com", "test-key",
+                "deepseek-flash", 1);
 
         selector = mock(DeploymentSelector.class);
         upstreamClient = mock(UpstreamClient.class);
@@ -57,7 +55,7 @@ class ChatCompletionCoreTest {
 
     @Test
     void orchestrates_routing_protocol_and_upstream_call() {
-        ChatCompletionBO bo = new ChatCompletionBO("chat", List.of(deployment), REQUEST_BODY);
+        ChatCompletionBO bo = masterBO("chat", List.of(deployment));
 
         ChatCompletionResultBO result = core.chat(bo);
 
@@ -69,10 +67,58 @@ class ChatCompletionCoreTest {
     }
 
     @Test
+    void allows_model_in_virtual_key_whitelist() {
+        ChatCompletionBO bo = virtualKeyBO("chat", List.of(deployment), List.of("chat"));
+
+        ChatCompletionResultBO result = core.chat(bo);
+
+        assertThat(result.getResponseBody()).isEqualTo(FINAL_RESPONSE);
+    }
+
+    @Test
+    void rejects_model_outside_virtual_key_whitelist() {
+        ChatCompletionBO bo = virtualKeyBO("chat", List.of(deployment), List.of("reasoner"));
+
+        assertThatThrownBy(() -> core.chat(bo))
+                .isInstanceOf(ChatCompletionException.class)
+                .satisfies(ex -> {
+                    ChatCompletionException exception = (ChatCompletionException) ex;
+                    assertThat(exception.getStatus().value()).isEqualTo(403);
+                    assertThat(exception.getType()).isEqualTo("key_model_access_denied");
+                    assertThat(exception.getParam()).isEqualTo("model");
+                    assertThat(exception.getCode()).isEqualTo("403");
+                });
+    }
+
+    @Test
+    void rejects_unknown_model_for_master_key() {
+        ChatCompletionBO bo = masterBO("no-such-model", List.of());
+
+        assertThatThrownBy(() -> core.chat(bo))
+                .isInstanceOf(ChatCompletionException.class)
+                .satisfies(ex -> {
+                    ChatCompletionException exception = (ChatCompletionException) ex;
+                    assertThat(exception.getStatus().value()).isEqualTo(400);
+                    assertThat(exception.getParam()).isEqualTo("model");
+                });
+    }
+
+    @Test
+    void denies_before_unknown_model_for_virtual_key() {
+        // 不在白名单时优先 403，避免通过 400/403 差异探测模型目录。
+        ChatCompletionBO bo = virtualKeyBO("no-such-model", List.of(), List.of("chat"));
+
+        assertThatThrownBy(() -> core.chat(bo))
+                .isInstanceOf(ChatCompletionException.class)
+                .satisfies(ex -> assertThat(((ChatCompletionException) ex).getType())
+                        .isEqualTo("key_model_access_denied"));
+    }
+
+    @Test
     void propagates_upstream_error() {
         when(upstreamClient.chat(eq(deployment), anyString()))
                 .thenThrow(ChatCompletionException.upstreamTimeout(new RuntimeException("timeout")));
-        ChatCompletionBO bo = new ChatCompletionBO("chat", List.of(deployment), REQUEST_BODY);
+        ChatCompletionBO bo = masterBO("chat", List.of(deployment));
 
         assertThatThrownBy(() -> core.chat(bo))
                 .isInstanceOf(ChatCompletionException.class)
@@ -84,11 +130,20 @@ class ChatCompletionCoreTest {
     void propagates_protocol_error() {
         when(protocolAdapter.rewriteResponseModel(UPSTREAM_RESPONSE, "chat"))
                 .thenThrow(ChatCompletionException.upstreamError("bad json", null));
-        ChatCompletionBO bo = new ChatCompletionBO("chat", List.of(deployment), REQUEST_BODY);
+        ChatCompletionBO bo = masterBO("chat", List.of(deployment));
 
         assertThatThrownBy(() -> core.chat(bo))
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getType())
                         .isEqualTo("upstream_error"));
+    }
+
+    private ChatCompletionBO masterBO(String alias, List<ModelDeployment> deployments) {
+        return new ChatCompletionBO(alias, deployments, REQUEST_BODY, List.of(), true);
+    }
+
+    private ChatCompletionBO virtualKeyBO(String alias, List<ModelDeployment> deployments,
+                                         List<String> allowedModels) {
+        return new ChatCompletionBO(alias, deployments, REQUEST_BODY, allowedModels, false);
     }
 }

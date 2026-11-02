@@ -1,7 +1,7 @@
 # ai-hub 本地依赖：Redis（共享状态/限流/预算/锁）+ PostgreSQL（Key/日志/预算）
 services:
   redis:
-    image: redis:7.4-alpine
+    image: redis:7.2
     container_name: ai-hub-redis
     command: ["redis-server", "--appendonly", "yes"]
     ports:
@@ -10,7 +10,7 @@ services:
       - redis-data:/data
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16
     container_name: ai-hub-postgres
     environment:
       POSTGRES_DB: aihub

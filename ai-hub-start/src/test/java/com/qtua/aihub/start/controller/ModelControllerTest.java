@@ -5,6 +5,7 @@ import com.qtua.aihub.start.filter.AuthFilter;
 import com.qtua.aihub.start.filter.RequestIdFilter;
 import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.start.config.JacksonConfig;
+import com.qtua.aihub.api.KeyService;
 import com.qtua.aihub.api.ModelService;
 import com.qtua.aihub.api.model.res.ModelListResDTO;
 import com.qtua.aihub.AiHubApplication;
@@ -35,6 +36,9 @@ class ModelControllerTest {
 
     @MockitoBean
     private ModelService modelService;
+
+    @MockitoBean
+    private KeyService keyService;
 
     @MockitoBean
     private GatewayProperties gatewayProperties;

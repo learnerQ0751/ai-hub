@@ -1,7 +1,7 @@
 package com.qtua.aihub.integration;
 
+import com.qtua.aihub.common.catalog.ModelDeployment;
 import com.qtua.aihub.common.exception.ChatCompletionException;
-import com.qtua.aihub.common.config.GatewayProperties.Deployment;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -67,11 +67,7 @@ class UpstreamClientTest {
                         .isEqualTo(HttpStatus.BAD_GATEWAY.value()));
     }
 
-    private Deployment deployment(String baseUrl) {
-        Deployment deployment = new Deployment();
-        deployment.setApiBase(baseUrl);
-        deployment.setApiKey("test-key");
-        deployment.setModel("deepseek-chat");
-        return deployment;
+    private ModelDeployment deployment(String baseUrl) {
+        return new ModelDeployment("chat", baseUrl, "test-key", "deepseek-chat", 1);
     }
 }

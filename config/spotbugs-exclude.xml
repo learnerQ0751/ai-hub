@@ -36,6 +36,23 @@
         <Class name="com.qtua.aihub.core.routing.WeightedRandomSelector"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.ApiKeyManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.KeyServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.start.config.MasterKeyStartupValidator"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <!-- metadata 允许 null 值，构造器中已用 unmodifiableMap 包装 -->
+    <Match>
+        <Class name="com.qtua.aihub.manager.model.ApiKeyBO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
     <!-- 响应 DTO：List 已在紧凑构造器中 List.copyOf 防御性拷贝 -->
     <Match>
         <Class name="com.qtua.aihub.api.model.res.ModelListResDTO"/>

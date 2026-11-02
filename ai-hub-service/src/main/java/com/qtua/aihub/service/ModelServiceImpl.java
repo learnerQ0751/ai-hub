@@ -2,7 +2,7 @@ package com.qtua.aihub.service;
 
 import com.qtua.aihub.api.ModelService;
 import com.qtua.aihub.api.model.res.ModelListResDTO;
-import com.qtua.aihub.common.config.GatewayProperties;
+import com.qtua.aihub.common.catalog.ModelCatalog;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,20 +10,20 @@ import java.util.List;
 /**
  * 模型查询服务实现。
  *
- * <p>只读取配置，不接触上游；返回顺序与 YAML 配置顺序一致。</p>
+ * <p>只读取模型目录，不接触上游；返回顺序与目录源顺序一致。</p>
  */
 @Service
 public class ModelServiceImpl implements ModelService {
 
-    private final GatewayProperties properties;
+    private final ModelCatalog modelCatalog;
 
     /**
      * 构造服务。
      *
-     * @param properties 网关配置
+     * @param modelCatalog 模型目录
      */
-    public ModelServiceImpl(GatewayProperties properties) {
-        this.properties = properties;
+    public ModelServiceImpl(ModelCatalog modelCatalog) {
+        this.modelCatalog = modelCatalog;
     }
 
     /**
@@ -33,6 +33,6 @@ public class ModelServiceImpl implements ModelService {
      */
     @Override
     public ModelListResDTO listModels() {
-        return ModelListResDTO.of(List.copyOf(properties.getModelList().keySet()));
+        return ModelListResDTO.of(List.copyOf(modelCatalog.listAliases()));
     }
 }

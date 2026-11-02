@@ -1,8 +1,7 @@
 package com.qtua.aihub.core.routing;
 
-import com.qtua.aihub.common.config.GatewayProperties.Deployment;
+import com.qtua.aihub.common.catalog.ModelDeployment;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 import java.util.Random;
@@ -36,25 +35,28 @@ public class WeightedRandomSelector implements DeploymentSelector {
     }
 
     /**
-     * 按 rpm/tpm 权重随机选择一个部署。
+     * 按部署权重随机选择一个部署。
+     *
+     * <p>权重在 {@code YamlModelCatalog} 映射时已按 rpm/tpm 规则归一化；
+     * 此处只做兜底，保证非正数不会导致选择异常。</p>
      *
      * @param alias       模型别名（当前不参与权重计算，保留扩展点）
      * @param deployments 部署列表
      * @return 选中的部署
      */
     @Override
-    public Deployment select(String alias, List<Deployment> deployments) {
+    public ModelDeployment select(String alias, List<ModelDeployment> deployments) {
         if (deployments.size() == 1) {
             return deployments.get(0);
         }
         long totalWeight = 0;
-        for (Deployment deployment : deployments) {
+        for (ModelDeployment deployment : deployments) {
             totalWeight += weightOf(deployment);
         }
         // 加权随机：票号落在哪个累计权重区间，就选择哪个部署。
         long ticket = random.nextLong(totalWeight);
         long cumulative = 0;
-        for (Deployment deployment : deployments) {
+        for (ModelDeployment deployment : deployments) {
             cumulative += weightOf(deployment);
             if (ticket < cumulative) {
                 return deployment;
@@ -63,23 +65,7 @@ public class WeightedRandomSelector implements DeploymentSelector {
         return deployments.get(deployments.size() - 1);
     }
 
-    /**
-     * 权重规则：优先 rpm，其次 tpm，都没有则为 1；非正数回退 1。
-     *
-     * @param deployment 部署
-     * @return 有效权重
-     */
-    private static long weightOf(Deployment deployment) {
-        if (!ObjectUtils.isEmpty(deployment.getRpm())) {
-            return validWeight(deployment.getRpm());
-        }
-        if (!ObjectUtils.isEmpty(deployment.getTpm())) {
-            return validWeight(deployment.getTpm());
-        }
-        return DEFAULT_WEIGHT;
-    }
-
-    private static long validWeight(Integer weight) {
-        return weight > 0 ? weight : DEFAULT_WEIGHT;
+    private static long weightOf(ModelDeployment deployment) {
+        return deployment.weight() > 0 ? deployment.weight() : DEFAULT_WEIGHT;
     }
 }
