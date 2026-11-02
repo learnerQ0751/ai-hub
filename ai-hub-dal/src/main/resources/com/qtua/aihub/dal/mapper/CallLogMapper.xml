@@ -18,6 +18,9 @@
         <result column="error_type" property="errorType" jdbcType="VARCHAR"/>
         <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="retry_count" property="retryCount" jdbcType="INTEGER"/>
+        <result column="fallback_used" property="fallbackUsed" jdbcType="BOOLEAN"/>
+        <result column="served_alias" property="servedAlias" jdbcType="VARCHAR"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.qtua.aihub.dal.model.CallLogDO"
@@ -25,7 +28,8 @@
         INSERT INTO call_logs
             (request_id, key_id, model_alias, deployment_model,
              prompt_tokens, completion_tokens, total_tokens, cost,
-             latency_ms, status, error_type, tenant_id, created_at)
+             latency_ms, status, error_type, tenant_id, created_at,
+             retry_count, fallback_used, served_alias)
         VALUES
             (#{requestId,jdbcType=VARCHAR}, #{keyId,jdbcType=VARCHAR},
              #{modelAlias,jdbcType=VARCHAR}, #{deploymentModel,jdbcType=VARCHAR},
@@ -33,13 +37,16 @@
              #{totalTokens,jdbcType=INTEGER}, #{cost,jdbcType=NUMERIC},
              #{latencyMs,jdbcType=BIGINT}, #{status,jdbcType=INTEGER},
              #{errorType,jdbcType=VARCHAR}, #{tenantId,jdbcType=VARCHAR},
-             #{createdAt,jdbcType=TIMESTAMP})
+             #{createdAt,jdbcType=TIMESTAMP},
+             #{retryCount,jdbcType=INTEGER}, #{fallbackUsed,jdbcType=BOOLEAN},
+             #{servedAlias,jdbcType=VARCHAR})
     </insert>
 
     <select id="selectByRequestId" resultMap="CallLogResultMap">
         SELECT id, request_id, key_id, model_alias, deployment_model,
                prompt_tokens, completion_tokens, total_tokens, cost,
-               latency_ms, status, error_type, tenant_id, created_at
+               latency_ms, status, error_type, tenant_id, created_at,
+               retry_count, fallback_used, served_alias
         FROM call_logs
         WHERE request_id = #{requestId,jdbcType=VARCHAR}
         ORDER BY id DESC

@@ -1,8 +1,11 @@
 package com.qtua.aihub.core;
 
+import com.qtua.aihub.common.catalog.ModelCatalog;
 import com.qtua.aihub.common.catalog.ModelDeployment;
+import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.metering.TokenUsage;
+import com.qtua.aihub.common.resilience.DeploymentHealthStore;
 import com.qtua.aihub.core.routing.DeploymentSelector;
 import com.qtua.aihub.integration.UpstreamClient;
 import com.qtua.aihub.integration.protocol.OpenAiProtocolAdapter;
@@ -45,11 +48,15 @@ class ChatCompletionCoreTest {
     @BeforeEach
     void setUp() {
         deployment = new ModelDeployment("chat", "https://example.com", "test-key",
-                "deepseek-flash", 1);
+                "deepseek-flash", 1, 0);
         selector = mock(DeploymentSelector.class);
         upstreamClient = mock(UpstreamClient.class);
         protocolAdapter = mock(OpenAiProtocolAdapter.class);
-        core = new ChatCompletionCore(selector, upstreamClient, protocolAdapter);
+        ModelCatalog modelCatalog = mock(ModelCatalog.class);
+        DeploymentHealthStore healthStore = mock(DeploymentHealthStore.class);
+        when(modelCatalog.findFallbacks("chat")).thenReturn(List.of());
+        core = new ChatCompletionCore(selector, upstreamClient, protocolAdapter,
+                modelCatalog, healthStore, new GatewayProperties());
 
         when(selector.select(eq("chat"), eq(List.of(deployment)))).thenReturn(deployment);
         when(protocolAdapter.rewriteRequestModel(REQUEST_BODY, "deepseek-flash")).thenReturn(UPSTREAM_BODY);

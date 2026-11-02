@@ -10,7 +10,8 @@ import java.util.Objects;
  * 调用日志业务对象。
  *
  * <p>core 在成功或失败路径构造并交给 {@code CallLogManager} 异步落库；
- * 金额使用 {@link BigDecimal}，Token 用量来自上游 usage。</p>
+ * 金额使用 {@link BigDecimal}，Token 用量来自上游 usage。
+ * 容错轨迹（servedAlias / retryCount / fallbackUsed）由 REQ-1.6 引入。</p>
  *
  * @param requestId       请求追踪 ID
  * @param keyId           虚拟 Key 的 SHA-256；master 调用为 null
@@ -23,6 +24,9 @@ import java.util.Objects;
  * @param errorType       错误/限流类型；成功为 null
  * @param tenantId        租户 ID；本期为 null
  * @param createdAt       发生时间
+ * @param servedAlias     最终服务的别名；正常等于请求别名
+ * @param retryCount      本请求内失败尝试次数
+ * @param fallbackUsed    是否发生别名级 fallback
  */
 public record CallLogBO(
         String requestId,
@@ -35,7 +39,32 @@ public record CallLogBO(
         int status,
         String errorType,
         String tenantId,
-        Instant createdAt) {
+        Instant createdAt,
+        String servedAlias,
+        int retryCount,
+        boolean fallbackUsed) {
+
+    /**
+     * 兼容构造器：无容错轨迹时使用。
+     *
+     * @param requestId       请求追踪 ID
+     * @param keyId           虚拟 Key 哈希
+     * @param modelAlias      请求别名
+     * @param deploymentModel 上游模型
+     * @param usage           Token 用量
+     * @param cost            成本
+     * @param latencyMs       耗时
+     * @param status          HTTP 状态码
+     * @param errorType       错误类型
+     * @param tenantId        租户 ID
+     * @param createdAt       发生时间
+     */
+    public CallLogBO(String requestId, String keyId, String modelAlias, String deploymentModel,
+                     TokenUsage usage, BigDecimal cost, long latencyMs, int status,
+                     String errorType, String tenantId, Instant createdAt) {
+        this(requestId, keyId, modelAlias, deploymentModel, usage, cost, latencyMs, status,
+                errorType, tenantId, createdAt, modelAlias, 0, false);
+    }
 
     /**
      * 归一化可空字段，避免下游 NPE。

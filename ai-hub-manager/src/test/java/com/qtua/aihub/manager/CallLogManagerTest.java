@@ -57,6 +57,9 @@ class CallLogManagerTest {
         assertThat(stored.getLatencyMs()).isEqualTo(100L);
         assertThat(stored.getStatus()).isEqualTo(200);
         assertThat(stored.getCreatedAt()).isEqualTo(callLog.createdAt());
+        assertThat(stored.getServedAlias()).isEqualTo("chat-backup");
+        assertThat(stored.getRetryCount()).isEqualTo(2);
+        assertThat(stored.isFallbackUsed()).isTrue();
     }
 
     @Test
@@ -106,6 +109,6 @@ class CallLogManagerTest {
     private CallLogBO callLog(BigDecimal cost, int status) {
         return new CallLogBO("req-1", KEY_ID, "chat", "deepseek-chat",
                 new TokenUsage(10, 20, 30), cost, 100L, status, null, null,
-                Instant.parse("2026-11-02T00:00:00Z"));
+                Instant.parse("2026-11-02T00:00:00Z"), "chat-backup", 2, true);
     }
 }

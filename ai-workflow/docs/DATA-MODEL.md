@@ -11,7 +11,7 @@
 | 表 | 用途 | 关键关系 | 状态 | 引入需求 |
 |---|---|---|---|---|
 | api_keys | 虚拟 Key：SHA-256 哈希、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend | 1:N call_logs（key_id） | active | REQ-1.3 / REQ-1.4 |
-| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5 / REQ-1.4 |
+| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5 / REQ-1.4 / REQ-1.6 |
 
 ## 规划表（planned，仅供设计参考，不进入 STATUS）
 

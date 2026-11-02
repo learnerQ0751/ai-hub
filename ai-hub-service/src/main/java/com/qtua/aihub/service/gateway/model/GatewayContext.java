@@ -30,6 +30,9 @@ public class GatewayContext {
     private volatile GuardReservation reservation;
     private volatile TokenUsage usage = TokenUsage.ZERO;
     private volatile String deploymentModel;
+    private volatile String servedAlias;
+    private volatile int retryCount;
+    private volatile boolean fallbackUsed;
     private volatile int status;
     private volatile String errorType;
     private volatile boolean failed;
@@ -107,14 +110,43 @@ public class GatewayContext {
     }
 
     /**
-     * 业务成功回填实际用量。
+     * 业务成功回填实际用量（无容错轨迹）。
      *
      * @param usage           实际用量
      * @param deploymentModel 实际部署模型
      */
     public void complete(TokenUsage usage, String deploymentModel) {
+        complete(usage, deploymentModel, modelAlias, 0, false);
+    }
+
+    /**
+     * 业务成功回填实际用量与容错轨迹。
+     *
+     * @param usage           实际用量
+     * @param deploymentModel 实际部署模型
+     * @param servedAlias     最终服务别名
+     * @param retryCount      失败尝试次数
+     * @param fallbackUsed    是否发生别名级 fallback
+     */
+    public void complete(TokenUsage usage, String deploymentModel, String servedAlias,
+                         int retryCount, boolean fallbackUsed) {
         this.usage = usage;
         this.deploymentModel = deploymentModel;
+        this.servedAlias = servedAlias;
+        this.retryCount = retryCount;
+        this.fallbackUsed = fallbackUsed;
+    }
+
+    public String getServedAlias() {
+        return servedAlias;
+    }
+
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public boolean isFallbackUsed() {
+        return fallbackUsed;
     }
 
     public int getStatus() {

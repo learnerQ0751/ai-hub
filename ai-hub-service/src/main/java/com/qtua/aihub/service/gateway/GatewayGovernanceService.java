@@ -215,7 +215,9 @@ public class GatewayGovernanceService {
         try {
             callLogManager.record(new CallLogBO(context.getRequestId(), context.getKeyHash(),
                     context.getModelAlias(), context.getDeploymentModel(), usage, cost,
-                    latencyMs(context), status, errorType, null, Instant.now()));
+                    latencyMs(context), status, errorType, null, Instant.now(),
+                    context.getServedAlias(), context.getRetryCount(),
+                    context.isFallbackUsed()));
         } catch (RuntimeException ex) {
             // 日志失败不影响业务响应。
         }

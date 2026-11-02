@@ -65,6 +65,6 @@ class WeightedRandomSelectorTest {
     }
 
     private ModelDeployment deployment(String model, int weight) {
-        return new ModelDeployment("chat", "https://example.com", "test-key", model, weight);
+        return new ModelDeployment("chat", "https://example.com", "test-key", model, weight, 0);
     }
 }

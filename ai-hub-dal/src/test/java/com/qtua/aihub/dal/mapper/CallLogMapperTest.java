@@ -49,6 +49,9 @@ class CallLogMapperTest {
         callLog.setStatus(200);
         callLog.setTenantId("tenant-a");
         callLog.setCreatedAt(now);
+        callLog.setServedAlias("chat-backup");
+        callLog.setRetryCount(2);
+        callLog.setFallbackUsed(true);
 
         callLogMapper.insert(callLog);
 
@@ -65,6 +68,9 @@ class CallLogMapperTest {
         assertThat(stored.getStatus()).isEqualTo(200);
         assertThat(stored.getTenantId()).isEqualTo("tenant-a");
         assertThat(stored.getCreatedAt()).isEqualTo(now);
+        assertThat(stored.getServedAlias()).isEqualTo("chat-backup");
+        assertThat(stored.getRetryCount()).isEqualTo(2);
+        assertThat(stored.isFallbackUsed()).isTrue();
     }
 
     @Test

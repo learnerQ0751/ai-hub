@@ -122,6 +122,9 @@ public class CallLogManager {
         dataObject.setErrorType(callLog.errorType());
         dataObject.setTenantId(callLog.tenantId());
         dataObject.setCreatedAt(callLog.createdAt());
+        dataObject.setServedAlias(callLog.servedAlias());
+        dataObject.setRetryCount(callLog.retryCount());
+        dataObject.setFallbackUsed(callLog.fallbackUsed());
         return dataObject;
     }
 }

@@ -39,7 +39,7 @@ class ChatCompletionServiceImplTest {
         modelCatalog = mock(ModelCatalog.class);
         chatCompletionCore = mock(ChatCompletionCore.class);
         deployment = new ModelDeployment("chat-default", "https://example.com", "key",
-                "deepseek-flash", 1);
+                "deepseek-flash", 1, 0);
         when(modelCatalog.findDeployments("chat-default")).thenReturn(List.of(deployment));
         when(chatCompletionCore.chat(any())).thenReturn(new ChatCompletionResultBO(
                 RESPONSE, new TokenUsage(10, 20, 30), "deepseek-flash"));

@@ -37,6 +37,22 @@ class YamlModelCatalogTest {
     }
 
     @Test
+    void maps_priority_and_fallback_aliases() {
+        GatewayProperties properties = properties(
+                "chat", List.of(deployment("deepseek-chat", null, null)),
+                "backup", List.of(deployment("deepseek-backup", null, null)));
+        properties.getModelList().get("chat").get(0).setPriority(2);
+        properties.setFallbacks(Map.of("chat", List.of("backup")));
+
+        YamlModelCatalog catalog = new YamlModelCatalog(properties);
+
+        assertThat(catalog.findDeployments("chat").get(0).priority()).isEqualTo(2);
+        assertThat(catalog.findDeployments("chat").get(0).toString()).contains("priority=2");
+        assertThat(catalog.findFallbacks("chat")).containsExactly("backup");
+        assertThat(catalog.findFallbacks("no-such-model")).isEmpty();
+    }
+
+    @Test
     void weight_prefers_rpm_then_tpm_then_default() {
         GatewayProperties properties = properties(
                 "chat", List.of(
@@ -58,7 +74,7 @@ class YamlModelCatalogTest {
                 properties("chat", List.of(deployment("deepseek-chat", null, null))));
 
         assertThatThrownBy(() -> catalog.findDeployments("chat").add(
-                new ModelDeployment("chat", "x", "y", "z", 1)))
+                new ModelDeployment("chat", "x", "y", "z", 1, 0)))
                 .isInstanceOf(UnsupportedOperationException.class);
         assertThatThrownBy(() -> catalog.listAliases().add("x"))
                 .isInstanceOf(UnsupportedOperationException.class);

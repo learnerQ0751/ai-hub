@@ -53,21 +53,47 @@ class UpstreamClientTest {
 
         assertThatThrownBy(() -> client.chat(deployment(server.url("/").toString()), "{}"))
                 .isInstanceOf(ChatCompletionException.class)
-                .satisfies(ex -> assertThat(((ChatCompletionException) ex).getStatus().value())
-                        .isEqualTo(HttpStatus.UNAUTHORIZED.value()));
+                .satisfies(ex -> {
+                    ChatCompletionException exception = (ChatCompletionException) ex;
+                    assertThat(exception.getStatus().value())
+                            .isEqualTo(HttpStatus.UNAUTHORIZED.value());
+                    assertThat(exception.isRetryable()).isTrue();
+                });
     }
 
     @Test
-    void maps_server_error_to_upstream_error() {
+    void maps_server_error_to_retryable_upstream_error() {
         server.enqueue(new MockResponse().setResponseCode(HttpStatus.INTERNAL_SERVER_ERROR.value()));
 
         assertThatThrownBy(() -> client.chat(deployment(server.url("/").toString()), "{}"))
                 .isInstanceOf(ChatCompletionException.class)
-                .satisfies(ex -> assertThat(((ChatCompletionException) ex).getStatus().value())
-                        .isEqualTo(HttpStatus.BAD_GATEWAY.value()));
+                .satisfies(ex -> {
+                    ChatCompletionException exception = (ChatCompletionException) ex;
+                    assertThat(exception.getStatus().value())
+                            .isEqualTo(HttpStatus.BAD_GATEWAY.value());
+                    assertThat(exception.isRetryable()).isTrue();
+                });
+    }
+
+    @Test
+    void maps_429_to_retryable_error() {
+        server.enqueue(new MockResponse().setResponseCode(HttpStatus.TOO_MANY_REQUESTS.value()));
+
+        assertThatThrownBy(() -> client.chat(deployment(server.url("/").toString()), "{}"))
+                .isInstanceOf(ChatCompletionException.class)
+                .satisfies(ex -> assertThat(((ChatCompletionException) ex).isRetryable()).isTrue());
+    }
+
+    @Test
+    void maps_4xx_to_non_retryable_error() {
+        server.enqueue(new MockResponse().setResponseCode(HttpStatus.BAD_REQUEST.value()));
+
+        assertThatThrownBy(() -> client.chat(deployment(server.url("/").toString()), "{}"))
+                .isInstanceOf(ChatCompletionException.class)
+                .satisfies(ex -> assertThat(((ChatCompletionException) ex).isRetryable()).isFalse());
     }
 
     private ModelDeployment deployment(String baseUrl) {
-        return new ModelDeployment("chat", baseUrl, "test-key", "deepseek-chat", 1);
+        return new ModelDeployment("chat", baseUrl, "test-key", "deepseek-chat", 1, 0);
     }
 }

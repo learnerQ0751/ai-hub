@@ -32,6 +32,12 @@ public class CallLogDO {
     /** 租户 ID；本期未启用。 */
     private String tenantId;
     private Instant createdAt;
+    /** 本请求内失败尝试次数（REQ-1.6）。 */
+    private int retryCount;
+    /** 是否发生别名级 fallback（REQ-1.6）。 */
+    private boolean fallbackUsed;
+    /** 最终服务的别名；正常等于请求别名，fallback 时为备用别名。 */
+    private String servedAlias;
 
     public Long getId() {
         return id;
@@ -143,5 +149,29 @@ public class CallLogDO {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
+    }
+
+    public boolean isFallbackUsed() {
+        return fallbackUsed;
+    }
+
+    public void setFallbackUsed(boolean fallbackUsed) {
+        this.fallbackUsed = fallbackUsed;
+    }
+
+    public String getServedAlias() {
+        return servedAlias;
+    }
+
+    public void setServedAlias(String servedAlias) {
+        this.servedAlias = servedAlias;
     }
 }

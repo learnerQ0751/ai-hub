@@ -64,7 +64,7 @@ class GatewayGovernanceServiceTest {
                 105, RESERVED_COST, true, true);
 
         ModelDeployment deployment = new ModelDeployment("chat-default", "https://example.com",
-                "key", "deepseek-flash", 1);
+                "key", "deepseek-flash", 1, 0);
         when(modelCatalog.findDeployments("chat-default")).thenReturn(List.of(deployment));
         when(protocolAdapter.estimateTokens(eq(BODY), anyInt()))
                 .thenReturn(TokenEstimate.of(5, 100));
@@ -133,7 +133,8 @@ class GatewayGovernanceServiceTest {
         GatewayContext context = context(virtualKey());
         context.setModelAlias("chat-default");
         context.setReservation(reservation);
-        context.complete(new TokenUsage(10, 20, 30), "deepseek-flash");
+        context.complete(new TokenUsage(10, 20, 30), "deepseek-flash",
+                "chat-backup", 1, true);
 
         service.complete(context);
 
@@ -144,6 +145,9 @@ class GatewayGovernanceServiceTest {
         assertThat(log.errorType()).isNull();
         assertThat(log.deploymentModel()).isEqualTo("deepseek-flash");
         assertThat(log.cost()).isEqualByComparingTo(ACTUAL_COST);
+        assertThat(log.servedAlias()).isEqualTo("chat-backup");
+        assertThat(log.retryCount()).isEqualTo(1);
+        assertThat(log.fallbackUsed()).isTrue();
     }
 
     @Test

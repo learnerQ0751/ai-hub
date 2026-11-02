@@ -71,7 +71,7 @@ class YamlPricingCatalogTest {
         ModelCatalog catalog = mock(ModelCatalog.class);
         when(catalog.listAliases()).thenReturn(Set.of("chat"));
         when(catalog.findDeployments("chat")).thenReturn(List.of(
-                new ModelDeployment("chat", "https://example.com", "key", "deepseek-chat", 1)));
+                new ModelDeployment("chat", "https://example.com", "key", "deepseek-chat", 1, 0)));
         return catalog;
     }
 }

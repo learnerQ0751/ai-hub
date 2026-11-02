@@ -26,4 +26,12 @@ public interface ModelCatalog {
      * @return 别名集合（不可变、有序）
      */
     Set<String> listAliases();
+
+    /**
+     * 查询别名的 fallback 降级链。
+     *
+     * @param alias 模型别名
+     * @return 备用别名列表（不可变、有序）；未配置返回空列表
+     */
+    List<String> findFallbacks(String alias);
 }

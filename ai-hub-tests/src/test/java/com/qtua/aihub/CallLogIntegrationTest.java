@@ -112,6 +112,9 @@ class CallLogIntegrationTest {
         assertThat(log.getCost()).isEqualByComparingTo(CALL_COST);
         assertThat(log.getLatencyMs()).isGreaterThanOrEqualTo(0L);
         assertThat(log.getStatus()).isEqualTo(200);
+        assertThat(log.getServedAlias()).isEqualTo("chat");
+        assertThat(log.getRetryCount()).isZero();
+        assertThat(log.isFallbackUsed()).isFalse();
         assertThat(callLogMapper.countByKeyId(KeyHasher.sha256Hex(plainKey))).isEqualTo(1);
 
         assertThat(apiKeyMapper.selectByKeyHash(KeyHasher.sha256Hex(plainKey)).orElseThrow().getSpend())

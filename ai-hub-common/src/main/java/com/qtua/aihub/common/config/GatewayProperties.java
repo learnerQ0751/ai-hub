@@ -21,11 +21,17 @@ public class GatewayProperties {
 
     private static final Logger LOG = LoggerFactory.getLogger(GatewayProperties.class);
     private static final int MIN_VALID_WEIGHT = 1;
+    private static final int DEFAULT_ALLOWED_FAILS = 3;
+    private static final int DEFAULT_COOLDOWN_SECONDS = 60;
 
     /** 本地 master key 占位；为空时本地开发不校验鉴权。 */
     private String masterKey;
     /** 模型别名 → 部署列表；保持 YAML 顺序。 */
     private Map<String, List<Deployment>> modelList = new LinkedHashMap<>();
+    /** 别名 → fallback 别名链；按列表顺序降级。 */
+    private Map<String, List<String>> fallbacks = new LinkedHashMap<>();
+    /** 容错与冷却配置。 */
+    private Resilience resilience = new Resilience();
 
     public String getMasterKey() {
         return masterKey;
@@ -41,6 +47,22 @@ public class GatewayProperties {
 
     public void setModelList(Map<String, List<Deployment>> modelList) {
         this.modelList = modelList;
+    }
+
+    public Map<String, List<String>> getFallbacks() {
+        return fallbacks;
+    }
+
+    public void setFallbacks(Map<String, List<String>> fallbacks) {
+        this.fallbacks = fallbacks;
+    }
+
+    public Resilience getResilience() {
+        return resilience;
+    }
+
+    public void setResilience(Resilience resilience) {
+        this.resilience = resilience;
     }
 
     /**
@@ -113,6 +135,45 @@ public class GatewayProperties {
     }
 
     /**
+     * 容错与冷却配置。
+     *
+     * <p>默认值保守：不额外重试，连续失败 3 次冷却 60 秒。</p>
+     */
+    public static class Resilience {
+
+        /** 同一别名内的重试次数（不含首次调用）。 */
+        private int numRetries = 0;
+        /** 部署连续失败多少次后进入冷却。 */
+        private int allowedFails = DEFAULT_ALLOWED_FAILS;
+        /** 冷却时长（秒）。 */
+        private int cooldownSeconds = DEFAULT_COOLDOWN_SECONDS;
+
+        public int getNumRetries() {
+            return numRetries;
+        }
+
+        public void setNumRetries(int numRetries) {
+            this.numRetries = numRetries;
+        }
+
+        public int getAllowedFails() {
+            return allowedFails;
+        }
+
+        public void setAllowedFails(int allowedFails) {
+            this.allowedFails = allowedFails;
+        }
+
+        public int getCooldownSeconds() {
+            return cooldownSeconds;
+        }
+
+        public void setCooldownSeconds(int cooldownSeconds) {
+            this.cooldownSeconds = cooldownSeconds;
+        }
+    }
+
+    /**
      * 单个上游部署。
      */
     public static class Deployment {
@@ -127,6 +188,8 @@ public class GatewayProperties {
         private Integer rpm;
         /** 权重来源之一；与 rpm 互斥。 */
         private Integer tpm;
+        /** 主备优先级：数值越小越优先；默认 0。 */
+        private Integer priority;
 
         public String getApiBase() {
             return apiBase;
@@ -166,6 +229,14 @@ public class GatewayProperties {
 
         public void setTpm(Integer tpm) {
             this.tpm = tpm;
+        }
+
+        public Integer getPriority() {
+            return priority;
+        }
+
+        public void setPriority(Integer priority) {
+            this.priority = priority;
         }
     }
 }

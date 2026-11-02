@@ -22,6 +22,8 @@ public class UpstreamClient {
 
     private static final String CHAT_COMPLETIONS_PATH = "/chat/completions";
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final int CLIENT_ERROR_MIN = 400;
+    private static final int CLIENT_ERROR_MAX_EXCLUSIVE = 500;
 
     private final RestClient restClient;
 
@@ -55,11 +57,20 @@ public class UpstreamClient {
             }
             return response;
         } catch (RestClientResponseException ex) {
-            if (ex.getStatusCode().value() == HttpStatus.UNAUTHORIZED.value()) {
+            int upstreamStatus = ex.getStatusCode().value();
+            if (upstreamStatus == HttpStatus.UNAUTHORIZED.value()) {
                 throw ChatCompletionException.upstreamAuthError(ex);
             }
+            // 上游 429：换部署可能规避，标记可重试。
+            if (upstreamStatus == HttpStatus.TOO_MANY_REQUESTS.value()) {
+                throw ChatCompletionException.upstreamRateLimited(ex);
+            }
+            // 其余 4xx：请求自身问题，重试无意义。
+            if (upstreamStatus >= CLIENT_ERROR_MIN && upstreamStatus < CLIENT_ERROR_MAX_EXCLUSIVE) {
+                throw ChatCompletionException.upstreamClientError(upstreamStatus, ex);
+            }
             throw ChatCompletionException.upstreamError(
-                    "Upstream request failed with status " + ex.getStatusCode().value(), ex);
+                    "Upstream request failed with status " + upstreamStatus, ex);
         } catch (ResourceAccessException ex) {
             throw ChatCompletionException.upstreamTimeout(ex);
         }

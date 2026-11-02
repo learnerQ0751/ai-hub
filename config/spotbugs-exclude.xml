@@ -59,6 +59,10 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
+        <Class name="com.qtua.aihub.integration.resilience.RedisDeploymentCooldownStore"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
         <Class name="com.qtua.aihub.service.gateway.DefaultGatewayGuard"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>

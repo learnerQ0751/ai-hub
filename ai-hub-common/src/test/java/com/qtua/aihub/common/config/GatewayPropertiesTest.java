@@ -92,6 +92,29 @@ class GatewayPropertiesTest {
     }
 
     @Test
+    void binds_resilience_settings_with_defaults() {
+        runner()
+                .withPropertyValues(
+                        "gateway.resilience.num-retries=1",
+                        "gateway.resilience.allowed-fails=3",
+                        "gateway.resilience.cooldown-seconds=60")
+                .run(context -> {
+                    GatewayProperties properties = context.getBean(GatewayProperties.class);
+                    assertThat(properties.getResilience().getNumRetries()).isEqualTo(1);
+                    assertThat(properties.getResilience().getAllowedFails()).isEqualTo(3);
+                    assertThat(properties.getResilience().getCooldownSeconds()).isEqualTo(60);
+                });
+    }
+
+    @Test
+    void resilience_defaults_are_safe() {
+        GatewayProperties.Resilience resilience = new GatewayProperties.Resilience();
+        assertThat(resilience.getNumRetries()).isEqualTo(0);
+        assertThat(resilience.getAllowedFails()).isEqualTo(3);
+        assertThat(resilience.getCooldownSeconds()).isEqualTo(60);
+    }
+
+    @Test
     void fails_when_alias_partially_configures_weights() {
         runner()
                 .withPropertyValues(deploymentProperties("chat", 0))

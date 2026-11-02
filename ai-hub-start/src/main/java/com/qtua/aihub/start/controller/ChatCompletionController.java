@@ -60,7 +60,8 @@ public class ChatCompletionController {
                 new ChatCompletionReqDTO(requestBody, auth, requestId));
         GatewayContext context = (GatewayContext) servletRequest.getAttribute(GatewayContext.ATTRIBUTE);
         if (Objects.nonNull(context)) {
-            context.complete(resDTO.getUsage(), resDTO.getDeploymentModel());
+            context.complete(resDTO.getUsage(), resDTO.getDeploymentModel(),
+                    resDTO.getServedAlias(), resDTO.getRetryCount(), resDTO.isFallbackUsed());
         }
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)

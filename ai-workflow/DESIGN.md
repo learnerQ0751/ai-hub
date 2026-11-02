@@ -79,6 +79,22 @@ AuthFilter（KeyAuthDTO 携带 rpm_limit / tpm_limit / max_budget / budget_durat
    ⑥ 命中写 call_logs.error_type，供 REQ-4.x 统计
 ```
 
+### 3.6 容错：重试 / 主备 / fallback / 冷却（REQ-1.6）
+
+```text
+ChatCompletionCore.chat
+→ 别名链 = [请求别名] + gateway.fallbacks[请求别名]（去重保序）
+→ 每个别名：
+   候选 = 冷却过滤（Redis）→ 请求内失败排除 → priority 最小层 → 加权随机
+   上游调用失败且 retryable（超时/5xx/401/429）→ Redis 失败计数（达到 allowed-fails 冷却）
+   → 本次请求排除该部署 → 同别名重试（num-retries）→ 下一个 fallback 别名
+→ 成功：响应 model 回写请求别名；记录 served_alias/retry_count/fallback_used
+→ 治理层只按最终成功调用结算一次、写 1 条 call_logs
+```
+
+- 冷却状态：`{resilience}:fails:<deployment>` 与 `{resilience}:cooldown:<deployment>`；部署标识 = SHA-256(alias|upstreamModel|apiBase|apiKey)。
+- 全部部署冷却时 fail-open；Redis 故障 fail-open 并 WARN。
+
 ### 3.5 计量与日志（REQ-1.5）
 
 ```text
@@ -132,6 +148,11 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 预算金额用整数 micro 单位（1e-8 元），周期 key 带 TTL | 避免 INCRBYFLOAT 精度问题；daily/monthly 跨期自动换 key，无需定时任务 | REQ-1.4 | 2026-11-02 |
 | 限流/预算 Redis 故障默认 fail-open，可配置 fail-closed | 限流是保护而非业务正确性；避免 Redis 故障导致网关整体不可用 | REQ-1.4 | 2026-11-02 |
 | 限流/预算/计价/spend/访问日志放 `GatewayGovernanceFilter + GatewayGovernanceService`，业务 Service/Core 不感知 | 横切治理必须统一入口、接口无关；新增流式/文件接口自动复用，不复制治理逻辑 | 架构重构 | 2026-11-02 |
+| 容错编排放 `ChatCompletionCore`，冷却状态放 `integration` + Redis | 容错属于上游调用业务编排；跨实例状态必须外置（STANDARDS §2.5），core 不直接依赖 Redis | REQ-1.6 | 2026-11-02 |
+| 部署 priority 数值越小越优先；同层内加权随机 | 主备语义直观；同优先级保留负载均衡 | REQ-1.6 | 2026-11-02 |
+| 容错顺序：同别名重试/主备 → 别名级 fallback 链 | 先解决单点，再跨模型降级 | REQ-1.6 | 2026-11-02 |
+| 部署标识 = SHA-256(alias + upstreamModel + apiBase + apiKey) | 同别名主备可能模型/base 相同、仅 key 不同；不含 key 会共享冷却 | REQ-1.6 | 2026-11-02 |
+| 一次请求只写 1 条日志、只计费一次；轨迹用 retry_count/fallback_used/served_alias | 重试不重复计费，审计可还原降级路径 | REQ-1.6 | 2026-11-02 |
 | 未来物理拆分时用 HTTP 契约（OpenAI 请求/响应或内部 `ChatCommand`），当前 Service 直接调 Core | `ChatExecutor` 是假出口：绑定内部 BO、含模型部署密钥，不能作为跨服务契约；YAGNI 删除 | 架构重构 | 2026-11-02 |
 
 ## 5. 演进记录
@@ -145,6 +166,7 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 2026-11-02 | REQ-1.5 | 调用日志 + Token 计量 + 显式价格表 + spend 累计 + 失败留痕 |
 | 2026-11-02 | REQ-1.4 | Key 级 RPM/TPM 滑动窗口 + 预算预占结算 + 限流命中留痕 |
 | 2026-11-02 | 重构 | 网关治理解耦：GatewayGovernanceFilter + GatewayGovernanceService 统一入口；业务 Service 直接调 Core，不感知治理 |
+| 2026-11-02 | REQ-1.6 | 容错：同别名重试/主备 + 别名级 fallback + Redis 冷却；日志新增容错轨迹 |
 
 ## 6. 与 LiteLLM 的差异
 

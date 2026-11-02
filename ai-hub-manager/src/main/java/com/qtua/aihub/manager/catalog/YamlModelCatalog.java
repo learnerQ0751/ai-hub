@@ -24,8 +24,10 @@ import java.util.Set;
 public class YamlModelCatalog implements ModelCatalog {
 
     private static final int DEFAULT_WEIGHT = 1;
+    private static final int DEFAULT_PRIORITY = 0;
 
     private final Map<String, List<ModelDeployment>> deploymentsByAlias;
+    private final Map<String, List<String>> fallbacksByAlias;
     private final Set<String> aliases;
 
     /**
@@ -42,9 +44,14 @@ public class YamlModelCatalog implements ModelCatalog {
                                 deployment.getApiBase(),
                                 deployment.getApiKey(),
                                 deployment.getModel(),
-                                weightOf(deployment)))
+                                weightOf(deployment),
+                                priorityOf(deployment)))
                         .toList()));
+        Map<String, List<String>> fallbacks = new LinkedHashMap<>();
+        properties.getFallbacks().forEach((alias, targets) ->
+                fallbacks.put(alias, List.copyOf(targets)));
         this.deploymentsByAlias = Collections.unmodifiableMap(mapped);
+        this.fallbacksByAlias = Collections.unmodifiableMap(fallbacks);
         this.aliases = Collections.unmodifiableSet(new LinkedHashSet<>(mapped.keySet()));
     }
 
@@ -70,6 +77,17 @@ public class YamlModelCatalog implements ModelCatalog {
     }
 
     /**
+     * 查询别名的 fallback 降级链。
+     *
+     * @param alias 模型别名
+     * @return 不可变备用别名列表；未配置返回空列表
+     */
+    @Override
+    public List<String> findFallbacks(String alias) {
+        return fallbacksByAlias.getOrDefault(alias, List.of());
+    }
+
+    /**
      * 权重规则：rpm 优先，其次 tpm，都没有则为 1。
      *
      * @param deployment 配置中的部署
@@ -87,5 +105,16 @@ public class YamlModelCatalog implements ModelCatalog {
 
     private static int validWeight(Integer weight) {
         return !ObjectUtils.isEmpty(weight) && weight > 0 ? weight : DEFAULT_WEIGHT;
+    }
+
+    /**
+     * 主备优先级：未配置或负数按 0（最高优先级）处理。
+     *
+     * @param deployment 配置中的部署
+     * @return 非负优先级
+     */
+    private static int priorityOf(GatewayProperties.Deployment deployment) {
+        return !ObjectUtils.isEmpty(deployment.getPriority()) && deployment.getPriority() >= 0
+                ? deployment.getPriority() : DEFAULT_PRIORITY;
     }
 }

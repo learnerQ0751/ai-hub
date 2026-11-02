@@ -67,8 +67,9 @@ public class ChatCompletionServiceImpl implements ChatCompletionService {
         ChatCompletionBO bo = new ChatCompletionBO(alias, deployments, requestBody,
                 reqDTO.getRequestId(), reqDTO.getAuth().keyHash());
         ChatCompletionResultBO result = chatCompletionCore.chat(bo);
-        return new ChatCompletionResDTO(result.getResponseBody(),
-                result.getUsage(), result.getDeploymentModel());
+        return new ChatCompletionResDTO(result.getResponseBody(), result.getUsage(),
+                result.getDeploymentModel(), result.getServedAlias(),
+                result.getRetryCount(), result.isFallbackUsed());
     }
 
     /**
