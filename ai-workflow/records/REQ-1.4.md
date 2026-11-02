@@ -31,7 +31,7 @@
 ```text
 AuthFilter（KeyAuthDTO 携带 rpm/tpm/maxBudget/budgetDuration）
 → GatewayGovernanceFilter（pre：RPM → TPM 预占 → 预算预占；超限 429/400）
-→ Controller → ChatCompletionServiceImpl → ChatExecutor → Core（选部署/上游/usage）
+→ Controller → ChatCompletionServiceImpl → ChatCompletionCore（选部署/上游/usage）
 → Controller 回填 usage/deploymentModel → Filter（post：计价、结算、spend、call_logs）
 → 失败：ExceptionHandler 回填 status/errorType → Filter release + call_logs
 ```
@@ -80,7 +80,7 @@ regression: [REQ-1.1 聊天链路, REQ-1.2 路由, REQ-1.3 Key 管理, REQ-1.5 �
 | Redis 故障默认 fail-open + WARN，可配置 | 可用性优先；限流是保护而非业务正确性 | 2026-11-02 |
 | 限流/预算命中写 call_logs 的 `error_type` | 供 REQ-4.x 统计；不新增独立日志表 | 2026-11-02 |
 | 限流/预算/计价/spend/访问日志放 `GatewayGovernanceFilter + GatewayGovernanceService`，业务 Service/Core 不感知 | 横切治理必须统一入口、接口无关；新增流式/文件接口自动复用，不复制治理逻辑 | 2026-11-02 |
-| `ChatExecutor` 作为业务执行端口，当前本地实现，未来可替换 HTTP | 不引入 Dubbo/Nacos；保留物理拆分出口 | 2026-11-02 |
+| 未来物理拆分用 HTTP 契约（OpenAI 或内部 ChatCommand），当前 Service 直接调 Core | `ChatExecutor` 绑定内部 BO/含部署密钥，是假出口；YAGNI 删除 | 2026-11-02 |
 
 ## 6. 执行摘要
 
@@ -103,7 +103,7 @@ regression: [REQ-1.1 聊天链路, REQ-1.2 路由, REQ-1.3 Key 管理, REQ-1.5 �
 
 - 做对了：TPM/预算用"预占-结算"解决输出 token 未知；micro 单位避免浮点误差；周期 key + TTL 免定时任务；fail-open 保证 Redis 故障时网关可用。
 - 踩了什么坑：Spring 多构造器需要 `@Autowired` 指定注入构造器；Testcontainers 在 Docker Hub 不可达时需禁用 Ryuk 并使用本地镜像；Windows 下被占用的 exec jar 会阻止 clean，验证时用 `-Dspring-boot.repackage.skip=true`。
-- 下次改进：流式（REQ-1.7）的 TPM 结算需放在异步完成回调（Filter 的 `onCompletion`）；请求体缓存只适用于小 JSON，大文件接口改用流式提取；预算预占的幂等/过期清理生产化时补齐；未来拆网关应用时替换 `ChatExecutor` 为 HTTP 实现即可。
+- 下次改进：流式（REQ-1.7）的 TPM 结算需放在异步完成回调（Filter 的 `onCompletion`）；请求体缓存只适用于小 JSON，大文件接口改用流式提取；预算预占的幂等/过期清理生产化时补齐；未来拆网关应用时用 HTTP 契约（OpenAI 请求/响应或内部 ChatCommand）替换本地 Core 调用。
 
 ## 8. 多实例检查
 

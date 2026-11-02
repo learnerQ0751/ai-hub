@@ -75,10 +75,6 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
-        <Class name="com.qtua.aihub.service.gateway.CoreChatExecutor"/>
-        <Bug pattern="EI_EXPOSE_REP2"/>
-    </Match>
-    <Match>
         <Class name="com.qtua.aihub.service.KeyServiceImpl"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>

@@ -59,7 +59,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
    ② 模型目录为空 → 400；RPM/TPM/预算预占（429/400）
    ③ 治理上下文放入 request attribute
 3. ChatCompletionController：原始 JSON → ChatCompletionReqDTO（携带 KeyAuthDTO）
-4. ChatCompletionServiceImpl（业务）：校验 model/stream/messages → ChatExecutor → Core
+4. ChatCompletionServiceImpl（业务）：校验 model/stream/messages → ChatCompletionCore
 5. ChatCompletionCore（纯业务）：
    加权随机选部署 → model 别名改写为上游真实名 → 调上游 → 响应 model 回写别名 → 解析 usage
 6. Controller 回填 usage/deploymentModel；Filter 按实际 usage/cost 结算 TPM/预算、累加 spend、异步写 call_logs（成功/失败都写）
@@ -83,7 +83,7 @@ AuthFilter（KeyAuthDTO 携带 rpm_limit / tpm_limit / max_budget / budget_durat
 
 ```text
 RequestIdFilter（生成 request_id）→ GatewayGovernanceFilter
-→ Controller → ChatCompletionServiceImpl → ChatExecutor → Core
+→ Controller → ChatCompletionServiceImpl → ChatCompletionCore
 → 上游响应 usage（prompt/completion/total）
 → YamlPricingCatalog（每 1M tokens 单价，缺失 WARN + cost=0）
 → ModelPrice.costOf（BigDecimal scale=8）
@@ -132,7 +132,7 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 预算金额用整数 micro 单位（1e-8 元），周期 key 带 TTL | 避免 INCRBYFLOAT 精度问题；daily/monthly 跨期自动换 key，无需定时任务 | REQ-1.4 | 2026-11-02 |
 | 限流/预算 Redis 故障默认 fail-open，可配置 fail-closed | 限流是保护而非业务正确性；避免 Redis 故障导致网关整体不可用 | REQ-1.4 | 2026-11-02 |
 | 限流/预算/计价/spend/访问日志放 `GatewayGovernanceFilter + GatewayGovernanceService`，业务 Service/Core 不感知 | 横切治理必须统一入口、接口无关；新增流式/文件接口自动复用，不复制治理逻辑 | 架构重构 | 2026-11-02 |
-| `ChatExecutor` 作为业务执行端口，当前本地实现，未来替换为 HTTP | 不引入 Dubbo/Nacos；保留物理拆分出口，网关调业务走 HTTP | 架构重构 | 2026-11-02 |
+| 未来物理拆分时用 HTTP 契约（OpenAI 请求/响应或内部 `ChatCommand`），当前 Service 直接调 Core | `ChatExecutor` 是假出口：绑定内部 BO、含模型部署密钥，不能作为跨服务契约；YAGNI 删除 | 架构重构 | 2026-11-02 |
 
 ## 5. 演进记录
 
@@ -144,7 +144,7 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 2026-10-22 | REQ-1.3 | 虚拟 Key（生成/哈希鉴权/白名单/封禁/查询） |
 | 2026-11-02 | REQ-1.5 | 调用日志 + Token 计量 + 显式价格表 + spend 累计 + 失败留痕 |
 | 2026-11-02 | REQ-1.4 | Key 级 RPM/TPM 滑动窗口 + 预算预占结算 + 限流命中留痕 |
-| 2026-11-02 | 重构 | 网关治理解耦：GatewayGovernanceFilter + GatewayGovernanceService 统一入口；业务 Service/Core 不感知；ChatExecutor 保留 HTTP 拆分出口 |
+| 2026-11-02 | 重构 | 网关治理解耦：GatewayGovernanceFilter + GatewayGovernanceService 统一入口；业务 Service 直接调 Core，不感知治理 |
 
 ## 6. 与 LiteLLM 的差异
 

@@ -8,8 +8,8 @@ import com.qtua.aihub.common.catalog.ModelCatalog;
 import com.qtua.aihub.common.catalog.ModelDeployment;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.metering.TokenUsage;
+import com.qtua.aihub.core.ChatCompletionCore;
 import com.qtua.aihub.manager.model.ChatCompletionResultBO;
-import com.qtua.aihub.service.gateway.ChatExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,20 +30,20 @@ class ChatCompletionServiceImplTest {
     private static final KeyAuthDTO MASTER = KeyAuthDTO.master();
 
     private ModelCatalog modelCatalog;
-    private ChatExecutor chatExecutor;
+    private ChatCompletionCore chatCompletionCore;
     private ChatCompletionServiceImpl service;
     private ModelDeployment deployment;
 
     @BeforeEach
     void setUp() {
         modelCatalog = mock(ModelCatalog.class);
-        chatExecutor = mock(ChatExecutor.class);
+        chatCompletionCore = mock(ChatCompletionCore.class);
         deployment = new ModelDeployment("chat-default", "https://example.com", "key",
                 "deepseek-flash", 1);
         when(modelCatalog.findDeployments("chat-default")).thenReturn(List.of(deployment));
-        when(chatExecutor.execute(any())).thenReturn(new ChatCompletionResultBO(
+        when(chatCompletionCore.chat(any())).thenReturn(new ChatCompletionResultBO(
                 RESPONSE, new TokenUsage(10, 20, 30), "deepseek-flash"));
-        service = new ChatCompletionServiceImpl(modelCatalog, chatExecutor, new ObjectMapper());
+        service = new ChatCompletionServiceImpl(modelCatalog, chatCompletionCore, new ObjectMapper());
     }
 
     @Test
@@ -64,7 +64,7 @@ class ChatCompletionServiceImplTest {
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getParam())
                         .isEqualTo("stream"));
-        verifyNoInteractions(chatExecutor);
+        verifyNoInteractions(chatCompletionCore);
     }
 
     @Test
@@ -104,6 +104,6 @@ class ChatCompletionServiceImplTest {
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getParam())
                         .isEqualTo("model"));
-        verifyNoInteractions(chatExecutor);
+        verifyNoInteractions(chatCompletionCore);
     }
 }

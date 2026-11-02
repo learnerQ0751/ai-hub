@@ -10,9 +10,9 @@ import com.qtua.aihub.common.catalog.ModelCatalog;
 import com.qtua.aihub.common.catalog.ModelDeployment;
 import com.qtua.aihub.common.constant.JsonFields;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.core.ChatCompletionCore;
 import com.qtua.aihub.manager.model.ChatCompletionBO;
 import com.qtua.aihub.manager.model.ChatCompletionResultBO;
-import com.qtua.aihub.service.gateway.ChatExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -29,21 +29,21 @@ import java.util.List;
 public class ChatCompletionServiceImpl implements ChatCompletionService {
 
     private final ModelCatalog modelCatalog;
-    private final ChatExecutor chatExecutor;
+    private final ChatCompletionCore chatCompletionCore;
     private final ObjectMapper objectMapper;
 
     /**
      * 构造业务服务。
      *
-     * @param modelCatalog 模型目录
-     * @param chatExecutor 业务执行出口
-     * @param objectMapper JSON 解析器
+     * @param modelCatalog       模型目录
+     * @param chatCompletionCore 聊天补全业务编排
+     * @param objectMapper       JSON 解析器
      */
     public ChatCompletionServiceImpl(ModelCatalog modelCatalog,
-                                     ChatExecutor chatExecutor,
+                                     ChatCompletionCore chatCompletionCore,
                                      ObjectMapper objectMapper) {
         this.modelCatalog = modelCatalog;
-        this.chatExecutor = chatExecutor;
+        this.chatCompletionCore = chatCompletionCore;
         this.objectMapper = objectMapper;
     }
 
@@ -66,7 +66,7 @@ public class ChatCompletionServiceImpl implements ChatCompletionService {
         }
         ChatCompletionBO bo = new ChatCompletionBO(alias, deployments, requestBody,
                 reqDTO.getRequestId(), reqDTO.getAuth().keyHash());
-        ChatCompletionResultBO result = chatExecutor.execute(bo);
+        ChatCompletionResultBO result = chatCompletionCore.chat(bo);
         return new ChatCompletionResDTO(result.getResponseBody(),
                 result.getUsage(), result.getDeploymentModel());
     }
