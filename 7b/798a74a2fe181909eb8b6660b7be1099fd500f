@@ -1,0 +1,44 @@
+ai-hub-service/src/main/java/com/qtua/aihub/service/ChatCompletionServiceImpl.java
+  s_062b5428c0b6a2::t_77c80fe817ed5b 13
+  s_062b5428c0b6a2::t_9fb3a57b982899 32,38-40,43,46
+  s_062b5428c0b6a2::t_0451a392325766 69
+ai-workflow/DESIGN.md
+  s_062b5428c0b6a2::t_f2b337107e93b2 86
+  s_062b5428c0b6a2::t_29b7bcfdf8a122 147
+  s_062b5428c0b6a2::t_28e6c96a8ae696 135
+  s_062b5428c0b6a2::t_8f6c410590e4e4 62
+ai-workflow/records/REQ-1.4.md
+  s_062b5428c0b6a2::t_8512bb05c20bb9 106
+  s_062b5428c0b6a2::t_4b023d0edd8198 34
+  s_062b5428c0b6a2::t_d52c064d8eba51 83
+ai-hub-service/src/test/java/com/qtua/aihub/service/ChatCompletionServiceImplTest.java
+  s_062b5428c0b6a2::t_630add88e5abe6 11
+  s_062b5428c0b6a2::t_ca288648b7aa95 33,40,44,46
+  s_062b5428c0b6a2::t_aac820e72fdf78 67,107
+ai-workflow/STATUS.md
+  s_c79baf63be364e::t_a726998854ac09 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7b798a74a2fe181909eb8b6660b7be1099fd500f",
+  "prompts": {},
+  "sessions": {
+    "s_062b5428c0b6a2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6355626e-fefc-4e54-b6b4-8e987ab87b55",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
