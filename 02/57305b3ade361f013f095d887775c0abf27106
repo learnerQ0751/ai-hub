@@ -1,0 +1,159 @@
+ai-hub-service/src/test/java/com/qtua/aihub/service/KeyServiceTest.java
+  s_062b5428c0b6a2::t_624c821fabbf07 50,110-111
+  s_062b5428c0b6a2::t_f65e5a21008b00 76
+  s_062b5428c0b6a2::t_ab643ebe879fb1 67-69
+  s_062b5428c0b6a2::t_375cd459174391 88,97,102-109
+  s_062b5428c0b6a2::t_cbd0e80acc67e0 205
+ai-hub-tests/src/test/java/com/qtua/aihub/KeyManagementIntegrationTest.java
+  s_062b5428c0b6a2::t_458336afc06d30 158
+ai-hub-tests/src/test/java/com/qtua/aihub/integration/ratelimit/RateLimitIntegrationTest.java
+  s_062b5428c0b6a2::t_636896890eae5a 1-95,111-155
+  s_062b5428c0b6a2::t_d782b9a0f10a9d 96-110
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ApiKeyBO.java
+  s_062b5428c0b6a2::t_80873a4c6ca12e 36-43,46-47,53
+  s_062b5428c0b6a2::t_a5a716bec40f79 22
+  s_062b5428c0b6a2::t_01923c824b5e61 80-83
+ai-hub-manager/src/test/java/com/qtua/aihub/manager/ApiKeyManagerTest.java
+  s_062b5428c0b6a2::t_04e6ad4bf2f2de 83
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/CallLogDO.java
+  s_062b5428c0b6a2::t_4ba3d4bec466d5 124-131
+  s_062b5428c0b6a2::t_0ed80bcb930f14 30-31
+ai-hub-tests/pom.xml
+  s_062b5428c0b6a2::t_6b78a9385835c0 71-77
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/ApiKeyManager.java
+  s_062b5428c0b6a2::t_2f27e48471dd90 57
+  s_062b5428c0b6a2::t_0c66007a64ae7a 94
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/ApiKeyMapper.xml
+  s_062b5428c0b6a2::t_25079996d8b83e 12
+  s_062b5428c0b6a2::t_0ad6da684b9732 38
+  s_062b5428c0b6a2::t_27aa5588caca1e 24,29
+ai-hub-dal/src/main/resources/db/api-keys-schema.sql
+  s_062b5428c0b6a2::t_7a6b3e8aa90843 9
+ai-hub-manager/src/test/java/com/qtua/aihub/manager/CallLogManagerTest.java
+  s_062b5428c0b6a2::t_946fc152f64b09 108
+ai-workflow/requirements/INDEX.md
+  s_062b5428c0b6a2::t_ea7a779970fc9d 12
+ai-hub-service/src/main/java/com/qtua/aihub/service/ChatCompletionServiceImpl.java
+  s_062b5428c0b6a2::t_200a3a99bb7484 72-74
+ai-workflow/records/REQ-1.4.md
+  s_062b5428c0b6a2::t_341957110a623b 1-3,5-84,89-91,95-97
+  s_062b5428c0b6a2::t_18c2739ba15e89 4
+  s_062b5428c0b6a2::t_0efad4ec9e486b 85-88,92-94,98-102
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ChatCompletionBO.java
+  s_062b5428c0b6a2::t_631a1841419751 92-107
+  s_062b5428c0b6a2::t_04620d3e169c5f 5
+  s_062b5428c0b6a2::t_e7b8cd6da1b9a3 26-29,34-44,48-50,59-62
+ai-hub-integration/src/test/java/com/qtua/aihub/integration/protocol/OpenAiProtocolAdapterTest.java
+  s_062b5428c0b6a2::t_2f5f6ebd598bd8 74-97
+  s_062b5428c0b6a2::t_b4c35f9a5651e4 6
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/KeyGenerateReqDTO.java
+  s_062b5428c0b6a2::t_cbe9da30f1728b 20-23,30
+ai-hub-service/src/main/java/com/qtua/aihub/service/KeyServiceImpl.java
+  s_062b5428c0b6a2::t_644258297e8c87 140
+  s_062b5428c0b6a2::t_e902736e480c21 46-47
+  s_062b5428c0b6a2::t_1856e7db55d00e 124-126
+  s_062b5428c0b6a2::t_16b5a33ffa7b16 68,74,78-80,82-102
+ai-hub-integration/src/test/java/com/qtua/aihub/integration/ratelimit/RedisRateLimiterTest.java
+  s_062b5428c0b6a2::t_bb9416ee8bc9e2 1-155
+ai-hub-core/src/main/java/com/qtua/aihub/core/ChatCompletionCore.java
+  s_062b5428c0b6a2::t_c1a0091b1a0211 138
+  s_062b5428c0b6a2::t_3a7812c02d30b1 173-174
+  s_062b5428c0b6a2::t_ed44dfb59761a6 22
+  s_062b5428c0b6a2::t_9435f3f9d871c9 4,6,12,31,45-46,51-57,63-65,71-72,79,87-90,97-99,103-106,113-115,119-120,122,125,127,132-137,139-154,156-172,175-229,251,255,258
+  s_062b5428c0b6a2::t_91db74e7eb98ac 155
+ai-hub-dal/src/main/resources/db/call-logs-schema.sql
+  s_062b5428c0b6a2::t_e2033fbb52f868 14
+ai-hub-common/src/main/java/com/qtua/aihub/common/constant/JsonFields.java
+  s_062b5428c0b6a2::t_0459469e3429f7 10-11
+ai-workflow/docs/DATA-MODEL.md
+  s_062b5428c0b6a2::t_aac287110975fa 13-14
+ai-hub-core/src/test/java/com/qtua/aihub/core/ChatCompletionCoreTest.java
+  s_062b5428c0b6a2::t_3bd70bfec36f68 4,6,13,28-29,34,60,73-74,76,80-81,128,162,225-267,269-324,333,338-344,346
+  s_062b5428c0b6a2::t_1dfd11daea6b3c 268
+  s_062b5428c0b6a2::t_328a11b66dc5ba 87-90
+  s_062b5428c0b6a2::t_e7e898e4c6c61a 30
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/ApiKeyDO.java
+  s_062b5428c0b6a2::t_4d1edeb9633012 22-23
+  s_062b5428c0b6a2::t_b881d28ee85853 72-79
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/ratelimit/RedisRateLimiter.java
+  s_062b5428c0b6a2::t_7372b4be8f32f9 263
+  s_062b5428c0b6a2::t_7de9e9ea9ab9da 43
+  s_062b5428c0b6a2::t_ee346896b219ad 1-6,8-11,14-42,44-145,147-173,175-178,180-195,197-200,202-240,243-262,264-282,284-305,307-335
+  s_062b5428c0b6a2::t_e383179da2497a 283
+  s_062b5428c0b6a2::t_635b7e83df1be6 306
+  s_062b5428c0b6a2::t_0dda3a95d9d538 7
+  s_062b5428c0b6a2::t_42493ab6363f3c 12-13
+  s_062b5428c0b6a2::t_e099d24f607455 241-242
+  s_062b5428c0b6a2::t_d3d9553bc41b4e 174,179
+  s_062b5428c0b6a2::t_2f170aa771ebb0 196,201
+  s_062b5428c0b6a2::t_6c7596cc181fa2 146
+ai-hub-dal/src/main/resources/db/migration/V3__rate_limit_budget.sql
+  s_062b5428c0b6a2::t_f2e6514e8afcbb 1-8
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/auth/KeyAuthDTO.java
+  s_062b5428c0b6a2::t_013e207fd7f661 3,11,13-19,21-23,38,42,49-66
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/KeyGenerateResDTO.java
+  s_062b5428c0b6a2::t_96e20e755e4775 22-26,35
+ai-workflow/acceptance/REQ-1.4.md
+  s_062b5428c0b6a2::t_8193356a93f58c 1-2,4-11,19-93
+  s_062b5428c0b6a2::t_9d6613be31f3fc 12-18
+  s_062b5428c0b6a2::t_3f89e8944d77da 3
+  s_062b5428c0b6a2::t_ae2b1c88903b7f 94-96
+ai-hub-integration/pom.xml
+  s_062b5428c0b6a2::t_41137f80af72b4 21-25
+ai-hub-common/src/main/java/com/qtua/aihub/common/metering/TokenEstimate.java
+  s_062b5428c0b6a2::t_29159cd984d31b 1-34
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/RateLimitProperties.java
+  s_062b5428c0b6a2::t_56fa71970c78b3 1-13,19-23,25,27-59
+  s_062b5428c0b6a2::t_5f184098b773a2 14-18,24,26
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/KeyInfoResDTO.java
+  s_062b5428c0b6a2::t_78f6fae2aaeee6 27-34,42
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/CallLogManager.java
+  s_062b5428c0b6a2::t_b528d34568f01a 122
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/protocol/OpenAiProtocolAdapter.java
+  s_062b5428c0b6a2::t_8887fe2e856e15 9,57
+  s_062b5428c0b6a2::t_ac1de3e080c585 22-24
+  s_062b5428c0b6a2::t_e0ec4cd77cafe4 100
+  s_062b5428c0b6a2::t_0cacd002fdbd7b 58-99,101-102
+ai-hub-start/src/test/java/com/qtua/aihub/start/controller/KeyControllerTest.java
+  s_062b5428c0b6a2::t_f7a27b053864d8 117
+  s_062b5428c0b6a2::t_f0074aa74c4e9c 87
+  s_062b5428c0b6a2::t_7b3a7c46fcba2b 65
+  s_062b5428c0b6a2::t_2245b53ddf9f17 73-74,78
+ai-workflow/DESIGN.md
+  s_062b5428c0b6a2::t_7694228f7ba7e7 62-65
+  s_062b5428c0b6a2::t_7fdd614d8c7c11 69-82
+  s_062b5428c0b6a2::t_437ec6b363d62f 129-132
+  s_062b5428c0b6a2::t_9ee5e85f0c3b73 143
+  s_062b5428c0b6a2::t_ed738172125ed1 4
+  s_062b5428c0b6a2::t_8b3fbc54a5654d 155
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/CallLogBO.java
+  s_062b5428c0b6a2::t_165a39d256476e 23,36
+ai-hub-start/src/main/resources/application.yml
+  s_062b5428c0b6a2::t_91a11eba42f786 37-41
+config/spotbugs-exclude.xml
+  s_062b5428c0b6a2::t_cae6f2e26f559b 57-60
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  s_062b5428c0b6a2::t_68d3d282921c90 141-161
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/CallLogMapper.xml
+  s_062b5428c0b6a2::t_5dbb5b53a668ad 42
+  s_062b5428c0b6a2::t_a094405e1fbe18 18
+  s_062b5428c0b6a2::t_71ebe684a6994b 28,35-36
+ai-workflow/STATUS.md
+  s_062b5428c0b6a2::t_817166aaed4e86 6,15,37-38,69,73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0257305b3ade361f013f095d887775c0abf27106",
+  "prompts": {},
+  "sessions": {
+    "s_062b5428c0b6a2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6355626e-fefc-4e54-b6b4-8e987ab87b55",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
