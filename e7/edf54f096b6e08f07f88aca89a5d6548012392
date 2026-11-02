@@ -1,0 +1,136 @@
+ai-hub-start/src/main/resources/application-local.yml.example
+  s_062b5428c0b6a2::t_79b5eccaeb39dc 17-25
+ai-hub-dal/src/test/java/com/qtua/aihub/dal/mapper/CallLogMapperTest.java
+  s_062b5428c0b6a2::t_f01c36307bd509 1-86,109
+  s_062b5428c0b6a2::t_4b2b0a526124bf 87-108
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ChatCompletionBO.java
+  s_062b5428c0b6a2::t_4b3e04fc5d4f96 7,13-14,23-24,34-35,38-39,45-47
+  s_062b5428c0b6a2::t_619b131fd1c600 69-76
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/ChatCompletionReqDTO.java
+  s_062b5428c0b6a2::t_54dbec09a82380 17,20,26-36,39,49-52
+ai-workflow/docs/DATA-MODEL.md
+  s_062b5428c0b6a2::t_db1ca95d9fab57 41
+  s_062b5428c0b6a2::t_ac0e11fc76cdaa 13-14
+  s_062b5428c0b6a2::t_ee8f00335eb66c 46
+ai-hub-start/src/main/resources/application.yml
+  s_062b5428c0b6a2::t_499aaca5d32bf4 35-36
+ai-hub-manager/src/test/java/com/qtua/aihub/manager/CallLogManagerTest.java
+  s_062b5428c0b6a2::t_d4a8e19f1198c4 1-111
+ai-workflow/DESIGN.md
+  s_062b5428c0b6a2::t_6ea291dfa38240 111-114
+  s_062b5428c0b6a2::t_013ded5e38ee7b 124
+  s_062b5428c0b6a2::t_9825d7ee57e4a2 135
+  s_062b5428c0b6a2::t_2e111e780bf2dc 3-4,77-78
+  s_062b5428c0b6a2::t_afe2299f614f6c 63-64,68-76
+  s_062b5428c0b6a2::t_0171d2e03b904c 45
+ai-workflow/records/REQ-1.5.md
+  s_062b5428c0b6a2::t_b2d6ada2ef2ecc 4
+  s_062b5428c0b6a2::t_6a56ad2be074d6 60,64,66-67
+  s_062b5428c0b6a2::t_9a77e4a6181f8b 73-74,78-80,84-88
+ai-hub-core/src/test/java/com/qtua/aihub/core/ChatCompletionCoreTest.java
+  s_062b5428c0b6a2::t_9c2166e1eb7021 5-7,11-12,17,19,21,29,34-35,41-43,51-52,63-66,71,73-74,100-130,142-147,151,161-162,174,178,187-190,194,203-210,214-215,220-221
+ai-hub-start/src/test/java/com/qtua/aihub/start/controller/ChatCompletionControllerTest.java
+  s_062b5428c0b6a2::t_afa33861cf8bc6 22-23,25,27,76
+  s_062b5428c0b6a2::t_db6794c1c6762b 77-93
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/CallLogMapper.java
+  s_062b5428c0b6a2::t_7ec47fe92ba871 1-30,39
+  s_062b5428c0b6a2::t_a3f69594d1109b 31-38
+ai-workflow/acceptance/REQ-1.5.md
+  s_062b5428c0b6a2::t_5790e826814615 12-18
+  s_062b5428c0b6a2::t_c3eda065e4a768 3
+  s_062b5428c0b6a2::t_cb1d74301eefb7 94-96
+ai-hub-dal/src/test/java/com/qtua/aihub/dal/mapper/ApiKeyMapperTest.java
+  s_062b5428c0b6a2::t_9f6bc299db417f 83-98
+ai-hub-common/src/main/java/com/qtua/aihub/common/pricing/PricingCatalog.java
+  s_062b5428c0b6a2::t_e265926742e78e 1-21
+ai-hub-common/src/test/java/com/qtua/aihub/common/pricing/ModelPriceTest.java
+  s_062b5428c0b6a2::t_32cf855ddaa929 1-54
+ai-hub-common/src/main/java/com/qtua/aihub/common/metering/TokenUsage.java
+  s_062b5428c0b6a2::t_0fa49c1d542c72 1-37
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/CallLogDO.java
+  s_062b5428c0b6a2::t_901f174943a453 25-26
+  s_062b5428c0b6a2::t_7a3b38153904d1 1-24,27-137
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/CallLogManager.java
+  s_062b5428c0b6a2::t_ab4d2160f021ca 11-12
+  s_062b5428c0b6a2::t_612dbb0af1ef4b 74
+  s_062b5428c0b6a2::t_79f2a443b66168 1-10,13-73,75-126
+ai-hub-common/src/main/java/com/qtua/aihub/common/pricing/ModelPrice.java
+  s_062b5428c0b6a2::t_ac0e15a0d7f361 29
+  s_062b5428c0b6a2::t_85bb1112518884 1-3,5-28,30-66
+  s_062b5428c0b6a2::t_dce6e10d6705f0 4
+ai-hub-integration/src/test/java/com/qtua/aihub/integration/protocol/OpenAiProtocolAdapterTest.java
+  s_062b5428c0b6a2::t_557c6b4f12068a 6
+  s_062b5428c0b6a2::t_e935a50ac36b39 44-72
+ai-workflow/requirements/INDEX.md
+  s_062b5428c0b6a2::t_e02e91b57eb503 13
+ai-hub-tests/src/test/resources/application-test.yml
+  s_062b5428c0b6a2::t_ba7d9a87848eeb 15
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/CallLogBO.java
+  s_062b5428c0b6a2::t_526565a695b075 1-46
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/ApiKeyMapper.java
+  s_062b5428c0b6a2::t_b3b04a422bcbb8 7
+  s_062b5428c0b6a2::t_5904604ce01cf2 42-53
+ai-hub-tests/src/test/java/com/qtua/aihub/CallLogIntegrationTest.java
+  s_062b5428c0b6a2::t_007c26e5764064 1-254
+ai-workflow/records/REQ-1.3.md
+  s_062b5428c0b6a2::t_5422e68cfee547 9
+ai-hub-start/src/main/java/com/qtua/aihub/start/config/CallLogExecutorConfig.java
+  s_062b5428c0b6a2::t_48af64a1792cbc 1-38
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/PricingProperties.java
+  s_062b5428c0b6a2::t_4354085589b856 1-63
+config/spotbugs-exclude.xml
+  s_062b5428c0b6a2::t_33afab5ba13dbf 14-19,49
+  s_062b5428c0b6a2::t_4019b2defe5261 50-56
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/CallLogMapper.xml
+  s_062b5428c0b6a2::t_8ebf2daac56750 46-51
+  s_062b5428c0b6a2::t_f4216543fbfd75 1-45,52
+ai-hub-dal/src/main/resources/db/migration/V2__call_logs.sql
+  s_062b5428c0b6a2::t_16b6e84e838c30 1-30
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/RequestIdFilter.java
+  s_062b5428c0b6a2::t_9846e9a7487965 28-29
+  s_062b5428c0b6a2::t_fd8af9066e39e2 43
+ai-hub-common/src/main/java/com/qtua/aihub/common/constant/JsonFields.java
+  s_062b5428c0b6a2::t_c99a71f84b54d6 11-14
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/pricing/YamlPricingCatalog.java
+  s_062b5428c0b6a2::t_64336bc38becff 11
+  s_062b5428c0b6a2::t_061d1cf1dd37b7 56
+  s_062b5428c0b6a2::t_27ceae7c651646 1-10,12-55,57-78
+ai-hub-manager/src/test/java/com/qtua/aihub/manager/pricing/YamlPricingCatalogTest.java
+  s_062b5428c0b6a2::t_e6e6e122121de0 1-77
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/protocol/OpenAiProtocolAdapter.java
+  s_062b5428c0b6a2::t_a961166ebfb7fa 9,53
+  s_062b5428c0b6a2::t_77ae554b1cbe14 54-98
+ai-hub-dal/src/main/resources/db/call-logs-schema.sql
+  s_062b5428c0b6a2::t_766baee283907d 1-19
+ai-hub-core/src/main/java/com/qtua/aihub/core/ChatCompletionCore.java
+  s_062b5428c0b6a2::t_0ece3ecd11ae71 5-6,10-11,16,20-23,27-29,39-40,48-49,53-55,59-60,66-68,73-135,137-146
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/ApiKeyMapper.xml
+  s_062b5428c0b6a2::t_7008d77ee40038 47-52
+ai-hub-service/src/main/java/com/qtua/aihub/service/ChatCompletionServiceImpl.java
+  s_062b5428c0b6a2::t_f98106060e9732 71-72
+ai-hub-start/src/test/java/com/qtua/aihub/start/filter/RequestIdFilterTest.java
+  s_062b5428c0b6a2::t_98358c60d78573 23-24
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/ChatCompletionController.java
+  s_062b5428c0b6a2::t_5289f13d55c5ae 9
+  s_062b5428c0b6a2::t_bcdf73dce0356b 57-59
+ai-hub-service/src/test/java/com/qtua/aihub/service/ChatCompletionServiceTest.java
+  s_062b5428c0b6a2::t_4d261641a05720 76-88
+ai-workflow/STATUS.md
+  s_062b5428c0b6a2::t_aca0223a23145b 6,14-15,24,36-37,51-53,68,72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e7edf54f096b6e08f07f88aca89a5d6548012392",
+  "prompts": {},
+  "sessions": {
+    "s_062b5428c0b6a2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6355626e-fefc-4e54-b6b4-8e987ab87b55",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
