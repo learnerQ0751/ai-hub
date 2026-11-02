@@ -34,3 +34,8 @@ gateway:
   model-list: {}
   pricing:
     models: {}
+  rate-limit:
+    enabled: true
+    fail-open: true
+    window-seconds: 60
+    default-max-tokens: 1024

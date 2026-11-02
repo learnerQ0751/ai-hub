@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
     models JSONB NOT NULL,
     spend NUMERIC(18, 8) NOT NULL DEFAULT 0,
     max_budget NUMERIC(18, 8),
+    budget_duration VARCHAR(16),
     rpm_limit INTEGER,
     tpm_limit INTEGER,
     expires_at TIMESTAMP WITH TIME ZONE,

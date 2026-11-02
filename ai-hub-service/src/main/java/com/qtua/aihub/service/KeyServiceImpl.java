@@ -43,6 +43,8 @@ public class KeyServiceImpl implements KeyService {
     private static final long SECONDS_PER_HOUR = 3600L;
     private static final long SECONDS_PER_DAY = 86400L;
     private static final Pattern DURATION_PATTERN = Pattern.compile("^(\\d+)([smhd])$");
+    private static final String BUDGET_DURATION_DAILY = "daily";
+    private static final String BUDGET_DURATION_MONTHLY = "monthly";
 
     private final ApiKeyManager apiKeyManager;
 
@@ -63,19 +65,41 @@ public class KeyServiceImpl implements KeyService {
      */
     @Override
     public KeyGenerateResDTO generate(KeyGenerateReqDTO reqDTO) {
+        String budgetDuration = normalizeBudgetDuration(reqDTO.budgetDuration());
         String plainKey = KEY_PREFIX + randomHex();
         String keyHash = KeyHasher.sha256Hex(plainKey);
         Instant createdAt = Instant.now();
         Instant expiresAt = resolveExpiry(reqDTO.duration(), createdAt);
         ApiKeyBO apiKey = new ApiKeyBO(keyHash, reqDTO.models(), BigDecimal.ZERO,
-                reqDTO.maxBudget(), reqDTO.rpmLimit(), reqDTO.tpmLimit(),
+                reqDTO.maxBudget(), budgetDuration, reqDTO.rpmLimit(), reqDTO.tpmLimit(),
                 expiresAt, false, reqDTO.metadata(), createdAt);
         apiKeyManager.save(apiKey);
         // 只记录哈希用于审计关联，绝不记录明文 Key。
-        LOG.info("generated virtual key hash={} models={} expiresAt={}",
-                keyHash, reqDTO.models(), expiresAt);
+        LOG.info("generated virtual key hash={} models={} rpm={} tpm={} budget={} expiresAt={}",
+                keyHash, reqDTO.models(), reqDTO.rpmLimit(), reqDTO.tpmLimit(),
+                reqDTO.maxBudget(), expiresAt);
         return new KeyGenerateResDTO(plainKey, reqDTO.models(), BigDecimal.ZERO, reqDTO.metadata(),
-                toIso(expiresAt), reqDTO.maxBudget(), reqDTO.rpmLimit(), reqDTO.tpmLimit(), false);
+                toIso(expiresAt), reqDTO.maxBudget(), budgetDuration,
+                reqDTO.rpmLimit(), reqDTO.tpmLimit(), false);
+    }
+
+    /**
+     * 校验并归一化预算周期。
+     *
+     * @param budgetDuration 预算周期；空表示不启用
+     * @return daily/monthly 或 null
+     */
+    private String normalizeBudgetDuration(String budgetDuration) {
+        if (!StringUtils.hasText(budgetDuration)) {
+            return null;
+        }
+        String normalized = budgetDuration.trim().toLowerCase();
+        if (!BUDGET_DURATION_DAILY.equals(normalized)
+                && !BUDGET_DURATION_MONTHLY.equals(normalized)) {
+            throw ChatCompletionException.invalidRequest(
+                    "Field 'budget_duration' must be daily or monthly", "budget_duration");
+        }
+        return normalized;
     }
 
     /**
@@ -97,7 +121,9 @@ public class KeyServiceImpl implements KeyService {
         if (!Objects.isNull(apiKey.getExpiresAt()) && !Instant.now().isBefore(apiKey.getExpiresAt())) {
             throw ChatCompletionException.expiredApiKey();
         }
-        return KeyAuthDTO.virtualKey(apiKey.getKeyHash(), apiKey.getModels());
+        return KeyAuthDTO.virtualKey(apiKey.getKeyHash(), apiKey.getModels(),
+                apiKey.getRpmLimit(), apiKey.getTpmLimit(),
+                apiKey.getMaxBudget(), apiKey.getBudgetDuration());
     }
 
     /**
@@ -111,7 +137,7 @@ public class KeyServiceImpl implements KeyService {
         ApiKeyBO apiKey = requireKey(plainKey);
         KeyInfoResDTO.KeyInfo info = new KeyInfoResDTO.KeyInfo(
                 apiKey.getSpend(), apiKey.getSpend(), apiKey.getModels(),
-                toIso(apiKey.getExpiresAt()), apiKey.getMaxBudget(),
+                toIso(apiKey.getExpiresAt()), apiKey.getMaxBudget(), apiKey.getBudgetDuration(),
                 apiKey.getRpmLimit(), apiKey.getTpmLimit(), apiKey.isBlocked(),
                 toIso(apiKey.getCreatedAt()), apiKey.getMetadata(), null);
         return new KeyInfoResDTO(mask(plainKey), info);

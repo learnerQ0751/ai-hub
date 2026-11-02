@@ -15,6 +15,7 @@
         <result column="cost" property="cost" jdbcType="NUMERIC"/>
         <result column="latency_ms" property="latencyMs" jdbcType="BIGINT"/>
         <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="error_type" property="errorType" jdbcType="VARCHAR"/>
         <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
     </resultMap>
@@ -24,20 +25,21 @@
         INSERT INTO call_logs
             (request_id, key_id, model_alias, deployment_model,
              prompt_tokens, completion_tokens, total_tokens, cost,
-             latency_ms, status, tenant_id, created_at)
+             latency_ms, status, error_type, tenant_id, created_at)
         VALUES
             (#{requestId,jdbcType=VARCHAR}, #{keyId,jdbcType=VARCHAR},
              #{modelAlias,jdbcType=VARCHAR}, #{deploymentModel,jdbcType=VARCHAR},
              #{promptTokens,jdbcType=INTEGER}, #{completionTokens,jdbcType=INTEGER},
              #{totalTokens,jdbcType=INTEGER}, #{cost,jdbcType=NUMERIC},
              #{latencyMs,jdbcType=BIGINT}, #{status,jdbcType=INTEGER},
-             #{tenantId,jdbcType=VARCHAR}, #{createdAt,jdbcType=TIMESTAMP})
+             #{errorType,jdbcType=VARCHAR}, #{tenantId,jdbcType=VARCHAR},
+             #{createdAt,jdbcType=TIMESTAMP})
     </insert>
 
     <select id="selectByRequestId" resultMap="CallLogResultMap">
         SELECT id, request_id, key_id, model_alias, deployment_model,
                prompt_tokens, completion_tokens, total_tokens, cost,
-               latency_ms, status, tenant_id, created_at
+               latency_ms, status, error_type, tenant_id, created_at
         FROM call_logs
         WHERE request_id = #{requestId,jdbcType=VARCHAR}
         ORDER BY id DESC

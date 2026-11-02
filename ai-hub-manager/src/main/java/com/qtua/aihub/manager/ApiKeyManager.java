@@ -54,6 +54,7 @@ public class ApiKeyManager {
         dataObject.setModels(writeJson(apiKey.getModels()));
         dataObject.setSpend(apiKey.getSpend());
         dataObject.setMaxBudget(apiKey.getMaxBudget());
+        dataObject.setBudgetDuration(apiKey.getBudgetDuration());
         dataObject.setRpmLimit(apiKey.getRpmLimit());
         dataObject.setTpmLimit(apiKey.getTpmLimit());
         dataObject.setExpiresAt(apiKey.getExpiresAt());
@@ -90,6 +91,7 @@ public class ApiKeyManager {
                 readModels(dataObject.getModels()),
                 dataObject.getSpend(),
                 dataObject.getMaxBudget(),
+                dataObject.getBudgetDuration(),
                 dataObject.getRpmLimit(),
                 dataObject.getTpmLimit(),
                 dataObject.getExpiresAt(),

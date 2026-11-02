@@ -20,6 +20,7 @@ import java.util.Objects;
  * @param cost            本次成本
  * @param latencyMs       端到端耗时（毫秒）
  * @param status          返回给客户端的 HTTP 状态码
+ * @param errorType       错误/限流类型；成功为 null
  * @param tenantId        租户 ID；本期为 null
  * @param createdAt       发生时间
  */
@@ -32,6 +33,7 @@ public record CallLogBO(
         BigDecimal cost,
         long latencyMs,
         int status,
+        String errorType,
         String tenantId,
         Instant createdAt) {
 

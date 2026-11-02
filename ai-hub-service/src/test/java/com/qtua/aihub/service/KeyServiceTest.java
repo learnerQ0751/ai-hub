@@ -47,7 +47,7 @@ class KeyServiceTest {
     void generate_returns_plain_key_and_persists_only_hash() {
         KeyGenerateReqDTO request = new KeyGenerateReqDTO(
                 List.of("chat"), "1h", Map.of("user", "tester"),
-                BigDecimal.TEN, 60, 1000);
+                BigDecimal.TEN, "daily", 60, 1000);
 
         KeyGenerateResDTO response = service.generate(request);
 
@@ -64,13 +64,16 @@ class KeyServiceTest {
         assertThat(saved.getKeyHash()).isEqualTo(KeyHasher.sha256Hex(response.key()));
         assertThat(saved.getKeyHash()).isNotEqualTo(response.key());
         assertThat(saved.getModels()).containsExactly("chat");
+        assertThat(saved.getBudgetDuration()).isEqualTo("daily");
+        assertThat(saved.getRpmLimit()).isEqualTo(60);
+        assertThat(saved.getTpmLimit()).isEqualTo(1000);
         assertThat(saved.getExpiresAt()).isAfter(Instant.now().plus(59, ChronoUnit.MINUTES));
     }
 
     @Test
     void generate_without_duration_has_no_expiry() {
         KeyGenerateResDTO response = service.generate(
-                new KeyGenerateReqDTO(List.of(), null, null, null, null, null));
+                new KeyGenerateReqDTO(List.of(), null, null, null, null, null, null));
 
         assertThat(response.expires()).isNull();
         ArgumentCaptor<ApiKeyBO> captor = ArgumentCaptor.forClass(ApiKeyBO.class);
@@ -82,7 +85,7 @@ class KeyServiceTest {
     @Test
     void generate_rejects_invalid_duration_format() {
         assertThatThrownBy(() -> service.generate(
-                new KeyGenerateReqDTO(List.of(), "abc", null, null, null, null)))
+                new KeyGenerateReqDTO(List.of(), "abc", null, null, null, null, null)))
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getParam()).isEqualTo("duration"));
         verify(manager, never()).save(any(ApiKeyBO.class));
@@ -91,9 +94,19 @@ class KeyServiceTest {
     @Test
     void generate_rejects_non_positive_duration() {
         assertThatThrownBy(() -> service.generate(
-                new KeyGenerateReqDTO(List.of(), "0h", null, null, null, null)))
+                new KeyGenerateReqDTO(List.of(), "0h", null, null, null, null, null)))
                 .isInstanceOf(ChatCompletionException.class)
                 .satisfies(ex -> assertThat(((ChatCompletionException) ex).getParam()).isEqualTo("duration"));
+    }
+
+    @Test
+    void generate_rejects_invalid_budget_duration() {
+        assertThatThrownBy(() -> service.generate(
+                new KeyGenerateReqDTO(List.of(), null, null, BigDecimal.TEN, "weekly", 60, 1000)))
+                .isInstanceOf(ChatCompletionException.class)
+                .satisfies(ex -> assertThat(((ChatCompletionException) ex).getParam())
+                        .isEqualTo("budget_duration"));
+        verify(manager, never()).save(any(ApiKeyBO.class));
     }
 
     @Test
@@ -189,6 +202,6 @@ class KeyServiceTest {
 
     private ApiKeyBO apiKey(boolean blocked, Instant expiresAt) {
         return new ApiKeyBO(HASH, List.of("chat"), BigDecimal.ZERO, BigDecimal.TEN,
-                60, 1000, expiresAt, blocked, Map.of("user", "tester"), Instant.now());
+                "daily", 60, 1000, expiresAt, blocked, Map.of("user", "tester"), Instant.now());
     }
 }

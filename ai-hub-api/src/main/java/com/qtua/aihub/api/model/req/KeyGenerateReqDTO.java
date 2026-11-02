@@ -17,15 +17,17 @@ import java.util.Objects;
  * @param models    模型白名单；为空表示不限制
  * @param duration  有效期，如 1h、7d；为空表示不过期
  * @param metadata  任意元信息
- * @param maxBudget 预算上限
- * @param rpmLimit  每分钟请求上限
- * @param tpmLimit  每分钟 Token 上限
+ * @param maxBudget      预算上限
+ * @param budgetDuration 预算周期：daily/monthly；为空表示不启用周期预算
+ * @param rpmLimit       每分钟请求上限
+ * @param tpmLimit       每分钟 Token 上限
  */
 public record KeyGenerateReqDTO(
         List<String> models,
         String duration,
         Map<String, Object> metadata,
         @JsonProperty("max_budget") BigDecimal maxBudget,
+        @JsonProperty("budget_duration") String budgetDuration,
         @JsonProperty("rpm_limit") Integer rpmLimit,
         @JsonProperty("tpm_limit") Integer tpmLimit) {
 

@@ -2,6 +2,7 @@ package com.qtua.aihub.manager.model;
 
 import com.qtua.aihub.common.catalog.ModelDeployment;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -22,21 +23,31 @@ public class ChatCompletionBO {
     private final boolean masterKey;
     private final String requestId;
     private final String keyHash;
+    private final Integer rpmLimit;
+    private final Integer tpmLimit;
+    private final BigDecimal maxBudget;
+    private final String budgetDuration;
 
     /**
      * 构造业务对象。
      *
-     * @param alias         模型别名
-     * @param deployments   可用部署；可能为空
-     * @param requestBody   原始请求 JSON
-     * @param allowedModels 虚拟 Key 的模型白名单；空表示全部
-     * @param masterKey     是否 master key 调用
-     * @param requestId     请求追踪 ID；空时生成兜底 ID
-     * @param keyHash       虚拟 Key 的 SHA-256；master 调用为 null
+     * @param alias          模型别名
+     * @param deployments    可用部署；可能为空
+     * @param requestBody    原始请求 JSON
+     * @param allowedModels  虚拟 Key 的模型白名单；空表示全部
+     * @param masterKey      是否 master key 调用
+     * @param requestId      请求追踪 ID；空时生成兜底 ID
+     * @param keyHash        虚拟 Key 的 SHA-256；master 调用为 null
+     * @param rpmLimit       每分钟请求上限；null 表示不限
+     * @param tpmLimit       每分钟 Token 上限；null 表示不限
+     * @param maxBudget      预算上限；null 表示不限
+     * @param budgetDuration 预算周期：daily/monthly
      */
     public ChatCompletionBO(String alias, List<ModelDeployment> deployments, String requestBody,
                             List<String> allowedModels, boolean masterKey,
-                            String requestId, String keyHash) {
+                            String requestId, String keyHash,
+                            Integer rpmLimit, Integer tpmLimit,
+                            BigDecimal maxBudget, String budgetDuration) {
         this.alias = alias;
         this.deployments = Objects.isNull(deployments) ? List.of() : List.copyOf(deployments);
         this.requestBody = requestBody;
@@ -45,6 +56,10 @@ public class ChatCompletionBO {
         this.requestId = Objects.isNull(requestId) || requestId.isBlank()
                 ? UUID.randomUUID().toString() : requestId;
         this.keyHash = keyHash;
+        this.rpmLimit = rpmLimit;
+        this.tpmLimit = tpmLimit;
+        this.maxBudget = maxBudget;
+        this.budgetDuration = budgetDuration;
     }
 
     public String getAlias() {
@@ -73,5 +88,21 @@ public class ChatCompletionBO {
 
     public String getKeyHash() {
         return keyHash;
+    }
+
+    public Integer getRpmLimit() {
+        return rpmLimit;
+    }
+
+    public Integer getTpmLimit() {
+        return tpmLimit;
+    }
+
+    public BigDecimal getMaxBudget() {
+        return maxBudget;
+    }
+
+    public String getBudgetDuration() {
+        return budgetDuration;
     }
 }

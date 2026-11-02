@@ -19,6 +19,8 @@ public class ApiKeyDO {
     /** 已消费金额；本期只读，1.5 起累加。 */
     private BigDecimal spend;
     private BigDecimal maxBudget;
+    /** 预算周期：daily/monthly；为空表示不启用周期预算。 */
+    private String budgetDuration;
     private Integer rpmLimit;
     private Integer tpmLimit;
     private Instant expiresAt;
@@ -65,6 +67,14 @@ public class ApiKeyDO {
 
     public void setMaxBudget(BigDecimal maxBudget) {
         this.maxBudget = maxBudget;
+    }
+
+    public String getBudgetDuration() {
+        return budgetDuration;
+    }
+
+    public void setBudgetDuration(String budgetDuration) {
+        this.budgetDuration = budgetDuration;
     }
 
     public Integer getRpmLimit() {

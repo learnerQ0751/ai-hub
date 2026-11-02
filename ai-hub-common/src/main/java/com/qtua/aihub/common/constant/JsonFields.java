@@ -7,6 +7,8 @@ public final class JsonFields {
 
     public static final String MODEL = "model";
     public static final String MESSAGES = "messages";
+    public static final String CONTENT = "content";
+    public static final String MAX_TOKENS = "max_tokens";
     public static final String STREAM = "stream";
     public static final String USAGE = "usage";
     public static final String PROMPT_TOKENS = "prompt_tokens";

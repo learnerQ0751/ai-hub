@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.qtua.aihub.common.constant.JsonFields;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.metering.TokenEstimate;
 import com.qtua.aihub.common.metering.TokenUsage;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -17,6 +18,9 @@ import org.springframework.util.ObjectUtils;
  */
 @Component
 public class OpenAiProtocolAdapter {
+
+    /** 粗略 token 估算：约 4 个字符折合 1 个 token。 */
+    private static final int CHARS_PER_TOKEN = 4;
 
     private final ObjectMapper objectMapper;
 
@@ -48,6 +52,52 @@ public class OpenAiProtocolAdapter {
         } catch (JsonProcessingException ex) {
             throw ChatCompletionException.invalidRequest("Invalid JSON request body", null);
         }
+    }
+
+    /**
+     * 估算请求的 Token 用量，用于 TPM 与预算预占。
+     *
+     * <p>输入按 messages 字符数 / 4 估算，输出按 {@code max_tokens} 上限；
+     * 请求未携带 max_tokens 时使用默认值。</p>
+     *
+     * @param requestBody      请求 JSON
+     * @param defaultMaxTokens 默认输出上限
+     * @return Token 估算
+     */
+    public TokenEstimate estimateTokens(String requestBody, int defaultMaxTokens) {
+        int safeDefault = Math.max(1, defaultMaxTokens);
+        try {
+            JsonNode requestNode = objectMapper.readTree(requestBody);
+            if (ObjectUtils.isEmpty(requestNode) || !requestNode.isObject()) {
+                return TokenEstimate.of(0, safeDefault);
+            }
+            int maxOutput = Math.max(1, requestNode.path(JsonFields.MAX_TOKENS).asInt(safeDefault));
+            int input = estimateInputTokens(requestNode);
+            return TokenEstimate.of(input, maxOutput);
+        } catch (JsonProcessingException ex) {
+            return TokenEstimate.of(0, safeDefault);
+        }
+    }
+
+    /**
+     * 按 messages 文本长度估算输入 Token 数（4 字符约 1 token）。
+     *
+     * @param requestNode 请求 JSON
+     * @return 输入 Token 估算，最少 1
+     */
+    private int estimateInputTokens(JsonNode requestNode) {
+        JsonNode messages = requestNode.path(JsonFields.MESSAGES);
+        if (!messages.isArray()) {
+            return 1;
+        }
+        int chars = 0;
+        for (JsonNode message : messages) {
+            JsonNode content = message.path(JsonFields.CONTENT);
+            if (content.isTextual()) {
+                chars += content.asText().length();
+            }
+        }
+        return Math.max(1, (chars + CHARS_PER_TOKEN - 1) / CHARS_PER_TOKEN);
     }
 
     /**

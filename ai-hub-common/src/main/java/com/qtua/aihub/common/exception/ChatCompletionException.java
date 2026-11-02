@@ -139,6 +139,27 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * Key 级限流命中（429）。
+     *
+     * @param detail 触发的限制描述，如 rpm/tpm
+     * @return 业务异常
+     */
+    public static ChatCompletionException rateLimitExceeded(String detail) {
+        return new ChatCompletionException(HttpStatus.TOO_MANY_REQUESTS,
+                "Rate limit exceeded: " + detail, "rate_limit_error", null, "429", null);
+    }
+
+    /**
+     * Key 预算耗尽（400）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException budgetExceeded() {
+        return new ChatCompletionException(HttpStatus.BAD_REQUEST,
+                "Budget exceeded for this API key", "budget_exceeded", null, "400", null);
+    }
+
+    /**
      * 查询/封禁的 Key 不存在（404）。
      *
      * @return 业务异常

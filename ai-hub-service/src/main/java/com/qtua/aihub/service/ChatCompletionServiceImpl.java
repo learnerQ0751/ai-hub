@@ -69,7 +69,9 @@ public class ChatCompletionServiceImpl implements ChatCompletionService {
         // 授权与未知模型判断都下沉 core：虚拟 Key 越权优先返回 403。
         ChatCompletionBO bo = new ChatCompletionBO(alias, deployments, requestBody,
                 reqDTO.getAuth().models(), reqDTO.getAuth().masterKey(),
-                reqDTO.getRequestId(), reqDTO.getAuth().keyHash());
+                reqDTO.getRequestId(), reqDTO.getAuth().keyHash(),
+                reqDTO.getAuth().rpmLimit(), reqDTO.getAuth().tpmLimit(),
+                reqDTO.getAuth().maxBudget(), reqDTO.getAuth().budgetDuration());
         ChatCompletionResultBO result = chatCompletionCore.chat(bo);
         return new ChatCompletionResDTO(result.getResponseBody());
     }

@@ -1,7 +1,7 @@
 # 设计基线（ai-hub）
 
 - 更新于：2026-11-02
-- 对应状态：`55ce438` + REQ-1.5 工作区（待提交）
+- 对应状态：`2c0436a` + REQ-1.4 工作区（待提交）
 - 维护规则：只有架构、运行时链路、跨需求决策发生变化时才更新；需求细节见 `records/`。
 
 ## 1. 系统全景
@@ -59,13 +59,27 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 4. ChatCompletionCore：
    ① 白名单校验（非 master 且白名单非空且不含 alias → 403 key_model_access_denied）
    ② 部署为空 → 400 invalid_model
-   ③ 加权随机选部署 → model 别名改写为上游真实名 → 调上游 → 响应 model 回写别名
-   ④ 解析 usage → 按上游真实模型查价格 → BigDecimal 计价
-   ⑤ 同步累加 api_keys.spend（虚拟 Key）→ 异步写 call_logs（成功/失败都写）
+   ③ Key 级限流/预算：RPM 滑动窗口 → TPM 预占 → 预算预占（超限 429/400）
+   ④ 加权随机选部署 → model 别名改写为上游真实名 → 调上游 → 响应 model 回写别名
+   ⑤ 解析 usage → 按上游真实模型查价格 → BigDecimal 计价
+   ⑥ 按实际用量结算 TPM/预算 → 同步累加 api_keys.spend → 异步写 call_logs（成功/失败都写）
 5. 返回上游原始 JSON（usage 等原样透传）
 ```
 
-### 3.4 计量与日志（REQ-1.5）
+### 3.4 限流与预算（REQ-1.4）
+
+```text
+AuthFilter（KeyAuthDTO 携带 rpm_limit / tpm_limit / max_budget / budget_duration）
+→ Core：
+   ① RPM：Redis ZSET 滑动窗口（key + model，窗口 60s）
+   ② TPM：输入估算（字符/4）+ max_tokens 预占，响应后按实际 usage 结算
+   ③ 预算：估算成本 × 预占，响应后按实际 cost 结算；失败释放
+   ④ 超限：rpm/tpm → 429 rate_limit_error；预算 → 400 budget_exceeded
+   ⑤ Redis 故障：默认 fail-open（WARN），可配置 fail-closed
+   ⑥ 命中写 call_logs.error_type，供 REQ-4.x 统计
+```
+
+### 3.5 计量与日志（REQ-1.5）
 
 ```text
 RequestIdFilter（生成 request_id）→ Controller（请求属性）→ Service → Core
@@ -112,6 +126,10 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 日志异步、spend 同步原子累加 | 日志不阻塞响应；spend 需尽快供预算判断，`spend = spend + ?` 防丢更新 | REQ-1.5 | 2026-11-02 |
 | 价格缺失只告警、cost=0，不阻断调用 | 对齐 LiteLLM B-04 教训：缺价格不能造成调用失败或错误成本 | REQ-1.5 | 2026-11-02 |
 | 失败调用也写日志（status=HTTP 码），不计成本 | 审计与排障需要失败面；失败不计费，重试语义留待 REQ-1.6 | REQ-1.5 | 2026-11-02 |
+| Key 级 rpm/tpm 按 `key + model` 维度、Redis ZSET 滑动窗口 | 需求卡指定；模型间互不影响；ZSET 支持精确时间窗口清理 | REQ-1.4 | 2026-11-02 |
+| TPM 请求前按「输入估算 + max_tokens」预占、响应后按实际 usage 结算 | 输出 token 请求前未知；预占保证不超限，结算保证口径与 REQ-1.5 一致 | REQ-1.4 | 2026-11-02 |
+| 预算金额用整数 micro 单位（1e-8 元），周期 key 带 TTL | 避免 INCRBYFLOAT 精度问题；daily/monthly 跨期自动换 key，无需定时任务 | REQ-1.4 | 2026-11-02 |
+| 限流/预算 Redis 故障默认 fail-open，可配置 fail-closed | 限流是保护而非业务正确性；避免 Redis 故障导致网关整体不可用 | REQ-1.4 | 2026-11-02 |
 
 ## 5. 演进记录
 
@@ -122,6 +140,7 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 2026-10-20 | 重构 | Maven 9 模块分层（对齐监管报送）+ Spring Boot 4.1.1 / LangChain4j 1.22.0 / Redis |
 | 2026-10-22 | REQ-1.3 | 虚拟 Key（生成/哈希鉴权/白名单/封禁/查询） |
 | 2026-11-02 | REQ-1.5 | 调用日志 + Token 计量 + 显式价格表 + spend 累计 + 失败留痕 |
+| 2026-11-02 | REQ-1.4 | Key 级 RPM/TPM 滑动窗口 + 预算预占结算 + 限流命中留痕 |
 
 ## 6. 与 LiteLLM 的差异
 
@@ -133,3 +152,4 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 虚拟 Key | `sk-` 前缀、models 白名单、block/unblock、info | 同；只存 SHA-256，info 只回显掩码 |
 | 错误体 | OpenAI error 结构 | 同；错误码字段与类型对齐基线 |
 | 计费 | spend 累计 | 已实现（REQ-1.5）；显式价格表按上游真实模型配置，缺失告警且 cost=0（避免 LiteLLM B-04 的 spend=0 静默问题） |
+| 限流/预算 | Key 级 rpm/tpm、max_budget、budget_duration | 已实现（REQ-1.4）；滑动窗口 + 预占-结算；超限 429/400；Redis 故障默认 fail-open |

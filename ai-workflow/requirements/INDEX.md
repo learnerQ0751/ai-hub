@@ -9,7 +9,7 @@
 | REQ-1.1 | 统一入口 + 单模型转发（非流式） | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | 无 | additive | `acceptance/REQ-1.1.md` |
 | REQ-1.2 | 模型配置 + 多部署路由 | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | REQ-1.1 | additive | `acceptance/REQ-1.2.md` |
 | REQ-1.3 | 虚拟 Key | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | REQ-1.2 | extension | `acceptance/REQ-1.3.md` |
-| REQ-1.4 | 限流与预算 | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 待实现 | REQ-1.3, REQ-1.5 | additive | `acceptance/REQ-1.4.md` |
+| REQ-1.4 | 限流与预算 | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | REQ-1.3, REQ-1.5 | additive | `acceptance/REQ-1.4.md` |
 | REQ-1.5 | 调用日志与 Token 计量 | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | REQ-1.3 | additive | `acceptance/REQ-1.5.md` |
 | REQ-1.6 | 容错（重试/fallback/冷却） | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 待实现 | REQ-1.5 | additive | `acceptance/REQ-1.6.md` |
 | REQ-1.7 | SSE 流式 | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 待实现 | REQ-1.6 | additive | `acceptance/REQ-1.7.md` |

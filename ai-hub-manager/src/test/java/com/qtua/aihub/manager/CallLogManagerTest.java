@@ -105,7 +105,7 @@ class CallLogManagerTest {
 
     private CallLogBO callLog(BigDecimal cost, int status) {
         return new CallLogBO("req-1", KEY_ID, "chat", "deepseek-chat",
-                new TokenUsage(10, 20, 30), cost, 100L, status, null,
+                new TokenUsage(10, 20, 30), cost, 100L, status, null, null,
                 Instant.parse("2026-11-02T00:00:00Z"));
     }
 }

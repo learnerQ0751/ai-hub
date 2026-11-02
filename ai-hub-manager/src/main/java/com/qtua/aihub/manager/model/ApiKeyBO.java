@@ -19,6 +19,7 @@ public class ApiKeyBO {
     private final List<String> models;
     private final BigDecimal spend;
     private final BigDecimal maxBudget;
+    private final String budgetDuration;
     private final Integer rpmLimit;
     private final Integer tpmLimit;
     private final Instant expiresAt;
@@ -32,21 +33,24 @@ public class ApiKeyBO {
      * @param keyHash   SHA-256 摘要
      * @param models    模型白名单；空表示不限制
      * @param spend     已消费金额
-     * @param maxBudget 预算上限
-     * @param rpmLimit  每分钟请求上限
-     * @param tpmLimit  每分钟 Token 上限
-     * @param expiresAt 过期时间；空表示不过期
-     * @param blocked   是否封禁
-     * @param metadata  元信息
-     * @param createdAt 创建时间
+     * @param maxBudget      预算上限
+     * @param budgetDuration 预算周期：daily/monthly
+     * @param rpmLimit       每分钟请求上限
+     * @param tpmLimit       每分钟 Token 上限
+     * @param expiresAt      过期时间；空表示不过期
+     * @param blocked        是否封禁
+     * @param metadata       元信息
+     * @param createdAt      创建时间
      */
     public ApiKeyBO(String keyHash, List<String> models, BigDecimal spend, BigDecimal maxBudget,
-                    Integer rpmLimit, Integer tpmLimit, Instant expiresAt, boolean blocked,
+                    String budgetDuration, Integer rpmLimit, Integer tpmLimit,
+                    Instant expiresAt, boolean blocked,
                     Map<String, Object> metadata, Instant createdAt) {
         this.keyHash = keyHash;
         this.models = Objects.isNull(models) ? List.of() : List.copyOf(models);
         this.spend = spend;
         this.maxBudget = maxBudget;
+        this.budgetDuration = budgetDuration;
         this.rpmLimit = rpmLimit;
         this.tpmLimit = tpmLimit;
         this.expiresAt = expiresAt;
@@ -71,6 +75,10 @@ public class ApiKeyBO {
 
     public BigDecimal getMaxBudget() {
         return maxBudget;
+    }
+
+    public String getBudgetDuration() {
+        return budgetDuration;
     }
 
     public Integer getRpmLimit() {

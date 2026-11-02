@@ -80,7 +80,7 @@ class ApiKeyManagerTest {
 
     private ApiKeyBO bo() {
         return new ApiKeyBO(KEY_HASH, List.of("chat", "reasoner"), BigDecimal.ONE,
-                BigDecimal.TEN, 60, 1000, EXPIRES_AT, false,
+                BigDecimal.TEN, "daily", 60, 1000, EXPIRES_AT, false,
                 Map.of("user", "tester"), CREATED_AT);
     }
 

@@ -119,6 +119,7 @@ public class CallLogManager {
         dataObject.setCost(callLog.cost());
         dataObject.setLatencyMs(callLog.latencyMs());
         dataObject.setStatus(callLog.status());
+        dataObject.setErrorType(callLog.errorType());
         dataObject.setTenantId(callLog.tenantId());
         dataObject.setCreatedAt(callLog.createdAt());
         return dataObject;

@@ -155,7 +155,7 @@ class KeyManagementIntegrationTest {
     void expired_key_is_rejected() {
         String plainKey = "sk-expired-" + UUID.randomUUID();
         ApiKeyBO expired = new ApiKeyBO(KeyHasher.sha256Hex(plainKey), List.of("chat"),
-                BigDecimal.ZERO, null, null, null,
+                BigDecimal.ZERO, null, null, null, null,
                 Instant.now().minusSeconds(60), false, Map.of(), Instant.now());
         apiKeyManager.save(expired);
 

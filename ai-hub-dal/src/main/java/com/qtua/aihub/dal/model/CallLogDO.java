@@ -27,6 +27,8 @@ public class CallLogDO {
     private long latencyMs;
     /** 返回给客户端的 HTTP 状态码。 */
     private int status;
+    /** 错误/限流类型，如 rate_limit_error、budget_exceeded。 */
+    private String errorType;
     /** 租户 ID；本期未启用。 */
     private String tenantId;
     private Instant createdAt;
@@ -117,6 +119,14 @@ public class CallLogDO {
 
     public void setStatus(int status) {
         this.status = status;
+    }
+
+    public String getErrorType() {
+        return errorType;
+    }
+
+    public void setErrorType(String errorType) {
+        this.errorType = errorType;
     }
 
     public String getTenantId() {

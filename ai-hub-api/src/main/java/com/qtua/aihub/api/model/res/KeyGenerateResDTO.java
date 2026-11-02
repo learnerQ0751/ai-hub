@@ -19,10 +19,11 @@ import java.util.Objects;
  * @param spend    起始消费额
  * @param metadata 元信息
  * @param expires  过期时间（ISO-8601）；null 表示不过期
- * @param maxBudget 预算上限
- * @param rpmLimit 每分钟请求上限
- * @param tpmLimit 每分钟 Token 上限
- * @param blocked  是否封禁
+ * @param maxBudget      预算上限
+ * @param budgetDuration 预算周期：daily/monthly
+ * @param rpmLimit       每分钟请求上限
+ * @param tpmLimit       每分钟 Token 上限
+ * @param blocked        是否封禁
  */
 public record KeyGenerateResDTO(
         String key,
@@ -31,6 +32,7 @@ public record KeyGenerateResDTO(
         Map<String, Object> metadata,
         String expires,
         @JsonProperty("max_budget") BigDecimal maxBudget,
+        @JsonProperty("budget_duration") String budgetDuration,
         @JsonProperty("rpm_limit") Integer rpmLimit,
         @JsonProperty("tpm_limit") Integer tpmLimit,
         boolean blocked) {
