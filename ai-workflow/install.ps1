@@ -67,10 +67,29 @@ function Install-Generic {
 }
 
 if ($NewProject) {
-    $projectFile = Join-Path $PackageRoot 'PROJECT.md'
+    $projectFile = Join-Path (Join-Path $PackageRoot 'docs') 'PROJECT.md'
     $template = Join-Path $PackageRoot 'templates\PROJECT.template.md'
     Copy-Item $template $projectFile -Force
     Write-Host "PROJECT.md reset from template."
+
+    # 需求索引为项目专属：新项目重置为空索引（保留备份），避免带入旧项目需求路径
+    $indexFile = Join-Path $PackageRoot 'requirements\INDEX.md'
+    if (Test-Path $indexFile) {
+        Copy-Item $indexFile "$indexFile.bak" -Force
+        $emptyIndex = @"
+# 需求索引（项目专属）
+
+> 本项目暂无外部需求源。需求可由用户口述，按 ``templates/REQ.md`` 起草。
+> 有外部需求文档时，在 ``PROJECT.md`` 的「外部文档源」填写路径并在此登记。
+
+| REQ | 名称 | 来源 | 状态 |
+|---|---|---|---|
+| — | — | — | — |
+"@
+        $utf8 = New-Object System.Text.UTF8Encoding($false)
+        [System.IO.File]::WriteAllText($indexFile, $emptyIndex, $utf8)
+        Write-Host "requirements/INDEX.md reset (backup: INDEX.md.bak)."
+    }
 }
 
 switch ($Agent) {
@@ -82,17 +101,19 @@ switch ($Agent) {
 
 Write-Host ''
 Write-Host 'AI workflow installed.'
-Write-Host '  Standards: ai-workflow/STANDARDS.md + ai-workflow/PROJECT.md'
-Write-Host '  Workflow:  ai-workflow/WORKFLOW.md'
+Write-Host '  Standards: ai-workflow/docs/STANDARDS.md + ai-workflow/docs/PROJECT.md'
+Write-Host '  Workflow:  ai-workflow/docs/WORKFLOW.md'
+Write-Host '  Baseline:  ai-workflow/DESIGN.md + ai-workflow/STATUS.md'
 Write-Host '  Records:   ai-workflow/records/REQ-*.md'
+Write-Host '  Acceptance:ai-workflow/acceptance/REQ-*.md'
 Write-Host ''
 Write-Host 'Next:'
-Write-Host '  1. Edit ai-workflow/PROJECT.md for this project.'
-Write-Host '  2. Copy ai-workflow/templates/REQ.md to ai-workflow/records/REQ-xxx.md.'
+Write-Host '  1. Edit ai-workflow/docs/PROJECT.md for this project.'
+Write-Host '  2. Copy templates/REQ.md -> records/REQ-xxx.md and templates/ACCEPTANCE.md -> acceptance/REQ-xxx.md.'
 Write-Host '  3. Start your agent from the project root.'
 if (Test-Path (Join-Path $PackageRoot 'records')) {
     $exampleRecords = Get-ChildItem (Join-Path $PackageRoot 'records') -Filter 'REQ-*.md' -ErrorAction SilentlyContinue
     if ($exampleRecords) {
-        Write-Host '  Note: records/ contains example records; remove them for a new project.'
+        Write-Host '  Note: records/ and acceptance/ contain example records; remove them for a new project.'
     }
 }

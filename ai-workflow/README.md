@@ -2,17 +2,30 @@
 
 > 复制本目录到任意项目根目录，运行 `install.ps1`，即可使用。不依赖 Vault、不依赖 Cursor/Claude Code 的专有格式。
 
-## 一眼看
+## 每天先看（人）
 
-| 你要找的 | 位置 |
+| 文件 | 内容 |
 |---|---|
-| 开发规范 | `STANDARDS.md`（通用）+ `PROJECT.md`（项目专属） |
-| 开发流程 | `WORKFLOW.md` |
-| 需求/决策/验收/复盘 | `records/REQ-*.md`（从 `templates/REQ.md` 复制） |
-| 项目完成态 | `STATUS.md`（需求/接口/测试/下一步） |
-| 更新看板 | `scripts/status.ps1` |
-| Agent 接入 | `install.ps1 -Agent claude\|cursor\|both\|generic` |
-| 归因（可选） | `ATTRIBUTION.md` |
+| **`STATUS.md`** | 当前状态：需求进度 / 接口 / **数据表速查（按业务域，含用途与关系）** / 配置 / **变更矩阵** / 下一步 |
+| **`DESIGN.md`** | 设计基线：唯一架构图 / 模块 / 运行时链路 / 跨需求决策 / 演进记录 |
+| **`acceptance/REQ-x.y.md`** | 单个需求的验收：标准冻结 / 阅读路径 / 理解程度 / 5 题 / 亲手改口子 |
+
+## 读者分工
+
+- **人**：`STATUS.md` → `DESIGN.md` → `acceptance/REQ-x.y.md`
+- **AI**：`docs/WORKFLOW.md` → `docs/PROJECT.md` / `docs/STANDARDS.md` → `STATUS.md` / `DESIGN.md` → 相关 `records/REQ-*.md`
+- **共读**：`records/REQ-x.y.md` §1-3 人向说明 + §4 影响面
+
+## 工具裁剪（不要全套叠加）
+
+| 规模 | 使用 |
+|---|---|
+| 小改动（<半天） | 直接改 + 测试 |
+| 单需求（1-3 天） | REQ + acceptance + TDD |
+| 新能力/跨模块（3 天+） | + spec-kit（0→1）或 OpenSpec（存量变更）+ Superpowers |
+| 架构级 | + 更新 DESIGN 与活图 |
+
+规格以 `specs/` / `openspec/` 为真源，REQ 只引用；计划以 plan/tasks 为真源，REQ 只留摘要。
 
 ## 新项目三步
 
@@ -22,45 +35,40 @@
    .\ai-workflow\install.ps1 -Agent both -NewProject
    ```
    按公司环境把 `both` 换成 `claude`、`cursor` 或 `generic`。
-3. 编辑 `PROJECT.md`（技术栈/包名/端口/项目专属规则），然后复制 `templates/REQ.md` → `records/REQ-xxx.md` 开始第一个需求。
+3. 编辑 `docs/PROJECT.md`（技术栈/包名/端口/项目专属规则），然后复制 `templates/REQ.md` → `records/`、`templates/ACCEPTANCE.md` → `acceptance/` 开始第一个需求。
 4. 每次收尾运行 `.\ai-workflow\scripts\status.ps1`，看 `STATUS.md`。
 
 ## 工具解耦
-
-核心是纯 Markdown；适配层只是“指路牌”：
 
 | 环境 | 安装命令 | 生成 |
 |---|---|---|
 | **JetBrains IDEA + Claude Code 插件** | `-Agent claude` | `CLAUDE.md`（插件从项目根目录读取） |
 | Claude Code CLI / 其他 IDE 插件 | `-Agent claude` | `CLAUDE.md` |
 | 只用 Cursor | `-Agent cursor` | `.cursor/rules/ai-workflow.mdc` |
-| Claude Code + Cursor 都用 | `-Agent both` | 两个都生成 |
+| 两者都用 | `-Agent both` | 两个都生成 |
 | 其他 agent | `-Agent generic` | `AGENTS.md` |
-
-> IDEA 用户：用 `-Agent claude` 即可；不需要 Cursor 的 `.mdc`。打开项目根目录，让 Claude Code 插件的 cwd 指向仓库根。
-
-换公司/换工具只换适配层，不改规范。
-
-## 可选工具
-
-- spec-kit / OpenSpec：用于规格驱动；没有也能按 `WORKFLOW.md` 手写 spec/plan/tasks。
-- git-ai：用于行级 AI 归因；没有也能用 commit/PR 记录。
 
 ## 目录
 
-```
+```text
 ai-workflow/
-├── README.md
-├── STANDARDS.md
-├── PROJECT.md
-├── WORKFLOW.md
-├── ATTRIBUTION.md
-├── templates/REQ.md
-├── templates/PROJECT.template.md
-├── records/REQ-*.md
-├── STATUS.md                     # 一页看板（脚本生成）
-├── scripts/status.ps1            # 扫描需求/接口/测试，更新看板
+├── README.md                 # 本文件（入口导航）
+├── STATUS.md                 # ★ 人：当前状态（脚本生成）
+├── DESIGN.md                 # ★ 人：设计基线
+├── acceptance/               # ★ 人：验收文档
+│   ├── REQ-*.md
+│   └── assets/               # 设计活图（design.drawio + design.svg）
+├── docs/                     # 规范、流程与数据模型（AI 必读，人按需查）
+│   ├── WORKFLOW.md
+│   ├── STANDARDS.md
+│   ├── PROJECT.md
+│   ├── DATA-MODEL.md
+│   └── ATTRIBUTION.md
+├── records/                  # 需求档案（人机共读）
+├── requirements/INDEX.md     # 需求索引（状态/依赖/验收路径）
+├── templates/                # REQ / ACCEPTANCE / PROJECT 模板
+├── scripts/status.ps1        # 生成 STATUS
 ├── adapters/{claude,cursor,generic}/
 ├── install.ps1
-└── REFERENCE/legacy-standards/   # 历史全量规则库，默认不加载
+└── REFERENCE/legacy-standards/   # 历史规则库，默认不加载
 ```

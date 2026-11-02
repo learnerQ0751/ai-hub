@@ -1,9 +1,9 @@
 # 开发规范（通用）
 
-> 适用：Java / Spring 企业项目。项目专属规则见 `PROJECT.md`。
+> 适用：Java / Spring 企业项目。项目专属规则见 `docs/PROJECT.md`。
 > 级别：**MUST**（必须）、**SHOULD**（推荐）、**MAY**（可选）。
 > 优先级：安全红线 > 项目规则 > 通用规则；强制 > 推荐 > 参考。
-> 接口契约的完整字段与示例见项目接口文档（由 `PROJECT.md` 指定）；本文件给出骨架与强制规则。
+> 接口契约的完整字段与示例见项目接口文档（由 `docs/PROJECT.md` 指定）；本文件给出骨架与强制规则。
 
 ## 1. 安全底线（MUST）
 
@@ -76,7 +76,7 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
   - 本地锁（`synchronized` / `ReentrantLock`）只能保护本机内存中的非共享状态，**不得用于跨实例互斥**。
   - 跨实例互斥用分布式锁（Redis/Redisson 或数据库锁），必须设置超时、防死锁、幂等。
 - 负载均衡：
-  - 多实例优先用**无状态算法**（加权随机）；如必须用有状态算法（平滑轮询），状态必须共享，或明确接受“每实例独立计数”并在 `PROJECT.md` 记录限制。
+  - 多实例优先用**无状态算法**（加权随机）；如必须用有状态算法（平滑轮询），状态必须共享，或明确接受“每实例独立计数”并在 `docs/PROJECT.md` 记录限制。
 - 定时任务：多实例下必须 leader 选举，或用分布式锁/幂等保证只执行一次。
 - 本地缓存/本地队列不得承载不可丢失的业务数据。
 
@@ -102,7 +102,7 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 - 每个 DTO 声明 `private static final long serialVersionUID`。
 - DTO 不引用 BO/DO；api 层只放契约与 DTO。
 
-> OpenAI 兼容等非标准网关契约的项目，由 `PROJECT.md` 覆盖本节（例如 ai-hub 使用 OpenAI ChatCompletion 结构）。
+> OpenAI 兼容等非标准网关契约的项目，由 `docs/PROJECT.md` 覆盖本节（例如 ai-hub 使用 OpenAI ChatCompletion 结构）。
 
 ### 3.2 命名规范
 
@@ -172,8 +172,8 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 
 ## 4. 请求 / 响应契约（标准网关类项目，MUST）
 
-> 适用于采用标准网关报文的项目；OpenAI 兼容等其它契约由 `PROJECT.md` 覆盖。
-> 完整字段与示例见项目接口文档（由 `PROJECT.md` 指定）。
+> 适用于采用标准网关报文的项目；OpenAI 兼容等其它契约由 `docs/PROJECT.md` 覆盖。
+> 完整字段与示例见项目接口文档（由 `docs/PROJECT.md` 指定）。
 
 ### 4.1 请求结构
 
@@ -267,17 +267,19 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 - 统一处理 null/空集合/时间格式；`Result<T>` 与业务 DTO 的序列化规则在项目中保持一致。
 - 外部接口报文变更必须同步：DTO、校验注解、接口文档、Apifox/测试用例。
 
-## 5. 技术栈约定
+## 5. 技术栈约定（MUST）
 
-> 具体选型在 `PROJECT.md` 写明；同一项目内不得混用同类框架。
+> **每个项目必须在 `docs/PROJECT.md` 写明每类技术栈的唯一选型。**
+> 实现阶段发现选型缺失/不明确时：**停止实现 → 询问用户 → 写入 `docs/PROJECT.md` → 再动手**。
+> **禁止**以"本期简单/单表/临时"为由自行替换或降级框架（例：用 JdbcClient/JdbcTemplate 替代 MyBatis）；禁止同类框架混用。
 
-| 领域 | 常见选型 | 约定 |
+| 领域 | 默认选型 | 约束 |
 |---|---|---|
 | JDK / 构建 | Java 8/11/17/21、Maven | 按公司项目版本；新项目参考 Java 21 + Spring Boot 4.1.1（ai-coder-help 同版） |
 | Web / RPC | Spring MVC、RestClient、WebClient、Dubbo | 接口层不写业务；网关转发保持原始 JSON；RPC 契约与 DTO 分离 |
 | 校验 | OVAL、Jakarta Validation | 网关类项目 OVAL；新项目 Jakarta Validation |
 | 序列化 | Jackson 3、Jackson 2、fastjson | Spring Boot 4 默认 Jackson 3；若业务/LangChain4j 依赖 Jackson 2，显式提供 Jackson 2 Bean，避免注入歧义；网关类项目可用 fastjson；同一项目明确选型 |
-| 持久层 | MyBatis、MyBatis-Plus | SQL 在 mapper/dal；多数据源见 §6 |
+| 持久层 | **MyBatis（默认）**、MyBatis-Plus | **MUST 使用 `docs/PROJECT.md` 指定的持久层框架**；SQL 只在 dal；**禁止未确认使用 JdbcTemplate/JdbcClient/Spring Data JPA**（Checkstyle `IllegalImport` 强制：`org.springframework.jdbc` / `jakarta.persistence` / `org.hibernate` 直接构建失败）；版本在根 pom 管理 |
 | 缓存 / 共享状态 | Redis（Lettuce）、Redisson | 限流/预算/冷却/共享路由状态/分布式锁；禁止本地 Map 承载跨实例业务状态 |
 | AI 应用 | LangChain4j | MCP/AiServices/RAG/Memory；网关透传层保持原生 HTTP，避免字段丢失 |
 | Agent 编排 | LangGraph4j（可选） | 仅在有状态多步骤/多 Agent 图编排时引入；网关阶段不强制 |
@@ -293,6 +295,7 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 - 禁止 `SELECT *`；查询显式列出字段。
 - 高频查询必须有索引或分区依据；上线前用 `EXPLAIN` 验证。
 - 表名小写、必须有注释；单表字段数 ≤ 50；字符集统一。
+- 数据访问实现必须使用 `docs/PROJECT.md` 指定的持久层框架；新增表/查询/更新按该框架落位，不得临时改用其他数据访问方式。
 - 使用 MyBatis 时，XML 中字符串字段加 `jdbcType=VARCHAR`，时间字段 `TIMESTAMP`，id 字段 `BIGINT`。
 - 多数据源：SQL 语法必须兼容目标数据库；无法兼容时写两套并保证语义一致。
 
@@ -319,7 +322,11 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 
 ### 8.1 强制（MUST）
 
-- 提交信息：`feat/fix/refactor/docs/test/chore: 简述`。
+- 提交信息：`<type>: <中文描述>`。
+  - `type` 保留英文约定：`feat` / `fix` / `refactor` / `docs` / `test` / `chore`、`merge` / `revert` 等。
+  - **描述必须使用中文**；技术专有名词保留原文（Redis、MyBatis、Flyway、MCP、Prompt、JWT 等）。
+  - 示例：`feat: 新增虚拟 Key 生成与封禁接口`、`fix: 修复流式请求未拒绝的问题`、`refactor: 模型目录收口为 ModelCatalog 端口`。
+  - 禁止纯英文描述（`feat: add virtual key API` 不合规）。
 - 禁止在提交信息中包含模型署名；作者按公司/项目要求。
 - 一个需求/任务一个提交或逻辑组；提交前检查 diff，不提交无关文件。
 - 代码与对应 `records/REQ-*.md` 一起提交。
@@ -342,7 +349,7 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 
 ## 10. 项目专属规则
 
-见 `PROJECT.md`。项目规则优先于本文件中的通用规则。
+见 `docs/PROJECT.md`。项目规则优先于本文件中的通用规则。
 
 ## 11. 参考来源与历史规则
 
@@ -351,4 +358,4 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 - 数据库研发规范
 - 金融科技开发技术规范（技术红线）
 - 监管报送接口文档（02-接口文档（对外版））——请求/响应/错误码完整示例
-- `REFERENCE/legacy-standards/`：历史 45 条 YAML 规则库，仅供查阅，默认不加载
+- `ai-workflow/REFERENCE/legacy-standards/`：历史 45 条 YAML 规则库，仅供查阅，默认不加载
