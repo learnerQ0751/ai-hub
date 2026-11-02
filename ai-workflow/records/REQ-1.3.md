@@ -6,7 +6,7 @@
 - 依赖需求：REQ-1.2
 - 需求来源：Vault `05-项目7-第1期-LLM网关核心.md` §REQ-1.3
 - 接口：POST /key/generate, GET /key/info, POST /key/block, POST /key/unblock
-- 提交：待提交
+- 提交：881b844
 
 ## 1. 是什么
 

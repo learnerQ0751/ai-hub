@@ -6,6 +6,7 @@ import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
 import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.start.filter.AuthFilter;
+import com.qtua.aihub.start.filter.RequestIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -53,7 +54,9 @@ public class ChatCompletionController {
             // 过滤器未执行说明链路异常，按未鉴权处理，绝不默认放行。
             throw ChatCompletionException.invalidApiKey();
         }
-        ChatCompletionResDTO resDTO = chatCompletionService.chat(new ChatCompletionReqDTO(requestBody, auth));
+        String requestId = (String) servletRequest.getAttribute(RequestIdFilter.ATTRIBUTE);
+        ChatCompletionResDTO resDTO = chatCompletionService.chat(
+                new ChatCompletionReqDTO(requestBody, auth, requestId));
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(resDTO.getRawResponse());

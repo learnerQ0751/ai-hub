@@ -3,6 +3,7 @@ package com.qtua.aihub.integration.protocol;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.metering.TokenUsage;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,5 +40,34 @@ class OpenAiProtocolAdapterTest {
     void rejects_invalid_json_response() {
         assertThrows(ChatCompletionException.class,
                 () -> adapter.rewriteResponseModel("not-json", "chat"));
+    }
+
+    @Test
+    void extracts_usage_from_response() {
+        String body = "{\"id\":\"x\",\"usage\":{\"prompt_tokens\":10,"
+                + "\"completion_tokens\":20,\"total_tokens\":30}}";
+
+        TokenUsage usage = adapter.extractUsage(body);
+
+        assertEquals(new TokenUsage(10, 20, 30), usage);
+    }
+
+    @Test
+    void returns_zero_when_usage_is_missing() {
+        assertEquals(TokenUsage.ZERO, adapter.extractUsage("{\"id\":\"x\"}"));
+    }
+
+    @Test
+    void returns_zero_for_invalid_json() {
+        assertEquals(TokenUsage.ZERO, adapter.extractUsage("not-json"));
+    }
+
+    @Test
+    void clamps_negative_tokens_and_fills_total() {
+        String body = "{\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":-5}}";
+
+        TokenUsage usage = adapter.extractUsage(body);
+
+        assertEquals(new TokenUsage(10, 0, 10), usage);
     }
 }

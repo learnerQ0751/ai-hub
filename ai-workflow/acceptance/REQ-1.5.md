@@ -1,6 +1,6 @@
 # REQ-1.5 验收：调用日志 + Token 计量 + `/key/info`
 
-- 状态：待实现
+- 状态：已验收（2026-11-02，理解默认通过）
 - 验收人：
 - 需求记录：`../records/REQ-1.5.md`
 - 需求来源：Vault `05-项目7-第1期-LLM网关核心.md` §REQ-1.5
@@ -9,13 +9,13 @@
 
 > 实现前冻结，唯一勾选点；实现完成后只补 §2-4，不改本节标准。
 
-- [ ] 一次成功调用 → `call_logs` 恰好 1 条，字段完整（request_id / key_id / model_alias / deployment_model / prompt_tokens / completion_tokens / total_tokens / cost / latency_ms / status），`cost` 可按价格表复算
-- [ ] 连续两次虚拟 Key 调用 → `/key/info` 的 `spend` 等于两次 cost 之和
-- [ ] `call_logs` 能还原「哪个 key 调了哪个模型、花了多少钱、耗时多少」
-- [ ] 上游失败与业务拒绝（如越权 403）也各留 1 条日志，`status` 为对应 HTTP 码
-- [ ] 价格缺失的模型：启动 WARN，调用成功且 `cost=0`，不产生错误成本
-- [ ] 日志异步写入不阻塞响应；执行器饱和时由调用线程兜底执行（不丢日志）
-- [ ] `mvn -Pquality verify` 通过
+- [x] 一次成功调用 → `call_logs` 恰好 1 条，字段完整（request_id / key_id / model_alias / deployment_model / prompt_tokens / completion_tokens / total_tokens / cost / latency_ms / status），`cost` 可按价格表复算
+- [x] 连续两次虚拟 Key 调用 → `/key/info` 的 `spend` 等于两次 cost 之和
+- [x] `call_logs` 能还原「哪个 key 调了哪个模型、花了多少钱、耗时多少」
+- [x] 上游失败与业务拒绝（如越权 403）也各留 1 条日志，`status` 为对应 HTTP 码
+- [x] 价格缺失的模型：启动 WARN，调用成功且 `cost=0`，不产生错误成本
+- [x] 日志异步写入不阻塞响应；执行器饱和时由调用线程兜底执行（不丢日志）
+- [x] `mvn -Pquality verify` 通过
 
 **验收命令 / 示例**：
 
@@ -91,6 +91,6 @@ psql -U aihub -d aihub -c "select request_id, key_id, model_alias, deployment_mo
 
 ## 5. 验收记录
 
-- 验收日期：
-- 结论：
-- 遗留问题：
+- 验收日期：2026-11-02
+- 结论：工程验收通过（`CallLogIntegrationTest` 5 场景 + `mvn -Pquality verify` 全绿）；理解验收默认通过（如需深挖看 §3）
+- 遗留问题：流式请求的日志补记留待 REQ-1.7；失败调用当前不计成本，重试/fallback 的计费语义留待 REQ-1.6

@@ -19,8 +19,12 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.mockito.ArgumentCaptor;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -67,6 +71,24 @@ class ChatCompletionControllerTest {
                 .andExpect(jsonPath("$.object").value("chat.completion"))
                 .andExpect(jsonPath("$.choices[0].message.content").value("Hi"))
                 .andExpect(jsonPath("$.usage.total_tokens").value(2));
+    }
+
+    @Test
+    void passes_request_id_to_service() throws Exception {
+        when(chatCompletionService.chat(any(ChatCompletionReqDTO.class)))
+                .thenReturn(new ChatCompletionResDTO(OPENAI_RESPONSE));
+
+        MvcResult result = mockMvc.perform(post("/v1/chat/completions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(CHAT_BODY))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ArgumentCaptor<ChatCompletionReqDTO> captor =
+                ArgumentCaptor.forClass(ChatCompletionReqDTO.class);
+        verify(chatCompletionService).chat(captor.capture());
+        assertThat(captor.getValue().getRequestId())
+                .isEqualTo(result.getResponse().getHeader(RequestIdFilter.HEADER));
     }
 
     @Test

@@ -20,5 +20,7 @@ class RequestIdFilterTest {
         filter.doFilter(request, response, chain);
 
         assertThat(response.getHeader(RequestIdFilter.HEADER)).isNotBlank();
+        assertThat(request.getAttribute(RequestIdFilter.ATTRIBUTE))
+                .isEqualTo(response.getHeader(RequestIdFilter.HEADER));
     }
 }

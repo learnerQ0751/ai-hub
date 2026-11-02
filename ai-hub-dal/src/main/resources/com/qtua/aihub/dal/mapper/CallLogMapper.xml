@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.CallLogMapper">
+
+    <resultMap id="CallLogResultMap" type="com.qtua.aihub.dal.model.CallLogDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="request_id" property="requestId" jdbcType="VARCHAR"/>
+        <result column="key_id" property="keyId" jdbcType="VARCHAR"/>
+        <result column="model_alias" property="modelAlias" jdbcType="VARCHAR"/>
+        <result column="deployment_model" property="deploymentModel" jdbcType="VARCHAR"/>
+        <result column="prompt_tokens" property="promptTokens" jdbcType="INTEGER"/>
+        <result column="completion_tokens" property="completionTokens" jdbcType="INTEGER"/>
+        <result column="total_tokens" property="totalTokens" jdbcType="INTEGER"/>
+        <result column="cost" property="cost" jdbcType="NUMERIC"/>
+        <result column="latency_ms" property="latencyMs" jdbcType="BIGINT"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.qtua.aihub.dal.model.CallLogDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO call_logs
+            (request_id, key_id, model_alias, deployment_model,
+             prompt_tokens, completion_tokens, total_tokens, cost,
+             latency_ms, status, tenant_id, created_at)
+        VALUES
+            (#{requestId,jdbcType=VARCHAR}, #{keyId,jdbcType=VARCHAR},
+             #{modelAlias,jdbcType=VARCHAR}, #{deploymentModel,jdbcType=VARCHAR},
+             #{promptTokens,jdbcType=INTEGER}, #{completionTokens,jdbcType=INTEGER},
+             #{totalTokens,jdbcType=INTEGER}, #{cost,jdbcType=NUMERIC},
+             #{latencyMs,jdbcType=BIGINT}, #{status,jdbcType=INTEGER},
+             #{tenantId,jdbcType=VARCHAR}, #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="selectByRequestId" resultMap="CallLogResultMap">
+        SELECT id, request_id, key_id, model_alias, deployment_model,
+               prompt_tokens, completion_tokens, total_tokens, cost,
+               latency_ms, status, tenant_id, created_at
+        FROM call_logs
+        WHERE request_id = #{requestId,jdbcType=VARCHAR}
+        ORDER BY id DESC
+        LIMIT 1
+    </select>
+
+    <select id="countByKeyId" resultType="int">
+        SELECT COUNT(*)
+        FROM call_logs
+        WHERE key_id = #{keyId,jdbcType=VARCHAR}
+    </select>
+</mapper>

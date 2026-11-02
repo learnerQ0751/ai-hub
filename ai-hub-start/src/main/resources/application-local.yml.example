@@ -14,3 +14,12 @@ gateway:
       - api-base: https://api.deepseek.com
         api-key: ${DEEPSEEK_API_KEY:}
         model: deepseek-reasoner
+  # 价格表：按上游真实模型配置每 1M tokens 单价（按供应商实际价格调整）
+  pricing:
+    models:
+      deepseek-chat:
+        input-per-million: 0.27
+        output-per-million: 1.10
+      deepseek-reasoner:
+        input-per-million: 0.55
+        output-per-million: 2.19

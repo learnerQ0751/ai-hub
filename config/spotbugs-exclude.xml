@@ -11,6 +11,12 @@
     <Match>
         <Class name="com.qtua.aihub.common.config.GatewayProperties$Deployment"/>
     </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.PricingProperties"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.PricingProperties$Price"/>
+    </Match>
     <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露 -->
     <Match>
         <Class name="com.qtua.aihub.start.filter.AuthFilter"/>
@@ -38,6 +44,14 @@
     </Match>
     <Match>
         <Class name="com.qtua.aihub.manager.ApiKeyManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.CallLogManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.pricing.YamlPricingCatalog"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>

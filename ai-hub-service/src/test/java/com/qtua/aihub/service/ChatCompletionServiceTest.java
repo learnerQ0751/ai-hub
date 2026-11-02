@@ -73,6 +73,19 @@ class ChatCompletionServiceTest {
         verify(core).chat(boCaptor.capture());
         assertThat(boCaptor.getValue().isMasterKey()).isFalse();
         assertThat(boCaptor.getValue().getAllowedModels()).containsExactly("chat-default");
+        assertThat(boCaptor.getValue().getKeyHash()).isEqualTo("hash");
+    }
+
+    @Test
+    void passes_request_id_to_core() {
+        String body = "{\"model\":\"chat-default\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}";
+
+        service.chat(new ChatCompletionReqDTO(body, MASTER, "req-42"));
+
+        ArgumentCaptor<ChatCompletionBO> boCaptor = ArgumentCaptor.forClass(ChatCompletionBO.class);
+        verify(core).chat(boCaptor.capture());
+        assertThat(boCaptor.getValue().getRequestId()).isEqualTo("req-42");
+        assertThat(boCaptor.getValue().getKeyHash()).isNull();
     }
 
     @Test

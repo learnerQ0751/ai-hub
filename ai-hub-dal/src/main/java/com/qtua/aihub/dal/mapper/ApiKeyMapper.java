@@ -4,6 +4,7 @@ import com.qtua.aihub.dal.model.ApiKeyDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 /**
@@ -38,4 +39,16 @@ public interface ApiKeyMapper {
      * @return 受影响行数
      */
     int updateBlocked(@Param("keyHash") String keyHash, @Param("blocked") boolean blocked);
+
+    /**
+     * 原子累加消费金额。
+     *
+     * <p>使用 {@code spend = spend + ?} 由数据库保证并发安全，避免多实例
+     * 「先查再写」丢失更新。</p>
+     *
+     * @param keyHash SHA-256 摘要
+     * @param amount  本次成本（非负）
+     * @return 受影响行数
+     */
+    int addSpend(@Param("keyHash") String keyHash, @Param("amount") BigDecimal amount);
 }

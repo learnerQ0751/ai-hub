@@ -10,15 +10,10 @@
 
 | 表 | 用途 | 关键关系 | 状态 | 引入需求 |
 |---|---|---|---|---|
-| api_keys | 虚拟 Key：SHA-256 哈希、模型白名单、封禁、预算/限流字段、spend | 暂无已实现关联表（规划：1:N call_logs、1:N audit_logs） | active | REQ-1.3 |
+| api_keys | 虚拟 Key：SHA-256 哈希、模型白名单、封禁、预算/限流字段、spend | 1:N call_logs（key_id） | active | REQ-1.3 |
+| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5 |
 
 ## 规划表（planned，仅供设计参考，不进入 STATUS）
-
-### 计量与日志
-
-| 表 | 用途 | 关键关系 | 状态 | 引入需求 |
-|---|---|---|---|---|
-| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status | N:1 api_keys（key_id）；带 tenant_id/project_id | planned | REQ-1.5 |
 
 ### MCP 与 Prompt
 
@@ -43,9 +38,9 @@
 
 ## 关系总览（当前）
 
-- 当前仅 `api_keys` 一张表，无表间关系。
+- `api_keys` 1:N `call_logs`：通过 `call_logs.key_id` 逻辑关联（弱关联，不建外键；master 调用 key_id 为 NULL）。
 - 规划关系见上方规划表；实现后迁入「当前表」区并更新本节。
 
 ## ER 图
 
-- 表数量 ≥5 时补充 `acceptance/assets/data-model.drawio|svg`，并在本文件与 `DESIGN.md` 引用；当前 1 张表，暂不画。
+- 表数量 ≥5 时补充 `acceptance/assets/data-model.drawio|svg`，并在本文件与 `DESIGN.md` 引用；当前 2 张表，暂不画。

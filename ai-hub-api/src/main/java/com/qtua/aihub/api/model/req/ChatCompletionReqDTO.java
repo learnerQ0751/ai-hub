@@ -14,16 +14,29 @@ public class ChatCompletionReqDTO {
 
     private final String rawBody;
     private final KeyAuthDTO auth;
+    private final String requestId;
 
     /**
-     * 构造请求 DTO。
+     * 构造请求 DTO（无请求 ID，兼容直接调用）。
      *
      * @param rawBody OpenAI ChatCompletion 原始请求 JSON
      * @param auth    已认证调用方上下文
      */
     public ChatCompletionReqDTO(String rawBody, KeyAuthDTO auth) {
+        this(rawBody, auth, null);
+    }
+
+    /**
+     * 构造请求 DTO。
+     *
+     * @param rawBody   OpenAI ChatCompletion 原始请求 JSON
+     * @param auth      已认证调用方上下文
+     * @param requestId 入口生成的请求追踪 ID；为空时由 BO 生成兜底 ID
+     */
+    public ChatCompletionReqDTO(String rawBody, KeyAuthDTO auth, String requestId) {
         this.rawBody = rawBody;
         this.auth = Objects.requireNonNull(auth, "auth must not be null");
+        this.requestId = requestId;
     }
 
     public String getRawBody() {
@@ -32,5 +45,9 @@ public class ChatCompletionReqDTO {
 
     public KeyAuthDTO getAuth() {
         return auth;
+    }
+
+    public String getRequestId() {
+        return requestId;
     }
 }

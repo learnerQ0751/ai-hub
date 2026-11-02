@@ -25,6 +25,8 @@ public class RequestIdFilter extends OncePerRequestFilter {
 
     public static final String HEADER = "X-Request-Id";
     public static final String MDC_KEY = "request_id";
+    /** 请求属性名：供 Controller 读取并透传到调用日志。 */
+    public static final String ATTRIBUTE = "request_id";
 
     /**
      * 生成 request_id 并保证请求结束后清理 MDC，避免线程池复用造成串号。
@@ -38,6 +40,7 @@ public class RequestIdFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String requestId = UUID.randomUUID().toString();
         MDC.put(MDC_KEY, requestId);
+        request.setAttribute(ATTRIBUTE, requestId);
         response.setHeader(HEADER, requestId);
         try {
             filterChain.doFilter(request, response);

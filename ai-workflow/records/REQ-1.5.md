@@ -1,7 +1,7 @@
 # REQ-1.5：调用日志 + Token 计量 + `/key/info`
 
 - 日期：2026-11-02
-- 状态：进行中
+- 状态：已完成
 - 关联规格：无（单需求，按 REQ + TDD 执行）
 - 依赖需求：REQ-1.3
 - 需求来源：Vault `05-项目7-第1期-LLM网关核心.md` §REQ-1.5
@@ -57,30 +57,32 @@ regression: [REQ-1.1 聊天链路, REQ-1.3 /key/info 响应结构, REQ-1.2 /mode
 | 决策 | 理由 | 日期 |
 |---|---|---|
 | 价格按上游真实模型（`deployment_model`）匹配，而非别名 | 同一别名可路由到不同上游模型，按真实模型计价才可复算 | 2026-11-02 |
-| 单价单位为「每 1M tokens」，`BigDecimal` scale=8、HALF_UP | 对齐价格表习惯；避免 double 精度误差；`api_keys.spend` 为 NUMERIC(18,8) | 2026-11-02 |
+| 单价单位为「每 1M tokens」，配置键 `input-per-million` / `output-per-million`，`BigDecimal` scale=8、HALF_UP | 对齐价格表习惯；避免 double 精度误差；`api_keys.spend` 为 NUMERIC(18,8) | 2026-11-02 |
 | 日志异步（有界队列 + CallerRunsPolicy），spend 同步原子 UPDATE | 日志不阻塞响应且拒绝策略保证不丢；spend 需尽快供预算判断 | 2026-11-02 |
 | `call_logs.key_id` 存虚拟 Key 的 SHA-256；master 调用为 NULL | 当前 api_keys 无稳定对外 ID；哈希已是全链路 Key 身份；避免存明文 | 2026-11-02 |
 | 价格缺失：启动 WARN + 调用照常成功 + cost=0 | 参照 B-04 的教训：缺价格不能让调用失败，也不能产生错误成本 | 2026-11-02 |
-| 失败调用也落日志（status=HTTP 状态码） | 审计与排障需要失败面；只用成功样本会掩盖上游故障 | 2026-11-02 |
+| 失败调用也落日志（status=HTTP 状态码），失败不计成本 | 审计与排障需要失败面；只用成功样本会掩盖上游故障；失败计费语义留待 REQ-1.6 | 2026-11-02 |
 | 日志写入失败时以 ERROR 级结构化字段兜底 | 无法持久化时至少可从应用日志恢复关键字段 | 2026-11-02 |
+| `usage` 解析放 integration 协议层，TokenUsage 放 common | 协议字段解析属于 integration 职责；core 只做计量编排 | 2026-11-02 |
+| request_id 由入口 Filter 生成并经请求属性透传 | 显式链路，日志 ID 与响应头 `X-Request-Id` 一致，便于排障 | 2026-11-02 |
 
 ## 6. 执行摘要
 
 ### 2026-11-02
 
-- 进展：需求记录与验收文档建立；开始 TDD 实现。
-- 下一步：完成实现与质量门禁，补验收文档 §2-4。
+- 进展：完成 common 价格模型（ModelPrice/TokenUsage/PricingCatalog）、dal call_logs 表与 Mapper、manager YAML 价格目录与 CallLogManager、integration usage 解析、core 计量编排、request_id 透传；新增 `CallLogIntegrationTest`（5 场景）；`mvn -Pquality verify` 通过（109 测试 / 25 测试类）。
+- 下一步：提交并进入 REQ-1.4（限流与预算）。
 
 ## 7. 复盘
 
-- 做对了什么：
-- 踩了什么坑：
-- 下次改进：
+- 做对了：先冻结验收标准再实现；关键语义（价格缺失、失败留痕、异步不丢）在测试中逐条覆盖；spend 用原子 SQL，避免 1.3 复盘中提到的丢更新。
+- 踩了什么坑：Checkstyle 要求空值判断走 ObjectUtils；SpotBugs 对配置绑定 Map 报 EI_EXPOSE_REP/REP2（沿用 GatewayProperties 的排除策略）；H2 下 MyBatis 显式插入 NULL 会覆盖 DEFAULT，DO 需给 cost 设默认值。
+- 下次改进：流式（REQ-1.7）需要把 usage 结算移到流结束事件；预算（REQ-1.4）可直接复用 `CallLogManager.addSpend` 与价格目录。
 
 ## 8. 多实例检查
 
-- [ ] 是否有可变成员变量？是否线程安全、跨实例一致？
-- [ ] 计数器/限流/预算/冷却是否在 Redis/数据库？
-- [ ] 锁是否分布式？是否有超时、防死锁、幂等？
-- [ ] 定时任务是否只执行一次？
-- [ ] 本地缓存是否可容忍过期/不一致？
+- [x] 是否有可变成员变量？`ChatCompletionCore`/`CallLogManager` 无可变业务状态；`YamlPricingCatalog` 持有不可变 Map
+- [x] 计数器/限流/预算/冷却是否在 Redis/数据库？spend 在 PostgreSQL 原子累加；日志在 PostgreSQL
+- [x] 锁是否分布式？本期无锁；spend 原子 SQL 无需应用层锁
+- [x] 定时任务是否只执行一次？本期无定时任务
+- [x] 本地缓存是否可容忍过期/不一致？价格目录为启动期只读配置，多实例各自加载同一份配置，可容忍

@@ -32,3 +32,5 @@ logging:
 gateway:
   master-key: ${GATEWAY_MASTER_KEY:}
   model-list: {}
+  pricing:
+    models: {}

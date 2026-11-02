@@ -80,6 +80,22 @@ class ApiKeyMapperTest {
         assertThat(apiKeyMapper.selectByKeyHash("none")).isEmpty();
     }
 
+    @Test
+    void atomically_accumulates_spend() {
+        apiKeyMapper.insert(apiKey(null));
+
+        apiKeyMapper.addSpend(KEY_HASH, new BigDecimal("0.10000000"));
+        apiKeyMapper.addSpend(KEY_HASH, new BigDecimal("0.20000000"));
+
+        assertThat(apiKeyMapper.selectByKeyHash(KEY_HASH).orElseThrow().getSpend())
+                .isEqualByComparingTo("0.30000000");
+    }
+
+    @Test
+    void add_spend_returns_zero_for_unknown_key() {
+        assertThat(apiKeyMapper.addSpend("missing", BigDecimal.ONE)).isZero();
+    }
+
     private ApiKeyDO apiKey(Instant expiresAt) {
         Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         ApiKeyDO apiKey = new ApiKeyDO();

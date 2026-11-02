@@ -44,4 +44,10 @@
         SET blocked = #{blocked,jdbcType=BOOLEAN}
         WHERE key_hash = #{keyHash,jdbcType=VARCHAR}
     </update>
+
+    <update id="addSpend">
+        UPDATE api_keys
+        SET spend = spend + #{amount,jdbcType=NUMERIC}
+        WHERE key_hash = #{keyHash,jdbcType=VARCHAR}
+    </update>
 </mapper>

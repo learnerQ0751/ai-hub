@@ -1,7 +1,7 @@
 # 设计基线（ai-hub）
 
-- 更新于：2026-10-29
-- 对应状态：`9987afd` + REQ-1.3 工作区（待提交）
+- 更新于：2026-11-02
+- 对应状态：`55ce438` + REQ-1.5 工作区（待提交）
 - 维护规则：只有架构、运行时链路、跨需求决策发生变化时才更新；需求细节见 `records/`。
 
 ## 1. 系统全景
@@ -42,7 +42,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 - 表速查（按业务域、用途、关键关系、状态）见 `docs/DATA-MODEL.md`；`STATUS.md` 自动生成同名区块并与 DDL 校验（只显示当前已建表）。
 - DDL 由 Flyway 管理：`ai-hub-dal/src/main/resources/db/migration/Vn__*.sql`，应用启动自动迁移（Spring Boot 4 需 `spring-boot-starter-flyway`）；测试 H2 仍用 `spring.sql.init`（Flyway 测试禁用）。
 - 本地依赖容器：`postgres:16`（5432，db/user/pass=aihub）+ `redis:7.2`（6379）；Docker Hub 不可达时使用本地已有镜像。
-- 当前已实现：`api_keys`（REQ-1.3）；规划：`call_logs`、`mcp_servers`、`prompt_templates`、`rag_documents`、`rag_chunks`、`memories`、`audit_logs`。
+- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5）；规划：`mcp_servers`、`prompt_templates`、`rag_documents`、`rag_chunks`、`memories`、`audit_logs`。
 - ER 图：表数量 ≥5 时补充 `acceptance/assets/data-model.drawio|svg`。
 
 ## 3. 核心运行时链路
@@ -60,7 +60,20 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
    ① 白名单校验（非 master 且白名单非空且不含 alias → 403 key_model_access_denied）
    ② 部署为空 → 400 invalid_model
    ③ 加权随机选部署 → model 别名改写为上游真实名 → 调上游 → 响应 model 回写别名
+   ④ 解析 usage → 按上游真实模型查价格 → BigDecimal 计价
+   ⑤ 同步累加 api_keys.spend（虚拟 Key）→ 异步写 call_logs（成功/失败都写）
 5. 返回上游原始 JSON（usage 等原样透传）
+```
+
+### 3.4 计量与日志（REQ-1.5）
+
+```text
+RequestIdFilter（生成 request_id）→ Controller（请求属性）→ Service → Core
+→ 上游响应 usage（prompt/completion/total）
+→ YamlPricingCatalog（每 1M tokens 单价，缺失 WARN + cost=0）
+→ ModelPrice.costOf（BigDecimal scale=8）
+→ CallLogManager.addSpend（原子 UPDATE，虚拟 Key）
+→ CallLogManager.record（有界线程池异步 INSERT；饱和时 CallerRuns；失败 ERROR 兜底）
 ```
 
 ### 3.2 Key 管理（仅 master）
@@ -95,6 +108,10 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 容错 = 别名级 fallbacks + 部署 priority 主备 | 高可用需要两层配合：先主备、后降级 | 团队决策 | 2026-10-30 |
 | 上游 api-key AES-256-GCM + 环境密钥 | 金融场景密钥不得明文入库；KMS 留扩展 | 团队决策 | 2026-10-30 |
 | prod 环境 master key 空配置启动失败 | 防止生产网关无鉴权裸奔 | 团队决策 | 2026-10-30 |
+| 价格按上游真实模型匹配；1M tokens 单价 + BigDecimal scale=8 | 同一别名可路由不同上游模型，按真实模型才可复算；金额禁用 double | REQ-1.5 | 2026-11-02 |
+| 日志异步、spend 同步原子累加 | 日志不阻塞响应；spend 需尽快供预算判断，`spend = spend + ?` 防丢更新 | REQ-1.5 | 2026-11-02 |
+| 价格缺失只告警、cost=0，不阻断调用 | 对齐 LiteLLM B-04 教训：缺价格不能造成调用失败或错误成本 | REQ-1.5 | 2026-11-02 |
+| 失败调用也写日志（status=HTTP 码），不计成本 | 审计与排障需要失败面；失败不计费，重试语义留待 REQ-1.6 | REQ-1.5 | 2026-11-02 |
 
 ## 5. 演进记录
 
@@ -104,6 +121,7 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 2026-10-20 | REQ-1.2 | 模型配置 + 多部署加权路由 + `/models` |
 | 2026-10-20 | 重构 | Maven 9 模块分层（对齐监管报送）+ Spring Boot 4.1.1 / LangChain4j 1.22.0 / Redis |
 | 2026-10-22 | REQ-1.3 | 虚拟 Key（生成/哈希鉴权/白名单/封禁/查询） |
+| 2026-11-02 | REQ-1.5 | 调用日志 + Token 计量 + 显式价格表 + spend 累计 + 失败留痕 |
 
 ## 6. 与 LiteLLM 的差异
 
@@ -114,4 +132,4 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 路由 | simple-shuffle 加权随机 | 同；以无状态实现（多实例安全） |
 | 虚拟 Key | `sk-` 前缀、models 白名单、block/unblock、info | 同；只存 SHA-256，info 只回显掩码 |
 | 错误体 | OpenAI error 结构 | 同；错误码字段与类型对齐基线 |
-| 计费 | spend 累计 | 未实现（REQ-1.5）；DeepSeek 未配价导致 LiteLLM spend=0，本项目将显式价格表 |
+| 计费 | spend 累计 | 已实现（REQ-1.5）；显式价格表按上游真实模型配置，缺失告警且 cost=0（避免 LiteLLM B-04 的 spend=0 静默问题） |
