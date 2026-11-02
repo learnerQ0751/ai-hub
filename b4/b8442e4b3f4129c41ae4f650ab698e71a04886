@@ -1,0 +1,85 @@
+ai-hub-service/src/main/java/com/qtua/aihub/service/gateway/GatewayGovernanceService.java
+  s_062b5428c0b6a2::t_29aa64e7d3ed64 30
+  s_062b5428c0b6a2::t_76c9fb6d0d57bd 143
+  s_062b5428c0b6a2::t_283153306e2e95 126
+  s_062b5428c0b6a2::t_e7f92c84db0b35 1-29,31-125,127-142,144-248
+ai-hub-start/src/test/java/com/qtua/aihub/start/controller/KeyControllerTest.java
+  s_062b5428c0b6a2::t_f5ef5210ad1fd7 11
+  s_062b5428c0b6a2::t_966aabca4e2e75 57-59
+ai-hub-start/src/main/java/com/qtua/aihub/start/error/GatewayExceptionHandler.java
+  s_062b5428c0b6a2::t_02a8294137e9cd 87
+  s_062b5428c0b6a2::t_f0a8bb51e994df 72
+  s_062b5428c0b6a2::t_330f87dd393fff 30-31,35-36,39
+  s_062b5428c0b6a2::t_c90df12863a776 56
+  s_062b5428c0b6a2::t_c873384556e620 48-49,53-54
+  s_062b5428c0b6a2::t_d76058973f17d5 5-6,90
+  s_062b5428c0b6a2::t_128689a268392a 65-66,70,77-86,88-89
+  s_062b5428c0b6a2::t_b73210ab48fe48 9
+ai-hub-service/src/test/java/com/qtua/aihub/service/gateway/GatewayGovernanceServiceTest.java
+  s_062b5428c0b6a2::t_ab41852e759e94 1-199
+ai-hub-start/src/test/java/com/qtua/aihub/start/controller/ModelControllerTest.java
+  s_062b5428c0b6a2::t_fc8718788f5dfa 7
+  s_062b5428c0b6a2::t_fc18c03dd65067 47-49
+ai-workflow/docs/STANDARDS.md
+  s_062b5428c0b6a2::t_d19bb71a37630f 91-114
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/ChatCompletionResDTO.java
+  s_062b5428c0b6a2::t_bce334de73a8bb 3-4,7-8,13-14,17,22-32,34-35,41-48
+ai-workflow/templates/REQ.md
+  s_062b5428c0b6a2::t_1176ac293d674f 35-38
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/GatewayGovernanceFilter.java
+  s_062b5428c0b6a2::t_2aa4d94bf7f223 211
+  s_062b5428c0b6a2::t_1b782654647a91 1-19,21-88,90-210,212-214
+  s_062b5428c0b6a2::t_b56f1da60ee91a 20
+  s_062b5428c0b6a2::t_7aad4e8aff4c1a 89
+ai-workflow/DESIGN.md
+  s_062b5428c0b6a2::t_cf14ebbb5b19b3 73
+  s_062b5428c0b6a2::t_27b526ceddfad3 85-87
+  s_062b5428c0b6a2::t_a70543017b5493 134
+  s_062b5428c0b6a2::t_c57beb0c321bd7 147
+  s_062b5428c0b6a2::t_6b040f14cfd34b 34
+  s_062b5428c0b6a2::t_440456f8adf8fe 57-63,65-66
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/ChatCompletionController.java
+  s_062b5428c0b6a2::t_ca2a2b232d95e2 61-64
+  s_062b5428c0b6a2::t_bda4afb6124450 8
+ai-hub-service/src/main/java/com/qtua/aihub/service/gateway/model/GatewayContext.java
+  s_062b5428c0b6a2::t_0555811f6b47c7 1-24,26-67,72-152
+  s_062b5428c0b6a2::t_6ba0140305ef11 25
+  s_062b5428c0b6a2::t_f5d027823e1416 68-71
+ai-hub-service/src/main/java/com/qtua/aihub/service/ChatCompletionServiceImpl.java
+  s_062b5428c0b6a2::t_a2676053554edb 1-131
+config/spotbugs-exclude.xml
+  s_062b5428c0b6a2::t_e0490edeae0295 69-73
+  s_062b5428c0b6a2::t_4de39ed8c857d3 74-76
+ai-hub-start/src/test/java/com/qtua/aihub/start/controller/ChatCompletionControllerTest.java
+  s_062b5428c0b6a2::t_a874e58b4612a4 11
+  s_062b5428c0b6a2::t_9947121863827a 62-64
+ai-hub-service/src/test/java/com/qtua/aihub/service/ChatCompletionServiceImplTest.java
+  s_062b5428c0b6a2::t_23908fddbc8a05 1-109
+ai-workflow/docs/WORKFLOW.md
+  s_062b5428c0b6a2::t_84a52be22017f5 67
+  s_062b5428c0b6a2::t_4a929f5aebad20 29-30
+ai-workflow/records/REQ-1.4.md
+  s_062b5428c0b6a2::t_2bb37998beeb82 42-45
+  s_062b5428c0b6a2::t_a53702d4bb463f 96-98,100
+  s_062b5428c0b6a2::t_437e77651ca160 82
+  s_062b5428c0b6a2::t_e5a975ecee5788 27-28,33-36
+  s_062b5428c0b6a2::t_b6d817aac1ee4a 106
+ai-workflow/STATUS.md
+  s_062b5428c0b6a2::t_6348227794e79f 6,69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b4b8442e4b3f4129c41ae4f650ab698e71a04886",
+  "prompts": {},
+  "sessions": {
+    "s_062b5428c0b6a2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6355626e-fefc-4e54-b6b4-8e987ab87b55",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
