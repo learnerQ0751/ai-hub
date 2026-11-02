@@ -24,17 +24,16 @@
 
 ## 3. 怎么实现的
 
-- 分层落点：`common`（限流配置/错误）→ `integration`（Redis Lua 限流器）→ `core`（检查与结算编排）→ `api/service/manager/dal`（Key 限流/预算字段）→ `start`（鉴权传递）。
-- 核心类：`RedisRateLimiter`、`ChatCompletionCore`、`KeyServiceImpl`。
+- 分层落点：`common`（限流配置/错误）→ `integration`（Redis Lua 限流器）→ `service/gateway`（网关治理编排：限流/预算/计价/日志）→ `core`（纯业务：路由/上游/usage）→ `api/manager/dal`（Key 限流/预算字段）→ `start`（入口）。
+- 核心类：`GatewayChatCompletionService`、`DefaultGatewayGuard`、`RedisRateLimiter`、`ChatCompletionCore`。
 - 请求链路：
 
 ```text
 AuthFilter（KeyAuthDTO 携带 rpm/tpm/maxBudget/budgetDuration）
-→ Service → Core
-→ rpm 滑动窗口检查（key+model，60s）
-→ tpm 预占（估算输入 + max_tokens）
-→ 预算预占（估算成本，micro 单位）
-→ 调上游 → 按实际 usage 结算 tpm / 预算
+→ Controller → GatewayChatCompletionService（service/gateway）
+→ RPM 滑动窗口（key+model，60s）→ TPM 预占（估算输入 + max_tokens）→ 预算预占（估算成本，micro）
+→ ChatExecutor → Core（选部署/上游/usage）
+→ 按实际 usage 结算 tpm / 预算 → spend + call_logs
 → 失败路径释放预占；限流/预算命中写 call_logs
 ```
 
@@ -77,6 +76,8 @@ regression: [REQ-1.1 聊天链路, REQ-1.2 路由, REQ-1.3 Key 管理, REQ-1.5 �
 | 超限：rpm/tpm 返回 429 `rate_limit_error`；预算返回 400 `budget_exceeded` | 对齐 LiteLLM 语义；B-10 未实测，待补测校准 | 2026-11-02 |
 | Redis 故障默认 fail-open + WARN，可配置 | 可用性优先；限流是保护而非业务正确性 | 2026-11-02 |
 | 限流/预算命中写 call_logs 的 `error_type` | 供 REQ-4.x 统计；不新增独立日志表 | 2026-11-02 |
+| 限流/预算/计价/spend/访问日志放 `service/gateway`，core 只做业务转发 | 网关治理与业务编排职责分离；未来拆独立网关应用时整包迁移 | 2026-11-02 |
+| `ChatExecutor` 作为业务执行端口，当前本地实现，未来可替换 HTTP | 不引入 Dubbo/Nacos；保留物理拆分出口 | 2026-11-02 |
 
 ## 6. 执行摘要
 
@@ -87,15 +88,23 @@ regression: [REQ-1.1 聊天链路, REQ-1.2 路由, REQ-1.3 Key 管理, REQ-1.5 �
 - 真实链路：Flyway V3 迁移成功；`rpm_limit=2` 前两次 200、第三次 429 `rate_limit_error`；`max_budget=0.0001` 返回 400 `budget_exceeded`；`tpm_limit=100` 返回 429；`/key/info` 返回 `budget_duration`；`call_logs` 记录 status/error_type。
 - 下一步：提交并进入 REQ-1.6（重试/fallback/冷却）。
 
+### 2026-11-02（网关治理解耦重构）
+
+- 背景：评审指出限流/预算/计量放在 `ChatCompletionCore` 属于职责错位；裁决不引入 Dubbo/Nacos，按 HTTP + 逻辑网关层解耦。
+- 重构：新增 `service/gateway`（`GatewayChatCompletionService` / `GatewayGuard` / `ChatExecutor`）；`ChatCompletionCore` 只保留部署选择/协议/上游/usage；计价、spend、日志、限流、预算全部上移；ArchUnit 允许 Service → Integration；`ChatCompletionResultBO` 返回 usage/deploymentModel。
+- 验证：`mvn -Pquality verify` 全绿（149 测试）；CallLog/RateLimit/GatewayRouting/KeyManagement 集成测试通过。
+- 设计文档：Vault `15-网关治理解耦设计`。
+- 下一步：真实链路复验 → 提交 → REQ-1.6。
+
 ## 7. 复盘
 
 - 做对了：TPM/预算用"预占-结算"解决输出 token 未知；micro 单位避免浮点误差；周期 key + TTL 免定时任务；fail-open 保证 Redis 故障时网关可用。
 - 踩了什么坑：Spring 多构造器需要 `@Autowired` 指定注入构造器；Testcontainers 在 Docker Hub 不可达时需禁用 Ryuk 并使用本地镜像；Windows 下被占用的 exec jar 会阻止 clean，验证时用 `-Dspring-boot.repackage.skip=true`。
-- 下次改进：流式（REQ-1.7）的 TPM 结算需放在流结束事件；预算预占的幂等/过期清理在生产化时补齐（当前由 core 单次调用保证）。
+- 下次改进：流式（REQ-1.7）的 TPM 结算需放在流结束事件；预算预占的幂等/过期清理在生产化时补齐（当前由网关层单次调用保证）；未来拆网关应用时替换 `ChatExecutor` 为 HTTP 实现即可。
 
 ## 8. 多实例检查
 
-- [x] 是否有可变成员变量？`RedisRateLimiter`/`ChatCompletionCore` 无请求级可变状态；限流与预算全部在 Redis
+- [x] 是否有可变成员变量？`RedisRateLimiter`/`GatewayChatCompletionService` 无请求级可变状态；限流与预算全部在 Redis
 - [x] 计数器/限流/预算/冷却是否在 Redis/数据库？RPM/TPM/预算在 Redis；Key 配置在 PostgreSQL
 - [x] 锁是否分布式？无应用层锁；Lua 脚本原子执行，多实例共享同一计数器
 - [x] 定时任务是否只执行一次？无定时任务；预算周期靠 key 后缀 + TTL 切换

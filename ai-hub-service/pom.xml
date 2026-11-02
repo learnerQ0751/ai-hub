@@ -24,6 +24,10 @@
         </dependency>
         <dependency>
             <groupId>com.qtua</groupId>
+            <artifactId>ai-hub-integration</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.qtua</groupId>
             <artifactId>ai-hub-common</artifactId>
         </dependency>
         <dependency>

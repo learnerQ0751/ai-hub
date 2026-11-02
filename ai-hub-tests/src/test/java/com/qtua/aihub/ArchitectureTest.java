@@ -41,7 +41,8 @@ class ArchitectureTest {
                 .whereLayer("Service").mayOnlyBeAccessedByLayers("Start")
                 .whereLayer("Core").mayOnlyBeAccessedByLayers("Service")
                 .whereLayer("Manager").mayOnlyBeAccessedByLayers("Core", "Service")
-                .whereLayer("Integration").mayOnlyBeAccessedByLayers("Core")
+                // service/gateway 承担网关治理（Redis 限流/预算），允许 Service 访问 Integration。
+                .whereLayer("Integration").mayOnlyBeAccessedByLayers("Core", "Service")
                 .whereLayer("Api").mayOnlyBeAccessedByLayers("Start", "Service")
                 .whereLayer("Dal").mayOnlyBeAccessedByLayers("Manager")
                 .whereLayer("Common").mayOnlyBeAccessedByLayers(

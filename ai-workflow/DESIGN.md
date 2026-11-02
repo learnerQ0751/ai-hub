@@ -30,8 +30,8 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 | `ai-hub-manager` | BO 与 BO↔DO 转换（ChatCompletionBO / ApiKeyBO）；模型目录 YAML 实现（YamlModelCatalog） |
 | `ai-hub-dal` | MyBatis Mapper + DDL（api_keys） |
 | `ai-hub-integration` | 上游 HTTP + OpenAI 协议适配 + 协议改写 |
-| `ai-hub-core` | 业务编排：路由选择、模型白名单、别名改写决策 |
-| `ai-hub-service` | ServiceImpl：校验 + DTO↔BO + 编排 core |
+| `ai-hub-core` | 纯业务编排：部署选择、协议改写、上游调用、usage 解析（不含限流/预算/计价/日志） |
+| `ai-hub-service` | 应用服务 + 网关治理：请求解析/校验；`service/gateway` 负责限流、预算、计价、spend、访问日志 |
 | `ai-hub-start` | 启动类（根包）+ controller / filter / error / config |
 | `ai-hub-tests` | 集成测试 + ArchUnit + JaCoCo 聚合 |
 
@@ -55,22 +55,22 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
    - 否则 SHA-256 查 api_keys：不存在/封禁/过期 → 401 auth_error
    - /key/* 仅 master
 2. ChatCompletionController：原始 JSON → ChatCompletionReqDTO（携带 KeyAuthDTO）
-3. ChatCompletionServiceImpl：校验 model/stream/messages；按别名取部署；组装 BO
-4. ChatCompletionCore：
-   ① 白名单校验（非 master 且白名单非空且不含 alias → 403 key_model_access_denied）
-   ② 部署为空 → 400 invalid_model
-   ③ Key 级限流/预算：RPM 滑动窗口 → TPM 预占 → 预算预占（超限 429/400）
-   ④ 加权随机选部署 → model 别名改写为上游真实名 → 调上游 → 响应 model 回写别名
-   ⑤ 解析 usage → 按上游真实模型查价格 → BigDecimal 计价
-   ⑥ 按实际用量结算 TPM/预算 → 同步累加 api_keys.spend → 异步写 call_logs（成功/失败都写）
-5. 返回上游原始 JSON（usage 等原样透传）
+3. GatewayChatCompletionService（service/gateway，网关治理层）：
+   ① 校验 model/stream/messages；模型白名单（403 key_model_access_denied）
+   ② 模型目录为空 → 400 invalid_model
+   ③ 限流/预算预占：RPM 滑动窗口 → TPM 预占 → 预算预占（超限 429/400）
+   ④ 通过 ChatExecutor 调业务服务（当前 CoreChatExecutor → ChatCompletionCore）
+4. ChatCompletionCore（纯业务）：
+   加权随机选部署 → model 别名改写为上游真实名 → 调上游 → 响应 model 回写别名 → 解析 usage
+5. 网关层按实际 usage/cost 结算 TPM/预算、累加 spend、异步写 call_logs（成功/失败都写）
+6. 返回上游原始 JSON（usage 等原样透传）
 ```
 
 ### 3.4 限流与预算（REQ-1.4）
 
 ```text
 AuthFilter（KeyAuthDTO 携带 rpm_limit / tpm_limit / max_budget / budget_duration）
-→ Core：
+→ GatewayChatCompletionService（service/gateway，网关治理层）：
    ① RPM：Redis ZSET 滑动窗口（key + model，窗口 60s）
    ② TPM：输入估算（字符/4）+ max_tokens 预占，响应后按实际 usage 结算
    ③ 预算：估算成本 × 预占，响应后按实际 cost 结算；失败释放
@@ -82,8 +82,8 @@ AuthFilter（KeyAuthDTO 携带 rpm_limit / tpm_limit / max_budget / budget_durat
 ### 3.5 计量与日志（REQ-1.5）
 
 ```text
-RequestIdFilter（生成 request_id）→ Controller（请求属性）→ Service → Core
-→ 上游响应 usage（prompt/completion/total）
+RequestIdFilter（生成 request_id）→ Controller → GatewayChatCompletionService
+→ ChatExecutor → Core → 上游响应 usage（prompt/completion/total）
 → YamlPricingCatalog（每 1M tokens 单价，缺失 WARN + cost=0）
 → ModelPrice.costOf（BigDecimal scale=8）
 → CallLogManager.addSpend（原子 UPDATE，虚拟 Key）
@@ -130,6 +130,8 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | TPM 请求前按「输入估算 + max_tokens」预占、响应后按实际 usage 结算 | 输出 token 请求前未知；预占保证不超限，结算保证口径与 REQ-1.5 一致 | REQ-1.4 | 2026-11-02 |
 | 预算金额用整数 micro 单位（1e-8 元），周期 key 带 TTL | 避免 INCRBYFLOAT 精度问题；daily/monthly 跨期自动换 key，无需定时任务 | REQ-1.4 | 2026-11-02 |
 | 限流/预算 Redis 故障默认 fail-open，可配置 fail-closed | 限流是保护而非业务正确性；避免 Redis 故障导致网关整体不可用 | REQ-1.4 | 2026-11-02 |
+| 限流/预算/计价/spend/访问日志上移 `service/gateway`，core 只做上游转发 | 网关治理与业务编排职责分离；未来拆独立网关应用时整包迁移 | 架构重构 | 2026-11-02 |
+| `ChatExecutor` 作为业务执行端口，当前本地实现，未来替换为 HTTP | 不引入 Dubbo/Nacos；保留物理拆分出口，网关调业务走 HTTP | 架构重构 | 2026-11-02 |
 
 ## 5. 演进记录
 
@@ -141,6 +143,7 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 2026-10-22 | REQ-1.3 | 虚拟 Key（生成/哈希鉴权/白名单/封禁/查询） |
 | 2026-11-02 | REQ-1.5 | 调用日志 + Token 计量 + 显式价格表 + spend 累计 + 失败留痕 |
 | 2026-11-02 | REQ-1.4 | Key 级 RPM/TPM 滑动窗口 + 预算预占结算 + 限流命中留痕 |
+| 2026-11-02 | 重构 | 网关治理解耦：service/gateway + GatewayGuard/ChatExecutor 端口；core 纯业务 |
 
 ## 6. 与 LiteLLM 的差异
 
