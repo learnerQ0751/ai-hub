@@ -5,6 +5,7 @@ import com.qtua.aihub.api.model.auth.KeyAuthDTO;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
 import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.service.gateway.model.GatewayContext;
 import com.qtua.aihub.start.filter.AuthFilter;
 import com.qtua.aihub.start.filter.RequestIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -57,6 +58,10 @@ public class ChatCompletionController {
         String requestId = (String) servletRequest.getAttribute(RequestIdFilter.ATTRIBUTE);
         ChatCompletionResDTO resDTO = chatCompletionService.chat(
                 new ChatCompletionReqDTO(requestBody, auth, requestId));
+        GatewayContext context = (GatewayContext) servletRequest.getAttribute(GatewayContext.ATTRIBUTE);
+        if (Objects.nonNull(context)) {
+            context.complete(resDTO.getUsage(), resDTO.getDeploymentModel());
+        }
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(resDTO.getRawResponse());

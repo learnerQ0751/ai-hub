@@ -8,6 +8,7 @@ import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.start.config.JacksonConfig;
 import com.qtua.aihub.api.ChatCompletionService;
 import com.qtua.aihub.api.KeyService;
+import com.qtua.aihub.service.gateway.GatewayGovernanceService;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
 import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
 import com.qtua.aihub.AiHubApplication;
@@ -57,6 +58,9 @@ class ChatCompletionControllerTest {
 
     @MockitoBean
     private GatewayProperties gatewayProperties;
+
+    @MockitoBean
+    private GatewayGovernanceService gatewayGovernanceService;
 
     @Test
     void returns_openai_response_and_preserves_fields() throws Exception {

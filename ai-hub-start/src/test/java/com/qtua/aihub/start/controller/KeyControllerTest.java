@@ -8,6 +8,7 @@ import com.qtua.aihub.api.model.res.KeyBlockResDTO;
 import com.qtua.aihub.api.model.res.KeyGenerateResDTO;
 import com.qtua.aihub.api.model.res.KeyInfoResDTO;
 import com.qtua.aihub.common.config.GatewayProperties;
+import com.qtua.aihub.service.gateway.GatewayGovernanceService;
 import com.qtua.aihub.start.config.JacksonConfig;
 import com.qtua.aihub.start.error.GatewayExceptionHandler;
 import com.qtua.aihub.start.filter.AuthFilter;
@@ -52,6 +53,9 @@ class KeyControllerTest {
 
     @MockitoBean
     private GatewayProperties gatewayProperties;
+
+    @MockitoBean
+    private GatewayGovernanceService gatewayGovernanceService;
 
     @BeforeEach
     void setUp() {

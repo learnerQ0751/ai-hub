@@ -4,6 +4,7 @@ import com.qtua.aihub.start.error.GatewayExceptionHandler;
 import com.qtua.aihub.start.filter.AuthFilter;
 import com.qtua.aihub.start.filter.RequestIdFilter;
 import com.qtua.aihub.common.config.GatewayProperties;
+import com.qtua.aihub.service.gateway.GatewayGovernanceService;
 import com.qtua.aihub.start.config.JacksonConfig;
 import com.qtua.aihub.api.KeyService;
 import com.qtua.aihub.api.ModelService;
@@ -42,6 +43,9 @@ class ModelControllerTest {
 
     @MockitoBean
     private GatewayProperties gatewayProperties;
+
+    @MockitoBean
+    private GatewayGovernanceService gatewayGovernanceService;
 
     @Test
     void lists_models() throws Exception {

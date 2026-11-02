@@ -32,6 +32,10 @@
 > 实现前填写；分级门禁依据：`additive` 自动通过，`extension` / `breaking` 必须用户确认后动手。
 
 ```yaml
+capability:
+  type: business            # business | cross-cutting（横切治理：认证/限流/预算/计价/计量/日志/追踪/幂等）
+  entry_point: ""           # Filter / Interceptor / AOP / Service / Core
+  interface_agnostic: false # 横切治理必须 true：新增接口自动复用，不允许复制
 modules:
   add: []
   change: []

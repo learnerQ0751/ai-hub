@@ -1,0 +1,214 @@
+package com.qtua.aihub.start.filter;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.qtua.aihub.api.model.auth.KeyAuthDTO;
+import com.qtua.aihub.api.model.res.ErrorResponse;
+import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.service.gateway.GatewayGovernanceService;
+import com.qtua.aihub.service.gateway.model.GatewayContext;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StreamUtils;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
+/**
+ * 网关治理过滤器。
+ *
+ * <p>限流、预算、计价、spend、访问日志的统一入口，与具体业务接口无关。
+ * 请求前预占，请求后按业务回填的 usage 结算；失败释放。
+ * 未来新增流式/文件接口时，只需扩展请求提取与 usage 回填，治理主流程复用。</p>
+ */
+@Component
+@Order(Ordered.HIGHEST_PRECEDENCE + 2)
+public class GatewayGovernanceFilter extends OncePerRequestFilter {
+
+    private static final String CHAT_PATH_V1 = "/v1/chat/completions";
+    private static final String CHAT_PATH = "/chat/completions";
+    private static final String UTF_8 = "UTF-8";
+
+    private final GatewayGovernanceService governanceService;
+    private final ObjectMapper objectMapper;
+
+    /**
+     * 构造过滤器。
+     *
+     * @param governanceService 网关治理服务
+     * @param objectMapper      JSON 序列化器（错误响应）
+     */
+    public GatewayGovernanceFilter(GatewayGovernanceService governanceService,
+                                   ObjectMapper objectMapper) {
+        this.governanceService = governanceService;
+        this.objectMapper = objectMapper;
+    }
+
+    /**
+     * 只治理聊天补全入口；后续流式/文件接口在此扩展。
+     *
+     * @param request HTTP 请求
+     * @return true 表示跳过治理
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        String relative = path.startsWith(contextPath)
+                ? path.substring(contextPath.length()) : path;
+        return !CHAT_PATH_V1.equals(relative) && !CHAT_PATH.equals(relative);
+    }
+
+    /**
+     * 执行治理逻辑。
+     *
+     * @param request     HTTP 请求
+     * @param response    HTTP 响应
+     * @param filterChain 过滤器链
+     * @throws ServletException Servlet 异常
+     * @throws IOException      IO 异常
+     */
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
+        KeyAuthDTO auth = (KeyAuthDTO) request.getAttribute(AuthFilter.KEY_AUTH_ATTRIBUTE);
+        if (ObjectUtils.isEmpty(auth)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        String requestId = (String) request.getAttribute(RequestIdFilter.ATTRIBUTE);
+        GatewayContext context = new GatewayContext(requestId, auth.keyHash(),
+                request.getRequestURI(), auth);
+        CachedBodyRequestWrapper wrapped = new CachedBodyRequestWrapper(request);
+        wrapped.setAttribute(GatewayContext.ATTRIBUTE, context);
+        try {
+            governanceService.reserve(context, wrapped.getBody());
+            filterChain.doFilter(wrapped, response);
+        } catch (ChatCompletionException ex) {
+            context.fail(ex.getStatus().value(), ex.getType());
+            governanceService.fail(context);
+            writeError(response, ex);
+            return;
+        } catch (RuntimeException ex) {
+            context.fail(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "internal_error");
+            governanceService.fail(context);
+            writeError(response, ChatCompletionException.internalError(
+                    "Gateway governance failed", ex));
+            return;
+        }
+        if (context.isFailed()) {
+            governanceService.fail(context);
+        } else {
+            governanceService.complete(context);
+        }
+    }
+
+    /**
+     * 写 OpenAI 兼容错误体。
+     *
+     * @param response HTTP 响应
+     * @param ex       业务异常
+     * @throws IOException IO 异常
+     */
+    private void writeError(HttpServletResponse response, ChatCompletionException ex)
+            throws IOException {
+        response.setStatus(ex.getStatus().value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(UTF_8);
+        objectMapper.writeValue(response.getWriter(),
+                ErrorResponse.of(ex.getMessage(), ex.getType(), ex.getParam(), ex.getCode()));
+    }
+
+    /**
+     * 可重复读取请求体的包装器（聊天 JSON 体积小；大文件接口需改用流式提取）。
+     */
+    private static final class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
+
+        private final byte[] body;
+
+        /**
+         * 读取并缓存请求体。
+         *
+         * @param request 原始请求
+         * @throws IOException IO 异常
+         */
+        private CachedBodyRequestWrapper(HttpServletRequest request) throws IOException {
+            super(request);
+            this.body = StreamUtils.copyToByteArray(request.getInputStream());
+        }
+
+        /**
+         * 请求体文本。
+         *
+         * @return UTF-8 文本
+         */
+        private String getBody() {
+            return new String(body, charset());
+        }
+
+        /**
+         * 每次返回新的输入流，支持 Controller 再次读取。
+         *
+         * @return ServletInputStream
+         */
+        @Override
+        public ServletInputStream getInputStream() {
+            ByteArrayInputStream delegate = new ByteArrayInputStream(body);
+            return new ServletInputStream() {
+                @Override
+                public int read() {
+                    return delegate.read();
+                }
+
+                @Override
+                public int read(byte[] buffer, int offset, int length) {
+                    return delegate.read(buffer, offset, length);
+                }
+
+                @Override
+                public boolean isFinished() {
+                    return delegate.available() == 0;
+                }
+
+                @Override
+                public boolean isReady() {
+                    return true;
+                }
+
+                @Override
+                public void setReadListener(ReadListener listener) {
+                    throw new UnsupportedOperationException("ReadListener is not supported");
+                }
+            };
+        }
+
+        /**
+         * 每次返回新的 Reader，支持 Controller 再次读取。
+         *
+         * @return BufferedReader
+         */
+        @Override
+        public BufferedReader getReader() {
+            return new BufferedReader(new InputStreamReader(getInputStream(), charset()));
+        }
+
+        private Charset charset() {
+            String encoding = getCharacterEncoding();
+            return ObjectUtils.isEmpty(encoding) ? StandardCharsets.UTF_8 : Charset.forName(encoding);
+        }
+    }
+}

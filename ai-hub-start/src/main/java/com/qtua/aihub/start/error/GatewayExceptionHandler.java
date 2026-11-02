@@ -2,8 +2,11 @@ package com.qtua.aihub.start.error;
 
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.api.model.res.ErrorResponse;
+import com.qtua.aihub.service.gateway.model.GatewayContext;
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -24,13 +27,16 @@ public class GatewayExceptionHandler {
     /**
      * 处理网关业务异常。
      *
-     * @param ex 业务异常
+     * @param ex      业务异常
+     * @param request HTTP 请求（回填治理上下文）
      * @return 对应状态码与错误体
      */
     @ExceptionHandler(ChatCompletionException.class)
-    public ResponseEntity<ErrorResponse> handleChatCompletion(ChatCompletionException ex) {
+    public ResponseEntity<ErrorResponse> handleChatCompletion(ChatCompletionException ex,
+                                                              HttpServletRequest request) {
         LOG.warn("gateway request failed: type={}, code={}, message={}",
                 ex.getType(), ex.getCode(), ex.getMessage());
+        markFailure(request, ex.getStatus().value(), ex.getType());
         return ResponseEntity.status(ex.getStatus())
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(ErrorResponse.of(ex.getMessage(), ex.getType(), ex.getParam(), ex.getCode()));
@@ -39,12 +45,15 @@ public class GatewayExceptionHandler {
     /**
      * 处理请求体不是合法 JSON 的情况。
      *
-     * @param ex 解析异常
+     * @param ex      解析异常
+     * @param request HTTP 请求（回填治理上下文）
      * @return 400 规范错误体
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex) {
+    public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException ex,
+                                                          HttpServletRequest request) {
         LOG.warn("request body is not readable: {}", ex.getMessage());
+        markFailure(request, HttpStatus.BAD_REQUEST.value(), "invalid_request_error");
         return ResponseEntity.badRequest()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(ErrorResponse.of("Invalid JSON request body", "invalid_request_error", null, "400"));
@@ -53,14 +62,30 @@ public class GatewayExceptionHandler {
     /**
      * 兜底异常处理，避免泄露内部细节。
      *
-     * @param ex 未知异常
+     * @param ex      未知异常
+     * @param request HTTP 请求（回填治理上下文）
      * @return 500 规范错误体
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
         LOG.error("unexpected gateway error", ex);
+        markFailure(request, HttpStatus.INTERNAL_SERVER_ERROR.value(), "internal_error");
         return ResponseEntity.internalServerError()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(ErrorResponse.of("Internal gateway error", "internal_error", null, "500"));
+    }
+
+    /**
+     * 把失败状态回填到网关治理上下文，供 Filter 释放预占并记录日志。
+     *
+     * @param request   HTTP 请求
+     * @param status    HTTP 状态码
+     * @param errorType 错误类型
+     */
+    private void markFailure(HttpServletRequest request, int status, String errorType) {
+        GatewayContext context = (GatewayContext) request.getAttribute(GatewayContext.ATTRIBUTE);
+        if (!org.springframework.util.ObjectUtils.isEmpty(context)) {
+            context.fail(status, errorType);
+        }
     }
 }
