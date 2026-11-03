@@ -70,9 +70,10 @@ regression:
 
 ### 2026-11-03
 
-- 进展：完成 `ChatCompletionException` 全部工厂方法与调用点（请求解析/Key 管理/治理/限流预算/上游错误/流式）中文文案改造；新增 `ChatCompletionExceptionTest`（中文 message + 协议字段英文两组断言）；更新 `KeyServiceTest` 与 `ChatCompletionControllerTest`；`mvn -Pquality verify` 全绿。
+- 进展：完成 `ChatCompletionException` 全部工厂方法与调用点（请求解析/Key 管理/治理/限流预算/上游错误/流式）中文文案改造；补充 `GatewayExceptionHandler`（405/请求体解析/缺参/类型不匹配/内部错误）中文；新增 `ChatCompletionExceptionTest`（中文 message + 协议字段英文两组断言）；更新 `KeyServiceTest`/`ChatCompletionControllerTest`/`KeyControllerTest`；`mvn -Pquality verify` 全绿。
+- 真实链路：未知模型 400、未鉴权 401、`/key/info` 缺参 400、方法不支持 405 均返回中文 message；`type`/`param`/`code` 保持英文协议值。
 - 规范：STANDARDS §3.6 用户文案语言 + PROJECT 错误契约 + WORKFLOW 完成定义 + ACCEPTANCE 模板已同步。
-- 下一步：全量门禁后提交；后续需求按新规范验收。
+- 下一步：后续需求按新规范验收。
 
 ## 7. 复盘
 

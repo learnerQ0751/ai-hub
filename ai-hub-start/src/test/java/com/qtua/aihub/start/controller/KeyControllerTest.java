@@ -8,6 +8,7 @@ import com.qtua.aihub.api.model.res.KeyBlockResDTO;
 import com.qtua.aihub.api.model.res.KeyGenerateResDTO;
 import com.qtua.aihub.api.model.res.KeyInfoResDTO;
 import com.qtua.aihub.common.config.GatewayProperties;
+import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.service.gateway.GatewayGovernanceService;
 import com.qtua.aihub.start.config.JacksonConfig;
 import com.qtua.aihub.start.error.GatewayExceptionHandler;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -60,6 +62,27 @@ class KeyControllerTest {
     @BeforeEach
     void setUp() {
         when(gatewayProperties.getMasterKey()).thenReturn(MASTER_KEY);
+    }
+
+    @Test
+    void wrong_method_returns_chinese_method_not_allowed() throws Exception {
+        mockMvc.perform(post("/key/info")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + MASTER_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.error.message").value(containsString("请求方法")));
+    }
+
+    @Test
+    void missing_key_param_returns_chinese_bad_request() throws Exception {
+        when(keyService.info(null))
+                .thenThrow(ChatCompletionException.invalidRequest("字段 'key' 不能为空", "key"));
+
+        mockMvc.perform(get("/key/info")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + MASTER_KEY))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.message").value(containsString("字段 'key'")));
     }
 
     @Test

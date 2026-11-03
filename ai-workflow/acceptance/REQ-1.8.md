@@ -98,5 +98,5 @@ flowchart LR
 ## 5. 验收记录
 
 - 验收日期：2026-11-03
-- 结论：工程验收通过（`ChatCompletionExceptionTest` 2 组断言 + `ChatCompletionControllerTest` 中文 message 断言 + `KeyServiceTest` 中文断言；`mvn -Pquality verify` 全绿）；协议字段与状态码未变。
+- 结论：工程验收通过（`ChatCompletionExceptionTest` 2 组断言 + `ChatCompletionControllerTest`/`KeyControllerTest` 中文 message 断言 + `KeyServiceTest` 中文断言；`mvn -Pquality verify` 全绿）。真实链路：未知模型 400、未鉴权 401、`/key/info` 缺参 400、方法不支持 405 均为中文 message；`type`/`param`/`code` 与状态码未变。
 - 遗留问题：无
