@@ -205,6 +205,42 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * MCP Server 不存在（404）。
+     *
+     * @param serverId 服务器 ID
+     * @return 业务异常
+     */
+    public static ChatCompletionException mcpServerNotFound(String serverId) {
+        return new ChatCompletionException(HttpStatus.NOT_FOUND,
+                "MCP Server '" + serverId + "' 不存在", "not_found_error",
+                "server_id", "404", null, false);
+    }
+
+    /**
+     * MCP Server 名称冲突（409）。
+     *
+     * @param name 冲突的名称
+     * @return 业务异常
+     */
+    public static ChatCompletionException mcpServerConflict(String name) {
+        return new ChatCompletionException(HttpStatus.CONFLICT,
+                "MCP Server 名称 '" + name + "' 已存在", "conflict_error",
+                "name", "409", null, false);
+    }
+
+    /**
+     * MCP Server 注册参数非法（400）。
+     *
+     * @param message 错误描述
+     * @param param   出错字段
+     * @return 业务异常
+     */
+    public static ChatCompletionException invalidMcpServerRequest(String message, String param) {
+        return new ChatCompletionException(HttpStatus.BAD_REQUEST, message,
+                "invalid_request_error", param, "400", null, false);
+    }
+
+    /**
      * 网关内部错误（500）。
      *
      * @param message 错误描述

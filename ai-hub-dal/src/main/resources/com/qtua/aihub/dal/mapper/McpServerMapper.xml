@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.McpServerMapper">
+
+    <resultMap id="McpServerResultMap" type="com.qtua.aihub.dal.model.McpServerDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="server_id" property="serverId" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="transport" property="transport" jdbcType="VARCHAR"/>
+        <result column="endpoint" property="endpoint" jdbcType="VARCHAR"/>
+        <result column="command" property="command" jdbcType="VARCHAR"/>
+        <result column="args" property="args" jdbcType="VARCHAR"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="last_health_at" property="lastHealthAt" jdbcType="TIMESTAMP"/>
+        <result column="metadata" property="metadata" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="columns">
+        SELECT id, server_id, name, transport, endpoint, command,
+               CAST(args AS VARCHAR) AS args, tenant_id, status, last_health_at,
+               CAST(metadata AS VARCHAR) AS metadata, created_at
+        FROM mcp_servers
+    </sql>
+
+    <insert id="insert" parameterType="com.qtua.aihub.dal.model.McpServerDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO mcp_servers
+            (server_id, name, transport, endpoint, command, args, tenant_id,
+             status, last_health_at, metadata, created_at)
+        VALUES
+            (#{serverId,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR},
+             #{transport,jdbcType=VARCHAR}, #{endpoint,jdbcType=VARCHAR},
+             #{command,jdbcType=VARCHAR}, CAST(#{args,jdbcType=VARCHAR} AS JSONB),
+             #{tenantId,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR},
+             #{lastHealthAt,jdbcType=TIMESTAMP},
+             CAST(#{metadata,jdbcType=VARCHAR} AS JSONB),
+             #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="selectByServerId" resultMap="McpServerResultMap">
+        <include refid="columns"/>
+        WHERE server_id = #{serverId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectByName" resultMap="McpServerResultMap">
+        <include refid="columns"/>
+        WHERE name = #{name,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectAll" resultMap="McpServerResultMap">
+        <include refid="columns"/>
+        ORDER BY created_at DESC, id DESC
+    </select>
+
+    <select id="selectActive" resultMap="McpServerResultMap">
+        <include refid="columns"/>
+        WHERE status = 'ACTIVE'
+        ORDER BY id ASC
+    </select>
+
+    <update id="updateHealth">
+        UPDATE mcp_servers
+        SET status = #{status,jdbcType=VARCHAR},
+            last_health_at = #{lastHealthAt,jdbcType=TIMESTAMP},
+            metadata = CAST(#{metadata,jdbcType=VARCHAR} AS JSONB)
+        WHERE server_id = #{serverId,jdbcType=VARCHAR}
+    </update>
+
+    <delete id="deleteByServerId">
+        DELETE FROM mcp_servers WHERE server_id = #{serverId,jdbcType=VARCHAR}
+    </delete>
+</mapper>

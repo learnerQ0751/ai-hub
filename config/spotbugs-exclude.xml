@@ -117,4 +117,29 @@
         <Class name="com.qtua.aihub.manager.model.ChatCompletionStreamResultBO"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <!-- 响应 DTO：args 在紧凑构造器中已 List.copyOf，SpotBugs 无法推断不可变性 -->
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.McpServerResDTO"/>
+    </Match>
+    <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露（第 2 期新增类） -->
+    <Match>
+        <Class name="com.qtua.aihub.manager.mcp.McpServerManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.McpServerServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.integration.mcp.McpServerProbe"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.mcp.McpServerStartupLoader"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.start.controller.McpServerController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

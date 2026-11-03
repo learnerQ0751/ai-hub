@@ -11,16 +11,17 @@
 | 表 | 用途 | 关键关系 | 状态 | 引入需求 |
 |---|---|---|---|---|
 | api_keys | 虚拟 Key：SHA-256 哈希、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend | 1:N call_logs（key_id） | active | REQ-1.3 / REQ-1.4 |
-| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5 / REQ-1.4 / REQ-1.6 |
-
-## 规划表（planned，仅供设计参考，不进入 STATUS）
+| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias / call_type（CHAT/MCP/PROMPT）/ target_name | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5 / REQ-1.4 / REQ-1.6 / REQ-2.3 |
 
 ### MCP 与 Prompt
 
 | 表 | 用途 | 关键关系 | 状态 | 引入需求 |
 |---|---|---|---|---|
-| mcp_servers | MCP Server 注册：transport / endpoint / status / last_health_at / metadata | 独立配置类表；工具目录为运行时缓存 | planned | REQ-2.1 |
-| prompt_templates | Prompt 模板与版本：name / version / content / variables / status | 同 name 多版本（行内版本序列） | planned | REQ-2.4 |
+| mcp_servers | MCP Server 注册：server_id（UUID）/ name（唯一、禁 "__"）/ transport / endpoint / command / args / status（ACTIVE/DOWN）/ last_health_at / metadata（description、lastError） | 独立配置类表；工具目录为运行时缓存（REQ-2.2） | active | REQ-2.1 |
+| prompt_templates | Prompt 模板与版本：name / version / content / variables / status（DRAFT/PUBLISHED/ARCHIVED） | 同 name 多版本（name+version 唯一） | active | REQ-2.4 |
+
+## 规划表（planned，仅供设计参考，不进入 STATUS）
+
 
 ### RAG 与记忆
 
@@ -39,8 +40,9 @@
 ## 关系总览（当前）
 
 - `api_keys` 1:N `call_logs`：通过 `call_logs.key_id` 逻辑关联（弱关联，不建外键；master 调用 key_id 为 NULL）。
+- `mcp_servers` / `prompt_templates`：独立配置类表，无强外键；`call_logs.call_type + target_name` 记录 MCP/Prompt 调用轨迹。
 - 规划关系见上方规划表；实现后迁入「当前表」区并更新本节。
 
 ## ER 图
 
-- 表数量 ≥5 时补充 `acceptance/assets/data-model.drawio|svg`，并在本文件与 `DESIGN.md` 引用；当前 2 张表，暂不画。
+- 表数量 ≥5 时补充 `acceptance/assets/data-model.drawio|svg`，并在本文件与 `DESIGN.md` 引用；当前 4 张表，暂不画。

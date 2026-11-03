@@ -13,3 +13,4 @@ spring:
         - classpath:db/h2-jsonb-domain.sql
         - classpath:db/api-keys-schema.sql
         - classpath:db/call-logs-schema.sql
+        - classpath:db/mcp-prompt-schema.sql

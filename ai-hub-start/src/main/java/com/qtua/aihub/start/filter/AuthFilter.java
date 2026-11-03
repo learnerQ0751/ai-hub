@@ -43,7 +43,8 @@ public class AuthFilter extends OncePerRequestFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthFilter.class);
     private static final String BEARER_PREFIX = "Bearer ";
-    private static final String MASTER_ONLY_PREFIX = "/key/";
+    /** 管理面路径前缀：仅 master key 可访问（Key 管理 + MCP Server 管理）。 */
+    private static final String[] MASTER_ONLY_PREFIXES = {"/key/", "/v1/mcp/servers"};
 
     private final GatewayProperties properties;
     private final KeyService keyService;
@@ -127,7 +128,12 @@ public class AuthFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         String contextPath = request.getContextPath();
         String path = uri.startsWith(contextPath) ? uri.substring(contextPath.length()) : uri;
-        return path.startsWith(MASTER_ONLY_PREFIX);
+        for (String prefix : MASTER_ONLY_PREFIXES) {
+            if (path.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean constantTimeEquals(String expected, String actual) {

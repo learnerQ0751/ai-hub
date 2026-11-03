@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-02 17:51
+**最后更新**：2026-11-03 13:51
 
 ## 需求进度
 
@@ -16,6 +16,8 @@
 | REQ-1.5 | 调用日志 + Token 计量 + `/key/info` | 已完成 | additive | 已验收（2026-11-02，理解默认通过）（7/7） | REQ-1.3 | e7edf54 |
 | REQ-1.6 | 容错（重试 / fallback / 冷却） | 已完成 | extension | 已验收（2026-11-02，理解默认通过）（8/8） | REQ-1.5 | — |
 | REQ-1.7 | 流式（SSE）透传 | 已完成 | extension | 已验收（2026-11-02，理解默认通过）（7/7） | REQ-1.1、REQ-1.6 | — |
+| REQ-1.8 | 对外错误信息中文化 | 已完成 | extension | 已验收（2026-11-03）（8/8） | REQ-1.1 ~ 1.7（覆盖全部错误响应） | — |
+| REQ-2.1 | MCP Server 注册与发现 | 进行中 | additive | 待实现（0/8） | 无（第 2 期首卡） | — |
 
 ## 接口清单（来自 Controller）
 
@@ -28,6 +30,10 @@
 | POST | /key/unblock | KeyController#unblock | REQ-1.3 |
 | GET | /models | ModelController#listModels | REQ-1.2 |
 | POST | /v1/chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3 |
+| GET | /v1/mcp/servers | McpServerController#list | REQ-2.1 |
+| POST | /v1/mcp/servers | McpServerController#register | REQ-2.1 |
+| DELETE | /v1/mcp/servers/{serverId} | McpServerController#remove | REQ-2.1 |
+| POST | /v1/mcp/servers/{serverId}/reprobe | McpServerController#reprobe | REQ-2.1 |
 | GET | /v1/models | ModelController#listModels | REQ-1.2 |
 
 ## 数据表速查（语义来自 docs/DATA-MODEL.md，DDL 校验）
@@ -37,7 +43,14 @@
 | 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
 |---|---|---|---|---|---|
 | api_keys | 虚拟 Key：SHA-256 哈希、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend | 1:N call_logs（key_id） | active | REQ-1.3, REQ-1.5, REQ-1.3 / REQ-1.4 | ✓ |
-| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5, REQ-1.5 / REQ-1.4 / REQ-1.6 | ✓ |
+| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias / call_type（CHAT/MCP/PROMPT）/ target_name | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5, REQ-1.5 / REQ-1.4 / REQ-1.6 / REQ-2.3 | ✓ |
+
+### MCP 与 Prompt
+
+| 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
+|---|---|---|---|---|---|
+| mcp_servers | MCP Server 注册：server_id（UUID）/ name（唯一、禁 "__"）/ transport / endpoint / command / args / status（ACTIVE/DOWN）/ last_health_at / metadata（description、lastError） | 独立配置类表；工具目录为运行时缓存（REQ-2.2） | active | REQ-2.1 | ✓ |
+| prompt_templates | Prompt 模板与版本：name / version / content / variables / status（DRAFT/PUBLISHED/ARCHIVED） | 同 name 多版本（name+version 唯一） | active | REQ-2.4 | ✓ |
 
 ## 配置（application.yml 顶层键）
 
@@ -53,14 +66,19 @@
 |---|---|
 | api_keys | REQ-1.3, REQ-1.5 |
 | call_logs | REQ-1.5 |
+| DELETE /v1/mcp/servers/{serverId} | REQ-2.1 |
 | GET /key/info | REQ-1.3, REQ-1.5 |
 | GET /models | REQ-1.2 |
+| GET /v1/mcp/servers | REQ-2.1 |
 | GET /v1/models | REQ-1.2 |
+| mcp_servers | REQ-2.1 |
 | POST /chat/completions | REQ-1.1, REQ-1.3 |
 | POST /key/block | REQ-1.3 |
 | POST /key/generate | REQ-1.3 |
 | POST /key/unblock | REQ-1.3 |
 | POST /v1/chat/completions | REQ-1.1, REQ-1.2, REQ-1.3 |
+| POST /v1/mcp/servers | REQ-2.1 |
+| POST /v1/mcp/servers/{serverId}/reprobe | REQ-2.1 |
 
 ## 模块依赖
 
@@ -68,11 +86,11 @@
 
 ## 测试
 
-- 191 个 @Test / 35 个测试类
+- 204 个 @Test / 38 个测试类
 
 ## 下一步
 
-- 实现 REQ-2.1 MCP Server 注册与发现（待实现）→ 需求卡：`11-项目7-第2期-MCP与Prompt中心.md`
+- 验收 REQ-2.1 MCP Server 注册与发现 → 打开 `acceptance/REQ-2.1.md`
 
 <!-- STATUS:GENERATED:END -->
 
