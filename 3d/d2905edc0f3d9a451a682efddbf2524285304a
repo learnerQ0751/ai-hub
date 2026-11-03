@@ -1,0 +1,39 @@
+ai-hub-start/src/main/java/com/qtua/aihub/start/mcp/McpServerEndpoint.java
+  s_b128240c3068a4::t_f963a645f16f00 1-266
+ai-workflow/acceptance/REQ-2.6.md
+  s_b128240c3068a4::t_558bf4cf60db92 1-80
+ai-workflow/records/REQ-2.6.md
+  s_b128240c3068a4::t_8a90cd87d62e47 1-96
+ai-hub-tests/src/test/java/com/qtua/aihub/McpServerEndpointTest.java
+  s_b128240c3068a4::t_297beaaa1aae34 1-181
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/GatewayGovernanceFilter.java
+  s_b128240c3068a4::t_1c6c1460d11cd0 21,49,81,92-114,165,169-171
+ai-workflow/STATUS.md
+  s_c79baf63be364e::t_356762268a607c 6,25,100,119
+config/spotbugs-exclude.xml
+  s_b128240c3068a4::t_d32b513f105082 193-196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3dd2905edc0f3d9a451a682efddbf2524285304a",
+  "prompts": {},
+  "sessions": {
+    "s_b128240c3068a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11c146f3-c8d4-4ba1-82d5-fd5af022561a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
