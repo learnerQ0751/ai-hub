@@ -229,6 +229,31 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * Prompt 模板不存在或无已发布版本（404）。
+     *
+     * @param name 模板名
+     * @return 业务异常
+     */
+    public static ChatCompletionException promptNotFound(String name) {
+        return new ChatCompletionException(HttpStatus.NOT_FOUND,
+                "Prompt '" + name + "' 不存在或无已发布版本", "not_found_error",
+                "name", "404", null, false);
+    }
+
+    /**
+     * Prompt 指定版本不存在（404）。
+     *
+     * @param name    模板名
+     * @param version 版本
+     * @return 业务异常
+     */
+    public static ChatCompletionException promptVersionNotFound(String name, int version) {
+        return new ChatCompletionException(HttpStatus.NOT_FOUND,
+                "Prompt '" + name + "' 的版本 " + version + " 不存在", "not_found_error",
+                "version", "404", null, false);
+    }
+
+    /**
      * MCP Server 名称冲突（409）。
      *
      * @param name 冲突的名称

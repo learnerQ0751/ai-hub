@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-03 14:27
+**最后更新**：2026-11-03 14:39
 
 ## 需求进度
 
@@ -19,7 +19,8 @@
 | REQ-1.8 | 对外错误信息中文化 | 已完成 | extension | 已验收（2026-11-03）（8/8） | REQ-1.1 ~ 1.7（覆盖全部错误响应） | — |
 | REQ-2.1 | MCP Server 注册与发现 | 已完成 | additive | 已验收（2026-11-03）（8/8） | 无（第 2 期首卡） | 02caa77 |
 | REQ-2.2 | MCP 工具发现与聚合 | 已完成 | additive | 已验收（2026-11-03）（7/7） | REQ-2.1 | 384f2b5 |
-| REQ-2.3 | MCP 调用代理 | 已完成 | extension | 已验收（2026-11-03）（7/7） | REQ-2.1、REQ-2.2 | — |
+| REQ-2.3 | MCP 调用代理 | 已完成 | extension | 已验收（2026-11-03）（7/7） | REQ-2.1、REQ-2.2 | 5ba30bc |
+| REQ-2.4 | Prompt 模板管理 | 已完成 | additive | 已验收（2026-11-03）（7/7） | 无（可与 2.1 并行） | — |
 
 ## 接口清单（来自 Controller）
 
@@ -40,6 +41,12 @@
 | POST | /v1/mcp/tools/{toolName}:call | McpCallController#call | REQ-2.3 |
 | POST | /v1/mcp/tools/refresh | McpToolController#refresh | REQ-2.2 |
 | GET | /v1/models | ModelController#listModels | REQ-1.2 |
+| GET | /v1/prompts | PromptController#list | REQ-2.4 |
+| POST | /v1/prompts | PromptController#create | REQ-2.4 |
+| GET | /v1/prompts/{name} | PromptController#get | REQ-2.4 |
+| POST | /v1/prompts/{name}/publish | PromptController#publish | REQ-2.4 |
+| GET | /v1/prompts/{name}/versions | PromptController#versions | REQ-2.4 |
+| POST | /v1/prompts/{name}/versions | PromptController#createVersion | REQ-2.4 |
 
 ## 数据表速查（语义来自 docs/DATA-MODEL.md，DDL 校验）
 
@@ -78,6 +85,9 @@
 | GET /v1/mcp/servers | REQ-2.1 |
 | GET /v1/mcp/tools | REQ-2.2 |
 | GET /v1/models | REQ-1.2 |
+| GET /v1/prompts | REQ-2.4 |
+| GET /v1/prompts/{name} | REQ-2.4 |
+| GET /v1/prompts/{name}/versions | REQ-2.4 |
 | mcp_servers | REQ-2.1 |
 | POST /chat/completions | REQ-1.1, REQ-1.3 |
 | POST /key/block | REQ-1.3 |
@@ -88,6 +98,10 @@
 | POST /v1/mcp/servers/{serverId}/reprobe | REQ-2.1 |
 | POST /v1/mcp/tools/{toolName}:call | REQ-2.3 |
 | POST /v1/mcp/tools/refresh | REQ-2.2 |
+| POST /v1/prompts | REQ-2.4 |
+| POST /v1/prompts/{name}/publish | REQ-2.4 |
+| POST /v1/prompts/{name}/versions | REQ-2.4 |
+| prompt_templates：使用 V5 已建表 | REQ-2.4 |
 
 ## 模块依赖
 
@@ -95,7 +109,7 @@
 
 ## 测试
 
-- 214 个 @Test / 40 个测试类
+- 219 个 @Test / 41 个测试类
 
 ## 下一步
 

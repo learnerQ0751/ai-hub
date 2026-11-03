@@ -43,8 +43,11 @@ public class AuthFilter extends OncePerRequestFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(AuthFilter.class);
     private static final String BEARER_PREFIX = "Bearer ";
-    /** 管理面路径前缀：仅 master key 可访问（Key 管理 + MCP Server 管理）。 */
-    private static final String[] MASTER_ONLY_PREFIXES = {"/key/", "/v1/mcp/servers"};
+    /** 管理面路径前缀：仅 master key 可访问（Key / MCP Server / Prompt 管理）。 */
+    private static final String[] MASTER_ONLY_PREFIXES = {
+            "/key/", "/v1/mcp/servers", "/v1/prompts"};
+    /** Prompt 数据面子路径后缀：render/chat 允许任意 Key（REQ-2.5）。 */
+    private static final String[] PROMPT_DATA_SUFFIXES = {"/render", "/chat"};
 
     private final GatewayProperties properties;
     private final KeyService keyService;
@@ -128,6 +131,15 @@ public class AuthFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         String contextPath = request.getContextPath();
         String path = uri.startsWith(contextPath) ? uri.substring(contextPath.length()) : uri;
+        if (path.startsWith("/v1/prompts")) {
+            // Prompt 管理面仅 master；render/chat 为数据面。
+            for (String suffix : PROMPT_DATA_SUFFIXES) {
+                if (path.endsWith(suffix)) {
+                    return false;
+                }
+            }
+            return true;
+        }
         for (String prefix : MASTER_ONLY_PREFIXES) {
             if (path.startsWith(prefix)) {
                 return true;

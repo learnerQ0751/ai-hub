@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.PromptTemplateMapper">
+
+    <resultMap id="PromptResultMap" type="com.qtua.aihub.dal.model.PromptTemplateDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="variables" property="variables" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="created_by" property="createdBy" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="columns">
+        SELECT id, name, version, content, CAST(variables AS VARCHAR) AS variables,
+               status, tenant_id, created_by, created_at
+        FROM prompt_templates
+    </sql>
+
+    <insert id="insert" parameterType="com.qtua.aihub.dal.model.PromptTemplateDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO prompt_templates
+            (name, version, content, variables, status, tenant_id, created_by, created_at)
+        VALUES
+            (#{name,jdbcType=VARCHAR}, #{version,jdbcType=INTEGER},
+             #{content,jdbcType=VARCHAR}, CAST(#{variables,jdbcType=VARCHAR} AS JSONB),
+             #{status,jdbcType=VARCHAR}, #{tenantId,jdbcType=VARCHAR},
+             #{createdBy,jdbcType=VARCHAR}, #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="selectMaxVersion" resultType="java.lang.Integer">
+        SELECT MAX(version) FROM prompt_templates WHERE name = #{name,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectPublished" resultMap="PromptResultMap">
+        <include refid="columns"/>
+        WHERE name = #{name,jdbcType=VARCHAR} AND status = 'PUBLISHED'
+        ORDER BY version DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectByVersion" resultMap="PromptResultMap">
+        <include refid="columns"/>
+        WHERE name = #{name,jdbcType=VARCHAR} AND version = #{version,jdbcType=INTEGER}
+    </select>
+
+    <select id="selectVersions" resultMap="PromptResultMap">
+        <include refid="columns"/>
+        WHERE name = #{name,jdbcType=VARCHAR}
+        ORDER BY version DESC
+    </select>
+
+    <select id="selectAllPublished" resultMap="PromptResultMap">
+        <include refid="columns"/>
+        WHERE status = 'PUBLISHED'
+        ORDER BY name ASC, version DESC
+    </select>
+
+    <select id="lockByName" resultType="java.lang.Long">
+        SELECT id FROM prompt_templates
+        WHERE name = #{name,jdbcType=VARCHAR}
+        ORDER BY id ASC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <update id="archivePublished">
+        UPDATE prompt_templates
+        SET status = 'ARCHIVED'
+        WHERE name = #{name,jdbcType=VARCHAR} AND status = 'PUBLISHED'
+    </update>
+
+    <update id="publishVersion">
+        UPDATE prompt_templates
+        SET status = 'PUBLISHED'
+        WHERE name = #{name,jdbcType=VARCHAR} AND version = #{version,jdbcType=INTEGER}
+    </update>
+</mapper>
