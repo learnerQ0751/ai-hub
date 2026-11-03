@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-03 13:51
+**最后更新**：2026-11-03 14:10
 
 ## 需求进度
 
@@ -17,7 +17,8 @@
 | REQ-1.6 | 容错（重试 / fallback / 冷却） | 已完成 | extension | 已验收（2026-11-02，理解默认通过）（8/8） | REQ-1.5 | — |
 | REQ-1.7 | 流式（SSE）透传 | 已完成 | extension | 已验收（2026-11-02，理解默认通过）（7/7） | REQ-1.1、REQ-1.6 | — |
 | REQ-1.8 | 对外错误信息中文化 | 已完成 | extension | 已验收（2026-11-03）（8/8） | REQ-1.1 ~ 1.7（覆盖全部错误响应） | — |
-| REQ-2.1 | MCP Server 注册与发现 | 进行中 | additive | 待实现（0/8） | 无（第 2 期首卡） | — |
+| REQ-2.1 | MCP Server 注册与发现 | 已完成 | additive | 已验收（2026-11-03）（8/8） | 无（第 2 期首卡） | 02caa77 |
+| REQ-2.2 | MCP 工具发现与聚合 | 已完成 | additive | 已验收（2026-11-03）（7/7） | REQ-2.1 | — |
 
 ## 接口清单（来自 Controller）
 
@@ -34,6 +35,8 @@
 | POST | /v1/mcp/servers | McpServerController#register | REQ-2.1 |
 | DELETE | /v1/mcp/servers/{serverId} | McpServerController#remove | REQ-2.1 |
 | POST | /v1/mcp/servers/{serverId}/reprobe | McpServerController#reprobe | REQ-2.1 |
+| GET | /v1/mcp/tools | McpToolController#list | REQ-2.2 |
+| POST | /v1/mcp/tools/refresh | McpToolController#refresh | REQ-2.2 |
 | GET | /v1/models | ModelController#listModels | REQ-1.2 |
 
 ## 数据表速查（语义来自 docs/DATA-MODEL.md，DDL 校验）
@@ -70,6 +73,7 @@
 | GET /key/info | REQ-1.3, REQ-1.5 |
 | GET /models | REQ-1.2 |
 | GET /v1/mcp/servers | REQ-2.1 |
+| GET /v1/mcp/tools | REQ-2.2 |
 | GET /v1/models | REQ-1.2 |
 | mcp_servers | REQ-2.1 |
 | POST /chat/completions | REQ-1.1, REQ-1.3 |
@@ -79,6 +83,7 @@
 | POST /v1/chat/completions | REQ-1.1, REQ-1.2, REQ-1.3 |
 | POST /v1/mcp/servers | REQ-2.1 |
 | POST /v1/mcp/servers/{serverId}/reprobe | REQ-2.1 |
+| POST /v1/mcp/tools/refresh | REQ-2.2 |
 
 ## 模块依赖
 
@@ -86,11 +91,11 @@
 
 ## 测试
 
-- 204 个 @Test / 38 个测试类
+- 208 个 @Test / 39 个测试类
 
 ## 下一步
 
-- 验收 REQ-2.1 MCP Server 注册与发现 → 打开 `acceptance/REQ-2.1.md`
+- 实现 REQ-2.1 MCP Server 注册与发现（待实现）→ 需求卡：`11-项目7-第2期-MCP与Prompt中心.md`
 
 <!-- STATUS:GENERATED:END -->
 

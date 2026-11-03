@@ -11,6 +11,7 @@ import com.qtua.aihub.common.util.UrlMasker;
 import com.qtua.aihub.integration.mcp.McpServerProbe;
 import com.qtua.aihub.integration.mcp.ProbeResult;
 import com.qtua.aihub.manager.mcp.McpServerManager;
+import com.qtua.aihub.manager.mcp.McpToolCatalog;
 import com.qtua.aihub.manager.model.McpServerBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,16 +40,20 @@ public class McpServerServiceImpl implements McpServerService {
 
     private final McpServerManager mcpServerManager;
     private final McpServerProbe mcpServerProbe;
+    private final McpToolCatalog mcpToolCatalog;
 
     /**
      * 构造服务。
      *
      * @param mcpServerManager MCP Server 数据门面
      * @param mcpServerProbe   探活器
+     * @param mcpToolCatalog   工具目录快照（注册/注销时失效）
      */
-    public McpServerServiceImpl(McpServerManager mcpServerManager, McpServerProbe mcpServerProbe) {
+    public McpServerServiceImpl(McpServerManager mcpServerManager, McpServerProbe mcpServerProbe,
+                                McpToolCatalog mcpToolCatalog) {
         this.mcpServerManager = mcpServerManager;
         this.mcpServerProbe = mcpServerProbe;
+        this.mcpToolCatalog = mcpToolCatalog;
     }
 
     /**
@@ -89,6 +94,7 @@ public class McpServerServiceImpl implements McpServerService {
         }
         LOG.info("mcp server registered: name={}, transport={}, serverId={}",
                 name, transport.value(), server.serverId());
+        mcpToolCatalog.invalidate();
         return toResDTO(probeAndUpdate(server));
     }
 
@@ -115,6 +121,7 @@ public class McpServerServiceImpl implements McpServerService {
             throw ChatCompletionException.mcpServerNotFound(serverId);
         }
         LOG.info("mcp server removed: name={}, serverId={}", server.name(), server.serverId());
+        mcpToolCatalog.invalidate();
     }
 
     /**
