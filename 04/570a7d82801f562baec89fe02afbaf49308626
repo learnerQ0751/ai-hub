@@ -1,0 +1,74 @@
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/PromptController.java
+  s_b128240c3068a4::t_cf1d4dc0737e64 1-117
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/PromptResDTO.java
+  s_b128240c3068a4::t_aae2b6ab3a57cb 1-35
+ai-workflow/acceptance/REQ-2.4.md
+  s_b128240c3068a4::t_331e42d3d9ac05 1-83
+  s_b128240c3068a4::t_fae838e7250f1c 84-86
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/PromptTemplateBO.java
+  s_b128240c3068a4::t_06e11db0b43e2d 1-35
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/prompt/PromptManager.java
+  s_b128240c3068a4::t_54e2d934d5f512 1-175
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/prompt/SimpleTemplateRenderer.java
+  s_b128240c3068a4::t_c48cad3255c0d4 1-94
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/PromptTemplateMapper.java
+  s_b128240c3068a4::t_168d7badfe2f71 1-88
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/PromptTemplateMapper.xml
+  s_b128240c3068a4::t_45aa137c76f0f1 1-80
+  s_b128240c3068a4::t_2c2d9fcfb02763 81-82
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/PromptCreateReqDTO.java
+  s_b128240c3068a4::t_c6907d635b43fa 1-28
+ai-hub-tests/src/test/java/com/qtua/aihub/PromptManagementIntegrationTest.java
+  s_b128240c3068a4::t_989548265839f2 1-169
+ai-hub-common/src/main/java/com/qtua/aihub/common/prompt/PromptStatus.java
+  s_b128240c3068a4::t_b162cb21484604 1-19
+ai-workflow/records/REQ-2.4.md
+  s_b128240c3068a4::t_5fd34c25f1f79a 1-82
+  s_b128240c3068a4::t_693dddf42726e8 83-85
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/PromptPublishReqDTO.java
+  s_b128240c3068a4::t_c6bcd56729c1bc 1-9
+ai-hub-api/src/main/java/com/qtua/aihub/api/PromptService.java
+  s_b128240c3068a4::t_954dcf6453dffa 1-66
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/PromptVersionCreateReqDTO.java
+  s_b128240c3068a4::t_dd0af2484db6e8 1-20
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/PromptVersionListResDTO.java
+  s_b128240c3068a4::t_e8df6ba0af8e1e 1-19
+ai-hub-service/src/main/java/com/qtua/aihub/service/PromptServiceImpl.java
+  s_b128240c3068a4::t_6d978e578aac71 1-207
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/PromptTemplateDO.java
+  s_b128240c3068a4::t_fad121e93f0a86 1-98
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/PromptListResDTO.java
+  s_b128240c3068a4::t_32d55c712c31e8 1-19
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  s_b128240c3068a4::t_f535731a4a5e63 231-255
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/AuthFilter.java
+  s_b128240c3068a4::t_9c86b6cd635359 46-50,134-142
+ai-workflow/STATUS.md
+  s_c79baf63be364e::t_38b0677d1a0007 6,22-23,44-49,88-90,101-104,112
+config/spotbugs-exclude.xml
+  s_b128240c3068a4::t_40586f24c4b34b 169-184
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "04570a7d82801f562baec89fe02afbaf49308626",
+  "prompts": {},
+  "sessions": {
+    "s_b128240c3068a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11c146f3-c8d4-4ba1-82d5-fd5af022561a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
