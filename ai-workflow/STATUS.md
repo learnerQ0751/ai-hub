@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-03 14:51
+**最后更新**：2026-11-03 14:52
 
 ## 需求进度
 
@@ -21,6 +21,7 @@
 | REQ-2.2 | MCP 工具发现与聚合 | 已完成 | additive | 已验收（2026-11-03）（7/7） | REQ-2.1 | 384f2b5 |
 | REQ-2.3 | MCP 调用代理 | 已完成 | extension | 已验收（2026-11-03）（7/7） | REQ-2.1、REQ-2.2 | 5ba30bc |
 | REQ-2.4 | Prompt 模板管理 | 已完成 | additive | 已验收（2026-11-03）（7/7） | 无（可与 2.1 并行） | 04570a7 |
+| REQ-2.5 | Prompt 渲染接入网关 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.4、REQ-1.1 | 96a6b29 |
 
 ## 接口清单（来自 Controller）
 
@@ -41,12 +42,12 @@
 | POST | /v1/mcp/tools/{toolName}:call | McpCallController#call | REQ-2.3 |
 | POST | /v1/mcp/tools/refresh | McpToolController#refresh | REQ-2.2 |
 | GET | /v1/models | ModelController#listModels | REQ-1.2 |
-| GET | /v1/prompts | PromptController#list | REQ-2.4 |
-| POST | /v1/prompts | PromptController#create | REQ-2.4 |
-| GET | /v1/prompts/{name} | PromptController#get | REQ-2.4 |
-| POST | /v1/prompts/{name}/chat | PromptRuntimeController#chat | — |
+| GET | /v1/prompts | PromptController#list | REQ-2.4, REQ-2.5 |
+| POST | /v1/prompts | PromptController#create | REQ-2.4, REQ-2.5 |
+| GET | /v1/prompts/{name} | PromptController#get | REQ-2.4, REQ-2.5 |
+| POST | /v1/prompts/{name}/chat | PromptRuntimeController#chat | REQ-2.5 |
 | POST | /v1/prompts/{name}/publish | PromptController#publish | REQ-2.4 |
-| POST | /v1/prompts/{name}/render | PromptRuntimeController#render | — |
+| POST | /v1/prompts/{name}/render | PromptRuntimeController#render | REQ-2.5 |
 | GET | /v1/prompts/{name}/versions | PromptController#versions | REQ-2.4 |
 | POST | /v1/prompts/{name}/versions | PromptController#createVersion | REQ-2.4 |
 
@@ -101,7 +102,9 @@
 | POST /v1/mcp/tools/{toolName}:call | REQ-2.3 |
 | POST /v1/mcp/tools/refresh | REQ-2.2 |
 | POST /v1/prompts | REQ-2.4 |
+| POST /v1/prompts/{name}/chat | REQ-2.5 |
 | POST /v1/prompts/{name}/publish | REQ-2.4 |
+| POST /v1/prompts/{name}/render | REQ-2.5 |
 | POST /v1/prompts/{name}/versions | REQ-2.4 |
 | prompt_templates：使用 V5 已建表 | REQ-2.4 |
 
