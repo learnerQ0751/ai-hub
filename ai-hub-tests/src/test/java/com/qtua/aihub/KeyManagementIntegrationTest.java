@@ -146,7 +146,7 @@ class KeyManagementIntegrationTest {
         assertThat(blockResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(blockedChat.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(readJson(blockedChat).get("error").get("type").asText()).isEqualTo("auth_error");
-        assertThat(readJson(blockedChat).get("error").get("message").asText()).contains("blocked");
+        assertThat(readJson(blockedChat).get("error").get("message").asText()).contains("封禁");
         assertThat(unblockResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(restoredChat.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
@@ -162,7 +162,7 @@ class KeyManagementIntegrationTest {
         ResponseEntity<String> response = post("/v1/chat/completions", plainKey, CHAT_BODY);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(readJson(response).get("error").get("message").asText()).contains("expired");
+        assertThat(readJson(response).get("error").get("message").asText()).contains("过期");
     }
 
     @Test

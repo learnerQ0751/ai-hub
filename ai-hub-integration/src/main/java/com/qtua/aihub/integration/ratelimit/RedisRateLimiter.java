@@ -310,7 +310,7 @@ public class RedisRateLimiter {
                 return true;
             }
             LOG.error("rate limiter unavailable, fail-closed key={}", key, ex);
-            throw ChatCompletionException.rateLimitExceeded("rate limiter unavailable");
+            throw ChatCompletionException.rateLimitExceeded("限流服务不可用");
         }
     }
 

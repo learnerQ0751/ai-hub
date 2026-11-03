@@ -35,8 +35,7 @@ public class ChatCompletionException extends RuntimeException {
      * @return 业务异常
      */
     public static ChatCompletionException invalidModel(String model) {
-        String message = "Invalid model name passed in model=" + model
-                + ". Call `/v1/models` to view available models.";
+        String message = "模型 '" + model + "' 不存在或不可用，请调用 /v1/models 查看可用模型。";
         return new ChatCompletionException(HttpStatus.BAD_REQUEST, message,
                 "invalid_request_error", "model", "400", null, false);
     }
@@ -62,7 +61,7 @@ public class ChatCompletionException extends RuntimeException {
      * @return 业务异常
      */
     public static ChatCompletionException upstreamAuthError(Throwable cause) {
-        return new ChatCompletionException(HttpStatus.UNAUTHORIZED, "Upstream authentication failed",
+        return new ChatCompletionException(HttpStatus.UNAUTHORIZED, "上游服务鉴权失败",
                 "auth_error", null, "401", cause, true);
     }
 
@@ -73,7 +72,7 @@ public class ChatCompletionException extends RuntimeException {
      * @return 业务异常
      */
     public static ChatCompletionException upstreamTimeout(Throwable cause) {
-        return new ChatCompletionException(HttpStatus.GATEWAY_TIMEOUT, "Upstream request timed out",
+        return new ChatCompletionException(HttpStatus.GATEWAY_TIMEOUT, "上游请求超时",
                 "timeout_error", null, "504", cause, true);
     }
 
@@ -100,7 +99,7 @@ public class ChatCompletionException extends RuntimeException {
      */
     public static ChatCompletionException upstreamRateLimited(Throwable cause) {
         return new ChatCompletionException(HttpStatus.BAD_GATEWAY,
-                "Upstream rate limit exceeded", "upstream_error", null, "502", cause, true);
+                "上游服务触发限流", "upstream_error", null, "502", cause, true);
     }
 
     /**
@@ -114,7 +113,7 @@ public class ChatCompletionException extends RuntimeException {
      */
     public static ChatCompletionException upstreamClientError(int upstreamStatus, Throwable cause) {
         return new ChatCompletionException(HttpStatus.BAD_GATEWAY,
-                "Upstream rejected the request with status " + upstreamStatus,
+                "上游拒绝了本次请求，状态码 " + upstreamStatus,
                 "upstream_error", null, "502", cause, false);
     }
 
@@ -127,8 +126,8 @@ public class ChatCompletionException extends RuntimeException {
      * @return 业务异常
      */
     public static ChatCompletionException keyModelAccessDenied(String model) {
-        String message = "The requested model '" + model + "' is not available for this API key, "
-                + "or the model name is invalid. Check the models available to you and try again.";
+        String message = "当前 API Key 无权访问模型 '" + model
+                + "'，或模型名不存在；请检查可用模型后重试。";
         return new ChatCompletionException(HttpStatus.FORBIDDEN, message,
                 "key_model_access_denied", "model", "403", null, false);
     }
@@ -140,7 +139,7 @@ public class ChatCompletionException extends RuntimeException {
      */
     public static ChatCompletionException invalidApiKey() {
         return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
-                "Authentication Error, invalid API key", "auth_error", null, "401", null, false);
+                "鉴权失败：API Key 无效", "auth_error", null, "401", null, false);
     }
 
     /**
@@ -150,7 +149,7 @@ public class ChatCompletionException extends RuntimeException {
      */
     public static ChatCompletionException blockedApiKey() {
         return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
-                "Authentication Error, Key is blocked. Update via `/key/unblock` if you're an admin.",
+                "鉴权失败：该 API Key 已被封禁，请联系管理员解封。",
                 "auth_error", null, "401", null, false);
     }
 
@@ -161,7 +160,7 @@ public class ChatCompletionException extends RuntimeException {
      */
     public static ChatCompletionException expiredApiKey() {
         return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
-                "Authentication Error, Key is expired.", "auth_error", null, "401", null, false);
+                "鉴权失败：该 API Key 已过期。", "auth_error", null, "401", null, false);
     }
 
     /**
@@ -171,7 +170,7 @@ public class ChatCompletionException extends RuntimeException {
      */
     public static ChatCompletionException masterKeyRequired() {
         return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
-                "Authentication Error, master key required", "auth_error", null, "401", null, false);
+                "鉴权失败：管理接口需要 master key。", "auth_error", null, "401", null, false);
     }
 
     /**
@@ -182,7 +181,7 @@ public class ChatCompletionException extends RuntimeException {
      */
     public static ChatCompletionException rateLimitExceeded(String detail) {
         return new ChatCompletionException(HttpStatus.TOO_MANY_REQUESTS,
-                "Rate limit exceeded: " + detail, "rate_limit_error", null, "429", null, false);
+                "触发限流：" + detail, "rate_limit_error", null, "429", null, false);
     }
 
     /**
@@ -192,7 +191,7 @@ public class ChatCompletionException extends RuntimeException {
      */
     public static ChatCompletionException budgetExceeded() {
         return new ChatCompletionException(HttpStatus.BAD_REQUEST,
-                "Budget exceeded for this API key", "budget_exceeded", null, "400", null, false);
+                "该 API Key 的预算已耗尽。", "budget_exceeded", null, "400", null, false);
     }
 
     /**
@@ -202,7 +201,7 @@ public class ChatCompletionException extends RuntimeException {
      */
     public static ChatCompletionException apiKeyNotFound() {
         return new ChatCompletionException(HttpStatus.NOT_FOUND,
-                "API key not found", "not_found_error", "key", "404", null, false);
+                "API Key 不存在", "not_found_error", "key", "404", null, false);
     }
 
     /**

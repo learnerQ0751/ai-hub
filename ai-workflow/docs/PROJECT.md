@@ -92,6 +92,7 @@ ai-hub（父 POM）
 - 请求：`{model, messages}`；`model` 是别名，转发上游前改写为部署真实模型。
 - 响应：OpenAI ChatCompletion 结构；`model` 回写请求别名；`usage` 等字段原样透传。
 - 错误体：`{"error":{"message","type","param","code"}}`。
+- **错误文案语言**：客群为中文使用者，`message` 使用中文；`type` / `param` / `code` 保持协议英文值不变（详见 STANDARDS §3.6）。
 - 完整规格：`specs/001-chat-completions/`；行为基线见知识库历史文档。
 
 ## 业务/接口约束

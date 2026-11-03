@@ -143,7 +143,7 @@ class KeyServiceTest {
 
         assertThatThrownBy(() -> service.authenticate(PLAIN_KEY))
                 .isInstanceOf(ChatCompletionException.class)
-                .satisfies(ex -> assertThat(ex.getMessage()).contains("blocked"));
+                .satisfies(ex -> assertThat(ex.getMessage()).contains("封禁"));
     }
 
     @Test
@@ -153,7 +153,7 @@ class KeyServiceTest {
 
         assertThatThrownBy(() -> service.authenticate(PLAIN_KEY))
                 .isInstanceOf(ChatCompletionException.class)
-                .satisfies(ex -> assertThat(ex.getMessage()).contains("expired"));
+                .satisfies(ex -> assertThat(ex.getMessage()).contains("过期"));
     }
 
     @Test

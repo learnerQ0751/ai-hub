@@ -125,7 +125,8 @@ class ChatCompletionControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.type").value("invalid_request_error"))
                 .andExpect(jsonPath("$.error.param").value("model"))
-                .andExpect(jsonPath("$.error.code").value("400"));
+                .andExpect(jsonPath("$.error.code").value("400"))
+                .andExpect(jsonPath("$.error.message").value(containsString("模型")));
     }
 
     @Test

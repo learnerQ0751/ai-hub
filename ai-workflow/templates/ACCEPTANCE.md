@@ -12,6 +12,8 @@
 - [ ] 
 - [ ] 
 
+> 涉及对外错误/提示时，必须增加：`error.message` 为中文、`type`/`param`/`code`/HTTP 状态码保持不变（STANDARDS §3.6）。
+
 **验收命令 / 示例**：
 
 ```text

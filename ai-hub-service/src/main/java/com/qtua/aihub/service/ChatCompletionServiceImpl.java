@@ -107,7 +107,7 @@ public class ChatCompletionServiceImpl implements ChatCompletionService {
         JsonNode streamNode = root.get(JsonFields.STREAM);
         if (ObjectUtils.isEmpty(streamNode) || !streamNode.asBoolean(false)) {
             throw ChatCompletionException.invalidRequest(
-                    "Field 'stream' must be true", JsonFields.STREAM);
+                    "字段 'stream' 必须为 true", JsonFields.STREAM);
         }
     }
 
@@ -121,11 +121,11 @@ public class ChatCompletionServiceImpl implements ChatCompletionService {
         try {
             JsonNode root = objectMapper.readTree(requestBody);
             if (ObjectUtils.isEmpty(root) || !root.isObject()) {
-                throw ChatCompletionException.invalidRequest("Request body must be a JSON object", null);
+                throw ChatCompletionException.invalidRequest("请求体必须是 JSON 对象", null);
             }
             return root;
         } catch (JsonProcessingException ex) {
-            throw ChatCompletionException.invalidRequest("Invalid JSON request body", null);
+            throw ChatCompletionException.invalidRequest("请求体不是合法的 JSON", null);
         }
     }
 
@@ -139,7 +139,7 @@ public class ChatCompletionServiceImpl implements ChatCompletionService {
         JsonNode modelNode = root.get(JsonFields.MODEL);
         if (ObjectUtils.isEmpty(modelNode) || modelNode.isNull()
                 || !StringUtils.hasText(modelNode.asText())) {
-            throw ChatCompletionException.invalidRequest("Field 'model' is required", JsonFields.MODEL);
+            throw ChatCompletionException.invalidRequest("字段 'model' 不能为空", JsonFields.MODEL);
         }
         return modelNode.asText();
     }
@@ -152,7 +152,7 @@ public class ChatCompletionServiceImpl implements ChatCompletionService {
     private void rejectStreaming(JsonNode root) {
         JsonNode streamNode = root.get(JsonFields.STREAM);
         if (!ObjectUtils.isEmpty(streamNode) && streamNode.asBoolean(false)) {
-            throw ChatCompletionException.invalidRequest("Streaming is not supported yet", JsonFields.STREAM);
+            throw ChatCompletionException.invalidRequest("当前入口不支持流式请求", JsonFields.STREAM);
         }
     }
 
@@ -165,7 +165,7 @@ public class ChatCompletionServiceImpl implements ChatCompletionService {
         JsonNode messages = root.get(JsonFields.MESSAGES);
         if (ObjectUtils.isEmpty(messages) || !messages.isArray() || messages.isEmpty()) {
             throw ChatCompletionException.invalidRequest(
-                    "Field 'messages' must be a non-empty array", JsonFields.MESSAGES);
+                    "字段 'messages' 必须是非空数组", JsonFields.MESSAGES);
         }
     }
 }

@@ -194,6 +194,15 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 - 注释使用中文，与代码同步更新；禁止注释掉的死代码、禁止与实现矛盾的注释。
 - AI 生成代码必须带注释；reviewer 把“关键逻辑无注释”视为 Important。
 
+### 3.6 用户文案语言（MUST）
+
+- **面向最终用户的文案使用项目客群语言**：本项目客群为中文使用者，对外错误 `error.message`、提示语、校验说明必须使用中文；其他项目按 `docs/PROJECT.md` 声明的客群语言执行。
+- **结构化协议字段保持英文/标准值，禁止翻译**：`error.type`、`error.param`、`error.code`、JSON 字段名、HTTP header、状态码、日志 key、枚举值。
+- **技术专有名词保留原文**：API Key、Redis、SSE、JSON、Token、HTTP 等；句中用中文组织，不强行翻译。
+- **文案集中维护**：常规错误收敛到统一异常工厂/文案常量；调用点只传字段名、状态码等参数，禁止各接口自行拼整句。
+- **日志语言与用户文案分离**：日志面向运维，保持英文即可；不得把日志原文直接作为对外 message。
+- **验收要求**：涉及对外错误/提示的需求，acceptance 必须包含「message 中文 + type/param/code 不变」的验收项。
+
 ## 4. 请求 / 响应契约（标准网关类项目，MUST）
 
 > 适用于采用标准网关报文的项目；OpenAI 兼容等其它契约由 `docs/PROJECT.md` 覆盖。

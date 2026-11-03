@@ -66,6 +66,7 @@
 - [ ] 多实例检查完成（无单机业务状态/本地锁）
 - [ ] 职责能力归属检查通过：横切治理在统一入口/切面且接口无关；core 未依赖治理组件；新增接口可自动复用（REQ §4 `capability` 已声明）
 - [ ] 类/方法/关键行注释齐全
+- [ ] 对外错误/提示文案语言符合 STANDARDS §3.6 与 PROJECT.md（中文 message；type/param/code 保持英文）
 - [ ] `ai-workflow/STATUS.md` 已更新且变更矩阵正确
 - [ ] 新增/修改表已登记 `ai-workflow/docs/DATA-MODEL.md`；STATUS 表速查与 DDL 一致
 - [ ] 架构/链路/决策有变时 `ai-workflow/DESIGN.md` 与活图已更新

@@ -86,7 +86,7 @@ public class AuthFilter extends OncePerRequestFilter {
         } catch (RuntimeException ex) {
             // 查库等基础设施异常不能静默吞没，也不能把内部细节返回给客户端。
             LOG.error("authentication failed", ex);
-            writeError(response, ChatCompletionException.internalError("Authentication failed", ex));
+            writeError(response, ChatCompletionException.internalError("鉴权失败", ex));
             return;
         }
         filterChain.doFilter(request, response);

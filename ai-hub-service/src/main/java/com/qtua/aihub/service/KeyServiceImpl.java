@@ -97,7 +97,7 @@ public class KeyServiceImpl implements KeyService {
         if (!BUDGET_DURATION_DAILY.equals(normalized)
                 && !BUDGET_DURATION_MONTHLY.equals(normalized)) {
             throw ChatCompletionException.invalidRequest(
-                    "Field 'budget_duration' must be daily or monthly", "budget_duration");
+                    "字段 'budget_duration' 必须为 daily 或 monthly", "budget_duration");
         }
         return normalized;
     }
@@ -174,7 +174,7 @@ public class KeyServiceImpl implements KeyService {
 
     private ApiKeyBO requireKey(String plainKey) {
         if (!StringUtils.hasText(plainKey)) {
-            throw ChatCompletionException.invalidRequest("Field 'key' is required", "key");
+            throw ChatCompletionException.invalidRequest("字段 'key' 不能为空", "key");
         }
         return apiKeyManager.findByKeyHash(KeyHasher.sha256Hex(plainKey))
                 .orElseThrow(ChatCompletionException::apiKeyNotFound);
@@ -202,12 +202,12 @@ public class KeyServiceImpl implements KeyService {
         Matcher matcher = DURATION_PATTERN.matcher(duration.trim());
         if (!matcher.matches()) {
             throw ChatCompletionException.invalidRequest(
-                    "Field 'duration' must match <number><s|m|h|d>", "duration");
+                    "字段 'duration' 必须匹配 <数字><s|m|h|d> 格式", "duration");
         }
         long amount = Long.parseLong(matcher.group(1));
         if (amount <= 0) {
             throw ChatCompletionException.invalidRequest(
-                    "Field 'duration' must be positive", "duration");
+                    "字段 'duration' 必须为正数", "duration");
         }
         return now.plusSeconds(toSeconds(amount, matcher.group(2).charAt(0)));
     }
@@ -219,7 +219,7 @@ public class KeyServiceImpl implements KeyService {
             case 'h' -> amount * SECONDS_PER_HOUR;
             case 'd' -> amount * SECONDS_PER_DAY;
             default -> throw ChatCompletionException.invalidRequest(
-                    "Field 'duration' must match <number><s|m|h|d>", "duration");
+                    "字段 'duration' 必须匹配 <数字><s|m|h|d> 格式", "duration");
         };
     }
 

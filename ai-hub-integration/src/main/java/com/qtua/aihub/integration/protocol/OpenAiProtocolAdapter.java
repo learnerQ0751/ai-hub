@@ -46,13 +46,13 @@ public class OpenAiProtocolAdapter {
         try {
             JsonNode requestNode = objectMapper.readTree(requestBody);
             if (ObjectUtils.isEmpty(requestNode) || !requestNode.isObject()) {
-                throw ChatCompletionException.invalidRequest("Request body must be a JSON object", null);
+                throw ChatCompletionException.invalidRequest("请求体必须是 JSON 对象", null);
             }
             ObjectNode objectNode = (ObjectNode) requestNode;
             objectNode.put(JsonFields.MODEL, upstreamModel);
             return objectMapper.writeValueAsString(objectNode);
         } catch (JsonProcessingException ex) {
-            throw ChatCompletionException.invalidRequest("Invalid JSON request body", null);
+            throw ChatCompletionException.invalidRequest("请求体不是合法的 JSON", null);
         }
     }
 
@@ -68,7 +68,7 @@ public class OpenAiProtocolAdapter {
         try {
             JsonNode requestNode = objectMapper.readTree(requestBody);
             if (ObjectUtils.isEmpty(requestNode) || !requestNode.isObject()) {
-                throw ChatCompletionException.invalidRequest("Request body must be a JSON object", null);
+                throw ChatCompletionException.invalidRequest("请求体必须是 JSON 对象", null);
             }
             ObjectNode objectNode = (ObjectNode) requestNode;
             objectNode.put(JsonFields.MODEL, upstreamModel);
@@ -80,7 +80,7 @@ public class OpenAiProtocolAdapter {
             objectNode.set(JsonFields.STREAM_OPTIONS, streamOptions);
             return objectMapper.writeValueAsString(objectNode);
         } catch (JsonProcessingException ex) {
-            throw ChatCompletionException.invalidRequest("Invalid JSON request body", null);
+            throw ChatCompletionException.invalidRequest("请求体不是合法的 JSON", null);
         }
     }
 
@@ -216,13 +216,13 @@ public class OpenAiProtocolAdapter {
         try {
             JsonNode responseNode = objectMapper.readTree(responseBody);
             if (ObjectUtils.isEmpty(responseNode) || !responseNode.isObject()) {
-                throw ChatCompletionException.upstreamError("Upstream returned an invalid JSON response", null);
+                throw ChatCompletionException.upstreamError("上游返回了非法的 JSON 响应", null);
             }
             ObjectNode objectNode = (ObjectNode) responseNode;
             objectNode.put(JsonFields.MODEL, alias);
             return objectMapper.writeValueAsString(objectNode);
         } catch (JsonProcessingException ex) {
-            throw ChatCompletionException.upstreamError("Upstream returned an invalid JSON response", ex);
+            throw ChatCompletionException.upstreamError("上游返回了非法的 JSON 响应", ex);
         }
     }
 }

@@ -192,7 +192,7 @@ public class ChatCompletionController {
     private void failStream(SseEmitter emitter, GatewayContext context, Throwable error) {
         int status = HttpStatus.INTERNAL_SERVER_ERROR.value();
         String type = "internal_error";
-        String message = "Stream processing failed";
+        String message = "流式处理失败";
         String param = null;
         String code = "500";
         if (error instanceof ChatCompletionException ex) {

@@ -107,7 +107,7 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
             context.fail(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "internal_error");
             governanceService.fail(context);
             writeError(response, ChatCompletionException.internalError(
-                    "Gateway governance failed", ex));
+                    "网关治理失败", ex));
             return;
         }
         // 流式请求：响应尚未结束，usage 未知；由 Controller 在流结束回调中收尾。

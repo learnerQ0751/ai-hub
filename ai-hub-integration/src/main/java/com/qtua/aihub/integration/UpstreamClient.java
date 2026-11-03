@@ -60,7 +60,7 @@ public class UpstreamClient {
                     .retrieve()
                     .body(String.class);
             if (!StringUtils.hasText(response)) {
-                throw ChatCompletionException.upstreamError("Upstream returned an empty response", null);
+                throw ChatCompletionException.upstreamError("上游返回了空响应", null);
             }
             return response;
         } catch (RestClientResponseException ex) {
@@ -77,7 +77,7 @@ public class UpstreamClient {
                 throw ChatCompletionException.upstreamClientError(upstreamStatus, ex);
             }
             throw ChatCompletionException.upstreamError(
-                    "Upstream request failed with status " + upstreamStatus, ex);
+                    "上游请求失败，状态码 " + upstreamStatus, ex);
         } catch (ResourceAccessException ex) {
             throw ChatCompletionException.upstreamTimeout(ex);
         }
@@ -128,7 +128,7 @@ public class UpstreamClient {
             return ChatCompletionException.upstreamClientError(upstreamStatus, cause);
         }
         return ChatCompletionException.upstreamError(
-                "Upstream request failed with status " + upstreamStatus, cause);
+                "上游请求失败，状态码 " + upstreamStatus, cause);
     }
 
     /**

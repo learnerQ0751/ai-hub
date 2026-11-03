@@ -46,12 +46,12 @@ public class DefaultGatewayGuard implements GatewayGuard {
         try {
             if (!rateLimiter.tryAcquireRpm(request.keyHash(), request.modelAlias(),
                     request.requestId(), request.rpmLimit())) {
-                throw ChatCompletionException.rateLimitExceeded("requests per minute limit");
+                throw ChatCompletionException.rateLimitExceeded("每分钟请求数超限");
             }
             if (!ObjectUtils.isEmpty(request.tpmLimit()) && request.tpmLimit() > 0) {
                 if (!rateLimiter.tryAcquireTpm(request.keyHash(), request.modelAlias(),
                         request.requestId(), request.estimatedTokens(), request.tpmLimit())) {
-                    throw ChatCompletionException.rateLimitExceeded("tokens per minute limit");
+                    throw ChatCompletionException.rateLimitExceeded("每分钟 Token 数超限");
                 }
                 tpmReserved = true;
             }
