@@ -1,0 +1,54 @@
+ai-hub-common/src/main/java/com/qtua/aihub/common/mcp/RawTool.java
+  s_b128240c3068a4::t_9afc8d6154684e 1-11
+ai-workflow/records/REQ-2.2.md
+  s_b128240c3068a4::t_2e4d1ca3937f6b 1-81
+  s_b128240c3068a4::t_c513d1e3e9125d 82-96
+ai-hub-api/src/main/java/com/qtua/aihub/api/McpToolService.java
+  s_b128240c3068a4::t_e9dc87962e28fe 1-25
+ai-hub-tests/src/test/java/com/qtua/aihub/McpToolAggregationTest.java
+  s_b128240c3068a4::t_cebc1a96154741 1-250
+  s_b128240c3068a4::t_3c74fce8ee4643 251-260
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/McpToolController.java
+  s_b128240c3068a4::t_843ab739d2b6c9 1-56
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/mcp/McpToolClient.java
+  s_b128240c3068a4::t_823cd899799398 1-204
+ai-workflow/acceptance/REQ-2.2.md
+  s_b128240c3068a4::t_bf3ce1c4e4bb33 1-79
+  s_b128240c3068a4::t_a6533636a155a4 80-84
+ai-hub-common/src/main/java/com/qtua/aihub/common/mcp/McpToolDescriptor.java
+  s_b128240c3068a4::t_d0cc7069f00822 1-42
+ai-hub-service/src/main/java/com/qtua/aihub/service/McpToolServiceImpl.java
+  s_b128240c3068a4::t_1e40944a248e15 1-137
+ai-hub-common/src/main/java/com/qtua/aihub/common/mcp/ToolAggregationResult.java
+  s_b128240c3068a4::t_d0df5129edc7b3 1-21
+ai-hub-core/src/main/java/com/qtua/aihub/core/mcp/McpToolAggregator.java
+  s_b128240c3068a4::t_e5834c877fbb68 1-104
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/mcp/McpToolCatalog.java
+  s_b128240c3068a4::t_e85cd8250cedd9 1-81
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/McpToolResDTO.java
+  s_b128240c3068a4::t_af6e38f199f8a5 1-22
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/McpToolListResDTO.java
+  s_b128240c3068a4::t_3cf73b143789c8 1-25
+ai-hub-service/src/main/java/com/qtua/aihub/service/McpServerServiceImpl.java
+  s_b128240c3068a4::t_c070f971133b4c 14,43,50,52-53,56,97,124
+ai-workflow/STATUS.md
+  s_b128240c3068a4::t_96663b5f078b39 6,20-21,38-39,76,86,94,98
+config/spotbugs-exclude.xml
+  s_b128240c3068a4::t_92bd5b2ee8b498 145-160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "384f2b58bb6307b295665b1bacabf4e9bfd477ee",
+  "prompts": {},
+  "sessions": {
+    "s_b128240c3068a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11c146f3-c8d4-4ba1-82d5-fd5af022561a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
