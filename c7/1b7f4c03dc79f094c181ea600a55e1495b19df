@@ -1,0 +1,90 @@
+ai-workflow/templates/ACCEPTANCE.md
+  s_6f27c834d45972::t_d13b6b0e7c6a5d 15-16
+ai-hub-start/src/test/java/com/qtua/aihub/start/controller/ChatCompletionControllerTest.java
+  s_6f27c834d45972::t_ce250cbd609dea 128-129
+ai-workflow/records/REQ-1.8.md
+  s_6f27c834d45972::t_45c000e0a82d27 1-3,5-72,76-78,82-89
+  s_6f27c834d45972::t_4a784f53cecd75 73-75,79-81
+  s_6f27c834d45972::t_f99daf36ca7828 4
+ai-workflow/docs/STANDARDS.md
+  s_6f27c834d45972::t_58475d6cf620ae 197-205
+ai-hub-service/src/main/java/com/qtua/aihub/service/KeyServiceImpl.java
+  s_6f27c834d45972::t_b72f37adedf470 205,222
+  s_6f27c834d45972::t_be60f81c4384a3 177
+  s_6f27c834d45972::t_689c7ab974e5ba 210
+  s_6f27c834d45972::t_ac7d3a2e09a1f9 100
+ai-workflow/docs/WORKFLOW.md
+  s_6f27c834d45972::t_4481baf8d9aaf4 69
+ai-hub-tests/src/test/java/com/qtua/aihub/KeyManagementIntegrationTest.java
+  s_6f27c834d45972::t_fde7fe4463d464 149
+  s_6f27c834d45972::t_794f031f08dbed 165
+ai-hub-service/src/main/java/com/qtua/aihub/service/gateway/DefaultGatewayGuard.java
+  s_6f27c834d45972::t_b276ac158702ee 54
+  s_6f27c834d45972::t_f76fd5f5afde40 49
+ai-hub-service/src/main/java/com/qtua/aihub/service/ChatCompletionServiceImpl.java
+  s_6f27c834d45972::t_4d58d467ce3708 110
+  s_6f27c834d45972::t_adac181ed6811e 142
+  s_6f27c834d45972::t_24073183aa2602 155
+  s_6f27c834d45972::t_30bbd70a202ccf 168
+  s_6f27c834d45972::t_58cb5a014df86f 124
+  s_6f27c834d45972::t_12b7e7def0d058 128
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/protocol/OpenAiProtocolAdapter.java
+  s_6f27c834d45972::t_b7250238d2804e 219,225
+  s_6f27c834d45972::t_85a60d46fe7ebd 55,83
+  s_6f27c834d45972::t_b4c703fdf1cb42 49,71
+ai-workflow/docs/PROJECT.md
+  s_6f27c834d45972::t_17a89b73489f60 95
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  s_6f27c834d45972::t_5b9912d1d0e2c7 102
+  s_6f27c834d45972::t_2ced7f5239afdc 129-130
+  s_6f27c834d45972::t_58fc6f5ec07b7e 152
+  s_6f27c834d45972::t_d7660ec367fac5 184
+  s_6f27c834d45972::t_acb9ac4fd5a1af 194
+  s_6f27c834d45972::t_6465a3df78acf4 64
+  s_6f27c834d45972::t_f126cd268b4bba 38
+  s_6f27c834d45972::t_1384ff81827744 142
+  s_6f27c834d45972::t_d8afdbecf04f9e 204
+  s_6f27c834d45972::t_866ac643ea42d3 163
+  s_6f27c834d45972::t_a751d4fa16c111 75
+  s_6f27c834d45972::t_18ee592a01427a 173
+  s_6f27c834d45972::t_dc54bbbac0a93e 116
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/GatewayGovernanceFilter.java
+  s_6f27c834d45972::t_580427357b42f3 110
+ai-hub-common/src/test/java/com/qtua/aihub/common/exception/ChatCompletionExceptionTest.java
+  s_6f27c834d45972::t_29f89b2c7e1c5a 1-44
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/AuthFilter.java
+  s_6f27c834d45972::t_c0f887434125f4 89
+ai-hub-service/src/test/java/com/qtua/aihub/service/KeyServiceTest.java
+  s_6f27c834d45972::t_380c59018d909a 146
+  s_6f27c834d45972::t_d96ec33ae5761e 156
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/ChatCompletionController.java
+  s_6f27c834d45972::t_6505bdbbab2d59 195
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/ratelimit/RedisRateLimiter.java
+  s_6f27c834d45972::t_185d424a7cf27f 313
+ai-workflow/requirements/INDEX.md
+  s_6f27c834d45972::t_95c0c141121961 16
+ai-workflow/acceptance/REQ-1.8.md
+  s_6f27c834d45972::t_4d1ad1ae0a4ac5 100-102
+  s_6f27c834d45972::t_9a2277a05dcb69 12-19
+  s_6f27c834d45972::t_1b4a4da826e81f 1-2,4-11,20-99
+  s_6f27c834d45972::t_6e03bda58281e1 3
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/UpstreamClient.java
+  s_6f27c834d45972::t_31ecb8a3c9359a 63
+  s_6f27c834d45972::t_3bb23c6db6a46b 80,131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c71b7f4c03dc79f094c181ea600a55e1495b19df",
+  "prompts": {},
+  "sessions": {
+    "s_6f27c834d45972": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "88fb38b7-5c04-4180-9a86-a4f45f407a6f",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
