@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-03 14:39
+**最后更新**：2026-11-03 14:51
 
 ## 需求进度
 
@@ -20,7 +20,7 @@
 | REQ-2.1 | MCP Server 注册与发现 | 已完成 | additive | 已验收（2026-11-03）（8/8） | 无（第 2 期首卡） | 02caa77 |
 | REQ-2.2 | MCP 工具发现与聚合 | 已完成 | additive | 已验收（2026-11-03）（7/7） | REQ-2.1 | 384f2b5 |
 | REQ-2.3 | MCP 调用代理 | 已完成 | extension | 已验收（2026-11-03）（7/7） | REQ-2.1、REQ-2.2 | 5ba30bc |
-| REQ-2.4 | Prompt 模板管理 | 已完成 | additive | 已验收（2026-11-03）（7/7） | 无（可与 2.1 并行） | — |
+| REQ-2.4 | Prompt 模板管理 | 已完成 | additive | 已验收（2026-11-03）（7/7） | 无（可与 2.1 并行） | 04570a7 |
 
 ## 接口清单（来自 Controller）
 
@@ -44,7 +44,9 @@
 | GET | /v1/prompts | PromptController#list | REQ-2.4 |
 | POST | /v1/prompts | PromptController#create | REQ-2.4 |
 | GET | /v1/prompts/{name} | PromptController#get | REQ-2.4 |
+| POST | /v1/prompts/{name}/chat | PromptRuntimeController#chat | — |
 | POST | /v1/prompts/{name}/publish | PromptController#publish | REQ-2.4 |
+| POST | /v1/prompts/{name}/render | PromptRuntimeController#render | — |
 | GET | /v1/prompts/{name}/versions | PromptController#versions | REQ-2.4 |
 | POST | /v1/prompts/{name}/versions | PromptController#createVersion | REQ-2.4 |
 
@@ -109,7 +111,7 @@
 
 ## 测试
 
-- 219 个 @Test / 41 个测试类
+- 223 个 @Test / 42 个测试类
 
 ## 下一步
 

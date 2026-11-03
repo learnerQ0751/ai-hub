@@ -182,4 +182,12 @@
         <Class name="com.qtua.aihub.start.controller.PromptController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.PromptChatServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.start.controller.PromptRuntimeController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

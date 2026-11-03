@@ -43,8 +43,11 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     private static final String CHAT_PATH = "/chat/completions";
     private static final String MCP_CALL_PREFIX = "/v1/mcp/tools/";
     private static final String MCP_CALL_SUFFIX = ":call";
+    private static final String PROMPT_PREFIX = "/v1/prompts/";
+    private static final String PROMPT_CHAT_SUFFIX = "/chat";
     private static final String UTF_8 = "UTF-8";
     private static final String CALL_TYPE_MCP = "MCP";
+    private static final String CALL_TYPE_PROMPT = "PROMPT";
 
     private final GatewayGovernanceService governanceService;
     private final ObjectMapper objectMapper;
@@ -73,7 +76,27 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         if (CHAT_PATH_V1.equals(relative) || CHAT_PATH.equals(relative)) {
             return false;
         }
+        if (isPromptChat(relative)) {
+            return false;
+        }
         return !(relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX));
+    }
+
+    private boolean isPromptChat(String relative) {
+        return relative.startsWith(PROMPT_PREFIX) && relative.endsWith(PROMPT_CHAT_SUFFIX)
+                && relative.length() > PROMPT_PREFIX.length() + PROMPT_CHAT_SUFFIX.length();
+    }
+
+    /**
+     * 从 Prompt 对话路径解析模板名。
+     *
+     * @param request HTTP 请求
+     * @return 模板名
+     */
+    private String promptName(HttpServletRequest request) {
+        String relative = relativePath(request);
+        return relative.substring(PROMPT_PREFIX.length(),
+                relative.length() - PROMPT_CHAT_SUFFIX.length());
     }
 
     private String relativePath(HttpServletRequest request) {
@@ -117,6 +140,9 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         String relative = relativePath(request);
         if (relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX)) {
             context.setCallTarget(CALL_TYPE_MCP, mcpToolName(request));
+        } else if (isPromptChat(relative)) {
+            // targetName 先置模板名；Controller 渲染后回填 name@vN。
+            context.setCallTarget(CALL_TYPE_PROMPT, promptName(request));
         }
         CachedBodyRequestWrapper wrapped = new CachedBodyRequestWrapper(request);
         wrapped.setAttribute(GatewayContext.ATTRIBUTE, context);
