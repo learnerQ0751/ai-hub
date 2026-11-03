@@ -25,19 +25,25 @@
 
 - 分层落点：`integration/mcp`（McpToolClient.callTool：HTTP/stdio tools-call）、`api`（McpCallService）、`service`（McpCallServiceImpl：路由/参数/重试/截断）、`start`（McpCallController + GatewayGovernanceFilter 路径扩展）、`service/gateway`（MCP 治理分支）、`manager`（CallLogBO callType/targetName）、`dal`（call_logs 新列映射）
 - 核心类（≤3）：`McpCallServiceImpl`（工具路由/错误归一/幂等重试/截断）、`McpToolClient.callTool`（JSON-RPC 双向传输）、`GatewayGovernanceService`（MCP 治理分支：RPM + 日志，cost=0）
-- 请求链路（≤8 行）：
+- 请求链路（Mermaid）：
 
-```text
-POST /v1/mcp/tools/{server}__{tool}:call
-→ AuthFilter（任意 Key）
-→ GatewayGovernanceFilter：识别 MCP 路径 → setCallTarget(MCP, 工具名) → reserve（仅 RPM）
-→ McpCallController → McpCallServiceImpl
-  ① 解析 arguments（缺省 {}；非对象 400）
-  ② McpToolService.find(exposedName) → 404；Server 非 ACTIVE → 502
-  ③ McpToolClient.callTool（HTTP/stdio JSON-RPC）→ result JSON
-     失败：超时 → McpToolTimeoutException；幂等工具重试一次；非幂等直接映射
-  ④ >1MB → 截断包装（truncated/originalSize）
-→ Filter complete：RPM 结算 + call_logs(call_type=MCP, target_name, cost=0)
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant F as 治理 Filter
+    participant S as McpCallService
+    participant U as MCP Server
+    C->>F: POST /v1/mcp/tools/{tool}:call
+    F->>F: callType=MCP，仅 RPM 预占
+    F->>S: 放行
+    S->>S: 工具目录路由（不存在 → 404）
+    S->>U: JSON-RPC tools/call（超时 → 504）
+    alt 幂等工具失败
+        S->>U: 重试一次
+    end
+    U-->>S: result（>1MB 截断）
+    S-->>C: 结果原样返回
+    F->>F: RPM 结算 + 日志（call_type=MCP，cost=0）
 ```
 
 ## 4. 影响面

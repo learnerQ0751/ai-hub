@@ -41,7 +41,8 @@
 
 ## 4. 收尾
 
-1. 更新 REQ：§3 实现方式、§5 决策、§6 执行摘要（每会话 1-2 行 + commit）、§7 复盘（3 行）、§8 多实例检查。
+0. 流程/链路说明使用 Mermaid（简单流程图/时序图）或 draw.io（复杂跨系统图），禁止 ASCII 箭头文本——见 `docs/STANDARDS.md §3.7`。
+1. 更新 REQ：§3 实现方式（含 Mermaid 链路图）、§5 决策、§6 执行摘要（每会话 1-2 行 + commit）、§7 复盘（3 行）、§8 多实例检查。
 2. 补 acceptance §2-3（阅读路径 / 3 条机制 / 5 题 + 参考答案 / 亲手改口子 / 回归影响）。
 3. 若架构、运行时链路或跨需求决策变化 → 更新 `ai-workflow/DESIGN.md` 与 `ai-workflow/acceptance/assets/design.drawio|svg`。
 4. 若新增或修改表 → 新增/修改 `db/migration/Vn__*.sql`（Flyway）并更新 `ai-workflow/docs/DATA-MODEL.md`（表/用途/关键关系/状态/引入需求）。
@@ -66,6 +67,7 @@
 - [ ] 多实例检查完成（无单机业务状态/本地锁）
 - [ ] 职责能力归属检查通过：横切治理在统一入口/切面且接口无关；core 未依赖治理组件；新增接口可自动复用（REQ §4 `capability` 已声明）
 - [ ] 类/方法/关键行注释齐全
+- [ ] 流程/链路说明为 Mermaid 或 draw.io（无 ASCII 箭头文本块）
 - [ ] 对外错误/提示文案语言符合 STANDARDS §3.6 与 PROJECT.md（中文 message；type/param/code 保持英文）
 - [ ] `ai-workflow/STATUS.md` 已更新且变更矩阵正确
 - [ ] 新增/修改表已登记 `ai-workflow/docs/DATA-MODEL.md`；STATUS 表速查与 DDL 一致

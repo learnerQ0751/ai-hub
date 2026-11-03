@@ -25,18 +25,19 @@ Prompt 散落在代码里无法版本化、无法灰度回滚。本需求提供 
 
 - 分层落点：`common/prompt`（PromptStatus）、`dal`（PromptTemplateDO/Mapper/V5 表）、`manager/prompt`（PromptManager：版本/发布原子操作 + JSON）、`integration/prompt`（SimpleTemplateRenderer：变量提取/校验/渲染）、`api`（PromptService + DTO）、`service`（PromptServiceImpl：校验/状态机/@Transactional 发布）、`start`（PromptController + AuthFilter 管理面规则）
 - 核心类（≤3）：`PromptServiceImpl`（校验/状态机/发布回滚事务）、`PromptManager`（版本与发布原子 SQL）、`SimpleTemplateRenderer`（`{{var}}` 提取/一致性校验/单次替换）
-- 请求链路（≤8 行）：
+- 请求链路（Mermaid）：
 
-```text
-POST /v1/prompts
-→ AuthFilter（/v1/prompts 仅 master；render/chat 后缀排除）
-→ PromptController → PromptServiceImpl.create
-  ① 校验 name（字符集/长度）、content（≤10000、无 sk- 密钥模式）
-  ② 变量声明校验：{{var}} 集合 == variables 声明集合（缺失/多余 400）
-  ③ nextVersion → 插入 DRAFT
-发布 POST /v1/prompts/{name}/publish（@Transactional）：
-  lockByName（SELECT ... FOR UPDATE）→ 目标版本存在校验（404）
-  → PUBLISHED 全部归档 → 目标版本置 PUBLISHED（发布旧版本即回滚）
+```mermaid
+flowchart TD
+    A["POST /v1/prompts"] --> B["校验：name / content / {{var}} 与 variables 一致"]
+    B -->|"非法"| B1["400"]
+    B -->|"通过"| C["创建 v1（DRAFT）"]
+    C --> D["POST /v1/prompts/{name}/versions → v(N+1)（DRAFT）"]
+    D --> E["POST /v1/prompts/{name}/publish {version}"]
+    E --> F["事务：SELECT ... FOR UPDATE 锁同 name 行"]
+    F --> G["旧 PUBLISHED → ARCHIVED"]
+    G --> H["目标版本 → PUBLISHED（发布旧版 = 回滚）"]
+    H --> I["GET /v1/prompts/{name} 默认返回最新 PUBLISHED"]
 ```
 
 ## 4. 影响面

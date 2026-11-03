@@ -26,19 +26,21 @@ MCP 集群需要统一登记各 Server 的地址、传输方式与状态，供�
 
 - 分层落点：`common/mcp`（TransportType/McpServerStatus/McpProbeTarget）、`dal`（V5 迁移 + McpServerDO/Mapper）、`manager/mcp`（McpServerManager/McpServerBO）、`integration/mcp`（McpServerProbe/StdioProcessRegistry/ProbeResult）、`api`（McpServerService + Req/Res DTO）、`service`（McpServerServiceImpl + service/mcp/McpServerStartupLoader）、`start`（McpServerController + AuthFilter 管理面扩展）
 - 核心类（≤3）：`McpServerServiceImpl`（校验/查重/探活编排/掩码）、`McpServerProbe`（HTTP JSON/SSE + stdio 进程探活）、`McpServerManager`（BO↔DO + JSON 编解码）
-- 请求链路（≤8 行）：
+- 请求链路（Mermaid）：
 
-```text
-POST /v1/mcp/servers
-→ AuthFilter（/v1/mcp/servers 仅 master）
-→ McpServerController → McpServerServiceImpl.register
-  ① 校验 name（非空/≤128/不含 "__"）、transport（http|stdio；sse 拒绝）、endpoint/command
-  ② 查重（name 唯一）→ 409；并发冲突由 DB 唯一约束兜底（DuplicateKeyException→409）
-  ③ McpServerManager.save（status=DOWN）
-  ④ McpServerProbe.probe：HTTP 发 JSON-RPC initialize（3s，兼容 SSE 响应）；
-     stdio 启动子进程写 initialize、读一行（3s 超时强杀）
-  ⑤ updateHealth（ACTIVE/DOWN + lastHealthAt + metadata.lastError）→ 返回 DTO（endpoint 掩码）
-启动：McpServerStartupLoader（service 层 ApplicationRunner）加载 ACTIVE 并逐个 reprobe
+```mermaid
+flowchart TD
+    A["POST /v1/mcp/servers（master）"] --> B["校验 name / transport / endpoint 或 command"]
+    B -->|"非法"| B1["400"]
+    B -->|"通过"| C["查重（name 唯一，禁 __）"]
+    C -->|"已存在"| C1["409"]
+    C -->|"通过"| D["落库 status=DOWN"]
+    D --> E{"探活 initialize（3s）"}
+    E -->|"成功"| F["ACTIVE"]
+    E -->|"失败"| G["DOWN + lastError"]
+    F --> H["201 返回（endpoint 掩码）"]
+    G --> H
+    H -.-> I["应用启动：ACTIVE 逐个 reprobe"]
 ```
 
 ## 4. 影响面

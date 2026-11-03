@@ -25,18 +25,25 @@
 
 - 分层落点：`common/prompt`（PromptMessage）、`integration/prompt`（PromptMessageParser：System/User/Assistant 解析）、`api`（PromptChatService + DTO）、`service`（PromptChatServiceImpl：渲染→内部 chat 调用）、`start`（PromptRuntimeController + GatewayGovernanceFilter 路径扩展）
 - 核心类（≤3）：`PromptChatServiceImpl`（渲染/内部调用/版本记录）、`PromptMessageParser`（文本→消息）、`GatewayGovernanceService`（PROMPT 分支复用 CHAT 计价/结算/日志）
-- 请求链路（≤8 行）：
+- 请求链路（Mermaid）：
 
-```text
-POST /v1/prompts/{name}/chat
-→ AuthFilter（数据面任意 Key）
-→ GatewayGovernanceFilter：识别 Prompt chat → callType=PROMPT、targetName=name
-   → reserve（与 CHAT 相同：model 白名单 / 部署 / TPM / 预算预占）
-→ PromptRuntimeController → PromptChatServiceImpl
-  ① 查模板（指定版本或最新发布版）→ 变量渲染 → 消息解析
-  ② 构造 ChatCompletion JSON → 内部 ChatCompletionService.chat（不再经 Filter）
-  ③ Controller 回填 targetName=name@vN + usage/deploymentModel → Filter complete（计价/spend/日志）
-渲染 POST /v1/prompts/{name}/render：只渲染返回 messages，不调用模型、不治理
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant F as 治理 Filter
+    participant P as PromptChatService
+    participant G as ChatCompletionService
+    participant U as 上游 LLM
+    C->>F: POST /v1/prompts/{name}/chat
+    F->>F: callType=PROMPT（model 白名单 / TPM / 预算预占）
+    F->>P: 放行
+    P->>P: 查模板（指定版本或发布版）→ 渲染 → 消息解析
+    P->>G: 内部调用（不经 HTTP / Filter）
+    G->>U: chat/completions
+    U-->>G: 响应 + usage
+    G-->>P: ChatCompletionResDTO
+    P-->>C: 原始响应（Controller 回填 name@vN）
+    F->>F: 结算 + 日志（call_type=PROMPT，target_name=name@vN）
 ```
 
 ## 4. 影响面

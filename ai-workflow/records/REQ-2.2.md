@@ -25,18 +25,21 @@ Server 的 `tools/list`，用 `{serverName}__{toolName}` 作为对外唯一名�
 
 - 分层落点：`common/mcp`（RawTool/McpToolDescriptor/ToolAggregationResult）、`integration/mcp`（McpToolClient：HTTP/stdio tools-list）、`core/mcp`（McpToolAggregator：并行聚合 + 降级）、`manager/mcp`（McpToolCatalog：volatile 快照 + TTL）、`api`（McpToolService + DTO）、`service`（McpToolServiceImpl：缓存编排/过滤/变更日志）、`start`（McpToolController）
 - 核心类（≤3）：`McpToolAggregator`（有界线程池并行、单 Server 失败降级）、`McpToolCatalog`（不可变快照整体替换、TTL 判定、失效）、`McpToolServiceImpl`（新鲜度编排、过滤、added/removed 日志）
-- 请求链路（≤8 行）：
+- 请求链路（Mermaid）：
 
-```text
-GET /v1/mcp/tools?server_id=&tenant_id=
-→ AuthFilter（数据面：任意 Key）
-→ McpToolController → McpToolServiceImpl.list
-  ① 快照新鲜（TTL 60s）→ 直接过滤返回
-  ② 否则 refresh：McpServerManager.findActive()
-     → McpToolAggregator.aggregate（并行 tools/list，单 Server 异常→degraded）
-     → 与旧快照对比记录 added/removed 日志 → McpToolCatalog.save
-  ③ 按 serverId/name + tenant 过滤 → DTO
-注册/注销 Server：McpServerServiceImpl → McpToolCatalog.invalidate()（本实例立即失效）
+```mermaid
+flowchart TD
+    A["GET /v1/mcp/tools"] --> B{"快照在 TTL 60s 内？"}
+    B -->|"是"| F["按 server_id / tenant_id 过滤返回"]
+    B -->|"否"| C["并行 tools/list 各 ACTIVE Server"]
+    C --> D{"单 Server 失败？"}
+    D -->|"是"| E["记入 degradedServers"]
+    D -->|"否"| G["合并工具（{server}__{tool}）"]
+    E --> G
+    G --> H["对比旧快照，记录 added / removed 日志"]
+    H --> I["保存快照"]
+    I --> F
+    J["注册 / 注销 Server"] -.-> K["本实例缓存失效"]
 ```
 
 ## 4. 影响面

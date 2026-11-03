@@ -13,6 +13,7 @@
 - [ ] 
 
 > 涉及对外错误/提示时，必须增加：`error.message` 为中文、`type`/`param`/`code`/HTTP 状态码保持不变（STANDARDS §3.6）。
+> 链路/流程说明使用 Mermaid（简单流程图/时序图）或 draw.io（复杂跨系统图），禁止 ASCII 箭头文本（STANDARDS §3.7）。
 
 **验收命令 / 示例**：
 

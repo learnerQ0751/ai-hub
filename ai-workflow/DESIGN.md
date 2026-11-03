@@ -180,56 +180,88 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 
 ### 3.8 MCP Server 注册与工具发现（REQ-2.1 / 2.2）
 
-```text
-管理面（仅 master）：
-POST /v1/mcp/servers → 校验（name 唯一、禁 "__"、transport http|stdio）→ 落库(DOWN)
-→ 探活（HTTP JSON-RPC initialize 3s，兼容 SSE；stdio 子进程逐行协议 3s 强杀）
-→ ACTIVE/DOWN + lastHealthAt + metadata.lastError → 返回（endpoint 掩码）
-GET /v1/mcp/servers、DELETE /v1/mcp/servers/{id}（404）、POST .../reprobe
-启动：McpServerStartupLoader（service 层 ApplicationRunner）加载 ACTIVE 逐个重探
-
-数据面：
-GET /v1/mcp/tools（任意 Key）→ 快照新鲜（TTL 60s）直接返回
-→ 否则并行聚合各 ACTIVE Server 的 tools/list（有界线程池；单 Server 失败→degraded）
-→ 对外名 {serverName}__{toolName}；变更（added/removed）写日志
-POST /v1/mcp/tools/refresh；注册/注销 → 本实例缓存失效
+```mermaid
+flowchart TD
+    subgraph 管理面（仅 master）
+        A["POST /v1/mcp/servers"] --> B["校验 name（唯一、禁 __）/ transport / endpoint|command"]
+        B -->|"非法"| B1["400 / 409"]
+        B -->|"通过"| C["落库 status=DOWN"]
+        C --> D{"探活 initialize（3s）"}
+        D -->|"成功"| E["ACTIVE"]
+        D -->|"失败"| F["DOWN + lastError"]
+        E --> G["201 返回（endpoint 掩码）"]
+        F --> G
+        H["启动加载"] -.-> I["ACTIVE 逐个 reprobe"]
+    end
+    subgraph 数据面（任意 Key）
+        J["GET /v1/mcp/tools"] --> K{"快照 TTL 60s 内？"}
+        K -->|"是"| N["过滤返回"]
+        K -->|"否"| L["并行 tools/list（有界线程池）"]
+        L --> M{"单 Server 失败？"}
+        M -->|"是"| M1["记入 degradedServers"]
+        M -->|"否"| M2["合并 {server}__{tool}"]
+        M1 --> M2
+        M2 --> M3["对比旧快照记录 added/removed"] --> M4["保存快照"] --> N
+    end
 ```
 
 ### 3.9 MCP 调用代理（REQ-2.3）
 
-```text
-POST /v1/mcp/tools/{server}__{tool}:call（任意 Key）
-→ GatewayGovernanceFilter：callType=MCP、targetName=工具名 → 仅 RPM 预占
-→ 工具目录路由到 Server → JSON-RPC tools/call（HTTP/stdio）
-→ 结果原样返回；>1MB 截断（truncated/originalSize）；仅 _meta.idempotent=true 重试一次
-→ 错误归一：工具不存在 404 / 超时 504 / 参数 400 / 上游失败 502
-→ Filter complete：RPM 结算 + call_logs(call_type=MCP, target_name, cost=0)
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant F as 治理 Filter
+    participant S as McpCallService
+    participant U as MCP Server
+    C->>F: POST /v1/mcp/tools/{server}__{tool}:call
+    F->>F: callType=MCP，仅 RPM 预占
+    F->>S: 放行
+    S->>S: 工具目录路由（不存在 → 404）
+    S->>U: JSON-RPC tools/call（超时 → 504，参数 → 400）
+    alt 幂等工具失败（_meta.idempotent=true）
+        S->>U: 重试一次
+    end
+    U-->>S: result（>1MB 截断，记录 originalSize）
+    S-->>C: 结果原样返回
+    F->>F: RPM 结算 + 日志（call_type=MCP，target_name，cost=0）
 ```
 
 ### 3.10 Prompt 模板管理与渲染接入（REQ-2.4 / 2.5）
 
-```text
-管理面（仅 master）：
-POST /v1/prompts（v1 DRAFT）、POST /v1/prompts/{name}/versions（只追加）
-POST /v1/prompts/{name}/publish（@Transactional：FOR UPDATE 锁行 → 旧 PUBLISHED 归档 →
-目标置 PUBLISHED；发布旧版本即回滚）
-校验：name 字符集、content ≤10000、拒绝 sk- 密钥模式、{{var}} 集合 == variables 声明
-
-数据面（任意 Key）：
-POST /v1/prompts/{name}/render → 变量渲染（单次替换，不递归）→ System/User/Assistant 消息
-POST /v1/prompts/{name}/chat → 渲染 → 内部 ChatCompletionService.chat（不经 Filter）
-→ Filter（识别 chat 路径）统一预占/计价/结算；Controller 回填 targetName=name@vN
+```mermaid
+flowchart TD
+    subgraph 管理面（仅 master）
+        A["POST /v1/prompts"] --> B["校验 name/content/{{var}} 与 variables 一致"]
+        B --> C["创建 v1（DRAFT）"]
+        C --> D["追加版本 v(N+1)（DRAFT）"]
+        D --> E["发布 {version}"]
+        E --> F["事务：FOR UPDATE 锁行 → 旧 PUBLISHED 归档 → 目标 PUBLISHED"]
+    end
+    subgraph 数据面（任意 Key）
+        G["render"] --> H["变量渲染（单次替换）→ System/User/Assistant 消息（不调模型）"]
+        I["chat"] --> J["渲染 → 内部 ChatCompletionService（不经 Filter）"]
+        J --> K["Controller 回填 name@vN → Filter 计价/结算/日志"]
+    end
+    F -.-> G
+    F -.-> I
 ```
 
 ### 3.11 ai-hub 作为 MCP Server（REQ-2.6）
 
-```text
-POST /mcp（JSON-RPC 2.0，任意 Key）
-→ initialize（协议 2025-06-18 + capabilities.tools）/ ping / notifications（202）
-→ tools/list：chat_completion / list_models / prompts_get
-→ tools/call：内部复用 ChatCompletionService / ModelService / PromptChatService
-→ GatewayGovernanceFilter：callType=MCP、target=tools/call 工具名；RPM + cost=0 日志
-LangChain4j DefaultMcpClient + StreamableHttpMcpTransport 实测发现/调用通过
+```mermaid
+sequenceDiagram
+    participant C as MCP Client（LangChain4j）
+    participant F as 治理 Filter
+    participant E as McpServerEndpoint
+    participant S as 复用 Service
+    C->>F: POST /mcp（JSON-RPC 2.0）
+    F->>F: callType=MCP，target=method/工具名
+    F->>E: 放行
+    E->>E: initialize / tools/list / notification(202)
+    E->>S: tools/call → chat_completion / list_models / prompts_get
+    S-->>E: 结果
+    E-->>C: JSON-RPC result（JSON 单响应）
+    F->>F: RPM 结算 + 日志（cost=0）
 ```
 
 ## 4. 跨需求设计决策

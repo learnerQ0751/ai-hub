@@ -26,17 +26,22 @@
 
 - 分层落点：`start/mcp`（McpServerEndpoint：JSON-RPC 方法路由 + 工具 schema/调用）、`start/filter`（GatewayGovernanceFilter：/mcp 纳入统一治理）；复用 `ChatCompletionService` / `ModelService` / `PromptChatService`
 - 核心类（≤3）：`McpServerEndpoint`（initialize/tools/list/tools/call）、`GatewayGovernanceFilter`（MCP 目标解析 + 治理）、LangChain4j `DefaultMcpClient` + `StreamableHttpMcpTransport`（示例客户端）
-- 请求链路（≤8 行）：
+- 请求链路（Mermaid）：
 
-```text
-POST /mcp（JSON-RPC 2.0）
-→ AuthFilter（任意 Key）→ GatewayGovernanceFilter（识别 /mcp，target=method 或 tools/call 的工具名，MCP 治理口径）
-→ McpServerEndpoint
-  initialize → 协议版本 2025-06-18 + capabilities.tools
-  tools/list → chat_completion / list_models / prompts_get schema
-  tools/call → chat_completion（内部 ChatCompletionService）/ list_models（ModelService）
-              / prompts_get（PromptChatService.render）
-  响应 JSON 单响应（notification → 202）
+```mermaid
+sequenceDiagram
+    participant C as MCP Client（LangChain4j）
+    participant F as 治理 Filter
+    participant E as McpServerEndpoint
+    participant S as 复用 Service
+    C->>F: POST /mcp（initialize / tools/list / tools/call）
+    F->>F: callType=MCP，target = method 或工具名
+    F->>E: 放行
+    E->>E: JSON-RPC 路由（notification → 202）
+    E->>S: chat_completion / list_models / prompts_get
+    S-->>E: 结果
+    E-->>C: JSON-RPC result
+    F->>F: RPM 结算 + 日志（cost=0）
 ```
 
 ## 4. 影响面
