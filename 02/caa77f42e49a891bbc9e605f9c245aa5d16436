@@ -1,0 +1,101 @@
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/McpServerMapper.java
+  s_b128240c3068a4::t_fdcbc70581792e 1-77
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/McpServerDO.java
+  s_b128240c3068a4::t_e3ce9f47d62ca0 1-129
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/McpServerController.java
+  s_b128240c3068a4::t_210e6d94700cd3 1-83
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/McpServerMapper.xml
+  s_b128240c3068a4::t_fadc6b2b014e73 1-75
+ai-hub-tests/src/test/java/com/qtua/aihub/McpRegistryIntegrationTest.java
+  s_b128240c3068a4::t_45c3698062701f 1-54,61-121,123-124,126-135,137-138,140-160,162-168,170-200,212-241
+  s_b128240c3068a4::t_3c453041404a6a 122,125,136,139
+  s_b128240c3068a4::t_66deeb5e2b6cf8 161,169
+  s_b128240c3068a4::t_0c8885c78ab8e1 201-211
+  s_b128240c3068a4::t_336b768fa49fd3 55-60
+ai-hub-common/src/main/java/com/qtua/aihub/common/mcp/TransportType.java
+  s_b128240c3068a4::t_05fce924140d94 1-52
+  s_b128240c3068a4::t_4ba45fcf1f26a3 53-54
+ai-hub-common/src/main/java/com/qtua/aihub/common/util/UrlMasker.java
+  s_b128240c3068a4::t_1febefc00ec1d6 34
+  s_b128240c3068a4::t_44336934303e56 1,6-29,31-33,35-43,45-51
+  s_b128240c3068a4::t_e8c29b53684420 2-5
+  s_b128240c3068a4::t_2304c557ef3aa8 30
+  s_b128240c3068a4::t_e3307be0714dc9 44
+ai-hub-api/src/main/java/com/qtua/aihub/api/McpServerService.java
+  s_b128240c3068a4::t_9e9a107a042382 1-45
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/McpServerResDTO.java
+  s_b128240c3068a4::t_7d91ebb47af00c 1-37,45
+  s_b128240c3068a4::t_e94ff4cac47070 43
+  s_b128240c3068a4::t_deed018e680738 38-42,44
+ai-hub-common/src/main/java/com/qtua/aihub/common/mcp/McpServerStatus.java
+  s_b128240c3068a4::t_7d5929267f27a9 1-16
+ai-hub-dal/src/main/resources/db/mcp-prompt-schema.sql
+  s_b128240c3068a4::t_46cbce286e1c6a 1-35
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/mcp/McpServerManager.java
+  s_b128240c3068a4::t_aa665163f53105 1-203
+  s_b128240c3068a4::t_43dc2c82c71e21 204
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/McpServerBO.java
+  s_b128240c3068a4::t_e680d0504000fa 1-59
+ai-workflow/acceptance/REQ-2.1.md
+  s_b128240c3068a4::t_296aa94208c4ff 1-46,50-53,60-63,69-71,77-79,82-91
+  s_b128240c3068a4::t_d3e6826ad1bb43 47-49,54-59,64-68,72-76,80-81
+  s_b128240c3068a4::t_901f38c33d42a7 92
+ai-hub-dal/src/main/resources/db/migration/V5__mcp_prompt.sql
+  s_b128240c3068a4::t_d9ca73d028a014 1-37
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/mcp/McpServerProbe.java
+  s_b128240c3068a4::t_0ea11ade9c7157 1-200
+  s_b128240c3068a4::t_435c3cf1895b0e 201-211
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/AuthFilter.java
+  s_b128240c3068a4::t_dd5492fe21e648 131-136
+  s_b128240c3068a4::t_1391efaa938d63 46-47
+ai-hub-tests/src/test/java/com/qtua/aihub/McpServerStartupLoaderTest.java
+  s_b128240c3068a4::t_d9165f901c7c45 1-54
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/McpServerRegisterReqDTO.java
+  s_b128240c3068a4::t_fcdfb5af48b08c 1-32
+ai-workflow/records/REQ-2.1.md
+  s_b128240c3068a4::t_d157664e241c08 1-26,29-31,42-91,95-97,101-103
+  s_b128240c3068a4::t_68efe491cd12c2 27-28,32-41
+  s_b128240c3068a4::t_18248f4ed42c0a 98-100,104
+  s_b128240c3068a4::t_9bc1f9107ff97d 92-94
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/mcp/StdioProcessRegistry.java
+  s_b128240c3068a4::t_d6d83c8b65dd74 1-64
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/mcp/ProbeResult.java
+  s_b128240c3068a4::t_e107a52a4c21ce 1-29
+ai-hub-common/src/main/java/com/qtua/aihub/common/mcp/McpProbeTarget.java
+  s_b128240c3068a4::t_5f70c1a7f1130d 1-31
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  s_b128240c3068a4::t_c4a2d1fe6d6ca3 207-242
+ai-hub-tests/src/test/java/com/qtua/aihub/mcp/InMemoryStdioServer.java
+  s_b128240c3068a4::t_c9c2f20f8b6f75 3-6,13-14,17-18,21-22,50-58,61-65,68-76,79-103,106
+  s_b128240c3068a4::t_072b27aecdffa6 1-2,7-12,15-16,19-20,23-49,59-60,66-67,77-78,104-105,107-108
+  s_b128240c3068a4::t_c2274f28a0221b 109-111
+ai-hub-service/src/main/java/com/qtua/aihub/service/McpServerServiceImpl.java
+  s_b128240c3068a4::t_7b56bd226f84a9 1-221
+  s_b128240c3068a4::t_7c9a77f52e5a13 222
+ai-hub-service/src/main/java/com/qtua/aihub/service/mcp/McpServerStartupLoader.java
+  s_b128240c3068a4::t_210e7cf1b89ac7 1-62
+ai-hub-tests/src/test/resources/application-test.yml
+  s_b128240c3068a4::t_d0abf683fcb278 16
+ai-workflow/STATUS.md
+  s_b128240c3068a4::t_564f896508448e 6,19-20,33-36,46-53,69,72,74,80-81,89,93
+ai-workflow/docs/DATA-MODEL.md
+  s_b128240c3068a4::t_02f553acb5eee1 14,20-24,43,48
+config/spotbugs-exclude.xml
+  s_b128240c3068a4::t_32c1c2562d8223 120-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "02caa77f42e49a891bbc9e605f9c245aa5d16436",
+  "prompts": {},
+  "sessions": {
+    "s_b128240c3068a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11c146f3-c8d4-4ba1-82d5-fd5af022561a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
