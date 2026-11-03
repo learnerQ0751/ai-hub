@@ -18,6 +18,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -45,6 +46,7 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     private static final String MCP_CALL_SUFFIX = ":call";
     private static final String PROMPT_PREFIX = "/v1/prompts/";
     private static final String PROMPT_CHAT_SUFFIX = "/chat";
+    private static final String MCP_SERVER_PATH = "/mcp";
     private static final String UTF_8 = "UTF-8";
     private static final String CALL_TYPE_MCP = "MCP";
     private static final String CALL_TYPE_PROMPT = "PROMPT";
@@ -76,7 +78,7 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         if (CHAT_PATH_V1.equals(relative) || CHAT_PATH.equals(relative)) {
             return false;
         }
-        if (isPromptChat(relative)) {
+        if (isPromptChat(relative) || MCP_SERVER_PATH.equals(relative)) {
             return false;
         }
         return !(relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX));
@@ -85,6 +87,29 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     private boolean isPromptChat(String relative) {
         return relative.startsWith(PROMPT_PREFIX) && relative.endsWith(PROMPT_CHAT_SUFFIX)
                 && relative.length() > PROMPT_PREFIX.length() + PROMPT_CHAT_SUFFIX.length();
+    }
+
+    /**
+     * 从 MCP JSON-RPC 请求解析调用目标（tools/call 取工具名，其他取方法名）。
+     *
+     * @param body 请求体 JSON
+     * @return 目标名（解析失败返回 "mcp"）
+     */
+    private String mcpServerTarget(String body) {
+        try {
+            if (!StringUtils.hasText(body)) {
+                return "mcp";
+            }
+            com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(body);
+            String method = root.path("method").asText("mcp");
+            if ("tools/call".equals(method)) {
+                String toolName = root.path("params").path("name").asText("");
+                return StringUtils.hasText(toolName) ? toolName : method;
+            }
+            return method;
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            return "mcp";
+        }
     }
 
     /**
@@ -137,14 +162,17 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         String requestId = (String) request.getAttribute(RequestIdFilter.ATTRIBUTE);
         GatewayContext context = new GatewayContext(requestId, auth.keyHash(),
                 request.getRequestURI(), auth);
+        CachedBodyRequestWrapper wrapped = new CachedBodyRequestWrapper(request);
         String relative = relativePath(request);
         if (relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX)) {
             context.setCallTarget(CALL_TYPE_MCP, mcpToolName(request));
+        } else if (MCP_SERVER_PATH.equals(relative)) {
+            // JSON-RPC 目标从请求体解析（tools/call 取工具名）。
+            context.setCallTarget(CALL_TYPE_MCP, mcpServerTarget(wrapped.getBody()));
         } else if (isPromptChat(relative)) {
             // targetName 先置模板名；Controller 渲染后回填 name@vN。
             context.setCallTarget(CALL_TYPE_PROMPT, promptName(request));
         }
-        CachedBodyRequestWrapper wrapped = new CachedBodyRequestWrapper(request);
         wrapped.setAttribute(GatewayContext.ATTRIBUTE, context);
         try {
             governanceService.reserve(context, wrapped.getBody());
