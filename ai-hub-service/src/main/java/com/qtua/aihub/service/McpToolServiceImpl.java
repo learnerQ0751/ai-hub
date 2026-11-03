@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -68,6 +69,20 @@ public class McpToolServiceImpl implements McpToolService {
                 .toList();
         return new McpToolListResDTO(tools, snapshot.degradedServers(),
                 "Successfully retrieved tools");
+    }
+
+    /**
+     * 按对外工具名查找。
+     *
+     * @param exposedName 对外工具名（server__tool）
+     * @return 工具描述；不存在时为空
+     */
+    @Override
+    public Optional<McpToolDescriptor> find(String exposedName) {
+        McpToolCatalog.Snapshot snapshot = ensureSnapshot();
+        return snapshot.tools().stream()
+                .filter(tool -> tool.exposedName().equals(exposedName))
+                .findFirst();
     }
 
     /**

@@ -158,4 +158,12 @@
         <Class name="com.qtua.aihub.start.controller.McpToolController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.McpCallServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.start.controller.McpCallController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

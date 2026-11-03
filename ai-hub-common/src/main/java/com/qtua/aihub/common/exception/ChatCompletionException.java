@@ -217,6 +217,18 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * MCP 工具不存在（404）。
+     *
+     * @param toolName 对外工具名
+     * @return 业务异常
+     */
+    public static ChatCompletionException mcpToolNotFound(String toolName) {
+        return new ChatCompletionException(HttpStatus.NOT_FOUND,
+                "MCP 工具 '" + toolName + "' 不存在，请刷新工具目录后重试",
+                "not_found_error", "tool", "404", null, false);
+    }
+
+    /**
      * MCP Server 名称冲突（409）。
      *
      * @param name 冲突的名称

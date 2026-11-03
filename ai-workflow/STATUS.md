@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-03 14:10
+**最后更新**：2026-11-03 14:27
 
 ## 需求进度
 
@@ -18,7 +18,8 @@
 | REQ-1.7 | 流式（SSE）透传 | 已完成 | extension | 已验收（2026-11-02，理解默认通过）（7/7） | REQ-1.1、REQ-1.6 | — |
 | REQ-1.8 | 对外错误信息中文化 | 已完成 | extension | 已验收（2026-11-03）（8/8） | REQ-1.1 ~ 1.7（覆盖全部错误响应） | — |
 | REQ-2.1 | MCP Server 注册与发现 | 已完成 | additive | 已验收（2026-11-03）（8/8） | 无（第 2 期首卡） | 02caa77 |
-| REQ-2.2 | MCP 工具发现与聚合 | 已完成 | additive | 已验收（2026-11-03）（7/7） | REQ-2.1 | — |
+| REQ-2.2 | MCP 工具发现与聚合 | 已完成 | additive | 已验收（2026-11-03）（7/7） | REQ-2.1 | 384f2b5 |
+| REQ-2.3 | MCP 调用代理 | 已完成 | extension | 已验收（2026-11-03）（7/7） | REQ-2.1、REQ-2.2 | — |
 
 ## 接口清单（来自 Controller）
 
@@ -35,7 +36,8 @@
 | POST | /v1/mcp/servers | McpServerController#register | REQ-2.1 |
 | DELETE | /v1/mcp/servers/{serverId} | McpServerController#remove | REQ-2.1 |
 | POST | /v1/mcp/servers/{serverId}/reprobe | McpServerController#reprobe | REQ-2.1 |
-| GET | /v1/mcp/tools | McpToolController#list | REQ-2.2 |
+| GET | /v1/mcp/tools | McpToolController#list | REQ-2.2, REQ-2.3 |
+| POST | /v1/mcp/tools/{toolName}:call | McpCallController#call | REQ-2.3 |
 | POST | /v1/mcp/tools/refresh | McpToolController#refresh | REQ-2.2 |
 | GET | /v1/models | ModelController#listModels | REQ-1.2 |
 
@@ -46,7 +48,7 @@
 | 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
 |---|---|---|---|---|---|
 | api_keys | 虚拟 Key：SHA-256 哈希、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend | 1:N call_logs（key_id） | active | REQ-1.3, REQ-1.5, REQ-1.3 / REQ-1.4 | ✓ |
-| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias / call_type（CHAT/MCP/PROMPT）/ target_name | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5, REQ-1.5 / REQ-1.4 / REQ-1.6 / REQ-2.3 | ✓ |
+| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias / call_type（CHAT/MCP/PROMPT）/ target_name | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5, REQ-2.3, REQ-1.5 / REQ-1.4 / REQ-1.6 / REQ-2.3 | ✓ |
 
 ### MCP 与 Prompt
 
@@ -69,6 +71,7 @@
 |---|---|
 | api_keys | REQ-1.3, REQ-1.5 |
 | call_logs | REQ-1.5 |
+| call_logs：使用 V5 已有 call_type/target_name 列 | REQ-2.3 |
 | DELETE /v1/mcp/servers/{serverId} | REQ-2.1 |
 | GET /key/info | REQ-1.3, REQ-1.5 |
 | GET /models | REQ-1.2 |
@@ -83,6 +86,7 @@
 | POST /v1/chat/completions | REQ-1.1, REQ-1.2, REQ-1.3 |
 | POST /v1/mcp/servers | REQ-2.1 |
 | POST /v1/mcp/servers/{serverId}/reprobe | REQ-2.1 |
+| POST /v1/mcp/tools/{toolName}:call | REQ-2.3 |
 | POST /v1/mcp/tools/refresh | REQ-2.2 |
 
 ## 模块依赖
@@ -91,7 +95,7 @@
 
 ## 测试
 
-- 208 个 @Test / 39 个测试类
+- 214 个 @Test / 40 个测试类
 
 ## 下一步
 

@@ -41,7 +41,10 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
 
     private static final String CHAT_PATH_V1 = "/v1/chat/completions";
     private static final String CHAT_PATH = "/chat/completions";
+    private static final String MCP_CALL_PREFIX = "/v1/mcp/tools/";
+    private static final String MCP_CALL_SUFFIX = ":call";
     private static final String UTF_8 = "UTF-8";
+    private static final String CALL_TYPE_MCP = "MCP";
 
     private final GatewayGovernanceService governanceService;
     private final ObjectMapper objectMapper;
@@ -59,18 +62,36 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 只治理聊天补全入口；后续流式/文件接口在此扩展。
+     * 治理聊天补全与 MCP 工具调用入口；后续流式/文件接口在此扩展。
      *
      * @param request HTTP 请求
      * @return true 表示跳过治理
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
+        String relative = relativePath(request);
+        if (CHAT_PATH_V1.equals(relative) || CHAT_PATH.equals(relative)) {
+            return false;
+        }
+        return !(relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX));
+    }
+
+    private String relativePath(HttpServletRequest request) {
         String path = request.getRequestURI();
         String contextPath = request.getContextPath();
-        String relative = path.startsWith(contextPath)
-                ? path.substring(contextPath.length()) : path;
-        return !CHAT_PATH_V1.equals(relative) && !CHAT_PATH.equals(relative);
+        return path.startsWith(contextPath) ? path.substring(contextPath.length()) : path;
+    }
+
+    /**
+     * 从 MCP 调用路径解析对外工具名（去掉前缀与 ":call" 后缀）。
+     *
+     * @param request HTTP 请求
+     * @return 工具名
+     */
+    private String mcpToolName(HttpServletRequest request) {
+        String relative = relativePath(request);
+        return relative.substring(MCP_CALL_PREFIX.length(),
+                relative.length() - MCP_CALL_SUFFIX.length());
     }
 
     /**
@@ -93,6 +114,10 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         String requestId = (String) request.getAttribute(RequestIdFilter.ATTRIBUTE);
         GatewayContext context = new GatewayContext(requestId, auth.keyHash(),
                 request.getRequestURI(), auth);
+        String relative = relativePath(request);
+        if (relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX)) {
+            context.setCallTarget(CALL_TYPE_MCP, mcpToolName(request));
+        }
         CachedBodyRequestWrapper wrapped = new CachedBodyRequestWrapper(request);
         wrapped.setAttribute(GatewayContext.ATTRIBUTE, context);
         try {

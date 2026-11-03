@@ -6,6 +6,7 @@ package com.qtua.aihub.common.mcp;
  * @param name        上游工具名
  * @param description 描述
  * @param inputSchema 输入 schema（JSON 文本，原样透传）
+ * @param idempotent  是否幂等（上游 _meta.idempotent，用于调用失败重试策略）
  */
-public record RawTool(String name, String description, String inputSchema) {
+public record RawTool(String name, String description, String inputSchema, boolean idempotent) {
 }

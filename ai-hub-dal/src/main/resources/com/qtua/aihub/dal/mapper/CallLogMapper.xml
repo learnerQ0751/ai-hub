@@ -21,6 +21,8 @@
         <result column="retry_count" property="retryCount" jdbcType="INTEGER"/>
         <result column="fallback_used" property="fallbackUsed" jdbcType="BOOLEAN"/>
         <result column="served_alias" property="servedAlias" jdbcType="VARCHAR"/>
+        <result column="call_type" property="callType" jdbcType="VARCHAR"/>
+        <result column="target_name" property="targetName" jdbcType="VARCHAR"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.qtua.aihub.dal.model.CallLogDO"
@@ -29,7 +31,7 @@
             (request_id, key_id, model_alias, deployment_model,
              prompt_tokens, completion_tokens, total_tokens, cost,
              latency_ms, status, error_type, tenant_id, created_at,
-             retry_count, fallback_used, served_alias)
+             retry_count, fallback_used, served_alias, call_type, target_name)
         VALUES
             (#{requestId,jdbcType=VARCHAR}, #{keyId,jdbcType=VARCHAR},
              #{modelAlias,jdbcType=VARCHAR}, #{deploymentModel,jdbcType=VARCHAR},
@@ -39,14 +41,15 @@
              #{errorType,jdbcType=VARCHAR}, #{tenantId,jdbcType=VARCHAR},
              #{createdAt,jdbcType=TIMESTAMP},
              #{retryCount,jdbcType=INTEGER}, #{fallbackUsed,jdbcType=BOOLEAN},
-             #{servedAlias,jdbcType=VARCHAR})
+             #{servedAlias,jdbcType=VARCHAR}, #{callType,jdbcType=VARCHAR},
+             #{targetName,jdbcType=VARCHAR})
     </insert>
 
     <select id="selectByRequestId" resultMap="CallLogResultMap">
         SELECT id, request_id, key_id, model_alias, deployment_model,
                prompt_tokens, completion_tokens, total_tokens, cost,
                latency_ms, status, error_type, tenant_id, created_at,
-               retry_count, fallback_used, served_alias
+               retry_count, fallback_used, served_alias, call_type, target_name
         FROM call_logs
         WHERE request_id = #{requestId,jdbcType=VARCHAR}
         ORDER BY id DESC
@@ -63,7 +66,7 @@
         SELECT id, request_id, key_id, model_alias, deployment_model,
                prompt_tokens, completion_tokens, total_tokens, cost,
                latency_ms, status, error_type, tenant_id, created_at,
-               retry_count, fallback_used, served_alias
+               retry_count, fallback_used, served_alias, call_type, target_name
         FROM call_logs
         WHERE key_id = #{keyId,jdbcType=VARCHAR}
         ORDER BY id DESC

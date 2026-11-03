@@ -38,6 +38,10 @@ public class GatewayContext {
     private volatile boolean failed;
     /** 流式请求：Filter 只预占，由 Controller 在流结束后收尾。 */
     private volatile boolean streaming;
+    /** 调用类型：CHAT/MCP/PROMPT（REQ-2.3 引入，接口无关治理用）。 */
+    private volatile String callType = "CHAT";
+    /** 调用目标：MCP 工具名 / Prompt 名（REQ-2.3）。 */
+    private volatile String targetName;
 
     /**
      * 构造上下文。
@@ -162,6 +166,43 @@ public class GatewayContext {
      */
     public void setStreaming(boolean streaming) {
         this.streaming = streaming;
+    }
+
+    public String getCallType() {
+        return callType;
+    }
+
+    public String getTargetName() {
+        return targetName;
+    }
+
+    /**
+     * 设置调用类型与目标（MCP/Prompt 等非聊天入口使用）。
+     *
+     * @param newCallType 调用类型
+     * @param newTarget   目标名（工具名/Prompt 名）
+     */
+    public void setCallTarget(String newCallType, String newTarget) {
+        this.callType = newCallType;
+        this.targetName = newTarget;
+    }
+
+    /**
+     * 是否为 MCP 工具调用。
+     *
+     * @return true 表示 MCP 调用
+     */
+    public boolean isMcpCall() {
+        return "MCP".equals(callType);
+    }
+
+    /**
+     * 是否具备可记录日志的调用目标。
+     *
+     * @return true 表示有 targetName
+     */
+    public boolean hasCallTarget() {
+        return StringUtils.hasText(targetName);
     }
 
     public int getStatus() {

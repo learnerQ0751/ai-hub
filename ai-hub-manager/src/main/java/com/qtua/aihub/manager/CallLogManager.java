@@ -125,6 +125,8 @@ public class CallLogManager {
         dataObject.setServedAlias(callLog.servedAlias());
         dataObject.setRetryCount(callLog.retryCount());
         dataObject.setFallbackUsed(callLog.fallbackUsed());
+        dataObject.setCallType(callLog.callType());
+        dataObject.setTargetName(callLog.targetName());
         return dataObject;
     }
 }

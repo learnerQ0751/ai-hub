@@ -74,7 +74,8 @@ public class McpToolAggregator {
             }
             for (RawTool raw : result.rawTools()) {
                 tools.add(McpToolDescriptor.of(result.server().serverId(), result.server().name(),
-                        result.server().tenantId(), raw.name(), raw.description(), raw.inputSchema()));
+                        result.server().tenantId(), raw.name(), raw.description(),
+                        raw.inputSchema(), raw.idempotent()));
             }
         }
         return new ToolAggregationResult(tools, degraded);

@@ -16,7 +16,9 @@ CREATE TABLE IF NOT EXISTS call_logs (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry_count INTEGER NOT NULL DEFAULT 0,
     fallback_used BOOLEAN NOT NULL DEFAULT FALSE,
-    served_alias VARCHAR(128)
+    served_alias VARCHAR(128),
+    call_type VARCHAR(16) DEFAULT 'CHAT',
+    target_name VARCHAR(128)
 );
 
 CREATE INDEX IF NOT EXISTS idx_call_logs_request_id ON call_logs (request_id);

@@ -85,6 +85,10 @@ public class GatewayGovernanceService {
      * @param requestBody 请求体
      */
     public void reserve(GatewayContext context, String requestBody) {
+        if (context.isMcpCall()) {
+            reserveMcp(context);
+            return;
+        }
         JsonNode root = parseQuietly(requestBody);
         if (ObjectUtils.isEmpty(root)) {
             return;
@@ -115,12 +119,33 @@ public class GatewayGovernanceService {
     }
 
     /**
+     * MCP 调用预占：只做 Key 级 RPM，TPM/预算不适用（工具调用不计 Token/费用）。
+     *
+     * @param context 治理上下文
+     */
+    private void reserveMcp(GatewayContext context) {
+        KeyAuthDTO auth = context.getAuth();
+        // 用工具名作为 RPM 的 model 维度，日志 model_alias 也记录工具名。
+        context.setModelAlias(context.getTargetName());
+        GuardRequest request = new GuardRequest(context.getRequestId(), context.getKeyHash(),
+                context.getTargetName(), auth.rpmLimit(), null, null, null, 0, BigDecimal.ZERO);
+        context.setReservation(gatewayGuard.reserve(request));
+    }
+
+    /**
      * 成功路径：按实际用量计价、结算、累计 spend、写日志。
      *
      * @param context 治理上下文
      */
     public void complete(GatewayContext context) {
-        if (ObjectUtils.isEmpty(context) || !context.hasModelAlias()) {
+        if (ObjectUtils.isEmpty(context)) {
+            return;
+        }
+        if (context.isMcpCall()) {
+            completeMcp(context);
+            return;
+        }
+        if (!context.hasModelAlias()) {
             return;
         }
         BigDecimal cost = calculateCost(context.getDeploymentModel(), context.getUsage());
@@ -130,6 +155,19 @@ public class GatewayGovernanceService {
         }
         callLogManager.addSpend(context.getKeyHash(), cost);
         recordLog(context, context.getUsage(), cost, HttpStatus.OK.value(), null);
+    }
+
+    /**
+     * MCP 成功收尾：结算 RPM 预占并写日志（cost=0）。
+     *
+     * @param context 治理上下文
+     */
+    private void completeMcp(GatewayContext context) {
+        GuardReservation reservation = context.getReservation();
+        if (Objects.nonNull(reservation)) {
+            gatewayGuard.settle(reservation, TokenUsage.ZERO, BigDecimal.ZERO);
+        }
+        recordLog(context, TokenUsage.ZERO, BigDecimal.ZERO, HttpStatus.OK.value(), null);
     }
 
     /**
@@ -145,7 +183,7 @@ public class GatewayGovernanceService {
         if (Objects.nonNull(reservation)) {
             gatewayGuard.release(reservation);
         }
-        if (context.hasModelAlias()) {
+        if (context.isMcpCall() || context.hasModelAlias()) {
             recordLog(context, TokenUsage.ZERO, BigDecimal.ZERO,
                     context.getStatus(), context.getErrorType());
         }
@@ -219,7 +257,7 @@ public class GatewayGovernanceService {
                     context.getModelAlias(), context.getDeploymentModel(), usage, cost,
                     latencyMs(context), status, errorType, null, Instant.now(),
                     context.getServedAlias(), context.getRetryCount(),
-                    context.isFallbackUsed()));
+                    context.isFallbackUsed(), context.getCallType(), context.getTargetName()));
         } catch (RuntimeException ex) {
             // 日志失败不影响业务响应。
         }

@@ -13,6 +13,7 @@ package com.qtua.aihub.common.mcp;
  * @param exposedName  对外唯一工具名
  * @param description  描述
  * @param inputSchema  输入 schema（JSON 文本）
+ * @param idempotent   是否幂等（仅幂等工具允许失败重试）
  */
 public record McpToolDescriptor(
         String serverId,
@@ -21,7 +22,8 @@ public record McpToolDescriptor(
         String toolName,
         String exposedName,
         String description,
-        String inputSchema) {
+        String inputSchema,
+        boolean idempotent) {
 
     /**
      * 构建描述（自动拼接对外名）。
@@ -32,11 +34,13 @@ public record McpToolDescriptor(
      * @param toolName    原始工具名
      * @param description 描述
      * @param inputSchema schema JSON
+     * @param idempotent  是否幂等
      * @return 聚合描述
      */
     public static McpToolDescriptor of(String serverId, String serverName, String tenantId,
-                                       String toolName, String description, String inputSchema) {
+                                       String toolName, String description, String inputSchema,
+                                       boolean idempotent) {
         return new McpToolDescriptor(serverId, serverName, tenantId, toolName,
-                serverName + "__" + toolName, description, inputSchema);
+                serverName + "__" + toolName, description, inputSchema, idempotent);
     }
 }
