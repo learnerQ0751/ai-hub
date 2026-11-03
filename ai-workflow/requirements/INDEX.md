@@ -14,12 +14,12 @@
 | REQ-1.6 | 容错（重试/fallback/冷却） | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | REQ-1.5 | extension | `acceptance/REQ-1.6.md` |
 | REQ-1.7 | SSE 流式 | 第 1 期 | `05-项目7-第1期-LLM网关核心.md` | 已完成 | REQ-1.6 | extension | `acceptance/REQ-1.7.md` |
 | REQ-1.8 | 对外错误信息中文化 | 第 1 期修复 | 用户验收反馈（2026-11-03） | 已完成 | REQ-1.1~1.7 | extension | `acceptance/REQ-1.8.md` |
-| REQ-2.1 | MCP Server 注册与发现 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 待实现 | — | — | — |
-| REQ-2.2 | MCP 工具发现与聚合 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 待实现 | REQ-2.1 | — | — |
-| REQ-2.3 | MCP 调用代理 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 待实现 | REQ-2.1 | — | — |
-| REQ-2.4 | Prompt 模板管理 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 待实现 | — | — | — |
-| REQ-2.5 | Prompt 渲染接入网关 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 待实现 | REQ-2.4、REQ-1.1 | — | — |
-| REQ-2.6 | Agent 适配层与 MCP 集群编排 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 待实现 | REQ-2.2、REQ-2.3 | — | — |
+| REQ-2.1 | MCP Server 注册与发现 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | — | additive | `acceptance/REQ-2.1.md` |
+| REQ-2.2 | MCP 工具发现与聚合 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | REQ-2.1 | additive | `acceptance/REQ-2.2.md` |
+| REQ-2.3 | MCP 调用代理 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | REQ-2.1 | extension | `acceptance/REQ-2.3.md` |
+| REQ-2.4 | Prompt 模板管理 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | — | additive | `acceptance/REQ-2.4.md` |
+| REQ-2.5 | Prompt 渲染接入网关 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | REQ-2.4、REQ-1.1 | additive | `acceptance/REQ-2.5.md` |
+| REQ-2.6 | Agent 适配层与 MCP 集群编排 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | REQ-2.2、REQ-2.3 | additive | `acceptance/REQ-2.6.md` |
 | REQ-3.1 | 文档接入 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | — | — | — |
 | REQ-3.2 | Embedding 抽象 + 向量存储 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | REQ-3.1 | — | — |
 | REQ-3.3 | 检索与重排 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | REQ-3.2 | — | — |

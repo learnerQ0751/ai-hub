@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-03 15:29
+**最后更新**：2026-11-03 15:30
 
 ## 需求进度
 
@@ -22,7 +22,7 @@
 | REQ-2.3 | MCP 调用代理 | 已完成 | extension | 已验收（2026-11-03）（7/7） | REQ-2.1、REQ-2.2 | 5ba30bc |
 | REQ-2.4 | Prompt 模板管理 | 已完成 | additive | 已验收（2026-11-03）（7/7） | 无（可与 2.1 并行） | 04570a7 |
 | REQ-2.5 | Prompt 渲染接入网关 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.4、REQ-1.1 | 96a6b29 |
-| REQ-2.6 | Agent 适配层与 MCP Server 暴露 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3、REQ-2.5 | — |
+| REQ-2.6 | Agent 适配层与 MCP Server 暴露 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3、REQ-2.5 | 3dd2905 |
 
 ## 接口清单（来自 Controller）
 
@@ -120,7 +120,7 @@
 
 ## 下一步
 
-- 实现 REQ-2.1 MCP Server 注册与发现（待实现）→ 需求卡：`11-项目7-第2期-MCP与Prompt中心.md`
+- 实现 REQ-3.1 文档接入（待实现）→ 需求卡：`12-项目7-第3期-RAG与记忆服务.md`
 
 <!-- STATUS:GENERATED:END -->
 

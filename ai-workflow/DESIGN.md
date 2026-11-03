@@ -1,15 +1,15 @@
 # 设计基线（ai-hub）
 
-- 更新于：2026-11-02
-- 对应状态：`2c0436a` + REQ-1.4 工作区（待提交）
+- 更新于：2026-11-03
+- 对应状态：第 2 期完成（REQ-2.1 ~ 2.6，最新提交 3dd2905）
 - 维护规则：只有架构、运行时链路、跨需求决策发生变化时才更新；需求细节见 `records/`。
 
 ## 1. 系统全景
 
 ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），行为对标 LiteLLM：
 
-- 第 1 期：LLM 网关核心（统一入口 / 模型路由 / 虚拟 Key / 限流预算 / 日志计量 / 容错 / 流式）
-- 第 2 期：MCP 与 Prompt 中心
+- 第 1 期：LLM 网关核心（统一入口 / 模型路由 / 虚拟 Key / 限流预算 / 日志计量 / 容错 / 流式）✅
+- 第 2 期：MCP 与 Prompt 中心（MCP 注册/发现/调用代理 + Prompt 模板/渲染 + MCP Server 暴露）✅
 - 第 3 期：RAG 与记忆服务
 - 第 4 期：治理收尾（多租户 / Trace / 成本 / 管理端 / 审计）
 
@@ -29,7 +29,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 | `ai-hub-api` | Service 接口 + Req/Res DTO（OpenAI 契约） |
 | `ai-hub-manager` | BO 与 BO↔DO 转换（ChatCompletionBO / ApiKeyBO）；模型目录 YAML 实现（YamlModelCatalog） |
 | `ai-hub-dal` | MyBatis Mapper + DDL（api_keys） |
-| `ai-hub-integration` | 上游 HTTP + OpenAI 协议适配 + 协议改写 |
+| `ai-hub-integration` | 上游 HTTP + OpenAI 协议适配 + 协议改写；MCP 探活/工具客户端/stdio 进程管理；Prompt 模板渲染与消息解析 |
 | `ai-hub-core` | 纯业务编排：部署选择、协议改写、上游调用、usage 解析（不含限流/预算/计价/日志） |
 | `ai-hub-service` | 应用服务：请求解析/校验/业务执行；`service/gateway` 为网关治理公共实现（限流/预算/计价/spend/日志） |
 | `ai-hub-start` | 启动类（根包）+ controller / filter / error / config |
@@ -42,7 +42,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 - 表速查（按业务域、用途、关键关系、状态）见 `docs/DATA-MODEL.md`；`STATUS.md` 自动生成同名区块并与 DDL 校验（只显示当前已建表）。
 - DDL 由 Flyway 管理：`ai-hub-dal/src/main/resources/db/migration/Vn__*.sql`，应用启动自动迁移（Spring Boot 4 需 `spring-boot-starter-flyway`）；测试 H2 仍用 `spring.sql.init`（Flyway 测试禁用）。
 - 本地依赖容器：`postgres:16`（5432，db/user/pass=aihub）+ `redis:7.2`（6379）；Docker Hub 不可达时使用本地已有镜像。
-- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5）；规划：`mcp_servers`、`prompt_templates`、`rag_documents`、`rag_chunks`、`memories`、`audit_logs`。
+- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5，含 call_type/target_name）、`mcp_servers`（REQ-2.1）、`prompt_templates`（REQ-2.4）；规划：`rag_documents`、`rag_chunks`、`memories`、`audit_logs`。
 - ER 图：表数量 ≥5 时补充 `acceptance/assets/data-model.drawio|svg`。
 
 ## 3. 核心运行时链路
@@ -178,6 +178,60 @@ POST /key/unblock  → UPDATE blocked=false → 恢复
 GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-base/api-key）
 ```
 
+### 3.8 MCP Server 注册与工具发现（REQ-2.1 / 2.2）
+
+```text
+管理面（仅 master）：
+POST /v1/mcp/servers → 校验（name 唯一、禁 "__"、transport http|stdio）→ 落库(DOWN)
+→ 探活（HTTP JSON-RPC initialize 3s，兼容 SSE；stdio 子进程逐行协议 3s 强杀）
+→ ACTIVE/DOWN + lastHealthAt + metadata.lastError → 返回（endpoint 掩码）
+GET /v1/mcp/servers、DELETE /v1/mcp/servers/{id}（404）、POST .../reprobe
+启动：McpServerStartupLoader（service 层 ApplicationRunner）加载 ACTIVE 逐个重探
+
+数据面：
+GET /v1/mcp/tools（任意 Key）→ 快照新鲜（TTL 60s）直接返回
+→ 否则并行聚合各 ACTIVE Server 的 tools/list（有界线程池；单 Server 失败→degraded）
+→ 对外名 {serverName}__{toolName}；变更（added/removed）写日志
+POST /v1/mcp/tools/refresh；注册/注销 → 本实例缓存失效
+```
+
+### 3.9 MCP 调用代理（REQ-2.3）
+
+```text
+POST /v1/mcp/tools/{server}__{tool}:call（任意 Key）
+→ GatewayGovernanceFilter：callType=MCP、targetName=工具名 → 仅 RPM 预占
+→ 工具目录路由到 Server → JSON-RPC tools/call（HTTP/stdio）
+→ 结果原样返回；>1MB 截断（truncated/originalSize）；仅 _meta.idempotent=true 重试一次
+→ 错误归一：工具不存在 404 / 超时 504 / 参数 400 / 上游失败 502
+→ Filter complete：RPM 结算 + call_logs(call_type=MCP, target_name, cost=0)
+```
+
+### 3.10 Prompt 模板管理与渲染接入（REQ-2.4 / 2.5）
+
+```text
+管理面（仅 master）：
+POST /v1/prompts（v1 DRAFT）、POST /v1/prompts/{name}/versions（只追加）
+POST /v1/prompts/{name}/publish（@Transactional：FOR UPDATE 锁行 → 旧 PUBLISHED 归档 →
+目标置 PUBLISHED；发布旧版本即回滚）
+校验：name 字符集、content ≤10000、拒绝 sk- 密钥模式、{{var}} 集合 == variables 声明
+
+数据面（任意 Key）：
+POST /v1/prompts/{name}/render → 变量渲染（单次替换，不递归）→ System/User/Assistant 消息
+POST /v1/prompts/{name}/chat → 渲染 → 内部 ChatCompletionService.chat（不经 Filter）
+→ Filter（识别 chat 路径）统一预占/计价/结算；Controller 回填 targetName=name@vN
+```
+
+### 3.11 ai-hub 作为 MCP Server（REQ-2.6）
+
+```text
+POST /mcp（JSON-RPC 2.0，任意 Key）
+→ initialize（协议 2025-06-18 + capabilities.tools）/ ping / notifications（202）
+→ tools/list：chat_completion / list_models / prompts_get
+→ tools/call：内部复用 ChatCompletionService / ModelService / PromptChatService
+→ GatewayGovernanceFilter：callType=MCP、target=tools/call 工具名；RPM + cost=0 日志
+LangChain4j DefaultMcpClient + StreamableHttpMcpTransport 实测发现/调用通过
+```
+
 ## 4. 跨需求设计决策
 
 | 决策 | 理由 | 引入需求 | 日期 |
@@ -213,6 +267,15 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 流式治理延迟收尾：Filter 只预占，Controller 流结束回调结算 | 同步 Filter 无法感知异步流结束；复用统一治理服务 | REQ-1.7 | 2026-11-02 |
 | 流式请求强制注入 `stream_options.include_usage=true` | 保证末块 usage，计量/预算可结算 | REQ-1.7 | 2026-11-02 |
 | 未来物理拆分时用 HTTP 契约（OpenAI 请求/响应或内部 `ChatCommand`），当前 Service 直接调 Core | `ChatExecutor` 是假出口：绑定内部 BO、含模型部署密钥，不能作为跨服务契约；YAGNI 删除 | 架构重构 | 2026-11-02 |
+| MCP Server 注册即探活（同步 3s），失败允许注册为 DOWN | 需求卡要求；比 LiteLLM 懒探活直观；错误可 reprobe | REQ-2.1 | 2026-11-03 |
+| MCP server name 禁含 `__`；endpoint 输出掩码 | 工具名分隔符防歧义（T1 校准）；防密钥泄露 | REQ-2.1 | 2026-11-03 |
+| 工具目录本地快照 TTL 60s + 注册/注销失效 | 只读配置数据，多实例短时不一致可接受 | REQ-2.2 | 2026-11-03 |
+| MCP 调用仅幂等工具允许重试一次 | 非幂等工具重试可能重复副作用 | REQ-2.3 | 2026-11-03 |
+| 横切治理按 callType（CHAT/MCP/PROMPT）分支复用同一 Filter | 新接口零复制治理；MCP 只做 RPM，PROMPT 复用完整 chat 计量 | REQ-2.3/2.5 | 2026-11-03 |
+| Prompt 版本只追加 + 发布事务（FOR UPDATE）+ 发布旧版即回滚 | 审计可信；同一 name 仅一个 PUBLISHED | REQ-2.4 | 2026-11-03 |
+| 渲染单次纯文本替换（不递归） | 防注入；YAGNI 不引模板引擎 | REQ-2.4 | 2026-11-03 |
+| Prompt chat 内部直接调 Service（不经 HTTP/Filter） | 避免双路径重复治理/计量 | REQ-2.5 | 2026-11-03 |
+| ai-hub MCP Server 用原生 JSON-RPC（JSON 单响应） | 3 个工具、避免新 Web 栈；LangChain4j 实测兼容 | REQ-2.6 | 2026-11-03 |
 
 ## 5. 演进记录
 
@@ -227,6 +290,12 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 2026-11-02 | 重构 | 网关治理解耦：GatewayGovernanceFilter + GatewayGovernanceService 统一入口；业务 Service 直接调 Core，不感知治理 |
 | 2026-11-02 | REQ-1.6 | 容错：同别名重试/主备 + 别名级 fallback + Redis 冷却；日志新增容错轨迹 |
 | 2026-11-02 | REQ-1.7 | 流式 SSE：WebClient 透传 + SseEmitter + 末块 usage 结算 + 治理延迟收尾 |
+| 2026-11-03 | REQ-2.1 | MCP Server 注册/列表/注销/重探（HTTP+stdio 探活，V5 mcp_servers） |
+| 2026-11-03 | REQ-2.2 | MCP 工具发现聚合（并行 + 降级 + TTL 60s 快照 + 变更日志） |
+| 2026-11-03 | REQ-2.3 | MCP 调用代理（JSON-RPC 转发 + 治理接入 + 截断 + 幂等重试） |
+| 2026-11-03 | REQ-2.4 | Prompt 模板管理（版本只追加 + 发布/回滚事务 + 变量/安全校验） |
+| 2026-11-03 | REQ-2.5 | Prompt 渲染与对话接入（render 分离 + 内部 chat + name@vN 日志） |
+| 2026-11-03 | REQ-2.6 | ai-hub 作为 MCP Server 暴露（3 工具 + LangChain4j 客户端验证） |
 
 ## 6. 与 LiteLLM 的差异
 
@@ -239,3 +308,6 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 | 错误体 | OpenAI error 结构 | 同；错误码字段与类型对齐基线 |
 | 计费 | spend 累计 | 已实现（REQ-1.5）；显式价格表按上游真实模型配置，缺失告警且 cost=0（避免 LiteLLM B-04 的 spend=0 静默问题） |
 | 限流/预算 | Key 级 rpm/tpm、max_budget、budget_duration | 已实现（REQ-1.4）；滑动窗口 + 预占-结算；超限 429/400；Redis 故障默认 fail-open |
+| MCP 注册 | Server 注册/列表/删除、工具发现/调用 | 已实现（REQ-2.1~2.3）；注册即探活、单 Server 降级不阻塞（LiteLLM 反例）、工具名 `__`、错误码规范化 |
+| Prompt 管理 | 模板/版本/渲染 | 已实现（REQ-2.4/2.5）；比 LiteLLM 严格：版本只追加、发布/回滚事务、变量严格校验、render/chat 分离 |
+| MCP Server 暴露 | 自身作为 MCP Server | 已实现（REQ-2.6）；原生 JSON-RPC + 3 工具；LiteLLM 是聚合网关，本方案是能力出口 |
