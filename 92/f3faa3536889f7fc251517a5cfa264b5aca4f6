@@ -1,0 +1,14 @@
+ai-workflow/records/REQ-2.1.md
+  h_b8fad2c42ba7f8 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "92f3faa3536889f7fc251517a5cfa264b5aca4f6",
+  "prompts": {},
+  "humans": {
+    "h_b8fad2c42ba7f8": {
+      "author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
