@@ -1,0 +1,68 @@
+ai-hub-service/src/main/java/com/qtua/aihub/service/McpCallServiceImpl.java
+  s_b128240c3068a4::t_5b0a5b8eec552c 1-171
+  s_b128240c3068a4::t_cc7a4f988bb80f 172-173
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/mcp/McpToolClient.java
+  s_b128240c3068a4::t_d0660259f04baa 29,31,34,36-37,46-47,73,77-97,114-161,177-178,183,187,189-190,193,200-221,230-236,267,269,279-322,334-343
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/mcp/McpToolTimeoutException.java
+  s_b128240c3068a4::t_2496f8c2dab344 1-17
+ai-workflow/records/REQ-2.3.md
+  s_b128240c3068a4::t_247c6e3d12659e 1-81
+  s_b128240c3068a4::t_b38601eef486a3 82-97
+ai-hub-tests/src/test/java/com/qtua/aihub/McpProxyIntegrationTest.java
+  s_b128240c3068a4::t_6290a6e6e73f4e 1-270
+ai-workflow/acceptance/REQ-2.3.md
+  s_b128240c3068a4::t_3f8947510bf32a 1-79
+  s_b128240c3068a4::t_8a9d15d9779721 80-84
+ai-hub-api/src/main/java/com/qtua/aihub/api/McpCallService.java
+  s_b128240c3068a4::t_783a8616cc43b3 1-19
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/McpCallController.java
+  s_b128240c3068a4::t_b8c728e6b535d8 1-45
+ai-hub-api/src/main/java/com/qtua/aihub/api/McpToolService.java
+  s_b128240c3068a4::t_2d7edb6e9e60e8 4-6,24-31
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  s_b128240c3068a4::t_a0b6f02fd5df50 219-230
+ai-hub-common/src/main/java/com/qtua/aihub/common/mcp/McpToolDescriptor.java
+  s_b128240c3068a4::t_73b18e43580883 16,25-26,37,41-42,44
+ai-hub-common/src/main/java/com/qtua/aihub/common/mcp/RawTool.java
+  s_b128240c3068a4::t_df0a79100c854c 9,11
+ai-hub-core/src/main/java/com/qtua/aihub/core/mcp/McpToolAggregator.java
+  s_b128240c3068a4::t_69c137a18b9b53 77-78
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/CallLogDO.java
+  s_b128240c3068a4::t_079fbcecada5ed 41-44,181-196
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/CallLogMapper.xml
+  s_b128240c3068a4::t_914dda73066c3e 24-25,34,44-45,52,69
+ai-hub-dal/src/main/resources/db/call-logs-schema.sql
+  s_b128240c3068a4::t_6f1776a8bd3076 19-21
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/CallLogManager.java
+  s_b128240c3068a4::t_a1576ae0830ccf 128-129
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/CallLogBO.java
+  s_b128240c3068a4::t_37af7ecd04fe46 30-31,47-60,81,91
+ai-hub-service/src/main/java/com/qtua/aihub/service/McpToolServiceImpl.java
+  s_b128240c3068a4::t_07cf8741f13831 22,74-87
+ai-hub-service/src/main/java/com/qtua/aihub/service/gateway/GatewayGovernanceService.java
+  s_b128240c3068a4::t_de070f302ddf0d 88-91,121-134,141-148,160-172,186,260
+ai-hub-service/src/main/java/com/qtua/aihub/service/gateway/model/GatewayContext.java
+  s_b128240c3068a4::t_129a6426788e25 41-44,171-207
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/GatewayGovernanceFilter.java
+  s_b128240c3068a4::t_d794d706397509 44-45,47,65,72-79,82-94,117-120
+ai-workflow/STATUS.md
+  s_b128240c3068a4::t_f22da585309e29 6,21-22,39-40,51,74,89,98
+config/spotbugs-exclude.xml
+  s_b128240c3068a4::t_5253a4e0009d63 161-168
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5ba30bc0be8d7b9fa6c089fa8d42170a49b3d4b3",
+  "prompts": {},
+  "sessions": {
+    "s_b128240c3068a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11c146f3-c8d4-4ba1-82d5-fd5af022561a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
