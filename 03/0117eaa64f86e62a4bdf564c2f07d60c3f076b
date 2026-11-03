@@ -1,0 +1,28 @@
+ai-hub-start/src/test/java/com/qtua/aihub/start/controller/KeyControllerTest.java
+  s_6f27c834d45972::t_028ddf36c74d39 34
+  s_6f27c834d45972::t_f1eab41ba3286e 11,67
+  s_6f27c834d45972::t_7b6b683402a23f 68-87
+ai-hub-start/src/main/java/com/qtua/aihub/start/error/GatewayExceptionHandler.java
+  s_6f27c834d45972::t_913cfba8151d24 13-14,17,63-65
+  s_6f27c834d45972::t_64c35834fb8959 62,66-117,133
+ai-workflow/records/REQ-1.8.md
+  s_6f27c834d45972::t_a968ae0af49ff1 73-74,76
+ai-workflow/acceptance/REQ-1.8.md
+  s_6f27c834d45972::t_86d64505bfd910 101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "030117eaa64f86e62a4bdf564c2f07d60c3f076b",
+  "prompts": {},
+  "sessions": {
+    "s_6f27c834d45972": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "88fb38b7-5c04-4180-9a86-a4f45f407a6f",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
