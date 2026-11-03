@@ -1,0 +1,31 @@
+ai-workflow/DESIGN.md
+  s_b128240c3068a4::t_fb254f25168a75 3-4,11-12,32,45,181-234,270-278,293-298,311-313
+ai-workflow/STATUS.md
+  s_c79baf63be364e::t_01ff4c53724473 6,25,123
+ai-workflow/requirements/INDEX.md
+  s_b128240c3068a4::t_652ebe4998b405 17-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3272d7285d2ed0fd9bc0ea979193d28ce114eb0d",
+  "prompts": {},
+  "sessions": {
+    "s_b128240c3068a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11c146f3-c8d4-4ba1-82d5-fd5af022561a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
