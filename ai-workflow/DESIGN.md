@@ -182,7 +182,7 @@ GET /models、GET /v1/models → 只返回别名（不泄露上游模型名/api-
 
 ```mermaid
 flowchart TD
-    subgraph 管理面（仅 master）
+    subgraph "管理面（仅 master）"
         A["POST /v1/mcp/servers"] --> B["校验 name（唯一、禁 __）/ transport / endpoint|command"]
         B -->|"非法"| B1["400 / 409"]
         B -->|"通过"| C["落库 status=DOWN"]
@@ -193,7 +193,7 @@ flowchart TD
         F --> G
         H["启动加载"] -.-> I["ACTIVE 逐个 reprobe"]
     end
-    subgraph 数据面（任意 Key）
+    subgraph "数据面（任意 Key）"
         J["GET /v1/mcp/tools"] --> K{"快照 TTL 60s 内？"}
         K -->|"是"| N["过滤返回"]
         K -->|"否"| L["并行 tools/list（有界线程池）"]
@@ -230,14 +230,14 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    subgraph 管理面（仅 master）
+    subgraph "管理面（仅 master）"
         A["POST /v1/prompts"] --> B["校验 name/content/{{var}} 与 variables 一致"]
         B --> C["创建 v1（DRAFT）"]
         C --> D["追加版本 v(N+1)（DRAFT）"]
         D --> E["发布 {version}"]
         E --> F["事务：FOR UPDATE 锁行 → 旧 PUBLISHED 归档 → 目标 PUBLISHED"]
     end
-    subgraph 数据面（任意 Key）
+    subgraph "数据面（任意 Key）"
         G["render"] --> H["变量渲染（单次替换）→ System/User/Assistant 消息（不调模型）"]
         I["chat"] --> J["渲染 → 内部 ChatCompletionService（不经 Filter）"]
         J --> K["Controller 回填 name@vN → Filter 计价/结算/日志"]
