@@ -1,0 +1,31 @@
+ai-hub-tests/src/test/java/com/qtua/aihub/ChatWithMcpIntegrationTest.java
+  s_b128240c3068a4::t_435d3bbe300d43 202-203
+  s_b128240c3068a4::t_f44b87eea30fdf 199-201
+  s_b128240c3068a4::t_7a135362dfd146 204
+ai-hub-api/src/main/java/com/qtua/aihub/api/ChatMcpService.java
+  s_b128240c3068a4::t_23e04ab5a11eb2 15,21-29
+ai-hub-service/src/main/java/com/qtua/aihub/service/ChatMcpServiceImpl.java
+  s_b128240c3068a4::t_a3f93a2cf21c15 97-117
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/ChatCompletionController.java
+  s_b128240c3068a4::t_72b16b00963012 91,93-94
+ai-workflow/acceptance/REQ-2.8.md
+  s_b128240c3068a4::t_a5fba110ab3b9f 12,51,57,73
+ai-workflow/records/REQ-2.8.md
+  s_b128240c3068a4::t_e5d5bc6cbdea78 80,87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a484c68f0b7a25a0118f3432d44c6fb6d154c34c",
+  "prompts": {},
+  "sessions": {
+    "s_b128240c3068a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11c146f3-c8d4-4ba1-82d5-fd5af022561a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
