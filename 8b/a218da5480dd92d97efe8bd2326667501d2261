@@ -1,0 +1,55 @@
+ai-hub-api/src/main/java/com/qtua/aihub/api/ChatMcpService.java
+  s_b128240c3068a4::t_e55922201a2e24 1-21
+ai-workflow/records/REQ-2.8.md
+  s_b128240c3068a4::t_88bf12f45448a8 1-102
+ai-hub-service/src/main/java/com/qtua/aihub/service/ChatMcpServiceImpl.java
+  s_b128240c3068a4::t_8b031880357480 1-240
+ai-workflow/acceptance/REQ-2.7.md
+  s_b128240c3068a4::t_ab616647bd8305 1-71
+ai-hub-tests/src/test/java/com/qtua/aihub/ChatWithMcpIntegrationTest.java
+  s_b128240c3068a4::t_030c9850914f0f 158-169
+  s_b128240c3068a4::t_f171a49eee3562 1-41,44-105,108-143,170-216
+  s_b128240c3068a4::t_bd6c2344a02e14 42-43
+  s_b128240c3068a4::t_e2c39d3f612c9b 106-107
+  s_b128240c3068a4::t_5320f285e482b0 144-146,155-157
+ai-workflow/records/REQ-2.7.md
+  s_b128240c3068a4::t_62c8f347742ea9 1-97
+ai-workflow/acceptance/REQ-2.8.md
+  s_b128240c3068a4::t_0e5fb4bf3fb556 1-72
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/ChatCompletionController.java
+  s_b128240c3068a4::t_e42c00cede6336 7,47,55,60,64,90-107,129-145
+ai-hub-start/src/main/java/com/qtua/aihub/start/mcp/McpServerEndpoint.java
+  s_b128240c3068a4::t_fff82099f16eaf 8-9,15,21-22,48,54-55,64-65,70-72,77-78,154-164,174-183,190-198,250
+ai-hub-start/src/test/java/com/qtua/aihub/start/controller/ChatCompletionControllerTest.java
+  s_b128240c3068a4::t_ee0dd0cf843099 10,64-66
+ai-hub-tests/src/test/java/com/qtua/aihub/McpServerEndpointTest.java
+  s_b128240c3068a4::t_f3f2cbf1efe85a 50,80,157-182,194-234
+ai-workflow/STATUS.md
+  s_c79baf63be364e::t_422d3885044ecb 6,26-27,33,39,103,105,116,124
+config/spotbugs-exclude.xml
+  s_b128240c3068a4::t_bfb2ec5e104c5c 197-200
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8ba218da5480dd92d97efe8bd2326667501d2261",
+  "prompts": {},
+  "sessions": {
+    "s_b128240c3068a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11c146f3-c8d4-4ba1-82d5-fd5af022561a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
