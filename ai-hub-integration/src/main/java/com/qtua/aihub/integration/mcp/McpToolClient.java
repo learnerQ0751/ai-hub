@@ -5,16 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.common.mcp.McpProbeTarget;
 import com.qtua.aihub.common.mcp.RawTool;
 import com.qtua.aihub.common.mcp.TransportType;
-import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.netty.http.client.HttpClient;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -28,6 +25,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -42,7 +40,6 @@ public class McpToolClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(McpToolClient.class);
     private static final Duration TIMEOUT = Duration.ofSeconds(3);
-    private static final int CONNECT_TIMEOUT_MS = 3000;
     /** 工具结果可能很大（>1MB 需截断），提高 WebClient 缓冲上限。 */
     private static final int MAX_IN_MEMORY_BYTES = 8 * 1024 * 1024;
     private static final String INITIALIZE_REQUEST = "{\"jsonrpc\":\"2.0\",\"id\":1,"
@@ -55,23 +52,24 @@ public class McpToolClient {
 
     private final ObjectMapper objectMapper;
     private final StdioProcessRegistry stdioProcessRegistry;
+    private final McpIoExecutor ioExecutor;
     private final WebClient httpClient;
+    private final AtomicInteger inFlight = new AtomicInteger();
 
     /**
      * 构造工具客户端。
      *
-     * @param objectMapper          JSON 解析器
-     * @param stdioProcessRegistry  stdio 子进程注册表
+     * @param objectMapper         JSON 解析器
+     * @param stdioProcessRegistry stdio 子进程注册表
+     * @param ioExecutor           stdio 读取专用线程池
+     * @param httpClientFactory    MCP HTTP 客户端工厂（显式连接池）
      */
-    public McpToolClient(ObjectMapper objectMapper, StdioProcessRegistry stdioProcessRegistry) {
+    public McpToolClient(ObjectMapper objectMapper, StdioProcessRegistry stdioProcessRegistry,
+                         McpIoExecutor ioExecutor, McpHttpClientFactory httpClientFactory) {
         this.objectMapper = objectMapper;
         this.stdioProcessRegistry = stdioProcessRegistry;
-        this.httpClient = WebClient.builder()
-                .clientConnector(new ReactorClientHttpConnector(HttpClient.create()
-                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MS)
-                        .responseTimeout(TIMEOUT)))
-                .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(MAX_IN_MEMORY_BYTES))
-                .build();
+        this.ioExecutor = ioExecutor;
+        this.httpClient = httpClientFactory.create(TIMEOUT, MAX_IN_MEMORY_BYTES);
     }
 
     /**
@@ -83,16 +81,30 @@ public class McpToolClient {
      * @return 上游 result 的 JSON 文本
      */
     public String callTool(McpProbeTarget server, String toolName, String argumentsJson) {
-        String request = "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\","
-                + "\"params\":{\"name\":" + quote(toolName) + ",\"arguments\":"
-                + argumentsJson + "}}";
-        if (server.transport() == TransportType.HTTP) {
-            return callToolHttp(server, request);
+        inFlight.incrementAndGet();
+        try {
+            String request = "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\","
+                    + "\"params\":{\"name\":" + quote(toolName) + ",\"arguments\":"
+                    + argumentsJson + "}}";
+            if (server.transport() == TransportType.HTTP) {
+                return callToolHttp(server, request);
+            }
+            if (server.transport() == TransportType.STDIO) {
+                return callToolStdio(server, request);
+            }
+            throw new IllegalStateException("传输方式 " + server.transport() + " 暂不支持工具调用");
+        } finally {
+            inFlight.decrementAndGet();
         }
-        if (server.transport() == TransportType.STDIO) {
-            return callToolStdio(server, request);
-        }
-        throw new IllegalStateException("传输方式 " + server.transport() + " 暂不支持工具调用");
+    }
+
+    /**
+     * 进行中的工具调用数（运行时统计）。
+     *
+     * @return 数量
+     */
+    public int inFlightCount() {
+        return inFlight.get();
     }
 
     /**
@@ -102,13 +114,18 @@ public class McpToolClient {
      * @return 原始工具列表
      */
     public List<RawTool> listTools(McpProbeTarget server) {
-        if (server.transport() == TransportType.HTTP) {
-            return listToolsHttp(server);
+        inFlight.incrementAndGet();
+        try {
+            if (server.transport() == TransportType.HTTP) {
+                return listToolsHttp(server);
+            }
+            if (server.transport() == TransportType.STDIO) {
+                return listToolsStdio(server);
+            }
+            throw new IllegalStateException("传输方式 " + server.transport() + " 暂不支持工具发现");
+        } finally {
+            inFlight.decrementAndGet();
         }
-        if (server.transport() == TransportType.STDIO) {
-            return listToolsStdio(server);
-        }
-        throw new IllegalStateException("传输方式 " + server.transport() + " 暂不支持工具发现");
     }
 
     private String callToolHttp(McpProbeTarget server, String request) {
@@ -204,8 +221,7 @@ public class McpToolClient {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(server.command());
         commandLine.addAll(server.args());
-        Process process = new ProcessBuilder(commandLine).start();
-        stdioProcessRegistry.register(process);
+        Process process = stdioProcessRegistry.start(new ProcessBuilder(commandLine));
         return new Process[]{process};
     }
 
@@ -220,13 +236,7 @@ public class McpToolClient {
     }
 
     private String readLine(BufferedReader reader) throws Exception {
-        CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> {
-            try {
-                return reader.readLine();
-            } catch (Exception ex) {
-                throw new IllegalStateException(ex.getMessage(), ex);
-            }
-        });
+        CompletableFuture<String> future = ioExecutor.supply(reader::readLine);
         try {
             return future.get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException ex) {

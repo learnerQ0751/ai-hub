@@ -176,6 +176,14 @@ class McpRegistryIntegrationTest {
         assertThat(list.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
+    @Test
+    void runtime_stats_endpoint_returns_counters() {
+        ResponseEntity<String> response = get("/v1/mcp/runtime/stats");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("activeStdioProcesses",
+                "inFlightProbeHttp", "inFlightToolCalls");
+    }
+
     private ResponseEntity<String> register(Map<String, Object> body) {
         return restClient.post()
                 .uri("/v1/mcp/servers")

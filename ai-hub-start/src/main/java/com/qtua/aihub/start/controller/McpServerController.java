@@ -2,7 +2,9 @@ package com.qtua.aihub.start.controller;
 
 import com.qtua.aihub.api.McpServerService;
 import com.qtua.aihub.api.model.req.McpServerRegisterReqDTO;
+import com.qtua.aihub.api.model.res.McpRuntimeStatsResDTO;
 import com.qtua.aihub.api.model.res.McpServerResDTO;
+import com.qtua.aihub.service.McpRuntimeStatsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,14 +26,18 @@ import java.util.List;
 public class McpServerController {
 
     private final McpServerService mcpServerService;
+    private final McpRuntimeStatsService mcpRuntimeStatsService;
 
     /**
      * 构造控制器。
      *
-     * @param mcpServerService MCP Server 服务
+     * @param mcpServerService       MCP Server 服务
+     * @param mcpRuntimeStatsService 运行时统计服务
      */
-    public McpServerController(McpServerService mcpServerService) {
+    public McpServerController(McpServerService mcpServerService,
+                               McpRuntimeStatsService mcpRuntimeStatsService) {
         this.mcpServerService = mcpServerService;
+        this.mcpRuntimeStatsService = mcpRuntimeStatsService;
     }
 
     /**
@@ -67,6 +73,16 @@ public class McpServerController {
     public ResponseEntity<Void> remove(@PathVariable("serverId") String serverId) {
         mcpServerService.remove(serverId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * MCP 客户端运行时统计（管理面）。
+     *
+     * @return 活跃子进程/进行中请求计数
+     */
+    @GetMapping(path = "/v1/mcp/runtime/stats", produces = MediaType.APPLICATION_JSON_VALUE)
+    public McpRuntimeStatsResDTO runtimeStats() {
+        return mcpRuntimeStatsService.stats();
     }
 
     /**

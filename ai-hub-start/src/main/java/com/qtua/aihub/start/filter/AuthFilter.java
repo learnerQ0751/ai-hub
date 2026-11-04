@@ -45,7 +45,7 @@ public class AuthFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     /** 管理面路径前缀：仅 master key 可访问（Key / MCP Server / Prompt 管理）。 */
     private static final String[] MASTER_ONLY_PREFIXES = {
-            "/key/", "/v1/mcp/servers", "/v1/prompts"};
+            "/key/", "/v1/mcp/servers", "/v1/mcp/runtime", "/v1/prompts"};
     /** Prompt 数据面子路径后缀：render/chat 允许任意 Key（REQ-2.5）。 */
     private static final String[] PROMPT_DATA_SUFFIXES = {"/render", "/chat"};
 

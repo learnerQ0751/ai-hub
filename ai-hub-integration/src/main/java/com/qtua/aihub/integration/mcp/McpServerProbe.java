@@ -4,16 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.common.mcp.McpProbeTarget;
 import com.qtua.aihub.common.mcp.TransportType;
-import io.netty.channel.ChannelOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.netty.http.client.HttpClient;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -21,28 +18,31 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * MCP Server 探活器。
+ * MCP Server 探活器（REQ-2.1 / 2.10）。
  *
  * <p>两种传输：
  * <ul>
- *   <li>HTTP：向 endpoint 发送 JSON-RPC {@code initialize}，接受 application/json 或
- *       text/event-stream（SSE 时取 {@code data:} 行），3 秒超时。</li>
- *   <li>stdio：启动本地子进程、写入一行 {@code initialize}、读取一行响应，超时强杀。</li>
- * </ul>
- * 探活只判断「能否完成 initialize」，不缓存连接、不持有常驻进程。</p>
+ *   <li>HTTP：JSON-RPC {@code initialize}，3 秒超时；探活使用 {@code Connection: close}
+ *       短连接，不占用工具调用连接池；连接池由 {@link McpHttpClientFactory} 统一管理。</li>
+ *   <li>stdio：启动本地子进程（经 {@link StdioProcessRegistry} 登记与孤儿保护）、
+ *       写入单行 {@code initialize}、读取一行响应；读取使用 {@link McpIoExecutor}
+ *       专用池，超时强杀。</li>
+ * </ul></p>
  */
 @Component
 public class McpServerProbe {
 
     private static final Logger LOG = LoggerFactory.getLogger(McpServerProbe.class);
     private static final Duration TIMEOUT = Duration.ofSeconds(3);
-    private static final int CONNECT_TIMEOUT_MS = 3000;
+    private static final int PROBE_MAX_IN_MEMORY_BYTES = 1024 * 1024;
     /**
      * initialize 请求必须是单行 JSON：stdio 传输按行分隔消息，多行文本会破坏协议帧。
      */
@@ -52,22 +52,24 @@ public class McpServerProbe {
 
     private final ObjectMapper objectMapper;
     private final StdioProcessRegistry stdioProcessRegistry;
+    private final McpIoExecutor ioExecutor;
     private final WebClient httpClient;
+    private final AtomicInteger inFlightHttp = new AtomicInteger();
 
     /**
      * 构造探活器。
      *
-     * @param objectMapper          JSON 解析器
-     * @param stdioProcessRegistry  stdio 子进程注册表
+     * @param objectMapper         JSON 解析器
+     * @param stdioProcessRegistry stdio 子进程注册表
+     * @param ioExecutor           stdio 读取专用线程池
+     * @param httpClientFactory    MCP HTTP 客户端工厂
      */
-    public McpServerProbe(ObjectMapper objectMapper, StdioProcessRegistry stdioProcessRegistry) {
+    public McpServerProbe(ObjectMapper objectMapper, StdioProcessRegistry stdioProcessRegistry,
+                          McpIoExecutor ioExecutor, McpHttpClientFactory httpClientFactory) {
         this.objectMapper = objectMapper;
         this.stdioProcessRegistry = stdioProcessRegistry;
-        this.httpClient = WebClient.builder()
-                .clientConnector(new ReactorClientHttpConnector(HttpClient.create()
-                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, CONNECT_TIMEOUT_MS)
-                        .responseTimeout(TIMEOUT)))
-                .build();
+        this.ioExecutor = ioExecutor;
+        this.httpClient = httpClientFactory.create(TIMEOUT, PROBE_MAX_IN_MEMORY_BYTES);
     }
 
     /**
@@ -86,15 +88,27 @@ public class McpServerProbe {
         return ProbeResult.fail("传输方式 " + server.transport() + " 暂不支持探活");
     }
 
+    /**
+     * 进行中的 HTTP 探活数（运行时统计）。
+     *
+     * @return 数量
+     */
+    public int inFlightHttpCount() {
+        return inFlightHttp.get();
+    }
+
     private ProbeResult probeHttp(McpProbeTarget server) {
         if (!StringUtils.hasText(server.endpoint())) {
             return ProbeResult.fail("HTTP 传输缺少 endpoint");
         }
+        inFlightHttp.incrementAndGet();
         try {
             String body = httpClient.post()
                     .uri(server.endpoint())
                     .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                     .header(HttpHeaders.ACCEPT, "application/json, text/event-stream")
+                    // 探活短连接：不占用/复用业务连接池。
+                    .header(HttpHeaders.CONNECTION, "close")
                     .bodyValue(INITIALIZE_REQUEST)
                     .exchangeToMono(response -> response.bodyToMono(String.class)
                             .defaultIfEmpty(""))
@@ -104,6 +118,8 @@ public class McpServerProbe {
             LOG.warn("mcp http probe failed: server={}, error={}",
                     server.name(), ex.getMessage());
             return ProbeResult.fail("探活失败：" + rootMessage(ex));
+        } finally {
+            inFlightHttp.decrementAndGet();
         }
     }
 
@@ -114,13 +130,12 @@ public class McpServerProbe {
         Process process = null;
         BufferedWriter writer = null;
         try {
-            List<String> commandLine = new java.util.ArrayList<>();
+            List<String> commandLine = new ArrayList<>();
             commandLine.add(server.command());
             commandLine.addAll(server.args());
             ProcessBuilder builder = new ProcessBuilder(commandLine);
             builder.redirectErrorStream(false);
-            process = builder.start();
-            stdioProcessRegistry.register(process);
+            process = stdioProcessRegistry.start(builder);
 
             writer = new BufferedWriter(
                     new OutputStreamWriter(process.getOutputStream(), StandardCharsets.UTF_8));
@@ -129,12 +144,10 @@ public class McpServerProbe {
             writer.flush();
 
             Process finalProcess = process;
-            CompletableFuture<String> reader = CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<String> reader = ioExecutor.supply(() -> {
                 try (BufferedReader bufferedReader = new BufferedReader(
                         new InputStreamReader(finalProcess.getInputStream(), StandardCharsets.UTF_8))) {
                     return bufferedReader.readLine();
-                } catch (Exception ex) {
-                    throw new IllegalStateException(ex.getMessage(), ex);
                 }
             });
             String response = reader.get(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);

@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-04 08:58
+**最后更新**：2026-11-04 14:23
 
 ## 需求进度
 
@@ -18,13 +18,14 @@
 | REQ-1.7 | 流式（SSE）透传 | 已完成 | extension | 已验收（2026-11-02，理解默认通过）（7/7） | REQ-1.1、REQ-1.6 | — |
 | REQ-1.8 | 对外错误信息中文化 | 已完成 | extension | 已验收（2026-11-03）（8/8） | REQ-1.1 ~ 1.7（覆盖全部错误响应） | — |
 | REQ-2.1 | MCP Server 注册与发现 | 已完成 | additive | 已验收（2026-11-03）（8/8） | 无（第 2 期首卡） | 02caa77 |
+| REQ-2.10 | MCP 客户端资源治理（探活与连接泄漏防护） | 已完成 | additive | 已验收（2026-11-04）（6/6） | REQ-2.1、2.2、2.3 | — |
 | REQ-2.2 | MCP 工具发现与聚合 | 已完成 | additive | 已验收（2026-11-03）（7/7） | REQ-2.1 | 384f2b5 |
 | REQ-2.3 | MCP 调用代理 | 已完成 | extension | 已验收（2026-11-03）（7/7） | REQ-2.1、REQ-2.2 | 5ba30bc |
 | REQ-2.4 | Prompt 模板管理 | 已完成 | additive | 已验收（2026-11-03）（7/7） | 无（可与 2.1 并行） | 04570a7 |
 | REQ-2.5 | Prompt 渲染接入网关 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.4、REQ-1.1 | 96a6b29 |
 | REQ-2.6 | Agent 适配层与 MCP Server 暴露 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3、REQ-2.5 | 3dd2905 |
-| REQ-2.7 | 网关统一 MCP 入口（MCP Client 连接池对外形态） | 已完成 | additive | 已验收（2026-11-04）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3 | — |
-| REQ-2.8 | chat 入口支持 MCP 工具自动调用 | 已完成 | additive | 已验收（2026-11-04）（4/4） | REQ-2.7、REQ-1.1 | — |
+| REQ-2.7 | 网关统一 MCP 入口（MCP Client 连接池对外形态） | 已完成 | additive | 已验收（2026-11-04）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3 | 8ba218d |
+| REQ-2.8 | chat 入口支持 MCP 工具自动调用 | 已完成 | additive | 已验收（2026-11-04）（5/5） | REQ-2.7、REQ-1.1 | 8ba218d + a484c68（流式形态 A） |
 
 ## 接口清单（来自 Controller）
 
@@ -37,6 +38,7 @@
 | POST | /key/unblock | KeyController#unblock | REQ-1.3 |
 | GET | /models | ModelController#listModels | REQ-1.2 |
 | POST | /v1/chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3, REQ-2.8 |
+| GET | /v1/mcp/runtime/stats | McpServerController#runtimeStats | REQ-2.10 |
 | GET | /v1/mcp/servers | McpServerController#list | REQ-2.1 |
 | POST | /v1/mcp/servers | McpServerController#register | REQ-2.1 |
 | DELETE | /v1/mcp/servers/{serverId} | McpServerController#remove | REQ-2.1 |
@@ -88,6 +90,7 @@
 | DELETE /v1/mcp/servers/{serverId} | REQ-2.1 |
 | GET /key/info | REQ-1.3, REQ-1.5 |
 | GET /models | REQ-1.2 |
+| GET /v1/mcp/runtime/stats | REQ-2.10 |
 | GET /v1/mcp/servers | REQ-2.1 |
 | GET /v1/mcp/tools | REQ-2.2 |
 | GET /v1/models | REQ-1.2 |
@@ -121,7 +124,7 @@
 
 ## 测试
 
-- 230 个 @Test / 44 个测试类
+- 234 个 @Test / 45 个测试类
 
 ## 下一步
 
