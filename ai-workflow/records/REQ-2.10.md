@@ -66,6 +66,7 @@ regression: ["REQ-2.1 探活（HTTP/stdio）", "REQ-2.2/2.3 工具发现与调�
 | stdio 读取用专用有界池 | commonPool 被阻塞 readLine 占用会拖垮全局并行流 | 2026-11-04 |
 | PID 记录 + parentPid 校验清理 | JVM 崩溃（kill -9）时 shutdown hook 不执行；只杀父进程已死的孤儿，避免误杀滚动重启/多实例 | 2026-11-04 |
 | 统计用自维护计数器（不引 Micrometer） | 轻量观察性；第 4 期统一接 Actuator | 2026-11-04 |
+| 观测指标用**本实例**计数器，不写 Redis | 本地物理资源指标（本机子进程/连接/线程）无法跨实例统计；写 Redis 是伪造全局状态。业务计数（限流/预算/冷却）仍走 Redis（STANDARDS §2.5/§2.7） | 2026-11-04 |
 
 ## 6. 执行摘要
 
@@ -77,8 +78,8 @@ regression: ["REQ-2.1 探活（HTTP/stdio）", "REQ-2.2/2.3 工具发现与调�
 ## 7. 复盘
 
 - 做对了什么：先分析故障模式（进程崩溃 vs 机器崩溃）再改代码；孤儿清理用 parentPid 校验避免误杀。
-- 踩了什么坑：Checkstyle MagicNumber / SpotBugs EI_EXPOSE_REP2（按项目规范处理）。
-- 下次改进：资源类改动先列出"获取-释放-异常-崩溃"四条路径。
+- 踩了什么坑：Checkstyle MagicNumber / SpotBugs EI_EXPOSE_REP2（按项目规范处理）；**流程缺口**：REQ/验收模板缺非功能检查，导致资源风险未被及时发现；实现阶段未逐条对照 STANDARDS §2.5/§2.6。
+- 下次改进：资源类改动先列"正常/超时/进程崩溃/机器崩溃"四条路径；REQ §4 必填 `nfr`；开工前逐条对照 STANDARDS 硬约束（已固化 §2.7 + 模板 + WORKFLOW 门禁）。
 
 ## 8. 多实例检查
 

@@ -12,6 +12,7 @@
 - [x] 模拟"父进程已死"的 PID 记录 → 启动清理杀掉孤儿并删除记录
 - [x] HTTP 探活请求带 `Connection: close`
 - [x] `GET /v1/mcp/runtime/stats` 返回三个计数
+- [x] 非功能验收：四条路径（正常/超时/进程崩溃/机器崩溃）已说明；本地资源指标每实例统计、未写 Redis（STANDARDS §2.7）
 - [x] `mvn -Pquality verify` 全绿
 
 **验收命令 / 示例**：

@@ -48,6 +48,10 @@ tables:
   change: []
 config: []
 depends_on: []
+nfr:                    # 涉及连接/线程/进程/缓存时必填（STANDARDS §2.7）
+  resources: []         # 连接池/线程池/子进程/文件句柄等
+  failure_modes: []     # 正常 / 超时异常 / 进程崩溃 / 机器崩溃 的处理
+  metrics: []           # 指标归属：业务计数→Redis/DB；本地资源→每实例指标
 compat: additive        # additive | extension | breaking
 gate: auto              # auto | confirm
 regression: []

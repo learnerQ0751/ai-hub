@@ -27,10 +27,11 @@
 1. 读 `ai-workflow/STATUS.md`（当前接口/表/配置/变更矩阵）+ `ai-workflow/DESIGN.md` + 依赖需求的 REQ。
 2. 写 REQ §4 影响面 YAML（modules/interfaces/tables/config/depends_on/compat/gate/regression）。
 3. **职责能力归属检查（§2.6）**：判断能力是横切治理（认证/限流/预算/计价/计量/日志/追踪/幂等）还是业务能力；横切治理必须放统一入口/切面、接口无关，不得进 core 或具体业务 Service；在 REQ §4 `capability` 中声明 type/entry_point/interface_agnostic。
-4. 分级门禁：
+4. **资源与故障模式检查（§2.7）**：涉及连接/线程/子进程/缓存时，REQ §4 `nfr` 必须声明资源、四条故障路径与指标归属（业务计数→Redis/DB；本地资源→每实例指标）。
+5. 分级门禁：
    - `additive`（纯新增）→ 自动通过，继续；
    - `extension` / `breaking`（修改已有接口/表/行为）→ **停下，向用户说明影响面并获得确认**。
-4. 同时冻结 `ai-workflow/acceptance/REQ-x.y.md` §1 验收标准（实现前写定，之后不改）。
+6. 同时冻结 `ai-workflow/acceptance/REQ-x.y.md` §1 验收标准（实现前写定，之后不改）。
 
 ## 3. 实现
 
@@ -66,6 +67,7 @@
 - [ ] 框架与 `ai-workflow/docs/PROJECT.md` 技术栈一致（无未授权替换/降级；持久层 MyBatis）
 - [ ] 多实例检查完成（无单机业务状态/本地锁）
 - [ ] 职责能力归属检查通过：横切治理在统一入口/切面且接口无关；core 未依赖治理组件；新增接口可自动复用（REQ §4 `capability` 已声明）
+- [ ] 资源生命周期检查通过：连接池显式配置、超时/异常释放、崩溃兜底、指标归属（STANDARDS §2.7，REQ §4 `nfr` 已声明）
 - [ ] 类/方法/关键行注释齐全
 - [ ] 流程/链路说明为 Mermaid 或 draw.io（无 ASCII 箭头文本块）
 - [ ] 对外错误/提示文案语言符合 STANDARDS §3.6 与 PROJECT.md（中文 message；type/param/code 保持英文）

@@ -112,6 +112,29 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 
 架构约束：ArchUnit 只保证依赖方向，不保证职责归属；职责归属由设计评审 + REQ §4 声明 + 本条规约共同保证。
 
+### 2.7 资源生命周期与故障模式（MUST，涉及连接/线程/进程/缓存的设计）
+
+任何会持有外部资源的代码（HTTP 客户端、连接池、线程池、子进程、文件句柄、缓存）必须在 REQ §4 `nfr` 声明，并在 acceptance 验收。
+
+**四条路径（获取 → 释放）必须全部回答**：
+
+1. **正常路径**：用完即释放/归还（连接回池、进程 kill、线程归还）
+2. **超时/异常路径**：超时或异常时释放；坏连接不得回池
+3. **进程崩溃（JVM 崩溃 / kill -9）**：shutdown hook 不执行时如何兜底（PID 记录 + 启动清理、stdin EOF 约定、Job Object/PDEATHSIG）
+4. **机器崩溃 / 网络分区**：对端如何回收（服务端 idle timeout、TCP keepalive；客户端无法主动释放）
+
+**连接池**：显式配置 `maxConnections / pendingAcquireTimeout / maxIdleTime（短于服务端 keep-alive）/ maxLifeTime / 后台回收`；应用关闭时 dispose。禁止依赖未配置的默认池。
+
+**线程池**：禁止用 `ForkJoinPool.commonPool` 执行可能阻塞的 IO；使用有界专用池并说明饱和策略。
+
+**子进程**：统一登记；正常停止强杀；记录 `{pid, parentPid}` 供启动清理（只杀父进程已死的孤儿，避免多实例误杀）；约定子进程支持 stdin EOF 退出。
+
+**指标归属**：
+- 业务计数（限流/预算/冷却/会话/配额）→ Redis/DB，跨实例一致；
+- 本地资源指标（连接数/线程数/本机子进程数）→ 每实例本地指标（Micrometer/统计端点），由监控端聚合；**禁止写 Redis 伪造全局状态**。
+
+**检查信号**（出现任一即停下重新设计）：默认连接池/默认线程池；超时不释放；子进程不记录 PID；观测指标未声明归属。
+
 ## 3. Java / Spring 编码规范
 
 ### 3.1 基类与 DTO（MUST，标准网关类项目）
