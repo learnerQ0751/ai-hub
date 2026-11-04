@@ -88,10 +88,10 @@ public class ChatCompletionController {
         }
         String requestId = (String) servletRequest.getAttribute(RequestIdFilter.ATTRIBUTE);
         if (hasMcpTools(requestBody)) {
-            // REQ-2.8：MCP 工具自动调用（非流式）。
+            // REQ-2.8：MCP 工具。流式走形态 A：展开工具后按普通 SSE 透传（客户端执行工具）。
             if (isStreaming(requestBody)) {
-                throw ChatCompletionException.invalidRequest(
-                        "MCP 工具调用暂不支持流式（stream=true）", "stream");
+                return stream(chatMcpService.prepareRequestBody(requestBody),
+                        auth, requestId, servletRequest);
             }
             ChatCompletionResDTO resDTO = chatMcpService.chat(
                     new ChatCompletionReqDTO(requestBody, auth, requestId));

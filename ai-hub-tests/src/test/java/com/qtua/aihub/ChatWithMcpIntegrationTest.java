@@ -40,6 +40,8 @@ class ChatWithMcpIntegrationTest {
     private static final String MASTER_KEY = "integration-master";
     private static final AtomicInteger MCP_CALLS = new AtomicInteger();
     private static final AtomicInteger UPSTREAM_CALLS = new AtomicInteger();
+    private static final java.util.concurrent.atomic.AtomicReference<String> LAST_STREAM_BODY =
+            new java.util.concurrent.atomic.AtomicReference<>();
     private static final MockWebServer UPSTREAM = startUpstream();
     private static final MockWebServer MCP_SRV = startMcpServer();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -111,6 +113,34 @@ class ChatWithMcpIntegrationTest {
     }
 
     @Test
+    void streaming_with_mcp_expands_tools_and_proxies_sse() throws Exception {
+        ResponseEntity<String> registered = restClient.post()
+                .uri("/v1/mcp/servers")
+                .header("Authorization", "Bearer " + MASTER_KEY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("name", "chat_mcp_stream", "transport", "http",
+                        "endpoint", MCP_SRV.url("/mcp").toString()))
+                .retrieve().toEntity(String.class);
+        assertThat(registered.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        ResponseEntity<String> response = restClient.post()
+                .uri("/v1/chat/completions")
+                .header("Authorization", "Bearer " + MASTER_KEY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"model\":\"chat\",\"stream\":true,"
+                        + "\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],"
+                        + "\"tools\":[{\"type\":\"mcp\",\"server_name\":\"chat_mcp_stream\"}]}")
+                .retrieve().toEntity(String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getHeaders().getContentType().toString()).contains("text/event-stream");
+        assertThat(response.getBody()).contains("chat_mcp_stream__echo");
+        // 上游收到的是展开后的 function tools，不再是 mcp 声明。
+        assertThat(LAST_STREAM_BODY.get()).contains("\"tools\"")
+                .doesNotContain("\"type\":\"mcp\"");
+    }
+
+    @Test
     void plain_chat_is_unaffected() {
         ResponseEntity<String> response = restClient.post()
                 .uri("/v1/chat/completions")
@@ -159,6 +189,19 @@ class ChatWithMcpIntegrationTest {
                 @Override
                 public MockResponse dispatch(RecordedRequest request) {
                     String body = request.getBody().readString(StandardCharsets.UTF_8);
+                    if (body.contains("\"stream\":true")) {
+                        LAST_STREAM_BODY.set(body);
+                        return new MockResponse()
+                                .setResponseCode(200)
+                                .setHeader("Content-Type", "text/event-stream")
+                                .setBody("data: {\"id\":\"s\",\"object\":\"chat.completion.chunk\","
+                                        + "\"model\":\"upstream-chat\",\"choices\":[{\"index\":0,"
+                                        + "\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\","
+                                        + "\"type\":\"function\",\"function\":{\"name\":"
+                                        + "\"chat_mcp_stream__echo\",\"arguments\":\"{}\"}}]},"
+                                        + "\"finish_reason\":null}]}\n\n"
+                                        + "data: [DONE]\n\n");
+                    }
                     if (body.contains("\"tools\"")) {
                         // MCP 编排：第一轮返回 tool_calls，后续返回最终回答。
                         return json(UPSTREAM_CALLS.incrementAndGet() == 1

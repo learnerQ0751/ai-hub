@@ -94,6 +94,27 @@ public class ChatMcpServiceImpl implements ChatMcpService {
         return withUsage(last, totalUsage);
     }
 
+    /**
+     * 展开请求体中的 mcp 工具声明（流式形态 A；无 mcp 声明原样返回）。
+     *
+     * @param rawBody 原始请求 JSON
+     * @return 展开后的请求 JSON
+     */
+    @Override
+    public String prepareRequestBody(String rawBody) {
+        JsonNode root = parse(rawBody);
+        if (!root.isObject()) {
+            throw ChatCompletionException.invalidRequest("请求体必须是 JSON 对象", "body");
+        }
+        Set<String> serverNames = collectMcpServers(root);
+        if (serverNames.isEmpty()) {
+            return rawBody;
+        }
+        ObjectNode working = root.deepCopy();
+        expandTools(working, serverNames);
+        return working.toString();
+    }
+
     private Set<String> collectMcpServers(JsonNode root) {
         Set<String> serverNames = new LinkedHashSet<>();
         JsonNode tools = root.path("tools");

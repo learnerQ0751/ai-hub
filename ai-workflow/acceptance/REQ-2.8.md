@@ -9,6 +9,7 @@
 
 - [x] 请求含 `tools:[{"type":"mcp","server_name":"mock_srv"}]` 时，模型可自动调用 MCP 工具
 - [x] 最终响应为模型总结结果；`call_logs` 记录 usage（各轮累计）
+- [x] 流式 + mcp：200 SSE，tool_calls 工具名为 `{server}__{tool}`（形态 A，不再 400）
 - [x] 无工具调用时行为与普通 chat 一致
 - [x] `mvn -Pquality verify` 全绿
 
@@ -47,13 +48,13 @@ curl -X POST http://localhost:18080/v1/chat/completions \
 
 1. 为什么循环上限是 3 轮？
 2. 工具执行会计费吗？
-3. 流式请求带 mcp 工具为什么 400？
+3. 流式 + mcp 如何工作（形态 A）？
 
 ### 参考答案
 
 1. 防模型死循环；超出返回最后一轮结果。
 2. 工具执行 cost=0（MCP 口径）；LLM 各轮 usage 累计计费。
-3. 首版未实现流式下的工具循环，显式拒绝避免静默错误。
+3. 网关把 mcp 声明展开为 function tools 后 SSE 透传；模型输出的 tool_calls 由客户端执行，客户端把结果作为下一轮请求（Claude Code 模式）。
 
 ### 3.4 亲手改的口子（可选）
 
@@ -69,4 +70,4 @@ curl -X POST http://localhost:18080/v1/chat/completions \
 
 - 验收日期：2026-11-04
 - 结论：理解验收默认通过
-- 遗留问题：流式 + mcp 未实现（显式 400）
+- 遗留问题：形态 B（服务端流式自动循环）未实现，留作增强；形态 A 已支持

@@ -12,10 +12,19 @@ import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
 public interface ChatMcpService {
 
     /**
-     * 执行带 MCP 工具的聊天补全（非流式）。
+     * 执行带 MCP 工具的聊天补全（非流式，形态 B 同步版）。
      *
      * @param reqDTO 原始请求（含 mcp tools 声明）
      * @return 最终响应（usage 为各轮累计）
      */
     ChatCompletionResDTO chat(ChatCompletionReqDTO reqDTO);
+
+    /**
+     * 展开请求体中的 mcp 工具声明（流式形态 A：展开后按普通流式透传，
+     * 客户端执行工具；无 mcp 声明时原样返回）。
+     *
+     * @param rawBody 原始请求 JSON
+     * @return 展开后的请求 JSON
+     */
+    String prepareRequestBody(String rawBody);
 }
