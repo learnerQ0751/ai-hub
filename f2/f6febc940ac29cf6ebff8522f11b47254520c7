@@ -1,0 +1,39 @@
+ai-workflow/STATUS.md
+  s_c79baf63be364e::t_6e91df0f52b3b4 6,21
+ai-workflow/acceptance/REQ-2.10.md
+  s_b128240c3068a4::t_f751ba14e104a7 15
+ai-workflow/docs/STANDARDS.md
+  s_b128240c3068a4::t_06c644a7834eee 115-137
+ai-workflow/docs/WORKFLOW.md
+  s_b128240c3068a4::t_5b1b43c77007cf 30-31,34,70
+ai-workflow/records/REQ-2.10.md
+  s_b128240c3068a4::t_f7a759c15c6694 69,81-82
+ai-workflow/templates/ACCEPTANCE.md
+  s_b128240c3068a4::t_34500f0723c297 17
+ai-workflow/templates/REQ.md
+  s_b128240c3068a4::t_565c29135aa49e 51-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f2f6febc940ac29cf6ebff8522f11b47254520c7",
+  "prompts": {},
+  "sessions": {
+    "s_b128240c3068a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11c146f3-c8d4-4ba1-82d5-fd5af022561a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_c79baf63be364e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4cfb3304-e2a8-4a2d-b167-4cc704e65780",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
