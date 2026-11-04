@@ -79,7 +79,7 @@ regression: ["REQ-2.1 探活（HTTP/stdio）", "REQ-2.2/2.3 工具发现与调�
 
 - 做对了什么：先分析故障模式（进程崩溃 vs 机器崩溃）再改代码；孤儿清理用 parentPid 校验避免误杀。
 - 踩了什么坑：Checkstyle MagicNumber / SpotBugs EI_EXPOSE_REP2（按项目规范处理）；**流程缺口**：REQ/验收模板缺非功能检查，导致资源风险未被及时发现；实现阶段未逐条对照 STANDARDS §2.5/§2.6。
-- 下次改进：资源类改动先列"正常/超时/进程崩溃/机器崩溃"四条路径；REQ §4 必填 `nfr`；开工前逐条对照 STANDARDS 硬约束（已固化 §2.7 + 模板 + WORKFLOW 门禁）。
+- 下次改进：资源类改动先列"正常/超时/进程崩溃/机器崩溃"四条路径；REQ §4 必填 `nfr`；开工前逐条对照 STANDARDS 硬约束（已固化 §2.7 + 模板 + WORKFLOW 门禁）；线程池只用 `ThreadPoolExecutor` 显式参数（rule-java-threadpool-001，已加 Checkstyle 门禁）。
 
 ## 8. 多实例检查
 

@@ -68,6 +68,7 @@
 - [ ] 多实例检查完成（无单机业务状态/本地锁）
 - [ ] 职责能力归属检查通过：横切治理在统一入口/切面且接口无关；core 未依赖治理组件；新增接口可自动复用（REQ §4 `capability` 已声明）
 - [ ] 资源生命周期检查通过：连接池显式配置、超时/异常释放、崩溃兜底、指标归属（STANDARDS §2.7，REQ §4 `nfr` 已声明）
+- [ ] 编码硬规则检查通过：线程池用 `ThreadPoolExecutor` 显式参数（禁 `Executors` 工厂，rule-java-threadpool-001）、禁星号/未用导入、禁 System.out/printStackTrace、注释齐全（STANDARDS §3，Checkstyle 已加规则拦截）
 - [ ] 类/方法/关键行注释齐全
 - [ ] 流程/链路说明为 Mermaid 或 draw.io（无 ASCII 箭头文本块）
 - [ ] 对外错误/提示文案语言符合 STANDARDS §3.6 与 PROJECT.md（中文 message；type/param/code 保持英文）

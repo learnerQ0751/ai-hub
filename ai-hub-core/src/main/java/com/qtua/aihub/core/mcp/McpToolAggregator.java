@@ -15,11 +15,12 @@ import java.util.ArrayList;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -33,7 +34,10 @@ import java.util.concurrent.TimeoutException;
 public class McpToolAggregator {
 
     private static final Logger LOG = LoggerFactory.getLogger(McpToolAggregator.class);
-    private static final int POOL_SIZE = 4;
+    private static final int CORE_POOL_SIZE = 4;
+    private static final int MAX_POOL_SIZE = 4;
+    private static final long KEEP_ALIVE_SECONDS = 60L;
+    private static final int QUEUE_CAPACITY = 64;
     /**
      * 单次聚合的兜底等待上限：任务内部已有 3s 超时，这里防止底层异常卡死拖住整个目录刷新。
      */
@@ -54,7 +58,11 @@ public class McpToolAggregator {
             thread.setDaemon(true);
             return thread;
         };
-        this.executor = Executors.newFixedThreadPool(POOL_SIZE, factory);
+        // 显式参数 + 有界队列 + CallerRuns：禁止 Executors 工厂（rule-java-threadpool-001）。
+        this.executor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE,
+                KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(QUEUE_CAPACITY), factory,
+                new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     /**

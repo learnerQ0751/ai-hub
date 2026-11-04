@@ -3,12 +3,14 @@ package com.qtua.aihub.integration.mcp;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * MCP stdio 读取专用线程池（REQ-2.10）。
@@ -19,7 +21,10 @@ import java.util.concurrent.ThreadFactory;
 @Component
 public class McpIoExecutor implements DisposableBean {
 
-    private static final int POOL_SIZE = 8;
+    private static final int CORE_POOL_SIZE = 8;
+    private static final int MAX_POOL_SIZE = 8;
+    private static final long KEEP_ALIVE_SECONDS = 60L;
+    private static final int QUEUE_CAPACITY = 100;
 
     private final ExecutorService executor;
 
@@ -32,7 +37,11 @@ public class McpIoExecutor implements DisposableBean {
             thread.setDaemon(true);
             return thread;
         };
-        this.executor = Executors.newFixedThreadPool(POOL_SIZE, factory);
+        // 显式参数 + 有界队列 + CallerRuns：禁止 Executors 工厂（rule-java-threadpool-001）。
+        this.executor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE,
+                KEEP_ALIVE_SECONDS, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(QUEUE_CAPACITY), factory,
+                new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     /**
