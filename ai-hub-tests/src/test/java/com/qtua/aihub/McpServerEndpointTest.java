@@ -47,6 +47,7 @@ class McpServerEndpointTest {
              "usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}}
             """;
     private static final MockWebServer UPSTREAM = startServer();
+    private static final MockWebServer MCP_SRV = startMcpServer();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @LocalServerPort
@@ -76,6 +77,7 @@ class McpServerEndpointTest {
     @AfterAll
     static void stopServer() throws IOException {
         UPSTREAM.shutdown();
+        MCP_SRV.shutdown();
     }
 
     @Test
@@ -152,6 +154,32 @@ class McpServerEndpointTest {
         }
     }
 
+    @Test
+    void gateway_exposes_registered_server_tools_over_mcp() throws Exception {
+        // 注册一个第三方 MCP Server（mock）到 ai-hub 注册表
+        ResponseEntity<String> registered = restClient.post()
+                .uri("/v1/mcp/servers")
+                .header("Authorization", "Bearer " + MASTER_KEY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"name\":\"mock_srv\",\"transport\":\"http\",\"endpoint\":\""
+                        + MCP_SRV.url("/mcp").toString() + "\"}")
+                .retrieve().toEntity(String.class);
+        assertThat(registered.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        try (McpClient client = newClient()) {
+            List<ToolSpecification> tools = client.listTools();
+            assertThat(tools).extracting(ToolSpecification::name)
+                    .contains("chat_completion", "mock_srv__echo", "mock_srv__add");
+
+            ToolExecutionResult result = client.executeTool(ToolExecutionRequest.builder()
+                    .name("mock_srv__echo")
+                    .arguments("{\"message\":\"hi\"}")
+                    .build());
+            assertThat(result.isError()).isFalse();
+            assertThat(result.resultText()).contains("echo: hi");
+        }
+    }
+
     private McpClient newClient() {
         return new DefaultMcpClient.Builder()
                 .key("aihub-test")
@@ -161,6 +189,47 @@ class McpServerEndpointTest {
                         .timeout(Duration.ofSeconds(10))
                         .build())
                 .build();
+    }
+
+    private static MockWebServer startMcpServer() {
+        try {
+            MockWebServer server = new MockWebServer();
+            server.setDispatcher(new okhttp3.mockwebserver.Dispatcher() {
+                @Override
+                public MockResponse dispatch(okhttp3.mockwebserver.RecordedRequest request) {
+                    String body = request.getBody().readString(java.nio.charset.StandardCharsets.UTF_8);
+                    if (body.contains("\"initialize\"")) {
+                        return json("{\"jsonrpc\":\"2.0\",\"id\":0,\"result\":"
+                                + "{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{},"
+                                + "\"serverInfo\":{\"name\":\"mock_srv\",\"version\":\"1.0.0\"}}}");
+                    }
+                    if (body.contains("\"tools/list\"")) {
+                        return json("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":["
+                                + "{\"name\":\"echo\",\"description\":\"echo tool\","
+                                + "\"inputSchema\":{\"type\":\"object\",\"properties\":{}}},"
+                                + "{\"name\":\"add\",\"description\":\"add tool\","
+                                + "\"inputSchema\":{\"type\":\"object\",\"properties\":{}}}]}}");
+                    }
+                    if (body.contains("\"tools/call\"")) {
+                        return json("{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":"
+                                + "{\"content\":[{\"type\":\"text\",\"text\":\"echo: hi\"}],"
+                                + "\"isError\":false}}");
+                    }
+                    return new MockResponse().setResponseCode(404);
+                }
+            });
+            server.start();
+            return server;
+        } catch (IOException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    private static MockResponse json(String body) {
+        return new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(body);
     }
 
     private static MockWebServer startServer() {

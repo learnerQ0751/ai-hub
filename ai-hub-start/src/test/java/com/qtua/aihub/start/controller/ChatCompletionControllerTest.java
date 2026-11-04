@@ -7,6 +7,7 @@ import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.start.config.JacksonConfig;
 import com.qtua.aihub.api.ChatCompletionService;
+import com.qtua.aihub.api.ChatMcpService;
 import com.qtua.aihub.api.KeyService;
 import com.qtua.aihub.service.gateway.GatewayGovernanceService;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
@@ -59,6 +60,9 @@ class ChatCompletionControllerTest {
 
     @MockitoBean
     private ChatCompletionService chatCompletionService;
+
+    @MockitoBean
+    private ChatMcpService chatMcpService;
 
     @MockitoBean
     private KeyService keyService;

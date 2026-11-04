@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.api.ChatCompletionService;
+import com.qtua.aihub.api.ChatMcpService;
 import com.qtua.aihub.api.model.auth.KeyAuthDTO;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
 import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
@@ -43,6 +44,7 @@ public class ChatCompletionController {
     private static final long STREAM_TIMEOUT_MS = 300_000L;
 
     private final ChatCompletionService chatCompletionService;
+    private final ChatMcpService chatMcpService;
     private final GatewayGovernanceService governanceService;
     private final ObjectMapper objectMapper;
 
@@ -50,13 +52,16 @@ public class ChatCompletionController {
      * 构造控制器。
      *
      * @param chatCompletionService 聊天补全应用服务
+     * @param chatMcpService        Chat + MCP 工具编排服务
      * @param governanceService     网关治理服务（流式收尾）
      * @param objectMapper          JSON 解析/序列化器
      */
     public ChatCompletionController(ChatCompletionService chatCompletionService,
+                                    ChatMcpService chatMcpService,
                                     GatewayGovernanceService governanceService,
                                     ObjectMapper objectMapper) {
         this.chatCompletionService = chatCompletionService;
+        this.chatMcpService = chatMcpService;
         this.governanceService = governanceService;
         this.objectMapper = objectMapper;
     }
@@ -82,6 +87,24 @@ public class ChatCompletionController {
             throw ChatCompletionException.invalidApiKey();
         }
         String requestId = (String) servletRequest.getAttribute(RequestIdFilter.ATTRIBUTE);
+        if (hasMcpTools(requestBody)) {
+            // REQ-2.8：MCP 工具自动调用（非流式）。
+            if (isStreaming(requestBody)) {
+                throw ChatCompletionException.invalidRequest(
+                        "MCP 工具调用暂不支持流式（stream=true）", "stream");
+            }
+            ChatCompletionResDTO resDTO = chatMcpService.chat(
+                    new ChatCompletionReqDTO(requestBody, auth, requestId));
+            GatewayContext mcpContext =
+                    (GatewayContext) servletRequest.getAttribute(GatewayContext.ATTRIBUTE);
+            if (Objects.nonNull(mcpContext)) {
+                mcpContext.complete(resDTO.getUsage(), resDTO.getDeploymentModel(),
+                        resDTO.getServedAlias(), resDTO.getRetryCount(), resDTO.isFallbackUsed());
+            }
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(resDTO.getRawResponse());
+        }
         if (isStreaming(requestBody)) {
             return stream(requestBody, auth, requestId, servletRequest);
         }
@@ -103,6 +126,23 @@ public class ChatCompletionController {
      * @param requestBody 原始请求体
      * @return true 表示流式
      */
+    private boolean hasMcpTools(String requestBody) {
+        try {
+            JsonNode tools = objectMapper.readTree(requestBody).path("tools");
+            if (!tools.isArray()) {
+                return false;
+            }
+            for (JsonNode tool : tools) {
+                if ("mcp".equals(tool.path("type").asText())) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (JsonProcessingException ex) {
+            return false;
+        }
+    }
+
     private boolean isStreaming(String requestBody) {
         try {
             JsonNode root = objectMapper.readTree(requestBody);

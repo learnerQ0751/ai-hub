@@ -20,6 +20,8 @@
 | REQ-2.4 | Prompt 模板管理 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | — | additive | `acceptance/REQ-2.4.md` |
 | REQ-2.5 | Prompt 渲染接入网关 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | REQ-2.4、REQ-1.1 | additive | `acceptance/REQ-2.5.md` |
 | REQ-2.6 | Agent 适配层与 MCP 集群编排 | 第 2 期 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | REQ-2.2、REQ-2.3 | additive | `acceptance/REQ-2.6.md` |
+| REQ-2.7 | 网关统一 MCP 入口（MCP Client 连接池） | 第 2 期补强 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | REQ-2.1、2.2、2.3 | additive | `acceptance/REQ-2.7.md` |
+| REQ-2.8 | chat 入口支持 MCP 工具自动调用 | 第 2 期补强 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | REQ-2.7、REQ-1.1 | additive | `acceptance/REQ-2.8.md` |
 | REQ-3.1 | 文档接入 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | — | — | — |
 | REQ-3.2 | Embedding 抽象 + 向量存储 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | REQ-3.1 | — | — |
 | REQ-3.3 | 检索与重排 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | REQ-3.2 | — | — |

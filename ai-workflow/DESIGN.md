@@ -343,3 +343,4 @@ sequenceDiagram
 | MCP 注册 | Server 注册/列表/删除、工具发现/调用 | 已实现（REQ-2.1~2.3）；注册即探活、单 Server 降级不阻塞（LiteLLM 反例）、工具名 `__`、错误码规范化 |
 | Prompt 管理 | 模板/版本/渲染 | 已实现（REQ-2.4/2.5）；比 LiteLLM 严格：版本只追加、发布/回滚事务、变量严格校验、render/chat 分离 |
 | MCP Server 暴露 | 自身作为 MCP Server | 已实现（REQ-2.6）；原生 JSON-RPC + 3 工具；LiteLLM 是聚合网关，本方案是能力出口 |
+

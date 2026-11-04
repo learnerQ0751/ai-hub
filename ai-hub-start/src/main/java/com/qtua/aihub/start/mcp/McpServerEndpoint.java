@@ -5,16 +5,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.qtua.aihub.api.ChatCompletionService;
+import com.qtua.aihub.api.McpCallService;
+import com.qtua.aihub.api.McpToolService;
 import com.qtua.aihub.api.ModelService;
 import com.qtua.aihub.api.PromptChatService;
 import com.qtua.aihub.api.model.auth.KeyAuthDTO;
 import com.qtua.aihub.api.model.req.ChatCompletionReqDTO;
 import com.qtua.aihub.api.model.req.PromptRenderReqDTO;
+import com.qtua.aihub.api.model.res.McpToolResDTO;
 import com.qtua.aihub.api.model.res.PromptRenderResDTO;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.start.filter.AuthFilter;
 import com.qtua.aihub.start.filter.RequestIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,11 +45,14 @@ public class McpServerEndpoint {
     private static final String SERVER_VERSION = "1.0.0";
     private static final String ERROR_INTERNAL = "-32603";
     private static final String ERROR_METHOD_NOT_FOUND = "-32601";
+    private static final Logger LOG = LoggerFactory.getLogger(McpServerEndpoint.class);
 
     private final ObjectMapper objectMapper;
     private final ChatCompletionService chatCompletionService;
     private final ModelService modelService;
     private final PromptChatService promptChatService;
+    private final McpToolService mcpToolService;
+    private final McpCallService mcpCallService;
 
     /**
      * 构造端点。
@@ -53,15 +61,21 @@ public class McpServerEndpoint {
      * @param chatCompletionService 聊天补全服务
      * @param modelService          模型目录服务
      * @param promptChatService     Prompt 数据面服务
+     * @param mcpToolService        工具目录（聚合注册 Server 的工具）
+     * @param mcpCallService        MCP 调用代理（聚合工具路由）
      */
     public McpServerEndpoint(ObjectMapper objectMapper,
                              ChatCompletionService chatCompletionService,
                              ModelService modelService,
-                             PromptChatService promptChatService) {
+                             PromptChatService promptChatService,
+                             McpToolService mcpToolService,
+                             McpCallService mcpCallService) {
         this.objectMapper = objectMapper;
         this.chatCompletionService = chatCompletionService;
         this.modelService = modelService;
         this.promptChatService = promptChatService;
+        this.mcpToolService = mcpToolService;
+        this.mcpCallService = mcpCallService;
     }
 
     /**
@@ -137,6 +151,17 @@ public class McpServerEndpoint {
                 chatCompletionSchema()));
         tools.add(tool("list_models", "列出 ai-hub 可用的模型别名", emptySchema()));
         tools.add(tool("prompts_get", "渲染 Prompt 模板为消息列表（不调用模型）", promptsGetSchema()));
+        // 统一 MCP 入口（REQ-2.7）：把注册表里的第三方工具聚合暴露给 MCP 客户端。
+        for (McpToolResDTO registered : mcpToolService.list(null, null).tools()) {
+            try {
+                JsonNode schema = objectMapper.readTree(registered.inputSchema());
+                tools.add(tool(registered.name(), registered.description(), schema));
+            } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+                // 单个工具 schema 非法不影响整体列表。
+                LOG.warn("skip aggregated tool with invalid schema: name={}, error={}",
+                        registered.name(), ex.getMessage());
+            }
+        }
         return result;
     }
 
@@ -146,12 +171,31 @@ public class McpServerEndpoint {
         if (!arguments.isObject()) {
             arguments = objectMapper.createObjectNode();
         }
+        if (!isPlatformTool(toolName)) {
+            // 聚合工具：经调用代理路由到上游 MCP Server，result 原样返回。
+            String body = "{\"arguments\":" + arguments.toString() + "}";
+            String resultJson = mcpCallService.call(toolName, body);
+            try {
+                return objectMapper.readTree(resultJson);
+            } catch (Exception ex) {
+                return contentResult(resultJson);
+            }
+        }
         String text = switch (toolName) {
             case "chat_completion" -> chatCompletionText(arguments, request);
             case "list_models" -> modelService.listModels().toString();
             case "prompts_get" -> promptsGetText(arguments);
             default -> throw new IllegalStateException("未知工具：" + toolName);
         };
+        return contentResult(text);
+    }
+
+    private boolean isPlatformTool(String toolName) {
+        return "chat_completion".equals(toolName) || "list_models".equals(toolName)
+                || "prompts_get".equals(toolName);
+    }
+
+    private ObjectNode contentResult(String text) {
         ObjectNode result = objectMapper.createObjectNode();
         ArrayNode content = result.putArray("content");
         content.addObject().put("type", "text").put("text", text);
@@ -203,7 +247,7 @@ public class McpServerEndpoint {
         }
     }
 
-    private ObjectNode tool(String name, String description, ObjectNode schema) {
+    private ObjectNode tool(String name, String description, JsonNode schema) {
         ObjectNode tool = objectMapper.createObjectNode();
         tool.put("name", name);
         tool.put("description", description);

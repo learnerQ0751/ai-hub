@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-03 15:30
+**最后更新**：2026-11-04 08:58
 
 ## 需求进度
 
@@ -23,18 +23,20 @@
 | REQ-2.4 | Prompt 模板管理 | 已完成 | additive | 已验收（2026-11-03）（7/7） | 无（可与 2.1 并行） | 04570a7 |
 | REQ-2.5 | Prompt 渲染接入网关 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.4、REQ-1.1 | 96a6b29 |
 | REQ-2.6 | Agent 适配层与 MCP Server 暴露 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3、REQ-2.5 | 3dd2905 |
+| REQ-2.7 | 网关统一 MCP 入口（MCP Client 连接池对外形态） | 已完成 | additive | 已验收（2026-11-04）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3 | — |
+| REQ-2.8 | chat 入口支持 MCP 工具自动调用 | 已完成 | additive | 已验收（2026-11-04）（4/4） | REQ-2.7、REQ-1.1 | — |
 
 ## 接口清单（来自 Controller）
 
 | 方法 | 路径 | Handler | 涉及需求 |
 |---|---|---|---|
-| POST | /chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3 |
+| POST | /chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3, REQ-2.8 |
 | POST | /key/block | KeyController#block | REQ-1.3 |
 | POST | /key/generate | KeyController#generate | REQ-1.3 |
 | GET | /key/info | KeyController#info | REQ-1.3, REQ-1.5 |
 | POST | /key/unblock | KeyController#unblock | REQ-1.3 |
 | GET | /models | ModelController#listModels | REQ-1.2 |
-| POST | /v1/chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3 |
+| POST | /v1/chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3, REQ-2.8 |
 | GET | /v1/mcp/servers | McpServerController#list | REQ-2.1 |
 | POST | /v1/mcp/servers | McpServerController#register | REQ-2.1 |
 | DELETE | /v1/mcp/servers/{serverId} | McpServerController#remove | REQ-2.1 |
@@ -98,7 +100,9 @@
 | POST /key/generate | REQ-1.3 |
 | POST /key/unblock | REQ-1.3 |
 | POST /mcp | REQ-2.6 |
+| POST /mcp：tools/list 合并注册工具；tools/call 支持聚合工具路由 | REQ-2.7 |
 | POST /v1/chat/completions | REQ-1.1, REQ-1.2, REQ-1.3 |
+| POST /v1/chat/completions：支持 tools:[{type:mcp | REQ-2.8 |
 | POST /v1/mcp/servers | REQ-2.1 |
 | POST /v1/mcp/servers/{serverId}/reprobe | REQ-2.1 |
 | POST /v1/mcp/tools/{toolName}:call | REQ-2.3 |
@@ -109,6 +113,7 @@
 | POST /v1/prompts/{name}/render | REQ-2.5 |
 | POST /v1/prompts/{name}/versions | REQ-2.4 |
 | prompt_templates：使用 V5 已建表 | REQ-2.4 |
+| server_name}]；流式 + mcp → 400 | REQ-2.8 |
 
 ## 模块依赖
 
@@ -116,7 +121,7 @@
 
 ## 测试
 
-- 227 个 @Test / 43 个测试类
+- 230 个 @Test / 44 个测试类
 
 ## 下一步
 

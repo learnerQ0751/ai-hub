@@ -194,4 +194,8 @@
         <Class name="com.qtua.aihub.start.mcp.McpServerEndpoint"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.ChatMcpServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>
