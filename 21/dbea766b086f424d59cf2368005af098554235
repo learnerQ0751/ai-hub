@@ -1,0 +1,27 @@
+ai-hub-core/src/main/java/com/qtua/aihub/core/mcp/McpToolAggregator.java
+  s_b128240c3068a4::t_ed3797f275ea48 18,23,37-40,61-65
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/mcp/McpIoExecutor.java
+  s_b128240c3068a4::t_3cb42d5465b532 6,12-13,24-27,40-44
+ai-workflow/docs/WORKFLOW.md
+  s_b128240c3068a4::t_3b34b5bf688913 71
+ai-workflow/records/REQ-2.10.md
+  s_b128240c3068a4::t_ee9fcf23f8c7ce 82
+config/checkstyle.xml
+  s_b128240c3068a4::t_64e5d78fc1280a 46-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "21dbea766b086f424d59cf2368005af098554235",
+  "prompts": {},
+  "sessions": {
+    "s_b128240c3068a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11c146f3-c8d4-4ba1-82d5-fd5af022561a",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
