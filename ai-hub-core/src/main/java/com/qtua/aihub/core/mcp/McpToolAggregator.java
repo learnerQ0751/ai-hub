@@ -12,12 +12,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * MCP 工具目录聚合器。
@@ -30,6 +34,10 @@ public class McpToolAggregator {
 
     private static final Logger LOG = LoggerFactory.getLogger(McpToolAggregator.class);
     private static final int POOL_SIZE = 4;
+    /**
+     * 单次聚合的兜底等待上限：任务内部已有 3s 超时，这里防止底层异常卡死拖住整个目录刷新。
+     */
+    private static final Duration AGGREGATE_TIMEOUT = Duration.ofSeconds(5);
 
     private final McpToolClient mcpToolClient;
     private final ExecutorService executor;
@@ -59,13 +67,32 @@ public class McpToolAggregator {
         if (Objects.isNull(servers) || servers.isEmpty()) {
             return new ToolAggregationResult(List.of(), List.of());
         }
-        List<CompletableFuture<ServerTools>> futures = servers.stream()
-                .map(server -> CompletableFuture.supplyAsync(() -> fetch(server), executor))
+        // 先全部提交（并行执行），再按提交顺序收集；总耗时由最慢任务决定，不是串行累加。
+        List<PendingTask> pending = servers.stream()
+                .map(server -> new PendingTask(server,
+                        CompletableFuture.supplyAsync(() -> fetch(server), executor)))
                 .toList();
         List<McpToolDescriptor> tools = new ArrayList<>();
         List<String> degraded = new ArrayList<>();
-        for (CompletableFuture<ServerTools> future : futures) {
-            ServerTools result = future.join();
+        for (PendingTask task : pending) {
+            ServerTools result;
+            try {
+                result = task.future().get(AGGREGATE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+            } catch (TimeoutException ex) {
+                task.future().cancel(true);
+                degraded.add(task.server().name());
+                LOG.warn("mcp tool discovery timeout: server={}", task.server().name());
+                continue;
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                degraded.add(task.server().name());
+                break;
+            } catch (ExecutionException ex) {
+                degraded.add(task.server().name());
+                LOG.warn("mcp tool discovery failed: server={}, error={}",
+                        task.server().name(), rootMessage(ex));
+                continue;
+            }
             if (Objects.nonNull(result.error())) {
                 degraded.add(result.server().name());
                 LOG.warn("mcp tool discovery degraded: server={}, error={}",
@@ -98,6 +125,18 @@ public class McpToolAggregator {
     @PreDestroy
     public void shutdown() {
         executor.shutdownNow();
+    }
+
+    private String rootMessage(Throwable ex) {
+        Throwable current = ex;
+        while (Objects.nonNull(current.getCause())) {
+            current = current.getCause();
+        }
+        return Objects.nonNull(current.getMessage())
+                ? current.getMessage() : current.getClass().getSimpleName();
+    }
+
+    private record PendingTask(McpServerBO server, CompletableFuture<ServerTools> future) {
     }
 
     private record ServerTools(McpServerBO server, List<RawTool> rawTools, String error) {
