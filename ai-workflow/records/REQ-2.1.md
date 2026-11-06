@@ -79,6 +79,8 @@ regression: ["/key/* 管理面 master-only 逻辑（AuthFilter 扩展回归）"]
 | endpoint 输出一律掩码（userinfo + 敏感 query 值） | endpoint 可能含密钥；列表/详情不泄露 | 2026-11-03 |
 | 启动加载 ACTIVE 并重新探活（同步遍历） | 需求卡 2.1.4；多实例各自探活、结果写 DB，无本地状态 | 2026-11-03 |
 | stdio 探活进程用 ProcessBuilder + 超时 kill + shutdown hook 清理 | 防子进程泄漏（需求卡常见坑） | 2026-11-03 |
+| stdio 定位 = 中台本机执行，不承诺跨环境 | stdio 子进程由中台启动，只能访问中台本机资源；跨环境须 HTTP/SSE（2026-11-06 校准） | 2026-11-06 |
+| 本地独占资源（本地 MySQL/文件）不进中台 | 中台只收可共享、可服务端部署的资产；本地资源由本地 Agent 直连 stdio MCP（Claude Code 模式） | 2026-11-06 |
 | SSE 传输保留枚举、暂不实现（400 明确报错） | 需求卡验收只要求 HTTP + stdio；避免复杂度 | 2026-11-03 |
 
 ## 6. 执行摘要

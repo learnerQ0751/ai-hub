@@ -34,6 +34,8 @@ curl -X POST http://localhost:18080/v1/mcp/servers/{serverId}/reprobe -H "Author
 curl -X DELETE http://localhost:18080/v1/mcp/servers/{serverId} -H "Authorization: Bearer sk-local-master-key"
 ```
 
+> **边界提示（2026-11-06）**：stdio 仅适用于中台本机（子进程在中台启动），跨环境必须用 HTTP/SSE；本地独占资源由本地 Agent 直连，不注册到中台。
+
 ## 2. 从哪看起（固定 10 分钟）
 
 1. 本文 §1（2 分钟）
