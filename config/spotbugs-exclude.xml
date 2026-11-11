@@ -270,6 +270,9 @@
     <Match>
         <Class name="com.qtua.aihub.common.config.RagProperties$VectorStoreSettings"/>
     </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$Search"/>
+    </Match>
     <!-- RAG record 的数组/List 已在紧凑构造器或访问器中防御性复制，SpotBugs 无法推断 -->
     <Match>
         <Class name="com.qtua.aihub.manager.model.RagDocumentBO"/>
@@ -298,6 +301,43 @@
     <Match>
         <Class name="com.qtua.aihub.api.model.res.RagDocumentListResDTO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <!-- RAG 检索（REQ-3.3）：record 的 List 在紧凑构造器/工厂中已做防御性复制或来自 JSON 绑定 -->
+    <Match>
+        <Class name="com.qtua.aihub.common.rag.RagSearchFilter"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.core.rag.RagRetrievalResult"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.req.RagSearchReqDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.req.RagSearchFilterDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.req.RagSearchFilterDTO"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.RagSearchResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.core.rag.RagRetrievalCore"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.RagSearchServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.start.controller.RagSearchController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露（RAG） -->
     <Match>

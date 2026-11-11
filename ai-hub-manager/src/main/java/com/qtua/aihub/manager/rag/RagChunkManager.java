@@ -56,6 +56,19 @@ public class RagChunkManager {
     }
 
     /**
+     * 按切片 ID 批量查询（检索补齐正文）。
+     *
+     * @param chunkIds 切片 ID 列表
+     * @return 切片列表；空入参返回空列表
+     */
+    public List<RagChunkBO> listByChunkIds(List<String> chunkIds) {
+        if (ObjectUtils.isEmpty(chunkIds)) {
+            return List.of();
+        }
+        return chunkMapper.selectByChunkIds(chunkIds).stream().map(this::toBO).toList();
+    }
+
+    /**
      * 统计文档切片数。
      *
      * @param docId 文档 ID

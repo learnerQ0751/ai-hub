@@ -30,6 +30,14 @@ public interface RagChunkMapper {
     List<RagChunkDO> selectByDocId(@Param("docId") String docId);
 
     /**
+     * 按切片 ID 批量查询（检索补齐正文）；调用方负责控制每批数量。
+     *
+     * @param chunkIds 切片 ID 列表（非空）
+     * @return 切片列表
+     */
+    List<RagChunkDO> selectByChunkIds(@Param("chunkIds") List<String> chunkIds);
+
+    /**
      * 统计文档切片数。
      *
      * @param docId 文档 ID

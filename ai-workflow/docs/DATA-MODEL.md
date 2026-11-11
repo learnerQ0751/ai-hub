@@ -28,15 +28,10 @@
 | memory_audit_logs | 物理删除审计：audit_id / 作用域 / operation（CLEAR）/ deleted_count / memory_ids（JSONB，最多 1000 条）/ operator_key / reason | 与 memories 通过 audit_id 独立；保存删除快照，不做外键 | active | REQ-3.5 |
 | rag_documents | 文档元数据：doc_id / project_id / source / content_type / size_bytes / content_hash / raw_content（BYTEA 原始文件）/ chunk_count / index_status（PENDING/PROCESSING/READY/FAILED）/ embedding_model / embedding_dimension / embedding_duration_ms / embedding_cost / error_message | 文档 1:N rag_chunks（doc_id 逻辑关联）；同项目 content_hash 唯一 | active | REQ-3.1 / REQ-3.2 |
 | rag_chunks | 切片：chunk_id（doc_id-序号）/ doc_id / project_id / chunk_index / content / char_count / source / index_status / embedding_model / embedding_dimension / error_message | N:1 rag_documents（doc_id 逻辑关联）；向量在 rag_vectors（REQ-3.2） | active | REQ-3.1 / REQ-3.2 |
+| rag_vectors | 切片向量：chunk_id / doc_id / project_id / embedding_model / embedding_dimension / embedding vector(384)；HNSW cosine 索引 | 1:1 rag_chunks（chunk_id 唯一）；按 project_id + 模型版本隔离 | active | REQ-3.2 |
 
 ## 规划表（planned，仅供设计参考，不进入 STATUS）
 
-
-### RAG
-
-| 表 | 用途 | 关键关系 | 状态 | 引入需求 |
-|---|---|---|---|---|
-| rag_vectors | 切片向量：chunk_id / doc_id / project_id / embedding_model / embedding_dimension / embedding vector(384)；HNSW cosine 索引 | 1:1 rag_chunks（chunk_id 唯一） | planned | REQ-3.2 |
 
 ### 治理
 
@@ -50,11 +45,12 @@
 - `mcp_servers` / `prompt_templates`：独立配置类表，无强外键；`call_logs.call_type + target_name` 记录 MCP/Prompt 调用轨迹。
 - `memories` / `memory_audit_logs`：记忆按作用域列逻辑隔离，不建外键；物理删除审计保存 `memory_ids` 快照，避免与已删除记忆耦合。
 - `rag_documents` 1:N `rag_chunks`：通过 `doc_id` 逻辑关联；文档删除级联切片（及应用层级联向量），不建外键。
+- `rag_chunks` 1:1 `rag_vectors`：通过 `chunk_id` 逻辑关联；重建索引时按 chunk_id 覆盖写，删除文档时级联删除。
 - 规划关系见上方规划表；实现后迁入「当前表」区并更新本节。
 
 ## ER 图
 
-- 当前 8 张表：本文件用 Mermaid `erDiagram` 维护速查图。
+- 当前 9 张表：本文件用 Mermaid `erDiagram` 维护速查图。
 - 第 3 期毕业验收时与 RAG 表合并，统一输出 `acceptance/assets/data-model.drawio|svg` 并在此引用（并行批次避免重复维护）。
 
 ```mermaid
@@ -62,6 +58,7 @@ erDiagram
     api_keys ||--o{ call_logs : "key_id（弱关联）"
     memories ||--o{ memory_audit_logs : "按删除快照记录"
     rag_documents ||--o{ rag_chunks : "doc_id（弱关联）"
+    rag_chunks ||--|| rag_vectors : "chunk_id（弱关联）"
     api_keys {
         string key_hash PK
         jsonb models
@@ -106,5 +103,12 @@ erDiagram
         string doc_id FK
         int chunk_index
         string index_status
+    }
+    rag_vectors {
+        string chunk_id PK
+        string doc_id
+        string project_id
+        string embedding_model
+        int embedding_dimension
     }
 ```

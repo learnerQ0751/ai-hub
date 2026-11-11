@@ -36,3 +36,13 @@ gateway:
       threads: 1
     vector-store:
       type: memory
+    search:
+      default-top-k: 3
+      max-top-k: 3
+      default-min-score: 0.0
+      candidate-multiplier: 4
+      max-candidates: 20
+      max-query-chars: 2000
+      rerank-enabled: true
+      rerank-lexical-weight: 0.3
+      max-filter-doc-ids: 5

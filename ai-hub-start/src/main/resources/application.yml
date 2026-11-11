@@ -78,3 +78,15 @@ gateway:
     vector-store:
       # pgvector（默认）或 memory（测试/无 PG）
       type: pgvector
+    search:
+      default-top-k: 5
+      max-top-k: 50
+      default-min-score: 0.0
+      # 候选放大：candidate = top_k × multiplier，受 max-candidates 约束
+      candidate-multiplier: 4
+      max-candidates: 200
+      max-query-chars: 2000
+      # 服务端重排总开关；请求只能关闭，不能越权打开
+      rerank-enabled: true
+      rerank-lexical-weight: 0.3
+      max-filter-doc-ids: 100

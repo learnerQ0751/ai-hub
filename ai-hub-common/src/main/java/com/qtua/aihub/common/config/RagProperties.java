@@ -23,6 +23,14 @@ public class RagProperties {
     private static final int DEFAULT_MAX_RETRIES = 2;
     private static final long DEFAULT_RETRY_BACKOFF_MS = 200L;
     private static final int DEFAULT_EMBEDDING_THREADS = 2;
+    private static final int DEFAULT_TOP_K = 5;
+    private static final int DEFAULT_MAX_TOP_K = 50;
+    private static final double DEFAULT_MIN_SCORE = 0.0d;
+    private static final int DEFAULT_CANDIDATE_MULTIPLIER = 4;
+    private static final int DEFAULT_MAX_CANDIDATES = 200;
+    private static final int DEFAULT_MAX_QUERY_CHARS = 2000;
+    private static final double DEFAULT_RERANK_LEXICAL_WEIGHT = 0.3d;
+    private static final int DEFAULT_MAX_FILTER_DOC_IDS = 100;
 
     /** 上传配置。 */
     private Upload upload = new Upload();
@@ -36,6 +44,8 @@ public class RagProperties {
     private Embedding embedding = new Embedding();
     /** 向量存储配置。 */
     private VectorStoreSettings vectorStore = new VectorStoreSettings();
+    /** 检索配置。 */
+    private Search search = new Search();
 
     public Upload getUpload() {
         return upload;
@@ -83,6 +93,14 @@ public class RagProperties {
 
     public void setVectorStore(VectorStoreSettings vectorStore) {
         this.vectorStore = vectorStore;
+    }
+
+    public Search getSearch() {
+        return search;
+    }
+
+    public void setSearch(Search search) {
+        this.search = search;
     }
 
     /**
@@ -274,6 +292,103 @@ public class RagProperties {
 
         public void setType(String type) {
             this.type = type;
+        }
+    }
+
+    /**
+     * 检索配置。
+     */
+    public static class Search {
+
+        /** 默认返回条数。 */
+        private int defaultTopK = DEFAULT_TOP_K;
+        /** 最大返回条数；超过收敛。 */
+        private int maxTopK = DEFAULT_MAX_TOP_K;
+        /** 默认最小相似度。 */
+        private double defaultMinScore = DEFAULT_MIN_SCORE;
+        /** 向量召回放大倍数：candidate = topK × multiplier。 */
+        private int candidateMultiplier = DEFAULT_CANDIDATE_MULTIPLIER;
+        /** 候选上限，避免放大召回占用过多内存与 SQL 参数。 */
+        private int maxCandidates = DEFAULT_MAX_CANDIDATES;
+        /** 查询文本最大字符数。 */
+        private int maxQueryChars = DEFAULT_MAX_QUERY_CHARS;
+        /** 服务端重排总开关。 */
+        private boolean rerankEnabled = true;
+        /** 规则重排中词项覆盖率的权重（0~1）。 */
+        private double rerankLexicalWeight = DEFAULT_RERANK_LEXICAL_WEIGHT;
+        /** 元数据过滤允许的文档 ID 上限。 */
+        private int maxFilterDocIds = DEFAULT_MAX_FILTER_DOC_IDS;
+
+        public int getDefaultTopK() {
+            return defaultTopK;
+        }
+
+        public void setDefaultTopK(int defaultTopK) {
+            this.defaultTopK = defaultTopK;
+        }
+
+        public int getMaxTopK() {
+            return maxTopK;
+        }
+
+        public void setMaxTopK(int maxTopK) {
+            this.maxTopK = maxTopK;
+        }
+
+        public double getDefaultMinScore() {
+            return defaultMinScore;
+        }
+
+        public void setDefaultMinScore(double defaultMinScore) {
+            this.defaultMinScore = defaultMinScore;
+        }
+
+        public int getCandidateMultiplier() {
+            return candidateMultiplier;
+        }
+
+        public void setCandidateMultiplier(int candidateMultiplier) {
+            this.candidateMultiplier = candidateMultiplier;
+        }
+
+        public int getMaxCandidates() {
+            return maxCandidates;
+        }
+
+        public void setMaxCandidates(int maxCandidates) {
+            this.maxCandidates = maxCandidates;
+        }
+
+        public int getMaxQueryChars() {
+            return maxQueryChars;
+        }
+
+        public void setMaxQueryChars(int maxQueryChars) {
+            this.maxQueryChars = maxQueryChars;
+        }
+
+        public boolean isRerankEnabled() {
+            return rerankEnabled;
+        }
+
+        public void setRerankEnabled(boolean rerankEnabled) {
+            this.rerankEnabled = rerankEnabled;
+        }
+
+        public double getRerankLexicalWeight() {
+            return rerankLexicalWeight;
+        }
+
+        public void setRerankLexicalWeight(double rerankLexicalWeight) {
+            this.rerankLexicalWeight = rerankLexicalWeight;
+        }
+
+        public int getMaxFilterDocIds() {
+            return maxFilterDocIds;
+        }
+
+        public void setMaxFilterDocIds(int maxFilterDocIds) {
+            this.maxFilterDocIds = maxFilterDocIds;
         }
     }
 }

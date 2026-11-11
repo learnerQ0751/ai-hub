@@ -24,8 +24,8 @@
 | REQ-2.8 | chat 入口支持 MCP 工具自动调用 | 第 2 期补强 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | REQ-2.7、REQ-1.1 | additive | `acceptance/REQ-2.8.md` |
 | REQ-2.10 | MCP 客户端资源治理（探活/连接泄漏防护） | 第 2 期补强 | `11-项目7-第2期-MCP与Prompt中心.md` | 已完成 | REQ-2.1、2.2、2.3 | additive | `acceptance/REQ-2.10.md` |
 | REQ-3.1 | 文档接入 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 已完成 | — | additive | `acceptance/REQ-3.1.md` |
-| REQ-3.2 | Embedding 抽象 + 向量存储 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | REQ-3.1 | — | — |
-| REQ-3.3 | 检索与重排 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | REQ-3.2 | — | — |
+| REQ-3.2 | Embedding 抽象 + 向量存储 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 已完成 | REQ-3.1 | additive | `acceptance/REQ-3.2.md` |
+| REQ-3.3 | 检索与重排 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 已完成 | REQ-3.2 | additive | `acceptance/REQ-3.3.md` |
 | REQ-3.4 | RAG 生成 + 引用溯源 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | REQ-3.3 | — | — |
 | REQ-3.5 | 记忆服务（session/user） | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 已完成 | REQ-2.1 | additive | `acceptance/REQ-3.5.md` |
 | REQ-3.6 | RAG/记忆 MCP Server 暴露 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | REQ-3.4、REQ-3.5 | — | — |

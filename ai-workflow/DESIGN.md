@@ -1,7 +1,7 @@
 # 设计基线（ai-hub）
 
 - 更新于：2026-11-11
-- 对应状态：第 3 期进行中（REQ-3.5 记忆服务；RAG 批次并行）
+- 对应状态：第 3 期进行中（REQ-3.1/3.2/3.3/3.5 完成；REQ-3.4 进行中）
 - 维护规则：只有架构、运行时链路、跨需求决策发生变化时才更新；需求细节见 `records/`。
 
 ## 1. 系统全景
@@ -10,7 +10,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 
 - 第 1 期：LLM 网关核心（统一入口 / 模型路由 / 虚拟 Key / 限流预算 / 日志计量 / 容错 / 流式）✅
 - 第 2 期：MCP 与 Prompt 中心（MCP 注册/发现/调用代理 + Prompt 模板/渲染 + MCP Server 暴露）✅
-- 第 3 期：RAG 与记忆服务（记忆服务 REQ-3.5 已完成；RAG 文档接入 REQ-3.1 已完成，向量化 REQ-3.2 进行中）
+- 第 3 期：RAG 与记忆服务（记忆 REQ-3.5、文档接入 REQ-3.1、向量化 REQ-3.2、检索 REQ-3.3 已完成；生成与引用 REQ-3.4 进行中）
 - 第 4 期：治理收尾（多租户 / Trace / 成本 / 管理端 / 审计）
 
 架构图（唯一活图）：`acceptance/assets/design.svg`（源文件 `design.drawio` 同目录）。
@@ -42,7 +42,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 - 表速查（按业务域、用途、关键关系、状态）见 `docs/DATA-MODEL.md`；`STATUS.md` 自动生成同名区块并与 DDL 校验（只显示当前已建表）。
 - DDL 由 Flyway 管理：`ai-hub-dal/src/main/resources/db/migration/Vn__*.sql`，应用启动自动迁移（Spring Boot 4 需 `spring-boot-starter-flyway`）；测试 H2 仍用 `spring.sql.init`（Flyway 测试禁用）。
 - 本地依赖容器：`postgres:16`（5432，db/user/pass=aihub）+ `redis:7.2`（6379）；Docker Hub 不可达时使用本地已有镜像。
-- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5，含 call_type/target_name，REQ-3.5 增加 MEMORY、REQ-3.1 增加 RAG 取值）、`mcp_servers`（REQ-2.1）、`prompt_templates`（REQ-2.4）、`memories` / `memory_audit_logs`（REQ-3.5）、`rag_documents` / `rag_chunks`（REQ-3.1）；规划：`rag_vectors`（REQ-3.2）、`audit_logs`。
+- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5，含 call_type/target_name，REQ-3.5 增加 MEMORY、REQ-3.1 增加 RAG 取值）、`mcp_servers`（REQ-2.1）、`prompt_templates`（REQ-2.4）、`memories` / `memory_audit_logs`（REQ-3.5）、`rag_documents` / `rag_chunks`（REQ-3.1）、`rag_vectors`（REQ-3.2）；规划：`audit_logs`。
 - ER 图：`docs/DATA-MODEL.md` 使用 Mermaid erDiagram 速查；第 3 期毕业时与 RAG 表合并输出 `acceptance/assets/data-model.drawio|svg`。
 
 ## 3. 核心运行时链路
@@ -323,6 +323,39 @@ flowchart TD
 - 删除：Service/Core 事务内先删向量（REQ-3.2 起），再删切片与文档。
 - 列表/删除强制 `project_id`；跨项目文档按 404 处理，避免存在性泄露。
 
+### 3.14 RAG 检索与重排（REQ-3.3）
+
+```mermaid
+sequenceDiagram
+    participant C as 业务方
+    participant F as 治理 Filter
+    participant S as RagSearchService
+    participant R as RagRetrievalCore
+    participant E as EmbeddingModel
+    participant V as VectorStore
+    participant DB as PostgreSQL
+    C->>F: POST /v1/rag/search
+    F->>F: callType=RAG, target=search_knowledge（仅 RPM）
+    F->>S: 放行
+    S->>S: 校验 + top_k/min_score 收敛 + 服务端重排开关
+    S->>R: retrieve(query, topK, candidate, minScore, filter, rerank)
+    R->>E: embed(query)
+    R->>V: search(project_id, 模型版本, vector, candidate, minScore)
+    V->>DB: pgvector cosine（project + 模型下推）
+    DB-->>R: chunk_id/doc_id/score
+    R->>DB: 按 chunk_id 分批查 rag_chunks（≤100/批）
+    R->>R: doc_ids/source 过滤 → 可选规则重排 → 截断 topK
+    R-->>S: hits + candidateCount + reranked
+    S-->>C: results[] + count + no_hit
+    F->>F: RPM 结算 + call_logs（call_type=RAG, target=search_knowledge, cost=0）
+```
+
+- 候选放大：`candidate = min(max-candidates, top_k × candidate-multiplier)`，抵消过滤/重排淘汰；
+  不改 REQ-3.2 的 `VectorSearchQuery` 契约，过滤按切片字段在编排层完成。
+- 重排：规则重排（`vectorScore×(1-w) + query 词项覆盖率×w`），服务端 `rerank-enabled` 为总开关，
+  请求只能关闭；无 query 词项时保持原序并标记 `reranked=false`。
+- 无命中：HTTP 200 + 空数组 + `no_hit=true`；检索日志只记 query、chunk_id/score、候选数与耗时，不记正文。
+
 ## 4. 跨需求设计决策
 
 | 决策 | 理由 | 引入需求 | 日期 |
@@ -373,6 +406,9 @@ flowchart TD
 | 物理删除 + `memory_audit_logs` 审计同事务 | 满足用户删除权举证；不会出现删了但无审计的半状态 | REQ-3.5 | 2026-11-11 |
 | 记忆召回收敛到 `MemoryRecallPort` 端口 | 为后续向量检索预留，Service 不绑定存储实现 | REQ-3.5 | 2026-11-11 |
 | call_type 统一常量 `CallTypes`，记忆调用只做 RPM、cost=0 | 复用统一治理，新接口零复制；集中枚举避免魔法值 | REQ-3.5 | 2026-11-11 |
+| 检索候选按 `top_k × multiplier` 放大（上限 200），元数据过滤在编排层完成 | 不改动 REQ-3.2 的 `VectorSearchQuery` 契约；过滤/重排淘汰后仍有足够结果，资源边界明确 | REQ-3.3 | 2026-11-11 |
+| 重排只做规则重排（向量分 + query 词项覆盖率），服务端总开关控制 | 无额外模型成本、可解释、可离线测试；需求允许二选一，避免 LLM 重排成本失控 | REQ-3.3 | 2026-11-11 |
+| 无命中返回 200 + `no_hit`，检索日志只记 query 与 id/score | 区分“知识库没有”与“服务异常”；满足 Badcase 归因而日志不落正文 | REQ-3.3 | 2026-11-11 |
 
 ## 5. 演进记录
 
@@ -394,6 +430,7 @@ flowchart TD
 | 2026-11-03 | REQ-2.5 | Prompt 渲染与对话接入（render 分离 + 内部 chat + name@vN 日志） |
 | 2026-11-03 | REQ-2.6 | ai-hub 作为 MCP Server 暴露（3 工具 + LangChain4j 客户端验证） |
 | 2026-11-11 | REQ-3.5 | 记忆服务（session/user 两级、TTL 惰性失效、物理删除审计、跨项目共享开关、MEMORY 调用治理） |
+| 2026-11-11 | REQ-3.3 | RAG 检索与重排（`/v1/rag/search`、项目/模型隔离、元数据过滤、阈值/条数、规则重排、no_hit、检索日志） |
 
 ## 6. 与 LiteLLM 的差异
 

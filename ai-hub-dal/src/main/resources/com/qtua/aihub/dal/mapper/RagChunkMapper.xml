@@ -43,6 +43,16 @@
         ORDER BY chunk_index ASC
     </select>
 
+    <select id="selectByChunkIds" resultMap="RagChunkResultMap">
+        SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
+               index_status, embedding_model, embedding_dimension, error_message, created_at
+        FROM rag_chunks
+        WHERE chunk_id IN
+        <foreach collection="chunkIds" item="chunkId" open="(" separator="," close=")">
+            #{chunkId,jdbcType=VARCHAR}
+        </foreach>
+    </select>
+
     <select id="countByDocId" resultType="int">
         SELECT COUNT(1)
         FROM rag_chunks
