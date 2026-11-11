@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-11 15:24
+**最后更新**：2026-11-11 15:30
 
 ## 需求进度
 
@@ -26,7 +26,7 @@
 | REQ-2.6 | Agent 适配层与 MCP Server 暴露 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3、REQ-2.5 | 3dd2905 |
 | REQ-2.7 | 网关统一 MCP 入口（MCP Client 连接池对外形态） | 已完成 | additive | 已验收（2026-11-04）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3 | 8ba218d |
 | REQ-2.8 | chat 入口支持 MCP 工具自动调用 | 已完成 | additive | 已验收（2026-11-04）（5/5） | REQ-2.7、REQ-1.1 | 8ba218d + a484c68（流式形态 A） |
-| REQ-3.5 | 记忆服务（session/user） | 已完成 | additive | 已验收（2026-11-11，理解默认通过）（14/14） | REQ-2.1（需求卡前置；本期实现不感知 MCP，MCP 暴露在 REQ-3.6） | 待回填 |
+| REQ-3.5 | 记忆服务（session/user） | 已完成 | additive | 已验收（2026-11-11，理解默认通过）（14/14） | REQ-2.1（需求卡前置；本期实现不感知 MCP，MCP 暴露在 REQ-3.6） | c692b9c |
 
 ## 接口清单（来自 Controller）
 
