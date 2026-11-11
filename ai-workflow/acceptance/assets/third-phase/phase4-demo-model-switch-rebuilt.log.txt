@@ -1,0 +1,58 @@
+﻿==== mode=model-switch ====
+--- 文档列表（切换模型后） ---
+{
+  "documents": [
+    {
+      "source": "demo-att.md",
+      "index_status": "READY",
+      "embedding_model": "all-minilm-l6-v2-v2",
+      "reindex_required": false
+    },
+    {
+      "source": "demo-fin.md",
+      "index_status": "READY",
+      "embedding_model": "all-minilm-l6-v2",
+      "reindex_required": true
+    },
+    {
+      "source": "demo-hr.md",
+      "index_status": "READY",
+      "embedding_model": "all-minilm-l6-v2",
+      "reindex_required": true
+    }
+  ]
+}
+TOOL search_knowledge   requestId=5cd4557a-c9e8-4b8e-86fc-29f806b5f5fb ok
+--- 切换模型未重建：检索 ---
+{
+  "count": 1,
+  "no_hit": false
+}
+TOOL rag_answer         requestId=4518c895-9b6a-4e36-ba69-de0089c4bd50 ok
+--- 切换模型未重建：回答 ---
+{
+  "answer": "资料不足，无法回答。\n\n现有参考资料 [1] 仅涉及考勤制度（每日 9:00 上班、18:00 下班，迟到超过 30 分钟按半天事假处理），未包含任何关于年假天数的规定。",
+  "no_hit": false,
+  "citations": [
+    {
+      "index": 1,
+      "doc_id": "c1337440-40ce-412e-9d65-90d42dee19b1",
+      "chunk_id": "c1337440-40ce-412e-9d65-90d42dee19b1-0000",
+      "source": "demo-att.md",
+      "score": 0.4879288222768605
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 161,
+    "completion_tokens": 107,
+    "total_tokens": 268
+  }
+}
+reindex doc_id=c1337440-40ce-412e-9d65-90d42dee19b1 source=demo-att.md status=200 index_status=READY embedding_model=all-minilm-l6-v2-v2
+TOOL search_knowledge   requestId=db7f298c-0c52-4536-a43f-9324b81e46a6 ok
+--- 重建后检索 ---
+{
+  "count": 1,
+  "no_hit": false,
+  "top1": "demo-att.md"
+}

@@ -1,0 +1,43 @@
+﻿==== mode=model-switch ====
+--- 文档列表（切换模型后） ---
+{
+  "documents": [
+    {
+      "source": "demo-att.md",
+      "index_status": "READY",
+      "embedding_model": "all-minilm-l6-v2",
+      "reindex_required": true
+    },
+    {
+      "source": "demo-fin.md",
+      "index_status": "READY",
+      "embedding_model": "all-minilm-l6-v2",
+      "reindex_required": true
+    },
+    {
+      "source": "demo-hr.md",
+      "index_status": "READY",
+      "embedding_model": "all-minilm-l6-v2",
+      "reindex_required": true
+    }
+  ]
+}
+TOOL search_knowledge   requestId=1ac599b3-fe2a-45ae-8fe5-9fe3bd21567f ok
+--- 切换模型未重建：检索 ---
+{
+  "count": 0,
+  "no_hit": true
+}
+TOOL rag_answer         requestId=0046a935-9d78-4080-835d-9851e6235392 ok
+--- 切换模型未重建：回答 ---
+{
+  "answer": "未在知识库中检索到相关资料，无法回答该问题。",
+  "no_hit": true,
+  "citations": [],
+  "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+  }
+}
+reindex doc_id=c1337440-40ce-412e-9d65-90d42dee19b1 status=200 index_status=READY

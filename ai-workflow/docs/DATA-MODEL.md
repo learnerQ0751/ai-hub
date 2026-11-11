@@ -50,8 +50,8 @@
 
 ## ER 图
 
-- 当前 9 张表：本文件用 Mermaid `erDiagram` 维护速查图。
-- 第 3 期毕业验收时与 RAG 表合并，统一输出 `acceptance/assets/data-model.drawio|svg` 并在此引用（并行批次避免重复维护）。
+- 当前 9 张表：本文件用 Mermaid `erDiagram` 维护速查图（当前真源）。
+- 三期毕业验收已合并 RAG/记忆表；drawio/svg 统一导出随第 4 期架构图更新，届时在此引用。
 
 ```mermaid
 erDiagram

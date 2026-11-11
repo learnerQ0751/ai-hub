@@ -1,0 +1,21 @@
+﻿==== mode=cross ====
+TOOL save_memory        requestId=9d3e7bb1-5e95-4d49-bd89-956c2e82f74b ok
+  saved memory_id=a0d30664-d1fd-470e-a3d7-50c0dff4d689 type=USER
+TOOL recall_memory      requestId=b8eb8efb-6630-492d-9f59-7ab14dd1bfb4 ok
+--- 项目 B 默认召回（不开 cross_project） ---
+{
+  "count": 0
+}
+TOOL recall_memory      requestId=a26f00e1-e1de-4dfb-9aa1-2a2dc0e2de38 ok
+--- 项目 B 授权跨项目召回 ---
+{
+  "count": 1,
+  "memories": [
+    {
+      "project_id": "p-a",
+      "content": "用户画像：偏好中文回答"
+    }
+  ]
+}
+TOOL save_memory        requestId=1b0f2188-5c33-4ba1-9417-428a1456db9f ok
+TOOL recall_memory      requestId=a0ccdae3-4b39-4b60-8e4d-5b47a61d7195 error=会话级记忆不支持跨项目召回，请去掉 session_id 或关闭 cross_project。

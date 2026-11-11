@@ -1,0 +1,97 @@
+﻿==== mode=basic ====
+tools/list status=200 requestId=2f321fe8-4fa4-48ea-bbee-4366328d9ebe tools=chat_completion,list_models,prompts_get,ingest_document,search_knowledge,rag_answer,save_memory,recall_memory,clear_memory
+unauthorized tools/list status=401 body={"error":{"message":"鉴权失败：API Key 无效","type":"auth_error","param":null,"code":"401"}}
+TOOL ingest_document    requestId=49ae40c3-5ce2-404f-98a5-6ac482f60e52 ok
+  ingested doc_id=a89effde-f5b7-4f74-b5fd-9d0e7eb6100d source=demo-hr.md status=READY chunks=1
+TOOL ingest_document    requestId=08ee1897-bab5-4616-adb1-367d6511343f ok
+  ingested doc_id=dda15255-3c67-40fb-bad8-f77e7ffce459 source=demo-fin.md status=READY chunks=1
+TOOL ingest_document    requestId=2c4f5edb-5359-4c73-9d04-5b6559b1bb64 ok
+  ingested doc_id=c1337440-40ce-412e-9d65-90d42dee19b1 source=demo-att.md status=READY chunks=1
+TOOL search_knowledge   requestId=5cef2a3d-25d5-4cc4-9c42-2be2245edb70 ok
+--- search_knowledge 年假 ---
+{
+  "count": 3,
+  "no_hit": false,
+  "reranked": true,
+  "top1": "demo-hr.md",
+  "score": 0.736
+}
+TOOL rag_answer         requestId=af1dd111-a59e-4f2b-938f-065fba6e79ba ok
+--- rag_answer 年假 ---
+{
+  "answer": "年假天数按入职年限确定：入职满一年享受 5 天，满三年享受 10 天，满十年享受 15 天 [1]。",
+  "citations": [
+    {
+      "index": 1,
+      "source": "demo-hr.md",
+      "doc_id": "a89effde-f5b7-4f74-b5fd-9d0e7eb6100d",
+      "score": 0.5752
+    },
+    {
+      "index": 2,
+      "source": "demo-att.md",
+      "doc_id": "c1337440-40ce-412e-9d65-90d42dee19b1",
+      "score": 0.4879
+    },
+    {
+      "index": 3,
+      "source": "demo-fin.md",
+      "doc_id": "dda15255-3c67-40fb-bad8-f77e7ffce459",
+      "score": 0.3055
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 249,
+    "completion_tokens": 115,
+    "total_tokens": 364
+  }
+}
+TOOL search_knowledge   requestId=a4a3c48d-5033-44c3-b47b-cfe3ffbfcf98 ok
+--- search_knowledge 无召回 ---
+{
+  "count": 0,
+  "no_hit": true
+}
+TOOL rag_answer         requestId=8d7ac8d1-c0f9-447d-9178-dab03c0ff08f ok
+--- rag_answer 无召回 ---
+{
+  "answer": "未在知识库中检索到相关资料，无法回答该问题。",
+  "no_hit": true,
+  "citations": [],
+  "usage": {
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "total_tokens": 0
+  }
+}
+TOOL save_memory        requestId=d15b2a6b-dc64-4b1f-9037-7134fd8a3c08 ok
+  saved memory_id=d8e6eb03-6827-4547-954d-3abfd43faec7 type=USER expires_at=2026-11-11T11:09:28.576416200Z
+TOOL recall_memory      requestId=243f665e-ee4b-4c6d-bbfa-b863025179df ok
+--- recall_memory 项目 A ---
+{
+  "count": 1,
+  "contents": [
+    "用户对芒果过敏"
+  ]
+}
+TOOL recall_memory      requestId=2a62dce9-c052-45bd-ba74-6c0ec8589c1c ok
+--- recall_memory 项目 B（默认隔离） ---
+{
+  "count": 0
+}
+TOOL recall_memory      requestId=3f9d1f67-0e86-4514-aebf-ac9501c4b2b3 error=未开启跨项目记忆共享，无法跨项目召回；请使用项目内作用域或联系管理员开启。
+  cross_project rejected requestId=3f9d1f67-0e86-4514-aebf-ac9501c4b2b3
+TOOL save_memory        requestId=7b9aff03-1f59-4cad-b19c-1503173cddb7 ok
+TOOL recall_memory      requestId=cb60cc17-34cf-42ea-b4d7-09bc64af8d60 error=会话级记忆不支持跨项目召回，请去掉 session_id 或关闭 cross_project。
+TOOL recall_memory      requestId=73f5acf5-966f-4e22-9999-b7f9f51f1333 ok
+--- recall_memory 跨租户 ---
+{
+  "count": 0
+}
+TOOL clear_memory       requestId=2d6b644f-7b46-4e31-95b8-ab7ee482f4c0 ok
+  cleared deleted=2 audit_id=62a4a568-44d6-4d95-8a3e-6e7c70b64a4b
+TOOL recall_memory      requestId=60bcf998-d4c0-4275-9ef9-a2ed375a37af ok
+--- recall_memory clear 之后 ---
+{
+  "count": 0
+}
