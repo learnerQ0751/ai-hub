@@ -1,0 +1,30 @@
+ai-workflow/records/REQ-3.3.md
+  s_46733549857ff7::t_fb32ecd3e1839c 130
+  s_46733549857ff7::t_b40e11bdd42040 8
+ai-workflow/STATUS.md
+  s_99caaf43fe4205::t_317d5c886678a2 6,31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2dd2b1f0fc6da9be893bdafee01ddb04c97ae4a6",
+  "prompts": {},
+  "sessions": {
+    "s_46733549857ff7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f0aec044-4dde-4913-a4d9-fed29e1f8d3d",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_99caaf43fe4205": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "daffa154-6ea9-4269-bbdf-0573c10c0552",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
