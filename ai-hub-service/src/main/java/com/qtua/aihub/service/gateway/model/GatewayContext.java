@@ -39,9 +39,9 @@ public class GatewayContext {
     private volatile boolean failed;
     /** 流式请求：Filter 只预占，由 Controller 在流结束后收尾。 */
     private volatile boolean streaming;
-    /** 调用类型：CHAT/MCP/PROMPT/MEMORY（REQ-2.3 引入，REQ-3.5 扩展）。 */
+    /** 调用类型：CHAT/MCP/PROMPT/MEMORY/RAG（REQ-2.3 引入，REQ-3.5/3.1 扩展）。 */
     private volatile String callType = CallTypes.CHAT;
-    /** 调用目标：MCP 工具名 / Prompt 名 / 记忆操作名（REQ-2.3、REQ-3.5）。 */
+    /** 调用目标：MCP 工具名 / Prompt 名 / 记忆操作名 / RAG 操作名。 */
     private volatile String targetName;
 
     /**
@@ -178,10 +178,10 @@ public class GatewayContext {
     }
 
     /**
-     * 设置调用类型与目标（MCP/Prompt/记忆等非聊天入口使用）。
+     * 设置调用类型与目标（MCP/Prompt/记忆/RAG 等非聊天入口使用）。
      *
      * @param newCallType 调用类型
-     * @param newTarget   目标名（工具名/Prompt 名/记忆操作名）
+     * @param newTarget   目标名（工具名/Prompt 名/记忆操作名/RAG 操作名）
      */
     public void setCallTarget(String newCallType, String newTarget) {
         this.callType = newCallType;
@@ -204,6 +204,24 @@ public class GatewayContext {
      */
     public boolean isMemoryCall() {
         return CallTypes.MEMORY.equals(callType);
+    }
+
+    /**
+     * 是否为 RAG 文档接入/索引调用。
+     *
+     * @return true 表示 RAG 调用
+     */
+    public boolean isRagCall() {
+        return CallTypes.RAG.equals(callType);
+    }
+
+    /**
+     * 是否为工具类调用（MCP / 记忆 / RAG）：只做 RPM，cost=0。
+     *
+     * @return true 表示工具类调用
+     */
+    public boolean isToolCall() {
+        return isMcpCall() || isMemoryCall() || isRagCall();
     }
 
     /**

@@ -15,6 +15,8 @@ public final class CallTypes {
     public static final String PROMPT = "PROMPT";
     /** 记忆服务。 */
     public static final String MEMORY = "MEMORY";
+    /** RAG 文档接入/索引。 */
+    public static final String RAG = "RAG";
 
     private CallTypes() {
     }

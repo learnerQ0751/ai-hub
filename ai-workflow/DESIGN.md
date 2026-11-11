@@ -10,7 +10,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 
 - 第 1 期：LLM 网关核心（统一入口 / 模型路由 / 虚拟 Key / 限流预算 / 日志计量 / 容错 / 流式）✅
 - 第 2 期：MCP 与 Prompt 中心（MCP 注册/发现/调用代理 + Prompt 模板/渲染 + MCP Server 暴露）✅
-- 第 3 期：RAG 与记忆服务（记忆服务 REQ-3.5 已完成；RAG 批次并行）
+- 第 3 期：RAG 与记忆服务（记忆服务 REQ-3.5 已完成；RAG 文档接入 REQ-3.1 已完成，向量化 REQ-3.2 进行中）
 - 第 4 期：治理收尾（多租户 / Trace / 成本 / 管理端 / 审计）
 
 架构图（唯一活图）：`acceptance/assets/design.svg`（源文件 `design.drawio` 同目录）。
@@ -42,7 +42,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 - 表速查（按业务域、用途、关键关系、状态）见 `docs/DATA-MODEL.md`；`STATUS.md` 自动生成同名区块并与 DDL 校验（只显示当前已建表）。
 - DDL 由 Flyway 管理：`ai-hub-dal/src/main/resources/db/migration/Vn__*.sql`，应用启动自动迁移（Spring Boot 4 需 `spring-boot-starter-flyway`）；测试 H2 仍用 `spring.sql.init`（Flyway 测试禁用）。
 - 本地依赖容器：`postgres:16`（5432，db/user/pass=aihub）+ `redis:7.2`（6379）；Docker Hub 不可达时使用本地已有镜像。
-- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5，含 call_type/target_name，REQ-3.5 增加 MEMORY 取值）、`mcp_servers`（REQ-2.1）、`prompt_templates`（REQ-2.4）、`memories` / `memory_audit_logs`（REQ-3.5）；规划：`rag_documents`、`rag_chunks`、`audit_logs`。
+- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5，含 call_type/target_name，REQ-3.5 增加 MEMORY、REQ-3.1 增加 RAG 取值）、`mcp_servers`（REQ-2.1）、`prompt_templates`（REQ-2.4）、`memories` / `memory_audit_logs`（REQ-3.5）、`rag_documents` / `rag_chunks`（REQ-3.1）；规划：`rag_vectors`（REQ-3.2）、`audit_logs`。
 - ER 图：`docs/DATA-MODEL.md` 使用 Mermaid erDiagram 速查；第 3 期毕业时与 RAG 表合并输出 `acceptance/assets/data-model.drawio|svg`。
 
 ## 3. 核心运行时链路
@@ -299,6 +299,29 @@ sequenceDiagram
 - TTL：保存时算 `expires_at`，查询 SQL 过滤 `expires_at IS NULL OR expires_at > now()`；不做单机定时清理，多实例天然一致。
 - 物理删除审计：clear 在 Service 事务内「取 id → 删 → 写审计」，审计记录作用域、实际条数、id 快照、operator key 与原因。
 - 向量检索预留：`common/memory/MemoryRecallPort` 端口，本期结构化实现，后续可接向量检索。
+
+### 3.13 RAG 文档接入（REQ-3.1）
+
+```mermaid
+flowchart TD
+    A["POST /v1/rag/documents（multipart: file + project_id）"] --> F["AuthFilter + GatewayGovernanceFilter（callType=RAG，仅 RPM，不缓存 multipart）"]
+    F --> S["RagDocumentServiceImpl：校验 project/大小/文件名"]
+    S --> H{"project_id + SHA-256 已存在？"}
+    H -->|"默认：返回已有文档 duplicated=true"| R["200 RagDocumentResDTO"]
+    H -->|"override=true 或旧文档 FAILED"| X["删除旧文档/切片"]
+    H -->|"不存在"| P["DocumentTextExtractor：PDFBox / 严格 UTF-8"]
+    X --> P
+    P -->|"失败"| E["持久化 FAILED 文档 + 原始文件（BYTEA）→ 400 中文错误"]
+    P --> C["RagChunker：段落贪心打包，超长定长 + overlap"]
+    C --> DB[("rag_documents / rag_chunks")]
+    DB --> R
+    F --> L["call_logs（call_type=RAG, target_name=ingest_document, cost=0）"]
+```
+
+- 去重键：`project_id + content_hash`（SHA-256）；默认幂等返回已有文档，覆盖为显式配置。
+- 原始文件落库而非本机目录：多实例一致，解析失败也可追溯/删除。
+- 删除：Service/Core 事务内先删向量（REQ-3.2 起），再删切片与文档。
+- 列表/删除强制 `project_id`；跨项目文档按 404 处理，避免存在性泄露。
 
 ## 4. 跨需求设计决策
 

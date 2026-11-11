@@ -52,6 +52,16 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     private static final String MEMORY_PREFIX = "/v1/memory/";
     private static final Set<String> MEMORY_PATHS = Set.of(
             MEMORY_PREFIX + "save", MEMORY_PREFIX + "recall", MEMORY_PREFIX + "clear");
+    private static final String RAG_PREFIX = "/v1/rag/";
+    private static final String RAG_DOCUMENTS_PATH = "/v1/rag/documents";
+    private static final String RAG_REINDEX_SUFFIX = "/reindex";
+    private static final String METHOD_POST = "POST";
+    private static final String METHOD_DELETE = "DELETE";
+    private static final String TARGET_INGEST = "ingest_document";
+    private static final String TARGET_LIST = "list_documents";
+    private static final String TARGET_DELETE = "delete_document";
+    private static final String TARGET_REINDEX = "reindex_document";
+    private static final String TARGET_RAG = "rag_documents";
     private static final String UTF_8 = "UTF-8";
 
     private final GatewayGovernanceService governanceService;
@@ -70,7 +80,7 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 治理聊天补全与 MCP 工具调用入口；后续流式/文件接口在此扩展。
+     * 治理聊天补全、MCP 工具、记忆与 RAG 入口；后续流式/文件接口在此扩展。
      *
      * @param request HTTP 请求
      * @return true 表示跳过治理
@@ -82,7 +92,7 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
             return false;
         }
         if (isPromptChat(relative) || MCP_SERVER_PATH.equals(relative)
-                || MEMORY_PATHS.contains(relative)) {
+                || MEMORY_PATHS.contains(relative) || relative.startsWith(RAG_PREFIX)) {
             return false;
         }
         return !(relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX));
@@ -166,8 +176,15 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         String requestId = (String) request.getAttribute(RequestIdFilter.ATTRIBUTE);
         GatewayContext context = new GatewayContext(requestId, auth.keyHash(),
                 request.getRequestURI(), auth);
-        CachedBodyRequestWrapper wrapped = new CachedBodyRequestWrapper(request);
         String relative = relativePath(request);
+        if (relative.startsWith(RAG_PREFIX)) {
+            // RAG 上传为 multipart：不缓存请求体，只按操作名做 RPM 与调用日志。
+            context.setCallTarget(CallTypes.RAG, ragTarget(request));
+            request.setAttribute(GatewayContext.ATTRIBUTE, context);
+            govern(request, response, filterChain, context, null);
+            return;
+        }
+        CachedBodyRequestWrapper wrapped = new CachedBodyRequestWrapper(request);
         if (relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX)) {
             context.setCallTarget(CallTypes.MCP, mcpToolName(request));
         } else if (MCP_SERVER_PATH.equals(relative)) {
@@ -181,9 +198,26 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
             context.setCallTarget(CallTypes.MEMORY, relative.substring(MEMORY_PREFIX.length()));
         }
         wrapped.setAttribute(GatewayContext.ATTRIBUTE, context);
+        govern(wrapped, response, filterChain, context, wrapped.getBody());
+    }
+
+    /**
+     * 执行治理预占、业务链与收尾。
+     *
+     * @param request     请求（RAG 为原始请求，其他为可重复读取包装）
+     * @param response    响应
+     * @param filterChain 过滤器链
+     * @param context     治理上下文
+     * @param body        请求体；RAG 为 null（不解析 multipart）
+     * @throws ServletException Servlet 异常
+     * @throws IOException      IO 异常
+     */
+    private void govern(HttpServletRequest request, HttpServletResponse response,
+                        FilterChain filterChain, GatewayContext context, String body)
+            throws ServletException, IOException {
         try {
-            governanceService.reserve(context, wrapped.getBody());
-            filterChain.doFilter(wrapped, response);
+            governanceService.reserve(context, body);
+            filterChain.doFilter(request, response);
         } catch (ChatCompletionException ex) {
             context.fail(ex.getStatus().value(), ex.getType());
             governanceService.fail(context);
@@ -192,8 +226,7 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         } catch (RuntimeException ex) {
             context.fail(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "internal_error");
             governanceService.fail(context);
-            writeError(response, ChatCompletionException.internalError(
-                    "网关治理失败", ex));
+            writeError(response, ChatCompletionException.internalError("网关治理失败", ex));
             return;
         }
         // 流式请求：响应尚未结束，usage 未知；由 Controller 在流结束回调中收尾。
@@ -205,6 +238,26 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         } else {
             governanceService.complete(context);
         }
+    }
+
+    /**
+     * 解析 RAG 操作名（与未来 MCP 工具名对齐）。
+     *
+     * @param request HTTP 请求
+     * @return 操作名
+     */
+    private String ragTarget(HttpServletRequest request) {
+        String relative = relativePath(request);
+        if (RAG_DOCUMENTS_PATH.equals(relative)) {
+            return METHOD_POST.equalsIgnoreCase(request.getMethod()) ? TARGET_INGEST : TARGET_LIST;
+        }
+        if (relative.endsWith(RAG_REINDEX_SUFFIX)) {
+            return TARGET_REINDEX;
+        }
+        if (METHOD_DELETE.equalsIgnoreCase(request.getMethod())) {
+            return TARGET_DELETE;
+        }
+        return TARGET_RAG;
     }
 
     /**

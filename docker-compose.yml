@@ -10,7 +10,8 @@ services:
       - redis-data:/data
 
   postgres:
-    image: postgres:16
+    # RAG（REQ-3.2）需要 pgvector 扩展；pgvector/pgvector:pg16 与 postgres:16 兼容
+    image: pgvector/pgvector:pg16
     container_name: ai-hub-postgres
     environment:
       POSTGRES_DB: aihub

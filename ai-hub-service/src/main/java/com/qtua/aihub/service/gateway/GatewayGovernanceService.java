@@ -85,7 +85,7 @@ public class GatewayGovernanceService {
      * @param requestBody 请求体
      */
     public void reserve(GatewayContext context, String requestBody) {
-        if (context.isMcpCall() || context.isMemoryCall()) {
+        if (context.isToolCall()) {
             reserveToolCall(context);
             return;
         }
@@ -119,7 +119,7 @@ public class GatewayGovernanceService {
     }
 
     /**
-     * 工具类调用预占（MCP / 记忆）：只做 Key 级 RPM，TPM/预算不适用。
+     * 工具类调用预占（MCP / 记忆 / RAG）：只做 Key 级 RPM，TPM/预算不适用。
      *
      * @param context 治理上下文
      */
@@ -141,7 +141,7 @@ public class GatewayGovernanceService {
         if (ObjectUtils.isEmpty(context)) {
             return;
         }
-        if (context.isMcpCall() || context.isMemoryCall()) {
+        if (context.isToolCall()) {
             completeToolCall(context);
             return;
         }
@@ -158,7 +158,7 @@ public class GatewayGovernanceService {
     }
 
     /**
-     * 工具类调用成功收尾（MCP / 记忆）：结算 RPM 预占并写日志（cost=0）。
+     * 工具类调用成功收尾（MCP / 记忆 / RAG）：结算 RPM 预占并写日志（cost=0）。
      *
      * @param context 治理上下文
      */
@@ -183,7 +183,7 @@ public class GatewayGovernanceService {
         if (Objects.nonNull(reservation)) {
             gatewayGuard.release(reservation);
         }
-        if (context.isMcpCall() || context.isMemoryCall() || context.hasModelAlias()) {
+        if (context.isToolCall() || context.hasModelAlias()) {
             recordLog(context, TokenUsage.ZERO, BigDecimal.ZERO,
                     context.getStatus(), context.getErrorType());
         }

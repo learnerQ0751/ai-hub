@@ -237,6 +237,54 @@ class GatewayGovernanceServiceTest {
         assertThat(log.status()).isEqualTo(400);
     }
 
+    @Test
+    void reserve_rag_call_uses_only_rpm_and_no_body_parse() {
+        GatewayContext context = context(virtualKey());
+        context.setCallTarget(CallTypes.RAG, "ingest_document");
+
+        service.reserve(context, null);
+
+        assertThat(context.getModelAlias()).isEqualTo("ingest_document");
+        ArgumentCaptor<GuardRequest> captor = ArgumentCaptor.forClass(GuardRequest.class);
+        verify(gatewayGuard).reserve(captor.capture());
+        GuardRequest request = captor.getValue();
+        assertThat(request.modelAlias()).isEqualTo("ingest_document");
+        assertThat(request.tpmLimit()).isNull();
+        assertThat(request.estimatedTokens()).isZero();
+    }
+
+    @Test
+    void complete_rag_call_logs_call_type_and_zero_cost() {
+        GatewayContext context = context(virtualKey());
+        context.setCallTarget(CallTypes.RAG, "reindex_document");
+        context.setModelAlias("reindex_document");
+        context.setReservation(reservation);
+
+        service.complete(context);
+
+        verify(gatewayGuard).settle(reservation, TokenUsage.ZERO, BigDecimal.ZERO);
+        CallLogBO log = capturedLog();
+        assertThat(log.callType()).isEqualTo("RAG");
+        assertThat(log.targetName()).isEqualTo("reindex_document");
+        assertThat(log.cost()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    void fail_rag_call_releases_and_logs() {
+        GatewayContext context = context(virtualKey());
+        context.setCallTarget(CallTypes.RAG, "delete_document");
+        context.setModelAlias("delete_document");
+        context.setReservation(reservation);
+        context.fail(404, "not_found_error");
+
+        service.fail(context);
+
+        verify(gatewayGuard).release(reservation);
+        CallLogBO log = capturedLog();
+        assertThat(log.callType()).isEqualTo("RAG");
+        assertThat(log.status()).isEqualTo(404);
+    }
+
     private GatewayContext context(KeyAuthDTO auth) {
         return new GatewayContext(REQUEST_ID, auth.keyHash(),
                 "/v1/chat/completions", auth);

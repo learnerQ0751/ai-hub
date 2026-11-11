@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.RagChunkMapper">
+
+    <resultMap id="RagChunkResultMap" type="com.qtua.aihub.dal.model.RagChunkDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="chunk_id" property="chunkId" jdbcType="VARCHAR"/>
+        <result column="doc_id" property="docId" jdbcType="VARCHAR"/>
+        <result column="project_id" property="projectId" jdbcType="VARCHAR"/>
+        <result column="chunk_index" property="chunkIndex" jdbcType="INTEGER"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="char_count" property="charCount" jdbcType="INTEGER"/>
+        <result column="source" property="source" jdbcType="VARCHAR"/>
+        <result column="index_status" property="indexStatus" jdbcType="VARCHAR"/>
+        <result column="embedding_model" property="embeddingModel" jdbcType="VARCHAR"/>
+        <result column="embedding_dimension" property="embeddingDimension" jdbcType="INTEGER"/>
+        <result column="error_message" property="errorMessage" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <insert id="insertBatch">
+        INSERT INTO rag_chunks
+            (chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
+             index_status, embedding_model, embedding_dimension, error_message, created_at)
+        VALUES
+        <foreach collection="chunks" item="item" separator=",">
+            (#{item.chunkId,jdbcType=VARCHAR}, #{item.docId,jdbcType=VARCHAR},
+             #{item.projectId,jdbcType=VARCHAR}, #{item.chunkIndex,jdbcType=INTEGER},
+             #{item.content,jdbcType=VARCHAR}, #{item.charCount,jdbcType=INTEGER},
+             #{item.source,jdbcType=VARCHAR}, #{item.indexStatus,jdbcType=VARCHAR},
+             #{item.embeddingModel,jdbcType=VARCHAR},
+             #{item.embeddingDimension,jdbcType=INTEGER},
+             #{item.errorMessage,jdbcType=VARCHAR}, #{item.createdAt,jdbcType=TIMESTAMP})
+        </foreach>
+    </insert>
+
+    <select id="selectByDocId" resultMap="RagChunkResultMap">
+        SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
+               index_status, embedding_model, embedding_dimension, error_message, created_at
+        FROM rag_chunks
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+        ORDER BY chunk_index ASC
+    </select>
+
+    <select id="countByDocId" resultType="int">
+        SELECT COUNT(1)
+        FROM rag_chunks
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </select>
+
+    <update id="updateStatusByDocId">
+        UPDATE rag_chunks
+        SET index_status = #{indexStatus,jdbcType=VARCHAR},
+            error_message = #{errorMessage,jdbcType=VARCHAR}
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </update>
+
+    <update id="updateEmbeddingMetaByDocId">
+        UPDATE rag_chunks
+        SET embedding_model = #{embeddingModel,jdbcType=VARCHAR},
+            embedding_dimension = #{embeddingDimension,jdbcType=INTEGER}
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </update>
+
+    <delete id="deleteByDocId">
+        DELETE FROM rag_chunks
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </delete>
+</mapper>

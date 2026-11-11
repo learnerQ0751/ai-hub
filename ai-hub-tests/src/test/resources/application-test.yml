@@ -15,3 +15,24 @@ spring:
         - classpath:db/call-logs-schema.sql
         - classpath:db/mcp-prompt-schema.sql
         - classpath:db/memories-schema.sql
+        - classpath:db/rag-schema.sql
+
+gateway:
+  rag:
+    upload:
+      max-size-bytes: 1048576
+    chunk:
+      max-chars: 120
+      overlap-chars: 20
+      persist-batch-size: 100
+    embedding:
+      # 测试不加载 ONNX 模型；使用确定性向量，维度与生产表结构一致
+      provider: deterministic
+      model-id: deterministic-hash-v1
+      dimension: 384
+      batch-size: 4
+      max-retries: 1
+      retry-backoff-ms: 10
+      threads: 1
+    vector-store:
+      type: memory

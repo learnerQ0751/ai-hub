@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.RagDocumentMapper">
+
+    <resultMap id="RagDocumentResultMap" type="com.qtua.aihub.dal.model.RagDocumentDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="doc_id" property="docId" jdbcType="VARCHAR"/>
+        <result column="project_id" property="projectId" jdbcType="VARCHAR"/>
+        <result column="source" property="source" jdbcType="VARCHAR"/>
+        <result column="content_type" property="contentType" jdbcType="VARCHAR"/>
+        <result column="size_bytes" property="sizeBytes" jdbcType="BIGINT"/>
+        <result column="content_hash" property="contentHash" jdbcType="VARCHAR"/>
+        <result column="raw_content" property="rawContent" jdbcType="VARBINARY"/>
+        <result column="chunk_count" property="chunkCount" jdbcType="INTEGER"/>
+        <result column="index_status" property="indexStatus" jdbcType="VARCHAR"/>
+        <result column="embedding_model" property="embeddingModel" jdbcType="VARCHAR"/>
+        <result column="embedding_dimension" property="embeddingDimension" jdbcType="INTEGER"/>
+        <result column="embedding_duration_ms" property="embeddingDurationMs" jdbcType="BIGINT"/>
+        <result column="embedding_cost" property="embeddingCost" jdbcType="DECIMAL"/>
+        <result column="error_message" property="errorMessage" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="columns">
+        id, doc_id, project_id, source, content_type, size_bytes, content_hash,
+        raw_content, chunk_count, index_status, embedding_model, embedding_dimension,
+        embedding_duration_ms, embedding_cost, error_message, created_at, updated_at
+    </sql>
+
+    <sql id="listColumns">
+        id, doc_id, project_id, source, content_type, size_bytes, content_hash,
+        chunk_count, index_status, embedding_model, embedding_dimension,
+        embedding_duration_ms, embedding_cost, error_message, created_at, updated_at
+    </sql>
+
+    <insert id="insert" parameterType="com.qtua.aihub.dal.model.RagDocumentDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO rag_documents
+            (doc_id, project_id, source, content_type, size_bytes, content_hash,
+             raw_content, chunk_count, index_status, embedding_model, embedding_dimension,
+             embedding_duration_ms, embedding_cost, error_message, created_at, updated_at)
+        VALUES
+            (#{docId,jdbcType=VARCHAR}, #{projectId,jdbcType=VARCHAR},
+             #{source,jdbcType=VARCHAR}, #{contentType,jdbcType=VARCHAR},
+             #{sizeBytes,jdbcType=BIGINT}, #{contentHash,jdbcType=VARCHAR},
+             #{rawContent,jdbcType=VARBINARY}, #{chunkCount,jdbcType=INTEGER},
+             #{indexStatus,jdbcType=VARCHAR}, #{embeddingModel,jdbcType=VARCHAR},
+             #{embeddingDimension,jdbcType=INTEGER}, #{embeddingDurationMs,jdbcType=BIGINT},
+             #{embeddingCost,jdbcType=DECIMAL}, #{errorMessage,jdbcType=VARCHAR},
+             #{createdAt,jdbcType=TIMESTAMP}, #{updatedAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="selectByDocId" resultMap="RagDocumentResultMap">
+        SELECT <include refid="columns"/>
+        FROM rag_documents
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectByProjectAndHash" resultMap="RagDocumentResultMap">
+        SELECT <include refid="columns"/>
+        FROM rag_documents
+        WHERE project_id = #{projectId,jdbcType=VARCHAR}
+          AND content_hash = #{contentHash,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectByProject" resultMap="RagDocumentResultMap">
+        SELECT <include refid="listColumns"/>
+        FROM rag_documents
+        WHERE project_id = #{projectId,jdbcType=VARCHAR}
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{limit,jdbcType=INTEGER}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE rag_documents
+        SET index_status = #{indexStatus,jdbcType=VARCHAR},
+            error_message = #{errorMessage,jdbcType=VARCHAR},
+            updated_at = #{updatedAt,jdbcType=TIMESTAMP}
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </update>
+
+    <update id="updateChunkCount">
+        UPDATE rag_documents
+        SET chunk_count = #{chunkCount,jdbcType=INTEGER},
+            updated_at = #{updatedAt,jdbcType=TIMESTAMP}
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </update>
+
+    <update id="updateEmbeddingMeta">
+        UPDATE rag_documents
+        SET embedding_model = #{embeddingModel,jdbcType=VARCHAR},
+            embedding_dimension = #{embeddingDimension,jdbcType=INTEGER},
+            embedding_duration_ms = #{embeddingDurationMs,jdbcType=BIGINT},
+            embedding_cost = #{embeddingCost,jdbcType=DECIMAL},
+            updated_at = #{updatedAt,jdbcType=TIMESTAMP}
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </update>
+
+    <delete id="deleteByDocId">
+        DELETE FROM rag_documents
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </delete>
+</mapper>

@@ -15,6 +15,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /**
  * 网关统一异常处理。
@@ -115,6 +116,24 @@ public class GatewayExceptionHandler {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(ErrorResponse.of("请求参数 '" + param + "' 类型不正确",
                         "invalid_request_error", param, "400"));
+    }
+
+    /**
+     * 处理上传文件超过 Spring multipart 上限。
+     *
+     * @param ex      上传大小异常
+     * @param request HTTP 请求（回填治理上下文）
+     * @return 400 规范错误体
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleUploadTooLarge(MaxUploadSizeExceededException ex,
+                                                              HttpServletRequest request) {
+        LOG.warn("upload size exceeded: {}", ex.getMessage());
+        markFailure(request, HttpStatus.BAD_REQUEST.value(), "invalid_request_error");
+        return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ErrorResponse.of("上传文件大小超出服务端限制",
+                        "invalid_request_error", "file", "400"));
     }
 
     /**

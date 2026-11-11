@@ -302,6 +302,20 @@ public class ChatCompletionException extends RuntimeException {
                 "internal_error", null, "500", cause, false);
     }
 
+    /**
+     * RAG 文档不存在或不属于当前项目（404）。
+     *
+     * <p>跨项目访问统一返回 404，避免泄露文档是否存在。</p>
+     *
+     * @param docId 文档 ID
+     * @return 业务异常
+     */
+    public static ChatCompletionException ragDocumentNotFound(String docId) {
+        return new ChatCompletionException(HttpStatus.NOT_FOUND,
+                "RAG 文档 '" + docId + "' 不存在", "not_found_error",
+                "doc_id", "404", null, false);
+    }
+
     public HttpStatus getStatus() {
         return status;
     }

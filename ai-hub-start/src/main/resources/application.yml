@@ -1,6 +1,11 @@
 spring:
   application:
     name: ai-hub
+  servlet:
+    multipart:
+      # 与 gateway.rag.upload.max-size-bytes 匹配；调整上传上限时两处一起改。
+      max-file-size: ${RAG_MAX_FILE_SIZE:10MB}
+      max-request-size: ${RAG_MAX_REQUEST_SIZE:12MB}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -47,3 +52,29 @@ gateway:
     max-metadata-length: 8192
     default-recall-limit: 20
     max-recall-limit: 100
+  rag:
+    upload:
+      # 单文件上限；同时调整 spring.servlet.multipart 上限
+      max-size-bytes: 10485760
+    chunk:
+      max-chars: 800
+      overlap-chars: 100
+      persist-batch-size: 200
+    dedup:
+      # false：重复 hash 返回已有文档；true：删除旧文档后重新接入
+      override: false
+    list:
+      default-limit: 100
+      max-limit: 500
+    embedding:
+      # langchain4j-local（默认）或 deterministic（测试/离线）
+      provider: langchain4j-local
+      model-id: all-minilm-l6-v2
+      dimension: 384
+      batch-size: 32
+      max-retries: 2
+      retry-backoff-ms: 200
+      threads: 2
+    vector-store:
+      # pgvector（默认）或 memory（测试/无 PG）
+      type: pgvector

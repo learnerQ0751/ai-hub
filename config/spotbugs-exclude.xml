@@ -248,4 +248,97 @@
         <Class name="com.qtua.aihub.start.controller.MemoryController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <!-- RAG（REQ-3.1/3.2）：配置绑定 Bean 需要可变嵌套对象供 Spring Binder 使用 -->
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$Upload"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$Chunk"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$Dedup"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$ListSettings"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$Embedding"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$VectorStoreSettings"/>
+    </Match>
+    <!-- RAG record 的数组/List 已在紧凑构造器或访问器中防御性复制，SpotBugs 无法推断 -->
+    <Match>
+        <Class name="com.qtua.aihub.manager.model.RagDocumentBO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.model.RagDocumentBO"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.rag.VectorRecord"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.rag.VectorRecord"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.rag.VectorSearchQuery"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.rag.VectorSearchQuery"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.RagDocumentListResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露（RAG） -->
+    <Match>
+        <Class name="com.qtua.aihub.manager.rag.RagDocumentManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.rag.RagChunkManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.rag.PgVectorStore"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.core.rag.RagDocumentCore"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.core.rag.RagChunker"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.RagDocumentServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.start.controller.RagDocumentController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.integration.rag.LangChain4jEmbeddingModel"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <!-- embedding 模型构造时校验维度/配置，非法配置应在启动期快速失败 -->
+    <Match>
+        <Class name="com.qtua.aihub.integration.rag.LangChain4jEmbeddingModel"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.integration.rag.DeterministicEmbeddingModel"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
 </FindBugsFilter>
