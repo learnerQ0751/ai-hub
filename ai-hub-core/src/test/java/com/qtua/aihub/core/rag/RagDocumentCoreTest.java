@@ -1,6 +1,7 @@
 package com.qtua.aihub.core.rag;
 
 import com.qtua.aihub.common.config.RagProperties;
+import com.qtua.aihub.common.rag.VectorStore;
 import com.qtua.aihub.integration.rag.DocumentParseException;
 import com.qtua.aihub.integration.rag.DocumentTextExtractor;
 import com.qtua.aihub.manager.model.RagChunkBO;
@@ -15,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,6 +25,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -36,18 +39,30 @@ class RagDocumentCoreTest {
     private RagDocumentManager documentManager;
     private RagChunkManager chunkManager;
     private DocumentTextExtractor textExtractor;
+    private RagIndexCore indexCore;
+    private VectorStore vectorStore;
     private RagDocumentCore core;
+    private final AtomicReference<RagDocumentBO> inserted = new AtomicReference<>();
 
     @BeforeEach
     void setUp() {
         documentManager = mock(RagDocumentManager.class);
         chunkManager = mock(RagChunkManager.class);
         textExtractor = mock(DocumentTextExtractor.class);
+        indexCore = mock(RagIndexCore.class);
+        vectorStore = mock(VectorStore.class);
+        doAnswer(invocation -> {
+            inserted.set(invocation.getArgument(0));
+            return null;
+        }).when(documentManager).insert(any());
+        when(documentManager.findByDocId(anyString()))
+                .thenAnswer(invocation -> Optional.ofNullable(inserted.get()));
+        when(indexCore.index(anyString())).thenAnswer(invocation -> inserted.get());
         RagProperties properties = new RagProperties();
         properties.getChunk().setMaxChars(40);
         properties.getChunk().setOverlapChars(5);
         core = new RagDocumentCore(documentManager, chunkManager,
-                new RagChunker(properties), textExtractor, properties);
+                new RagChunker(properties), textExtractor, indexCore, vectorStore, properties);
     }
 
     @Test
@@ -55,7 +70,6 @@ class RagDocumentCoreTest {
         byte[] content = bytes("段落一\n\n段落二");
         when(documentManager.findByProjectAndHash(eq("p1"), anyString())).thenReturn(Optional.empty());
         when(textExtractor.extract("a.md", content)).thenReturn("段落一\n\n段落二");
-        when(documentManager.findByDocId(anyString())).thenReturn(Optional.empty());
 
         RagIngestResult result = core.ingest("p1", "a.md", "text/markdown", content, false);
 
@@ -123,7 +137,6 @@ class RagDocumentCoreTest {
         when(documentManager.findByProjectAndHash(eq("p1"), anyString()))
                 .thenReturn(Optional.of(existing));
         when(textExtractor.extract("a.md", content)).thenReturn("new content");
-        when(documentManager.findByDocId(anyString())).thenReturn(Optional.empty());
 
         RagIngestResult result = core.ingest("p1", "a.md", "text/markdown", content, true);
 
@@ -140,7 +153,6 @@ class RagDocumentCoreTest {
         when(documentManager.findByProjectAndHash(eq("p1"), anyString()))
                 .thenReturn(Optional.of(existing));
         when(textExtractor.extract("a.txt", content)).thenReturn("retry content");
-        when(documentManager.findByDocId(anyString())).thenReturn(Optional.empty());
 
         RagIngestResult result = core.ingest("p1", "a.txt", "text/plain", content, false);
 
@@ -150,7 +162,8 @@ class RagDocumentCoreTest {
     }
 
     @Test
-    void delete_cascades_chunks_and_document() {
+    void delete_cascades_vectors_chunks_and_document() {
+        when(vectorStore.deleteByDocument("d1")).thenReturn(2);
         when(chunkManager.deleteByDocId("d1")).thenReturn(3);
         when(documentManager.deleteByDocId("d1")).thenReturn(1);
 
@@ -158,6 +171,18 @@ class RagDocumentCoreTest {
 
         assertThat(result.deleted()).isTrue();
         assertThat(result.chunksDeleted()).isEqualTo(3);
+        assertThat(result.vectorsDeleted()).isEqualTo(2);
+        verify(vectorStore).deleteByDocument("d1");
+    }
+
+    @Test
+    void reindex_delegates_to_index_core() {
+        RagDocumentBO document = document("d1", "READY");
+        when(indexCore.reindex("d1")).thenReturn(document);
+
+        Optional<RagDocumentBO> result = core.reindex("d1");
+
+        assertThat(result).contains(document);
     }
 
     @Test

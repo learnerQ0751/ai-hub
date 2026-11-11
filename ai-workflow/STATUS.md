@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-11 15:30
+**最后更新**：2026-11-11 16:50
 
 ## 需求进度
 
@@ -26,6 +26,8 @@
 | REQ-2.6 | Agent 适配层与 MCP Server 暴露 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3、REQ-2.5 | 3dd2905 |
 | REQ-2.7 | 网关统一 MCP 入口（MCP Client 连接池对外形态） | 已完成 | additive | 已验收（2026-11-04）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3 | 8ba218d |
 | REQ-2.8 | chat 入口支持 MCP 工具自动调用 | 已完成 | additive | 已验收（2026-11-04）（5/5） | REQ-2.7、REQ-1.1 | 8ba218d + a484c68（流式形态 A） |
+| REQ-3.1 | 文档接入（上传/解析/切分） | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（11/11） | 无（文档接入是本批次第一个 RAG 需求） | 待回填 |
+| REQ-3.2 | Embedding 抽象 + 向量存储 | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（13/13） | REQ-3.1 | 待回填 |
 | REQ-3.5 | 记忆服务（session/user） | 已完成 | additive | 已验收（2026-11-11，理解默认通过）（14/14） | REQ-2.1（需求卡前置；本期实现不感知 MCP，MCP 暴露在 REQ-3.6） | c692b9c |
 
 ## 接口清单（来自 Controller）
@@ -59,6 +61,10 @@
 | POST | /v1/prompts/{name}/render | PromptRuntimeController#render | REQ-2.5 |
 | GET | /v1/prompts/{name}/versions | PromptController#versions | REQ-2.4 |
 | POST | /v1/prompts/{name}/versions | PromptController#createVersion | REQ-2.4 |
+| GET | /v1/rag/documents | RagDocumentController#list | REQ-3.1, REQ-3.2 |
+| POST | /v1/rag/documents | RagDocumentController#upload | REQ-3.1, REQ-3.2 |
+| DELETE | /v1/rag/documents/{docId} | RagDocumentController#remove | REQ-3.1, REQ-3.2 |
+| POST | /v1/rag/documents/{docId}/reindex | RagDocumentController#reindex | REQ-3.2 |
 
 ## 数据表速查（语义来自 docs/DATA-MODEL.md，DDL 校验）
 
@@ -82,6 +88,14 @@
 |---|---|---|---|---|---|
 | memories | 记忆：memory_id（UUID）/ tenant_id / project_id / user_id / session_id / memory_type（SESSION/USER）/ content / metadata（JSONB）/ expires_at；TTL 查询时过滤 | 按 tenant + project + user（+ session）逻辑分组，无强外键；用户级记忆可跨项目共享（配置开启） | active | REQ-3.5 | ✓ |
 | memory_audit_logs | 物理删除审计：audit_id / 作用域 / operation（CLEAR）/ deleted_count / memory_ids（JSONB，最多 1000 条）/ operator_key / reason | 与 memories 通过 audit_id 独立；保存删除快照，不做外键 | active | REQ-3.5 | ✓ |
+| rag_documents | 文档元数据：doc_id / project_id / source / content_type / size_bytes / content_hash / raw_content（BYTEA 原始文件）/ chunk_count / index_status（PENDING/PROCESSING/READY/FAILED）/ embedding_model / embedding_dimension / embedding_duration_ms / embedding_cost / error_message | 文档 1:N rag_chunks（doc_id 逻辑关联）；同项目 content_hash 唯一 | active | REQ-3.1, REQ-3.2, REQ-3.1 / REQ-3.2 | ✓ |
+| rag_chunks | 切片：chunk_id（doc_id-序号）/ doc_id / project_id / chunk_index / content / char_count / source / index_status / embedding_model / embedding_dimension / error_message | N:1 rag_documents（doc_id 逻辑关联）；向量在 rag_vectors（REQ-3.2） | active | REQ-3.1, REQ-3.2, REQ-3.1 / REQ-3.2 | ✓ |
+
+### 未登记（DDL 中存在，DATA-MODEL 缺失）
+
+| 表 | 涉及需求 |
+|---|---|
+| rag_vectors | REQ-3.2 |
 
 ## 配置（application.yml 顶层键）
 
@@ -99,6 +113,7 @@
 | call_logs | REQ-1.5 |
 | call_logs：使用 V5 已有 call_type/target_name 列 | REQ-2.3 |
 | DELETE /v1/mcp/servers/{serverId} | REQ-2.1 |
+| DELETE /v1/rag/documents/{docId} | REQ-3.1 |
 | GET /key/info | REQ-1.3, REQ-1.5 |
 | GET /models | REQ-1.2 |
 | GET /v1/mcp/runtime/stats | REQ-2.10 |
@@ -108,6 +123,7 @@
 | GET /v1/prompts | REQ-2.4 |
 | GET /v1/prompts/{name} | REQ-2.4 |
 | GET /v1/prompts/{name}/versions | REQ-2.4 |
+| GET /v1/rag/documents | REQ-3.1 |
 | mcp_servers | REQ-2.1 |
 | memories | REQ-3.5 |
 | memory_audit_logs | REQ-3.5 |
@@ -131,7 +147,12 @@
 | POST /v1/prompts/{name}/publish | REQ-2.4 |
 | POST /v1/prompts/{name}/render | REQ-2.5 |
 | POST /v1/prompts/{name}/versions | REQ-2.4 |
+| POST /v1/rag/documents | REQ-3.1 |
+| POST /v1/rag/documents/{docId}/reindex | REQ-3.2 |
 | prompt_templates：使用 V5 已建表 | REQ-2.4 |
+| rag_chunks | REQ-3.1, REQ-3.2 |
+| rag_documents | REQ-3.1, REQ-3.2 |
+| rag_vectors | REQ-3.2 |
 | server_name}]；流式 + mcp → 400 | REQ-2.8 |
 
 ## 模块依赖
@@ -140,11 +161,12 @@
 
 ## 测试
 
-- 269 个 @Test / 51 个测试类
+- 324 个 @Test / 60 个测试类
 
 ## 下一步
 
-- 实现 REQ-3.1 文档接入（待实现）→ 需求卡：`12-项目7-第3期-RAG与记忆服务.md`
+- 验收 REQ-3.1 文档接入（上传/解析/切分） → 打开 `acceptance/REQ-3.1.md`
+- 验收 REQ-3.2 Embedding 抽象 + 向量存储 → 打开 `acceptance/REQ-3.2.md`
 
 <!-- STATUS:GENERATED:END -->
 

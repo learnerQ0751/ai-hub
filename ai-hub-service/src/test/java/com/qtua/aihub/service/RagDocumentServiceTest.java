@@ -5,6 +5,7 @@ import com.qtua.aihub.api.model.res.RagDocumentListResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentResDTO;
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.rag.EmbeddingModel;
 import com.qtua.aihub.core.rag.RagDeleteResult;
 import com.qtua.aihub.core.rag.RagDocumentCore;
 import com.qtua.aihub.core.rag.RagIngestResult;
@@ -40,6 +41,9 @@ class RagDocumentServiceTest {
     @Mock
     private RagDocumentCore documentCore;
 
+    @Mock
+    private EmbeddingModel embeddingModel;
+
     private RagProperties properties;
     private RagDocumentServiceImpl service;
 
@@ -49,7 +53,7 @@ class RagDocumentServiceTest {
         properties.getUpload().setMaxSizeBytes(16);
         properties.getList().setDefaultLimit(10);
         properties.getList().setMaxLimit(20);
-        service = new RagDocumentServiceImpl(documentCore, properties);
+        service = new RagDocumentServiceImpl(documentCore, embeddingModel, properties);
     }
 
     @Test
@@ -122,6 +126,49 @@ class RagDocumentServiceTest {
 
         assertThat(result.count()).isZero();
         verify(documentCore).list("p1", 20);
+    }
+
+    @Test
+    void list_marks_reindex_required_when_embedding_model_changed() {
+        RagDocumentBO document = document("d1", "p1", "b16");
+        RagDocumentBO indexed = new RagDocumentBO(document.docId(), document.projectId(),
+                document.source(), document.contentType(), document.sizeBytes(),
+                document.contentHash(), null, document.chunkCount(), "READY", "model-a", 384,
+                10L, BigDecimal.ZERO, null, document.createdAt(), document.updatedAt());
+        when(documentCore.list("p1", 10)).thenReturn(List.of(indexed));
+        when(embeddingModel.modelId()).thenReturn("model-b");
+
+        RagDocumentListResDTO result = service.list("p1", null);
+
+        assertThat(result.documents().get(0).reindexRequired()).isTrue();
+    }
+
+    @Test
+    void reindex_returns_updated_document() {
+        RagDocumentBO document = document("d1", "p1", "b16");
+        RagDocumentBO indexed = new RagDocumentBO(document.docId(), document.projectId(),
+                document.source(), document.contentType(), document.sizeBytes(),
+                document.contentHash(), null, document.chunkCount(), "READY", "model-b", 384,
+                20L, BigDecimal.ZERO, null, document.createdAt(), document.updatedAt());
+        when(documentCore.find("d1", "p1")).thenReturn(Optional.of(document));
+        when(documentCore.reindex("d1")).thenReturn(Optional.of(indexed));
+        when(embeddingModel.modelId()).thenReturn("model-b");
+
+        RagDocumentResDTO result = service.reindex("d1", "p1");
+
+        assertThat(result.indexStatus()).isEqualTo("READY");
+        assertThat(result.reindexRequired()).isFalse();
+        assertThat(result.embeddingModel()).isEqualTo("model-b");
+    }
+
+    @Test
+    void reindex_unknown_document_returns_404() {
+        when(documentCore.find("d1", "p1")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.reindex("d1", "p1"))
+                .isInstanceOf(ChatCompletionException.class)
+                .satisfies(ex -> assertThat(((ChatCompletionException) ex).getStatus().value())
+                        .isEqualTo(404));
     }
 
     @Test

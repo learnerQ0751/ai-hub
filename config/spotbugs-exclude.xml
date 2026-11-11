@@ -317,6 +317,10 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
+        <Class name="com.qtua.aihub.core.rag.RagIndexCore"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
         <Class name="com.qtua.aihub.core.rag.RagChunker"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>

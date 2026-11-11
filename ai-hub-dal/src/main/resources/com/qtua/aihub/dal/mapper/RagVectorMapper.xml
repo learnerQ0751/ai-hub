@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.RagVectorMapper">
+
+    <resultMap id="RagVectorMatchResultMap" type="com.qtua.aihub.dal.model.RagVectorDO">
+        <result column="chunk_id" property="chunkId" jdbcType="VARCHAR"/>
+        <result column="doc_id" property="docId" jdbcType="VARCHAR"/>
+        <result column="project_id" property="projectId" jdbcType="VARCHAR"/>
+        <result column="embedding_model" property="embeddingModel" jdbcType="VARCHAR"/>
+        <result column="embedding_dimension" property="embeddingDimension" jdbcType="INTEGER"/>
+        <result column="score" property="score" jdbcType="DOUBLE"/>
+    </resultMap>
+
+    <insert id="insertBatch">
+        INSERT INTO rag_vectors
+            (chunk_id, doc_id, project_id, embedding_model, embedding_dimension,
+             embedding, created_at)
+        VALUES
+        <foreach collection="vectors" item="item" separator=",">
+            (#{item.chunkId,jdbcType=VARCHAR}, #{item.docId,jdbcType=VARCHAR},
+             #{item.projectId,jdbcType=VARCHAR}, #{item.embeddingModel,jdbcType=VARCHAR},
+             #{item.embeddingDimension,jdbcType=INTEGER},
+             CAST(#{item.embedding,jdbcType=VARCHAR} AS vector),
+             #{item.createdAt,jdbcType=TIMESTAMP})
+        </foreach>
+        ON CONFLICT (chunk_id) DO UPDATE
+        SET doc_id = EXCLUDED.doc_id,
+            project_id = EXCLUDED.project_id,
+            embedding_model = EXCLUDED.embedding_model,
+            embedding_dimension = EXCLUDED.embedding_dimension,
+            embedding = EXCLUDED.embedding,
+            created_at = EXCLUDED.created_at
+    </insert>
+
+    <delete id="deleteByDocId">
+        DELETE FROM rag_vectors
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </delete>
+
+    <select id="countByDocId" resultType="int">
+        SELECT COUNT(1)
+        FROM rag_vectors
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectSimilar" resultMap="RagVectorMatchResultMap">
+        SELECT chunk_id, doc_id, project_id, embedding_model, embedding_dimension,
+               1 - (embedding &lt;=&gt; CAST(#{vector,jdbcType=VARCHAR} AS vector)) AS score
+        FROM rag_vectors
+        WHERE project_id = #{projectId,jdbcType=VARCHAR}
+          AND embedding_model = #{modelId,jdbcType=VARCHAR}
+          AND 1 - (embedding &lt;=&gt; CAST(#{vector,jdbcType=VARCHAR} AS vector)) &gt;= #{minScore,jdbcType=DOUBLE}
+        ORDER BY embedding &lt;=&gt; CAST(#{vector,jdbcType=VARCHAR} AS vector)
+        LIMIT #{topK,jdbcType=INTEGER}
+    </select>
+</mapper>

@@ -6,6 +6,7 @@ import com.qtua.aihub.api.model.res.RagDocumentListResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentResDTO;
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.rag.EmbeddingModel;
 import com.qtua.aihub.core.rag.RagDeleteResult;
 import com.qtua.aihub.core.rag.RagDocumentCore;
 import com.qtua.aihub.core.rag.RagIngestResult;
@@ -38,16 +39,20 @@ public class RagDocumentServiceImpl implements RagDocumentService {
     private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
     private final RagDocumentCore documentCore;
+    private final EmbeddingModel embeddingModel;
     private final RagProperties properties;
 
     /**
      * 构造服务。
      *
-     * @param documentCore 文档编排
-     * @param properties   RAG 配置
+     * @param documentCore   文档编排
+     * @param embeddingModel 当前向量模型（用于判断是否需要重建索引）
+     * @param properties     RAG 配置
      */
-    public RagDocumentServiceImpl(RagDocumentCore documentCore, RagProperties properties) {
+    public RagDocumentServiceImpl(RagDocumentCore documentCore, EmbeddingModel embeddingModel,
+                                  RagProperties properties) {
         this.documentCore = documentCore;
+        this.embeddingModel = embeddingModel;
         this.properties = properties;
     }
 
@@ -101,6 +106,26 @@ public class RagDocumentServiceImpl implements RagDocumentService {
     }
 
     /**
+     * 重建文档索引。
+     *
+     * @param docId     文档 ID
+     * @param projectId 项目 ID
+     * @return 索引后的文档视图
+     */
+    @Override
+    public RagDocumentResDTO reindex(String docId, String projectId) {
+        String normalizedProject = requireProject(projectId);
+        String normalizedDocId = requireDocId(docId);
+        documentCore.find(normalizedDocId, normalizedProject)
+                .orElseThrow(() -> ChatCompletionException.ragDocumentNotFound(docId));
+        RagDocumentBO document = documentCore.reindex(normalizedDocId)
+                .orElseThrow(() -> ChatCompletionException.ragDocumentNotFound(docId));
+        LOG.info("rag reindex completed: docId={}, projectId={}, status={}",
+                document.docId(), normalizedProject, document.indexStatus());
+        return toResDTO(document, false);
+    }
+
+    /**
      * 删除文档并级联切片与向量。
      *
      * @param docId     文档 ID
@@ -133,6 +158,13 @@ public class RagDocumentServiceImpl implements RagDocumentService {
                     "project_id 长度不能超过 " + MAX_PROJECT_LENGTH + " 个字符", PARAM_PROJECT);
         }
         return trimmed;
+    }
+
+    private String requireDocId(String docId) {
+        if (!StringUtils.hasText(docId)) {
+            throw ChatCompletionException.invalidRequest("doc_id 不能为空", "doc_id");
+        }
+        return docId.trim();
     }
 
     private String normalizeSource(String fileName) {
@@ -187,11 +219,13 @@ public class RagDocumentServiceImpl implements RagDocumentService {
     }
 
     private RagDocumentResDTO toResDTO(RagDocumentBO document, boolean duplicated) {
+        boolean reindexRequired = StringUtils.hasText(document.embeddingModel())
+                && !document.embeddingModel().equals(embeddingModel.modelId());
         return new RagDocumentResDTO(document.docId(), document.projectId(), document.source(),
                 document.contentType(), document.sizeBytes(), document.contentHash(),
                 document.chunkCount(), document.indexStatus(), document.embeddingModel(),
                 document.embeddingDimension(), document.embeddingDurationMs(),
-                document.embeddingCost(), document.errorMessage(), duplicated, false,
+                document.embeddingCost(), document.errorMessage(), duplicated, reindexRequired,
                 document.createdAt(), document.updatedAt());
     }
 }

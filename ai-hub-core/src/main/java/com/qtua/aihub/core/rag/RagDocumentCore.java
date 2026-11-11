@@ -3,6 +3,7 @@ package com.qtua.aihub.core.rag;
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.rag.RagChunkDraft;
 import com.qtua.aihub.common.rag.RagIndexStatus;
+import com.qtua.aihub.common.rag.VectorStore;
 import com.qtua.aihub.integration.rag.DocumentParseException;
 import com.qtua.aihub.integration.rag.DocumentTextExtractor;
 import com.qtua.aihub.manager.model.RagChunkBO;
@@ -44,6 +45,8 @@ public class RagDocumentCore {
     private final RagChunkManager chunkManager;
     private final RagChunker chunker;
     private final DocumentTextExtractor textExtractor;
+    private final RagIndexCore indexCore;
+    private final VectorStore vectorStore;
     private final RagProperties properties;
 
     /**
@@ -53,15 +56,20 @@ public class RagDocumentCore {
      * @param chunkManager    切片门面
      * @param chunker         切分器
      * @param textExtractor   文本提取器
+     * @param indexCore       向量化编排
+     * @param vectorStore     向量存储（删除级联）
      * @param properties      RAG 配置
      */
     public RagDocumentCore(RagDocumentManager documentManager, RagChunkManager chunkManager,
                            RagChunker chunker, DocumentTextExtractor textExtractor,
+                           RagIndexCore indexCore, VectorStore vectorStore,
                            RagProperties properties) {
         this.documentManager = documentManager;
         this.chunkManager = chunkManager;
         this.chunker = chunker;
         this.textExtractor = textExtractor;
+        this.indexCore = indexCore;
+        this.vectorStore = vectorStore;
         this.properties = properties;
     }
 
@@ -100,8 +108,11 @@ public class RagDocumentCore {
         List<RagChunkDraft> drafts = chunker.split(text);
         RagDocumentBO document = persistDocument(projectId, source, contentType, content,
                 contentHash, drafts, RagIndexStatus.PENDING, null);
-        LOG.info("rag document ingested: docId={}, projectId={}, source={}, size={}, chunks={}",
-                document.docId(), projectId, source, content.length, drafts.size());
+        document = indexCore.index(document.docId());
+        LOG.info("rag document ingested: docId={}, projectId={}, source={}, size={}, chunks={}, "
+                        + "status={}",
+                document.docId(), projectId, source, content.length, drafts.size(),
+                document.indexStatus());
         return new RagIngestResult(document, false, existing.isPresent());
     }
 
@@ -169,9 +180,20 @@ public class RagDocumentCore {
      */
     @Transactional(rollbackFor = Throwable.class)
     public RagDeleteResult delete(String docId) {
+        int vectors = vectorStore.deleteByDocument(docId);
         int chunks = chunkManager.deleteByDocId(docId);
         int deleted = documentManager.deleteByDocId(docId);
-        return new RagDeleteResult(deleted > 0, chunks, 0);
+        return new RagDeleteResult(deleted > 0, chunks, vectors);
+    }
+
+    /**
+     * 重建文档索引（先删旧向量，再按当前模型向量化）。
+     *
+     * @param docId 文档 ID
+     * @return 索引后的文档；不存在为空
+     */
+    public Optional<RagDocumentBO> reindex(String docId) {
+        return Optional.ofNullable(indexCore.reindex(docId));
     }
 
     /**
@@ -181,6 +203,7 @@ public class RagDocumentCore {
      */
     @Transactional(rollbackFor = Throwable.class)
     public void deleteDocument(String docId) {
+        vectorStore.deleteByDocument(docId);
         chunkManager.deleteByDocId(docId);
         documentManager.deleteByDocId(docId);
     }

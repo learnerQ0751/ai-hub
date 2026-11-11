@@ -33,6 +33,15 @@ public interface RagDocumentService {
     RagDocumentListResDTO list(String projectId, Integer limit);
 
     /**
+     * 重建文档索引（先删旧向量，再按当前模型向量化）。
+     *
+     * @param docId     文档 ID
+     * @param projectId 项目 ID
+     * @return 索引后的文档视图
+     */
+    RagDocumentResDTO reindex(String docId, String projectId);
+
+    /**
      * 删除文档并级联切片与向量。
      *
      * @param docId     文档 ID

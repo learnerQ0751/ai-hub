@@ -76,6 +76,20 @@ public class RagDocumentController {
     }
 
     /**
+     * 重建文档索引（先删旧向量，再按当前模型向量化）。
+     *
+     * @param docId     文档 ID
+     * @param projectId 项目 ID
+     * @return 索引后的文档
+     */
+    @PostMapping(path = "/v1/rag/documents/{docId}/reindex",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public RagDocumentResDTO reindex(@PathVariable("docId") String docId,
+                                     @RequestParam("project_id") String projectId) {
+        return ragDocumentService.reindex(docId, projectId);
+    }
+
+    /**
      * 删除文档并级联切片与向量。
      *
      * @param docId     文档 ID
