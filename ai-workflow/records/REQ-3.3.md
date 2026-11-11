@@ -5,7 +5,7 @@
 - 关联规格：外部需求卡 `12-项目7-第3期-RAG与记忆服务.md` REQ-3.3 章节
 - 依赖需求：REQ-3.2
 - 需求来源：外部需求卡
-- 提交：待回填
+- 提交：63f2b28
 
 ## 1. 是什么
 
@@ -127,7 +127,7 @@ regression: ["REQ-3.1 文档上传/切分/列表/删除", "REQ-3.2 reindex/向�
   `POST /v1/rag/search` 与 RAG 治理登记（`target_name=search_knowledge`）。
 - 验证：新增 13 个 core 测试（检索编排 9 + 规则重排 4）、10 个 service 测试、8 个 H2 端到端测试；
   `mvn -Pquality verify` 全绿（347 个测试、0 失败，含 pgvector Testcontainers 回归）。
-- 提交：待回填
+- 提交：63f2b28（实现 + 文档）
 - 下一步：REQ-3.4 在检索之上实现 `/v1/rag/answer`、引用编号与无召回兜底。
 
 ## 7. 复盘
