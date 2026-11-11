@@ -1,0 +1,64 @@
+ai-workflow/acceptance/REQ-3.6.md
+  s_4abdfc872f3baa::t_c6d7bc2fa94e51 81-87,92-95,100-104,108-117,121-124,128-130,134,136-140
+  s_4abdfc872f3baa::t_941cf7a9eaa86f 1-2,4-11,13-14,16-18,20,22,24,26-27,30,32,34,36-80,88-91,96-99,105-107,118-120,125-127,131-133,135
+  s_4abdfc872f3baa::t_aea72db0a0e6ea 12,15,19,21,23,25,28-29,31,33,35
+  s_4abdfc872f3baa::t_8c282196443f12 3
+ai-workflow/requirements/INDEX.md
+  s_4abdfc872f3baa::t_480d1d919205b5 31
+ai-hub-start/src/main/java/com/qtua/aihub/start/mcp/McpServerEndpoint.java
+  s_4abdfc872f3baa::t_a245c59e9fd1e1 181-186
+  s_4abdfc872f3baa::t_49f23dffdfab18 57,68,75-76,83
+  s_4abdfc872f3baa::t_e725c625504511 159-160
+  s_4abdfc872f3baa::t_6570cbd3afe8d8 36,38-39
+ai-hub-start/src/main/java/com/qtua/aihub/start/mcp/McpRagMemoryTools.java
+  s_4abdfc872f3baa::t_e3186c5446a901 77
+  s_4abdfc872f3baa::t_c85ed143cadbb5 30
+  s_4abdfc872f3baa::t_631626577e7d62 1-29,31-76,78-367
+ai-hub-tests/src/test/java/com/qtua/aihub/RagMemoryMcpCrossProjectIntegrationTest.java
+  s_4abdfc872f3baa::t_0ec1421829fc47 1-146
+ai-hub-tests/src/test/java/com/qtua/aihub/RagMemoryMcpIntegrationTest.java
+  s_4abdfc872f3baa::t_c9596c71f20767 1-110,112-114,116-254,256-272,274-379
+  s_4abdfc872f3baa::t_90ca91f10a0bb1 273
+  s_4abdfc872f3baa::t_2e45edaef34efa 111
+  s_4abdfc872f3baa::t_9034bfe7680d82 255
+  s_4abdfc872f3baa::t_91c537f38f0104 115
+ai-workflow/records/REQ-3.6.md
+  s_4abdfc872f3baa::t_9df67945b0d49b 4
+  s_4abdfc872f3baa::t_2a5304726f0025 67-100,105-150
+  s_4abdfc872f3baa::t_d18d9efebe9d32 1-3,5-66,101-104
+ai-workflow/DESIGN.md
+  s_4abdfc872f3baa::t_fca82e6b3e08a4 506
+  s_4abdfc872f3baa::t_d56cef4e983b93 523
+  s_4abdfc872f3baa::t_f58094e21e2040 4
+  s_4abdfc872f3baa::t_324066b7f3c496 13
+  s_4abdfc872f3baa::t_54b47fada5b658 396-424
+  s_4abdfc872f3baa::t_1310f84733d699 481-482
+config/spotbugs-exclude.xml
+  s_4abdfc872f3baa::t_6c2f94c1139b19 408-412
+ai-workflow/STATUS.md
+  s_99caaf43fe4205::t_3be22c0798acfc 6,34,136,167,175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0dc5e9eccd662a667f8e995b1414f84a96788e31",
+  "prompts": {},
+  "sessions": {
+    "s_4abdfc872f3baa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e8a154e7-bd5a-4242-9481-64905002d076",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_99caaf43fe4205": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "daffa154-6ea9-4269-bbdf-0573c10c0552",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
