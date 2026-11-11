@@ -1,7 +1,7 @@
 # 设计基线（ai-hub）
 
-- 更新于：2026-11-03
-- 对应状态：第 2 期完成（REQ-2.1 ~ 2.6，最新提交 3dd2905）
+- 更新于：2026-11-11
+- 对应状态：第 3 期进行中（REQ-3.5 记忆服务；RAG 批次并行）
 - 维护规则：只有架构、运行时链路、跨需求决策发生变化时才更新；需求细节见 `records/`。
 
 ## 1. 系统全景
@@ -10,7 +10,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 
 - 第 1 期：LLM 网关核心（统一入口 / 模型路由 / 虚拟 Key / 限流预算 / 日志计量 / 容错 / 流式）✅
 - 第 2 期：MCP 与 Prompt 中心（MCP 注册/发现/调用代理 + Prompt 模板/渲染 + MCP Server 暴露）✅
-- 第 3 期：RAG 与记忆服务
+- 第 3 期：RAG 与记忆服务（记忆服务 REQ-3.5 已完成；RAG 批次并行）
 - 第 4 期：治理收尾（多租户 / Trace / 成本 / 管理端 / 审计）
 
 架构图（唯一活图）：`acceptance/assets/design.svg`（源文件 `design.drawio` 同目录）。
@@ -27,11 +27,11 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 |---|---|
 | `ai-hub-common` | 异常、常量、配置模型（GatewayProperties）、模型目录端口（ModelCatalog/ModelDeployment）、工具 |
 | `ai-hub-api` | Service 接口 + Req/Res DTO（OpenAI 契约） |
-| `ai-hub-manager` | BO 与 BO↔DO 转换（ChatCompletionBO / ApiKeyBO）；模型目录 YAML 实现（YamlModelCatalog） |
-| `ai-hub-dal` | MyBatis Mapper + DDL（api_keys） |
+| `ai-hub-manager` | BO 与 BO↔DO 转换（ChatCompletionBO / ApiKeyBO）；模型目录 YAML 实现（YamlModelCatalog）；记忆数据门面与召回端口实现（MemoryManager） |
+| `ai-hub-dal` | MyBatis Mapper + DDL（api_keys / call_logs / mcp_servers / prompt_templates / memories / memory_audit_logs） |
 | `ai-hub-integration` | 上游 HTTP + OpenAI 协议适配 + 协议改写；MCP 探活/工具客户端/stdio 进程管理；Prompt 模板渲染与消息解析 |
 | `ai-hub-core` | 纯业务编排：部署选择、协议改写、上游调用、usage 解析（不含限流/预算/计价/日志） |
-| `ai-hub-service` | 应用服务：请求解析/校验/业务执行；`service/gateway` 为网关治理公共实现（限流/预算/计价/spend/日志） |
+| `ai-hub-service` | 应用服务：请求解析/校验/业务执行；`service/gateway` 为网关治理公共实现（限流/预算/计价/spend/日志）；记忆服务校验与 clear 事务 |
 | `ai-hub-start` | 启动类（根包）+ controller / filter / error / config |
 | `ai-hub-tests` | 集成测试 + ArchUnit + JaCoCo 聚合 |
 
@@ -42,8 +42,8 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 - 表速查（按业务域、用途、关键关系、状态）见 `docs/DATA-MODEL.md`；`STATUS.md` 自动生成同名区块并与 DDL 校验（只显示当前已建表）。
 - DDL 由 Flyway 管理：`ai-hub-dal/src/main/resources/db/migration/Vn__*.sql`，应用启动自动迁移（Spring Boot 4 需 `spring-boot-starter-flyway`）；测试 H2 仍用 `spring.sql.init`（Flyway 测试禁用）。
 - 本地依赖容器：`postgres:16`（5432，db/user/pass=aihub）+ `redis:7.2`（6379）；Docker Hub 不可达时使用本地已有镜像。
-- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5，含 call_type/target_name）、`mcp_servers`（REQ-2.1）、`prompt_templates`（REQ-2.4）；规划：`rag_documents`、`rag_chunks`、`memories`、`audit_logs`。
-- ER 图：表数量 ≥5 时补充 `acceptance/assets/data-model.drawio|svg`。
+- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5，含 call_type/target_name，REQ-3.5 增加 MEMORY 取值）、`mcp_servers`（REQ-2.1）、`prompt_templates`（REQ-2.4）、`memories` / `memory_audit_logs`（REQ-3.5）；规划：`rag_documents`、`rag_chunks`、`audit_logs`。
+- ER 图：`docs/DATA-MODEL.md` 使用 Mermaid erDiagram 速查；第 3 期毕业时与 RAG 表合并输出 `acceptance/assets/data-model.drawio|svg`。
 
 ## 3. 核心运行时链路
 
@@ -264,6 +264,42 @@ sequenceDiagram
     F->>F: RPM 结算 + 日志（cost=0）
 ```
 
+### 3.12 记忆服务（REQ-3.5）
+
+```mermaid
+sequenceDiagram
+    participant C as 业务方
+    participant F as 治理 Filter
+    participant S as MemoryService
+    participant M as MemoryManager
+    participant DB as PostgreSQL
+    C->>F: POST /v1/memory/save|recall|clear
+    F->>F: callType=MEMORY，Key RPM 预占（target=操作名）
+    F->>S: 放行
+    alt save
+        S->>S: 校验作用域/内容/metadata/TTL
+        S->>M: save(MemoryBO)
+        M->>DB: INSERT memories
+        S-->>C: 201 memory_id/expires_at
+    else recall
+        S->>S: 跨项目开关授权 + 关键词转义 + limit 收敛
+        S->>M: recall(MemoryQuery)
+        M->>DB: SELECT（expires_at 惰性过滤）
+        S-->>C: memories[] + count
+    else clear
+        S->>M: clear(scope, reason, operatorKey)（Service 事务）
+        M->>DB: SELECT memory_id → DELETE → INSERT memory_audit_logs
+        S-->>C: deleted + audit_id
+    end
+    F->>F: RPM 结算 + call_logs（call_type=MEMORY, cost=0）
+```
+
+- 两级记忆：`session_id` 有值为会话级（绑定 project），为空为用户级（可配置同租户跨项目共享）。
+- 默认隔离：召回强制 `tenant_id + user_id`，项目内再按 `project_id`；跨项目需配置开启且显式 `cross_project=true`，会话级记忆永远不跨项目。
+- TTL：保存时算 `expires_at`，查询 SQL 过滤 `expires_at IS NULL OR expires_at > now()`；不做单机定时清理，多实例天然一致。
+- 物理删除审计：clear 在 Service 事务内「取 id → 删 → 写审计」，审计记录作用域、实际条数、id 快照、operator key 与原因。
+- 向量检索预留：`common/memory/MemoryRecallPort` 端口，本期结构化实现，后续可接向量检索。
+
 ## 4. 跨需求设计决策
 
 | 决策 | 理由 | 引入需求 | 日期 |
@@ -308,6 +344,12 @@ sequenceDiagram
 | 渲染单次纯文本替换（不递归） | 防注入；YAGNI 不引模板引擎 | REQ-2.4 | 2026-11-03 |
 | Prompt chat 内部直接调 Service（不经 HTTP/Filter） | 避免双路径重复治理/计量 | REQ-2.5 | 2026-11-03 |
 | ai-hub MCP Server 用原生 JSON-RPC（JSON 单响应） | 3 个工具、避免新 Web 栈；LangChain4j 实测兼容 | REQ-2.6 | 2026-11-03 |
+| 记忆按 `tenant_id + project_id + user_id` 强制作用域，session_id 区分会话级/用户级 | 隔离是硬约束；两级模型同时覆盖对话记忆与用户画像 | REQ-3.5 | 2026-11-11 |
+| 跨项目共享默认关闭，仅配置开启 + 显式 `cross_project` + 用户级记忆 | 隐私优先；会话级内容不跨项目；未开启时显式请求返回 403 | REQ-3.5 | 2026-11-11 |
+| TTL 用查询时惰性过滤，不做定时清理 | 多实例无状态；避免定时任务重复执行与额外锁 | REQ-3.5 | 2026-11-11 |
+| 物理删除 + `memory_audit_logs` 审计同事务 | 满足用户删除权举证；不会出现删了但无审计的半状态 | REQ-3.5 | 2026-11-11 |
+| 记忆召回收敛到 `MemoryRecallPort` 端口 | 为后续向量检索预留，Service 不绑定存储实现 | REQ-3.5 | 2026-11-11 |
+| call_type 统一常量 `CallTypes`，记忆调用只做 RPM、cost=0 | 复用统一治理，新接口零复制；集中枚举避免魔法值 | REQ-3.5 | 2026-11-11 |
 
 ## 5. 演进记录
 
@@ -328,6 +370,7 @@ sequenceDiagram
 | 2026-11-03 | REQ-2.4 | Prompt 模板管理（版本只追加 + 发布/回滚事务 + 变量/安全校验） |
 | 2026-11-03 | REQ-2.5 | Prompt 渲染与对话接入（render 分离 + 内部 chat + name@vN 日志） |
 | 2026-11-03 | REQ-2.6 | ai-hub 作为 MCP Server 暴露（3 工具 + LangChain4j 客户端验证） |
+| 2026-11-11 | REQ-3.5 | 记忆服务（session/user 两级、TTL 惰性失效、物理删除审计、跨项目共享开关、MEMORY 调用治理） |
 
 ## 6. 与 LiteLLM 的差异
 
@@ -343,4 +386,5 @@ sequenceDiagram
 | MCP 注册 | Server 注册/列表/删除、工具发现/调用 | 已实现（REQ-2.1~2.3）；注册即探活、单 Server 降级不阻塞（LiteLLM 反例）、工具名 `__`、错误码规范化 |
 | Prompt 管理 | 模板/版本/渲染 | 已实现（REQ-2.4/2.5）；比 LiteLLM 严格：版本只追加、发布/回滚事务、变量严格校验、render/chat 分离 |
 | MCP Server 暴露 | 自身作为 MCP Server | 已实现（REQ-2.6）；原生 JSON-RPC + 3 工具；LiteLLM 是聚合网关，本方案是能力出口 |
+| 记忆服务 | 会话/用户两级记忆、save/recall/clear | 已实现（REQ-3.5）；PostgreSQL 结构化存储 + TTL 惰性过滤 + 物理删除审计；向量检索预留端口，本期不实现；LiteLLM Memory 未作为行为基线（B-16 待补测） |
 

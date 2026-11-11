@@ -5,6 +5,7 @@ import com.qtua.aihub.api.model.auth.KeyAuthDTO;
 import com.qtua.aihub.common.catalog.ModelCatalog;
 import com.qtua.aihub.common.catalog.ModelDeployment;
 import com.qtua.aihub.common.config.RateLimitProperties;
+import com.qtua.aihub.common.constant.CallTypes;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.metering.TokenEstimate;
 import com.qtua.aihub.common.metering.TokenUsage;
@@ -183,6 +184,57 @@ class GatewayGovernanceServiceTest {
         service.complete(context);
 
         verifyNoInteractions(gatewayGuard, callLogManager);
+    }
+
+    @Test
+    void reserve_memory_call_uses_only_rpm() {
+        GatewayContext context = context(virtualKey());
+        context.setCallTarget(CallTypes.MEMORY, "save");
+
+        service.reserve(context, "{\"tenant_id\":\"t1\"}");
+
+        assertThat(context.getModelAlias()).isEqualTo("save");
+        ArgumentCaptor<GuardRequest> captor = ArgumentCaptor.forClass(GuardRequest.class);
+        verify(gatewayGuard).reserve(captor.capture());
+        GuardRequest request = captor.getValue();
+        assertThat(request.modelAlias()).isEqualTo("save");
+        assertThat(request.rpmLimit()).isEqualTo(60);
+        assertThat(request.tpmLimit()).isNull();
+        assertThat(request.maxBudget()).isNull();
+        assertThat(request.estimatedTokens()).isZero();
+    }
+
+    @Test
+    void complete_memory_call_settles_and_logs_with_call_type() {
+        GatewayContext context = context(virtualKey());
+        context.setCallTarget(CallTypes.MEMORY, "recall");
+        context.setModelAlias("recall");
+        context.setReservation(reservation);
+
+        service.complete(context);
+
+        verify(gatewayGuard).settle(reservation, TokenUsage.ZERO, BigDecimal.ZERO);
+        CallLogBO log = capturedLog();
+        assertThat(log.callType()).isEqualTo("MEMORY");
+        assertThat(log.targetName()).isEqualTo("recall");
+        assertThat(log.cost()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(log.status()).isEqualTo(200);
+    }
+
+    @Test
+    void fail_memory_call_releases_and_logs() {
+        GatewayContext context = context(virtualKey());
+        context.setCallTarget(CallTypes.MEMORY, "clear");
+        context.setModelAlias("clear");
+        context.setReservation(reservation);
+        context.fail(400, "invalid_request_error");
+
+        service.fail(context);
+
+        verify(gatewayGuard).release(reservation);
+        CallLogBO log = capturedLog();
+        assertThat(log.callType()).isEqualTo("MEMORY");
+        assertThat(log.status()).isEqualTo(400);
     }
 
     private GatewayContext context(KeyAuthDTO auth) {

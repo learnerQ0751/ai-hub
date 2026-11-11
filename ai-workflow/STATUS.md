@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-04 14:27
+**最后更新**：2026-11-11 15:24
 
 ## 需求进度
 
@@ -26,6 +26,7 @@
 | REQ-2.6 | Agent 适配层与 MCP Server 暴露 | 已完成 | additive | 已验收（2026-11-03）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3、REQ-2.5 | 3dd2905 |
 | REQ-2.7 | 网关统一 MCP 入口（MCP Client 连接池对外形态） | 已完成 | additive | 已验收（2026-11-04）（4/4） | REQ-2.1、REQ-2.2、REQ-2.3 | 8ba218d |
 | REQ-2.8 | chat 入口支持 MCP 工具自动调用 | 已完成 | additive | 已验收（2026-11-04）（5/5） | REQ-2.7、REQ-1.1 | 8ba218d + a484c68（流式形态 A） |
+| REQ-3.5 | 记忆服务（session/user） | 已完成 | additive | 已验收（2026-11-11，理解默认通过）（14/14） | REQ-2.1（需求卡前置；本期实现不感知 MCP，MCP 暴露在 REQ-3.6） | 待回填 |
 
 ## 接口清单（来自 Controller）
 
@@ -46,6 +47,9 @@
 | GET | /v1/mcp/tools | McpToolController#list | REQ-2.2, REQ-2.3 |
 | POST | /v1/mcp/tools/{toolName}:call | McpCallController#call | REQ-2.3 |
 | POST | /v1/mcp/tools/refresh | McpToolController#refresh | REQ-2.2 |
+| POST | /v1/memory/clear | MemoryController#clear | REQ-3.5 |
+| POST | /v1/memory/recall | MemoryController#recall | REQ-3.5 |
+| POST | /v1/memory/save | MemoryController#save | REQ-3.5 |
 | GET | /v1/models | ModelController#listModels | REQ-1.2 |
 | GET | /v1/prompts | PromptController#list | REQ-2.4, REQ-2.5 |
 | POST | /v1/prompts | PromptController#create | REQ-2.4, REQ-2.5 |
@@ -71,6 +75,13 @@
 |---|---|---|---|---|---|
 | mcp_servers | MCP Server 注册：server_id（UUID）/ name（唯一、禁 "__"）/ transport / endpoint / command / args / status（ACTIVE/DOWN）/ last_health_at / metadata（description、lastError） | 独立配置类表；工具目录为运行时缓存（REQ-2.2） | active | REQ-2.1 | ✓ |
 | prompt_templates | Prompt 模板与版本：name / version / content / variables / status（DRAFT/PUBLISHED/ARCHIVED） | 同 name 多版本（name+version 唯一） | active | REQ-2.4 | ✓ |
+
+### RAG 与记忆
+
+| 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
+|---|---|---|---|---|---|
+| memories | 记忆：memory_id（UUID）/ tenant_id / project_id / user_id / session_id / memory_type（SESSION/USER）/ content / metadata（JSONB）/ expires_at；TTL 查询时过滤 | 按 tenant + project + user（+ session）逻辑分组，无强外键；用户级记忆可跨项目共享（配置开启） | active | REQ-3.5 | ✓ |
+| memory_audit_logs | 物理删除审计：audit_id / 作用域 / operation（CLEAR）/ deleted_count / memory_ids（JSONB，最多 1000 条）/ operator_key / reason | 与 memories 通过 audit_id 独立；保存删除快照，不做外键 | active | REQ-3.5 | ✓ |
 
 ## 配置（application.yml 顶层键）
 
@@ -98,6 +109,8 @@
 | GET /v1/prompts/{name} | REQ-2.4 |
 | GET /v1/prompts/{name}/versions | REQ-2.4 |
 | mcp_servers | REQ-2.1 |
+| memories | REQ-3.5 |
+| memory_audit_logs | REQ-3.5 |
 | POST /chat/completions | REQ-1.1, REQ-1.3 |
 | POST /key/block | REQ-1.3 |
 | POST /key/generate | REQ-1.3 |
@@ -110,6 +123,9 @@
 | POST /v1/mcp/servers/{serverId}/reprobe | REQ-2.1 |
 | POST /v1/mcp/tools/{toolName}:call | REQ-2.3 |
 | POST /v1/mcp/tools/refresh | REQ-2.2 |
+| POST /v1/memory/clear | REQ-3.5 |
+| POST /v1/memory/recall | REQ-3.5 |
+| POST /v1/memory/save | REQ-3.5 |
 | POST /v1/prompts | REQ-2.4 |
 | POST /v1/prompts/{name}/chat | REQ-2.5 |
 | POST /v1/prompts/{name}/publish | REQ-2.4 |
@@ -124,7 +140,7 @@
 
 ## 测试
 
-- 234 个 @Test / 45 个测试类
+- 269 个 @Test / 51 个测试类
 
 ## 下一步
 

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.MemoryMapper">
+
+    <resultMap id="MemoryResultMap" type="com.qtua.aihub.dal.model.MemoryDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="memory_id" property="memoryId" jdbcType="VARCHAR"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="project_id" property="projectId" jdbcType="VARCHAR"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="session_id" property="sessionId" jdbcType="VARCHAR"/>
+        <result column="memory_type" property="memoryType" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="VARCHAR"/>
+        <result column="metadata" property="metadata" jdbcType="VARCHAR"/>
+        <result column="expires_at" property="expiresAt" jdbcType="TIMESTAMP"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="columns">
+        id, memory_id, tenant_id, project_id, user_id, session_id, memory_type,
+        content, CAST(metadata AS VARCHAR) AS metadata, expires_at, created_at
+    </sql>
+
+    <insert id="insert" parameterType="com.qtua.aihub.dal.model.MemoryDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO memories
+            (memory_id, tenant_id, project_id, user_id, session_id, memory_type,
+             content, metadata, expires_at, created_at)
+        VALUES
+            (#{memoryId,jdbcType=VARCHAR}, #{tenantId,jdbcType=VARCHAR},
+             #{projectId,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR},
+             #{sessionId,jdbcType=VARCHAR}, #{memoryType,jdbcType=VARCHAR},
+             #{content,jdbcType=VARCHAR}, CAST(#{metadata,jdbcType=VARCHAR} AS JSONB),
+             #{expiresAt,jdbcType=TIMESTAMP}, #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="selectForRecall" resultMap="MemoryResultMap">
+        SELECT <include refid="columns"/>
+        FROM memories
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND user_id = #{userId,jdbcType=VARCHAR}
+          AND (expires_at IS NULL OR expires_at &gt; CURRENT_TIMESTAMP)
+        <choose>
+            <when test="sessionId != null and sessionId != ''">
+                AND session_id = #{sessionId,jdbcType=VARCHAR}
+                AND project_id = #{projectId,jdbcType=VARCHAR}
+            </when>
+            <otherwise>
+                AND session_id IS NULL
+                <if test="!crossProject">
+                    AND project_id = #{projectId,jdbcType=VARCHAR}
+                </if>
+            </otherwise>
+        </choose>
+        <if test="keywordPattern != null">
+            AND LOWER(content) LIKE LOWER(#{keywordPattern,jdbcType=VARCHAR}) ESCAPE '\'
+        </if>
+        <if test="from != null">
+            AND created_at &gt;= #{from,jdbcType=TIMESTAMP}
+        </if>
+        <if test="to != null">
+            AND created_at &lt;= #{to,jdbcType=TIMESTAMP}
+        </if>
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{limit,jdbcType=INTEGER}
+    </select>
+
+    <select id="selectIdsForClear" resultType="java.lang.String">
+        SELECT memory_id
+        FROM memories
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND project_id = #{projectId,jdbcType=VARCHAR}
+          AND user_id = #{userId,jdbcType=VARCHAR}
+        <if test="sessionId != null and sessionId != ''">
+            AND session_id = #{sessionId,jdbcType=VARCHAR}
+        </if>
+        ORDER BY id DESC
+        LIMIT #{limit,jdbcType=INTEGER}
+    </select>
+
+    <delete id="deleteByScope">
+        DELETE FROM memories
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND project_id = #{projectId,jdbcType=VARCHAR}
+          AND user_id = #{userId,jdbcType=VARCHAR}
+        <if test="sessionId != null and sessionId != ''">
+            AND session_id = #{sessionId,jdbcType=VARCHAR}
+        </if>
+    </delete>
+</mapper>

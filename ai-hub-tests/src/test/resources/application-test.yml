@@ -14,3 +14,4 @@ spring:
         - classpath:db/api-keys-schema.sql
         - classpath:db/call-logs-schema.sql
         - classpath:db/mcp-prompt-schema.sql
+        - classpath:db/memories-schema.sql

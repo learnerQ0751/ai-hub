@@ -278,6 +278,19 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * 记忆访问被拒绝（403）。
+     *
+     * <p>典型场景：未开启跨项目共享却请求跨项目召回。错误体字段保持英文协议值。</p>
+     *
+     * @param message 中文错误描述
+     * @return 业务异常
+     */
+    public static ChatCompletionException memoryAccessDenied(String message) {
+        return new ChatCompletionException(HttpStatus.FORBIDDEN, message,
+                "memory_access_denied", "cross_project", "403", null, false);
+    }
+
+    /**
      * 网关内部错误（500）。
      *
      * @param message 错误描述

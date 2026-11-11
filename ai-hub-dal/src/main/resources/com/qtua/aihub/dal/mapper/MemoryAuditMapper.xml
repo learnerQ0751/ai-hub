@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.MemoryAuditMapper">
+
+    <resultMap id="MemoryAuditResultMap" type="com.qtua.aihub.dal.model.MemoryAuditDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="audit_id" property="auditId" jdbcType="VARCHAR"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="project_id" property="projectId" jdbcType="VARCHAR"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="session_id" property="sessionId" jdbcType="VARCHAR"/>
+        <result column="operation" property="operation" jdbcType="VARCHAR"/>
+        <result column="deleted_count" property="deletedCount" jdbcType="INTEGER"/>
+        <result column="memory_ids" property="memoryIds" jdbcType="VARCHAR"/>
+        <result column="operator_key" property="operatorKey" jdbcType="VARCHAR"/>
+        <result column="reason" property="reason" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.qtua.aihub.dal.model.MemoryAuditDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO memory_audit_logs
+            (audit_id, tenant_id, project_id, user_id, session_id, operation,
+             deleted_count, memory_ids, operator_key, reason, created_at)
+        VALUES
+            (#{auditId,jdbcType=VARCHAR}, #{tenantId,jdbcType=VARCHAR},
+             #{projectId,jdbcType=VARCHAR}, #{userId,jdbcType=VARCHAR},
+             #{sessionId,jdbcType=VARCHAR}, #{operation,jdbcType=VARCHAR},
+             #{deletedCount,jdbcType=INTEGER}, CAST(#{memoryIds,jdbcType=VARCHAR} AS JSONB),
+             #{operatorKey,jdbcType=VARCHAR}, #{reason,jdbcType=VARCHAR},
+             #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="selectByAuditId" resultMap="MemoryAuditResultMap">
+        SELECT id, audit_id, tenant_id, project_id, user_id, session_id, operation,
+               deleted_count, CAST(memory_ids AS VARCHAR) AS memory_ids,
+               operator_key, reason, created_at
+        FROM memory_audit_logs
+        WHERE audit_id = #{auditId,jdbcType=VARCHAR}
+    </select>
+</mapper>

@@ -1,5 +1,7 @@
 package com.qtua.aihub.dal.model;
 
+import com.qtua.aihub.common.constant.CallTypes;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 
@@ -38,8 +40,8 @@ public class CallLogDO {
     private boolean fallbackUsed;
     /** 最终服务的别名；正常等于请求别名，fallback 时为备用别名。 */
     private String servedAlias;
-    /** 调用类型：CHAT/MCP/PROMPT（REQ-2.3）。 */
-    private String callType = "CHAT";
+    /** 调用类型：CHAT/MCP/PROMPT/MEMORY（REQ-2.3、REQ-3.5）。 */
+    private String callType = CallTypes.CHAT;
     /** 调用目标：MCP 工具名 / Prompt 名等（REQ-2.3）。 */
     private String targetName;
 

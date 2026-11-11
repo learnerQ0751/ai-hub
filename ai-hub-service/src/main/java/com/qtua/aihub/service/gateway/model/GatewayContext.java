@@ -1,6 +1,7 @@
 package com.qtua.aihub.service.gateway.model;
 
 import com.qtua.aihub.api.model.auth.KeyAuthDTO;
+import com.qtua.aihub.common.constant.CallTypes;
 import com.qtua.aihub.common.metering.TokenUsage;
 import org.springframework.util.StringUtils;
 
@@ -38,9 +39,9 @@ public class GatewayContext {
     private volatile boolean failed;
     /** 流式请求：Filter 只预占，由 Controller 在流结束后收尾。 */
     private volatile boolean streaming;
-    /** 调用类型：CHAT/MCP/PROMPT（REQ-2.3 引入，接口无关治理用）。 */
-    private volatile String callType = "CHAT";
-    /** 调用目标：MCP 工具名 / Prompt 名（REQ-2.3）。 */
+    /** 调用类型：CHAT/MCP/PROMPT/MEMORY（REQ-2.3 引入，REQ-3.5 扩展）。 */
+    private volatile String callType = CallTypes.CHAT;
+    /** 调用目标：MCP 工具名 / Prompt 名 / 记忆操作名（REQ-2.3、REQ-3.5）。 */
     private volatile String targetName;
 
     /**
@@ -177,10 +178,10 @@ public class GatewayContext {
     }
 
     /**
-     * 设置调用类型与目标（MCP/Prompt 等非聊天入口使用）。
+     * 设置调用类型与目标（MCP/Prompt/记忆等非聊天入口使用）。
      *
      * @param newCallType 调用类型
-     * @param newTarget   目标名（工具名/Prompt 名）
+     * @param newTarget   目标名（工具名/Prompt 名/记忆操作名）
      */
     public void setCallTarget(String newCallType, String newTarget) {
         this.callType = newCallType;
@@ -193,7 +194,16 @@ public class GatewayContext {
      * @return true 表示 MCP 调用
      */
     public boolean isMcpCall() {
-        return "MCP".equals(callType);
+        return CallTypes.MCP.equals(callType);
+    }
+
+    /**
+     * 是否为记忆服务调用。
+     *
+     * @return true 表示记忆调用
+     */
+    public boolean isMemoryCall() {
+        return CallTypes.MEMORY.equals(callType);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.qtua.aihub.manager.model;
 
+import com.qtua.aihub.common.constant.CallTypes;
 import com.qtua.aihub.common.metering.TokenUsage;
 
 import java.math.BigDecimal;
@@ -27,7 +28,7 @@ import java.util.Objects;
  * @param servedAlias     最终服务的别名；正常等于请求别名
  * @param retryCount      本请求内失败尝试次数
  * @param fallbackUsed    是否发生别名级 fallback
- * @param callType        调用类型：CHAT/MCP/PROMPT（REQ-2.3）
+ * @param callType        调用类型：CHAT/MCP/PROMPT/MEMORY（REQ-2.3、REQ-3.5）
  * @param targetName      调用目标：MCP 工具名 / Prompt 名（REQ-2.3）
  */
 public record CallLogBO(
@@ -56,7 +57,8 @@ public record CallLogBO(
                      String errorType, String tenantId, Instant createdAt, String servedAlias,
                      int retryCount, boolean fallbackUsed) {
         this(requestId, keyId, modelAlias, deploymentModel, usage, cost, latencyMs, status,
-                errorType, tenantId, createdAt, servedAlias, retryCount, fallbackUsed, "CHAT", null);
+                errorType, tenantId, createdAt, servedAlias, retryCount, fallbackUsed,
+                CallTypes.CHAT, null);
     }
 
     /**
@@ -78,7 +80,7 @@ public record CallLogBO(
                      TokenUsage usage, BigDecimal cost, long latencyMs, int status,
                      String errorType, String tenantId, Instant createdAt) {
         this(requestId, keyId, modelAlias, deploymentModel, usage, cost, latencyMs, status,
-                errorType, tenantId, createdAt, modelAlias, 0, false, "CHAT", null);
+                errorType, tenantId, createdAt, modelAlias, 0, false, CallTypes.CHAT, null);
     }
 
     /**
@@ -88,6 +90,6 @@ public record CallLogBO(
         Objects.requireNonNull(usage, "usage must not be null");
         cost = Objects.isNull(cost) ? BigDecimal.ZERO : cost;
         createdAt = Objects.isNull(createdAt) ? Instant.now() : createdAt;
-        callType = Objects.isNull(callType) ? "CHAT" : callType;
+        callType = Objects.isNull(callType) ? CallTypes.CHAT : callType;
     }
 }

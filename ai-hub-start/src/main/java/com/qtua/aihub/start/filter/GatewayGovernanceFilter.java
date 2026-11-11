@@ -3,6 +3,7 @@ package com.qtua.aihub.start.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.api.model.auth.KeyAuthDTO;
 import com.qtua.aihub.api.model.res.ErrorResponse;
+import com.qtua.aihub.common.constant.CallTypes;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.service.gateway.GatewayGovernanceService;
 import com.qtua.aihub.service.gateway.model.GatewayContext;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 /**
  * 网关治理过滤器。
@@ -47,9 +49,10 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     private static final String PROMPT_PREFIX = "/v1/prompts/";
     private static final String PROMPT_CHAT_SUFFIX = "/chat";
     private static final String MCP_SERVER_PATH = "/mcp";
+    private static final String MEMORY_PREFIX = "/v1/memory/";
+    private static final Set<String> MEMORY_PATHS = Set.of(
+            MEMORY_PREFIX + "save", MEMORY_PREFIX + "recall", MEMORY_PREFIX + "clear");
     private static final String UTF_8 = "UTF-8";
-    private static final String CALL_TYPE_MCP = "MCP";
-    private static final String CALL_TYPE_PROMPT = "PROMPT";
 
     private final GatewayGovernanceService governanceService;
     private final ObjectMapper objectMapper;
@@ -78,7 +81,8 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         if (CHAT_PATH_V1.equals(relative) || CHAT_PATH.equals(relative)) {
             return false;
         }
-        if (isPromptChat(relative) || MCP_SERVER_PATH.equals(relative)) {
+        if (isPromptChat(relative) || MCP_SERVER_PATH.equals(relative)
+                || MEMORY_PATHS.contains(relative)) {
             return false;
         }
         return !(relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX));
@@ -165,13 +169,16 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         CachedBodyRequestWrapper wrapped = new CachedBodyRequestWrapper(request);
         String relative = relativePath(request);
         if (relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX)) {
-            context.setCallTarget(CALL_TYPE_MCP, mcpToolName(request));
+            context.setCallTarget(CallTypes.MCP, mcpToolName(request));
         } else if (MCP_SERVER_PATH.equals(relative)) {
             // JSON-RPC 目标从请求体解析（tools/call 取工具名）。
-            context.setCallTarget(CALL_TYPE_MCP, mcpServerTarget(wrapped.getBody()));
+            context.setCallTarget(CallTypes.MCP, mcpServerTarget(wrapped.getBody()));
         } else if (isPromptChat(relative)) {
             // targetName 先置模板名；Controller 渲染后回填 name@vN。
-            context.setCallTarget(CALL_TYPE_PROMPT, promptName(request));
+            context.setCallTarget(CallTypes.PROMPT, promptName(request));
+        } else if (MEMORY_PATHS.contains(relative)) {
+            // 记忆调用只做 RPM，targetName 记录 save/recall/clear。
+            context.setCallTarget(CallTypes.MEMORY, relative.substring(MEMORY_PREFIX.length()));
         }
         wrapped.setAttribute(GatewayContext.ATTRIBUTE, context);
         try {

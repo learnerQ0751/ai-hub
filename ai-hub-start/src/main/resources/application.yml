@@ -39,3 +39,11 @@ gateway:
     fail-open: true
     window-seconds: 60
     default-max-tokens: 1024
+  memory:
+    # 默认项目隔离；开启后仅用户级记忆（session_id 为空）可跨项目召回
+    cross-project-sharing-enabled: false
+    max-ttl-seconds: 7776000
+    max-content-length: 10000
+    max-metadata-length: 8192
+    default-recall-limit: 20
+    max-recall-limit: 100

@@ -206,4 +206,46 @@
         <Class name="com.qtua.aihub.start.controller.McpServerController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <!-- 记忆服务（REQ-3.5）：record 的 Map/List 已在紧凑构造器中防御性拷贝，SpotBugs 无法推断 -->
+    <Match>
+        <Class name="com.qtua.aihub.common.memory.MemoryEntry"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.model.MemoryBO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.model.MemoryAuditBO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.model.MemoryAuditBO"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.req.MemorySaveReqDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.MemoryResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.MemoryRecallResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露（记忆服务） -->
+    <Match>
+        <Class name="com.qtua.aihub.manager.memory.MemoryManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.MemoryServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.start.controller.MemoryController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

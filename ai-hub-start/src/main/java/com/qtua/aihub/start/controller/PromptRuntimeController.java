@@ -6,6 +6,7 @@ import com.qtua.aihub.api.model.req.PromptChatReqDTO;
 import com.qtua.aihub.api.model.req.PromptRenderReqDTO;
 import com.qtua.aihub.api.model.res.PromptChatResDTO;
 import com.qtua.aihub.api.model.res.PromptRenderResDTO;
+import com.qtua.aihub.common.constant.CallTypes;
 import com.qtua.aihub.service.gateway.model.GatewayContext;
 import com.qtua.aihub.start.filter.AuthFilter;
 import com.qtua.aihub.start.filter.RequestIdFilter;
@@ -27,8 +28,6 @@ import java.util.Objects;
  */
 @RestController
 public class PromptRuntimeController {
-
-    private static final String CALL_TYPE_PROMPT = "PROMPT";
 
     private final PromptChatService promptChatService;
 
@@ -78,7 +77,7 @@ public class PromptRuntimeController {
         GatewayContext context = (GatewayContext) request.getAttribute(GatewayContext.ATTRIBUTE);
         if (Objects.nonNull(context)) {
             // 日志精确到实际使用的模板版本。
-            context.setCallTarget(CALL_TYPE_PROMPT,
+            context.setCallTarget(CallTypes.PROMPT,
                     result.promptName() + "@v" + result.version());
             context.complete(result.usage(), result.deploymentModel(),
                     result.servedAlias(), result.retryCount(), result.fallbackUsed());

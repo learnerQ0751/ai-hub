@@ -20,16 +20,22 @@
 | mcp_servers | MCP Server 注册：server_id（UUID）/ name（唯一、禁 "__"）/ transport / endpoint / command / args / status（ACTIVE/DOWN）/ last_health_at / metadata（description、lastError） | 独立配置类表；工具目录为运行时缓存（REQ-2.2） | active | REQ-2.1 |
 | prompt_templates | Prompt 模板与版本：name / version / content / variables / status（DRAFT/PUBLISHED/ARCHIVED） | 同 name 多版本（name+version 唯一） | active | REQ-2.4 |
 
+### RAG 与记忆
+
+| 表 | 用途 | 关键关系 | 状态 | 引入需求 |
+|---|---|---|---|---|
+| memories | 记忆：memory_id（UUID）/ tenant_id / project_id / user_id / session_id / memory_type（SESSION/USER）/ content / metadata（JSONB）/ expires_at；TTL 查询时过滤 | 按 tenant + project + user（+ session）逻辑分组，无强外键；用户级记忆可跨项目共享（配置开启） | active | REQ-3.5 |
+| memory_audit_logs | 物理删除审计：audit_id / 作用域 / operation（CLEAR）/ deleted_count / memory_ids（JSONB，最多 1000 条）/ operator_key / reason | 与 memories 通过 audit_id 独立；保存删除快照，不做外键 | active | REQ-3.5 |
+
 ## 规划表（planned，仅供设计参考，不进入 STATUS）
 
 
-### RAG 与记忆
+### RAG
 
 | 表 | 用途 | 关键关系 | 状态 | 引入需求 |
 |---|---|---|---|---|
 | rag_documents | 文档元数据：doc_id / hash / source / project_id | 文档 1:N 切片 | planned | REQ-3.1 |
 | rag_chunks | 切片与向量：chunk_id / doc_id / content / vector / status | N:1 rag_documents（doc_id） | planned | REQ-3.1 / REQ-3.2 |
-| memories | 记忆：user_id / session_id / content / metadata / TTL | 按 user/session 逻辑分组，无强外键 | planned | REQ-3.5 |
 
 ### 治理
 
@@ -41,8 +47,49 @@
 
 - `api_keys` 1:N `call_logs`：通过 `call_logs.key_id` 逻辑关联（弱关联，不建外键；master 调用 key_id 为 NULL）。
 - `mcp_servers` / `prompt_templates`：独立配置类表，无强外键；`call_logs.call_type + target_name` 记录 MCP/Prompt 调用轨迹。
+- `memories` / `memory_audit_logs`：记忆按作用域列逻辑隔离，不建外键；物理删除审计保存 `memory_ids` 快照，避免与已删除记忆耦合。
 - 规划关系见上方规划表；实现后迁入「当前表」区并更新本节。
 
 ## ER 图
 
-- 表数量 ≥5 时补充 `acceptance/assets/data-model.drawio|svg`，并在本文件与 `DESIGN.md` 引用；当前 4 张表，暂不画。
+- 当前 6 张表：本文件用 Mermaid `erDiagram` 维护速查图。
+- 第 3 期毕业验收时与 RAG 表合并，统一输出 `acceptance/assets/data-model.drawio|svg` 并在此引用（并行批次避免重复维护）。
+
+```mermaid
+erDiagram
+    api_keys ||--o{ call_logs : "key_id（弱关联）"
+    memories ||--o{ memory_audit_logs : "按删除快照记录"
+    api_keys {
+        string key_hash PK
+        jsonb models
+    }
+    call_logs {
+        string request_id
+        string key_id FK
+        string call_type
+        string target_name
+    }
+    mcp_servers {
+        string server_id PK
+        string name
+    }
+    prompt_templates {
+        string name
+        int version
+    }
+    memories {
+        string memory_id PK
+        string tenant_id
+        string project_id
+        string user_id
+        string session_id
+        string memory_type
+        timestamp expires_at
+    }
+    memory_audit_logs {
+        string audit_id PK
+        string operation
+        int deleted_count
+        jsonb memory_ids
+    }
+```

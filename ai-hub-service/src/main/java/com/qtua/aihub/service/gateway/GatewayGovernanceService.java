@@ -85,8 +85,8 @@ public class GatewayGovernanceService {
      * @param requestBody 请求体
      */
     public void reserve(GatewayContext context, String requestBody) {
-        if (context.isMcpCall()) {
-            reserveMcp(context);
+        if (context.isMcpCall() || context.isMemoryCall()) {
+            reserveToolCall(context);
             return;
         }
         JsonNode root = parseQuietly(requestBody);
@@ -119,13 +119,13 @@ public class GatewayGovernanceService {
     }
 
     /**
-     * MCP 调用预占：只做 Key 级 RPM，TPM/预算不适用（工具调用不计 Token/费用）。
+     * 工具类调用预占（MCP / 记忆）：只做 Key 级 RPM，TPM/预算不适用。
      *
      * @param context 治理上下文
      */
-    private void reserveMcp(GatewayContext context) {
+    private void reserveToolCall(GatewayContext context) {
         KeyAuthDTO auth = context.getAuth();
-        // 用工具名作为 RPM 的 model 维度，日志 model_alias 也记录工具名。
+        // 用工具名/操作名作为 RPM 的 model 维度，日志 model_alias 也记录同一目标。
         context.setModelAlias(context.getTargetName());
         GuardRequest request = new GuardRequest(context.getRequestId(), context.getKeyHash(),
                 context.getTargetName(), auth.rpmLimit(), null, null, null, 0, BigDecimal.ZERO);
@@ -141,8 +141,8 @@ public class GatewayGovernanceService {
         if (ObjectUtils.isEmpty(context)) {
             return;
         }
-        if (context.isMcpCall()) {
-            completeMcp(context);
+        if (context.isMcpCall() || context.isMemoryCall()) {
+            completeToolCall(context);
             return;
         }
         if (!context.hasModelAlias()) {
@@ -158,11 +158,11 @@ public class GatewayGovernanceService {
     }
 
     /**
-     * MCP 成功收尾：结算 RPM 预占并写日志（cost=0）。
+     * 工具类调用成功收尾（MCP / 记忆）：结算 RPM 预占并写日志（cost=0）。
      *
      * @param context 治理上下文
      */
-    private void completeMcp(GatewayContext context) {
+    private void completeToolCall(GatewayContext context) {
         GuardReservation reservation = context.getReservation();
         if (Objects.nonNull(reservation)) {
             gatewayGuard.settle(reservation, TokenUsage.ZERO, BigDecimal.ZERO);
@@ -183,7 +183,7 @@ public class GatewayGovernanceService {
         if (Objects.nonNull(reservation)) {
             gatewayGuard.release(reservation);
         }
-        if (context.isMcpCall() || context.hasModelAlias()) {
+        if (context.isMcpCall() || context.isMemoryCall() || context.hasModelAlias()) {
             recordLog(context, TokenUsage.ZERO, BigDecimal.ZERO,
                     context.getStatus(), context.getErrorType());
         }
