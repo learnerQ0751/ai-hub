@@ -1,0 +1,100 @@
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagUsageResDTO.java
+  s_46733549857ff7::t_34a6b0a2ae2ae8 1-16
+ai-hub-service/src/main/java/com/qtua/aihub/service/RagAnswerServiceImpl.java
+  s_46733549857ff7::t_aa8e296080b9a6 1-121,123-128,131-133,135-138,140,143-161,163-164,167-173,175-254,264
+  s_46733549857ff7::t_e444047fc683e0 122
+  s_46733549857ff7::t_578668f49211ce 129-130,134,139,141-142
+  s_46733549857ff7::t_eb952a0e5d2c60 162,165-166,174
+  s_46733549857ff7::t_e1e4a3fc9a9ab9 255-263
+ai-workflow/records/REQ-3.4.md
+  s_46733549857ff7::t_9e393e2f49fd14 126-130,137-138,142-149,153-157
+  s_46733549857ff7::t_bb7b5f647b7345 131-136
+  s_46733549857ff7::t_c57b54f80b1140 1-3,5-125,139-141,150-152
+  s_46733549857ff7::t_60f3040d051db5 4
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/RagAnswerController.java
+  s_46733549857ff7::t_339f582c396440 1-50
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagPromptBuilder.java
+  s_46733549857ff7::t_ecee48d226c0a2 1-80
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/RagProperties.java
+  s_46733549857ff7::t_5cfc27c2faa7ea 34-35
+  s_46733549857ff7::t_f97dde247bace7 51-52
+  s_46733549857ff7::t_aa46970992112c 406-462
+  s_46733549857ff7::t_3865d4394b90ee 110-117
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/RagAnswerReqDTO.java
+  s_46733549857ff7::t_357f03c3a96c80 1-26
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagCitationResDTO.java
+  s_46733549857ff7::t_a34bc65d5a8432 1-20
+ai-hub-start/src/main/resources/application.yml
+  s_46733549857ff7::t_9c576b773a5a83 93-100
+ai-hub-tests/src/test/resources/application-test.yml
+  s_46733549857ff7::t_d1638109efabb8 49-54
+ai-workflow/requirements/INDEX.md
+  s_46733549857ff7::t_9a1a86793b88b6 29
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagAnswerPrompt.java
+  s_46733549857ff7::t_a3ef9c2d0c8f2c 1-24
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagPromptBuilderTest.java
+  s_46733549857ff7::t_82848c5f0d583c 1-76
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagAnswerResDTO.java
+  s_46733549857ff7::t_fd63f45365bb21 1-39
+ai-hub-tests/src/test/resources/rag/golden-questions.yml
+  s_46733549857ff7::t_d3c917b15f8e97 1-42
+ai-hub-tests/src/test/java/com/qtua/aihub/RagAnswerIntegrationTest.java
+  s_46733549857ff7::t_4c0014f1c6dfb9 280-289
+  s_46733549857ff7::t_f8fb1ab29c2bfa 68
+  s_46733549857ff7::t_ded64e49bd4772 148-151,154,156-157
+  s_46733549857ff7::t_4e3eacf4a46989 1-67,69-147,152-153,155,158-279,290-308
+config/spotbugs-exclude.xml
+  s_46733549857ff7::t_39dece7cb7321b 345-361
+  s_46733549857ff7::t_6fdb82537ef9ae 276-278
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/GatewayGovernanceFilter.java
+  s_46733549857ff7::t_3d62e67614bb9c 67
+  s_46733549857ff7::t_0a1e9f3d9fff92 58
+  s_46733549857ff7::t_9ceaa3a8fd192b 261-263
+ai-hub-tests/src/test/java/com/qtua/aihub/RagGoldenQuestionRegressionTest.java
+  s_46733549857ff7::t_d0c135cf81559d 1-91,94-235
+  s_46733549857ff7::t_c8846a28caef6d 92-93
+ai-hub-api/src/main/java/com/qtua/aihub/api/RagAnswerService.java
+  s_46733549857ff7::t_539dbb4211953e 1-24
+ai-hub-service/src/test/java/com/qtua/aihub/service/RagAnswerServiceTest.java
+  s_46733549857ff7::t_4cce04cbb58478 1-241
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagAnswerCitation.java
+  s_46733549857ff7::t_e5270c6e9b8248 1-14
+ai-workflow/DESIGN.md
+  s_46733549857ff7::t_ee4338d59e5747 449-451
+  s_46733549857ff7::t_6e1eeed46c8c1a 474
+  s_46733549857ff7::t_797d1d57624c58 13
+  s_46733549857ff7::t_429ec55dd317b8 359-395
+  s_46733549857ff7::t_fa31de2ceb6e6a 4
+ai-workflow/acceptance/REQ-3.4.md
+  s_46733549857ff7::t_75f7d8a53a8dd0 118-121,125
+  s_46733549857ff7::t_c205726690f946 3
+  s_46733549857ff7::t_88b45c3d45d061 12,14,17,19,21-24,26-27,29-31
+  s_46733549857ff7::t_4751c9ca5f394f 1-2,4-11,13,15-16,18,20,25,28,32-117
+  s_46733549857ff7::t_192b080d07bd8c 122-124,126-127
+ai-workflow/STATUS.md
+  s_99caaf43fe4205::t_44baec8bda15fe 6,32,66,149,165,172
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0063c385e1cc5bc49b235bb874816e1440af7124",
+  "prompts": {},
+  "sessions": {
+    "s_46733549857ff7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f0aec044-4dde-4913-a4d9-fed29e1f8d3d",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_99caaf43fe4205": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "daffa154-6ea9-4269-bbdf-0573c10c0552",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
