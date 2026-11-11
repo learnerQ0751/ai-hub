@@ -405,4 +405,9 @@
         <Class name="com.qtua.aihub.integration.rag.DeterministicEmbeddingModel"/>
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
     </Match>
+    <!-- REQ-3.6：Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露 -->
+    <Match>
+        <Class name="com.qtua.aihub.start.mcp.McpRagMemoryTools"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

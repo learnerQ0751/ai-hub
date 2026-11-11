@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-11 17:43
+**最后更新**：2026-11-11 18:12
 
 ## 需求进度
 
@@ -31,6 +31,7 @@
 | REQ-3.3 | 检索与重排 | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（13/13） | REQ-3.2 | 63f2b28 |
 | REQ-3.4 | RAG 生成 + 引用溯源 | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（13/13） | REQ-3.3、REQ-1.1 | 0063c38 |
 | REQ-3.5 | 记忆服务（session/user） | 已完成 | additive | 已验收（2026-11-11，理解默认通过）（14/14） | REQ-2.1（需求卡前置；本期实现不感知 MCP，MCP 暴露在 REQ-3.6） | c692b9c |
+| REQ-3.6 | RAG/记忆 MCP Server 暴露 | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（11/11） | REQ-3.1、REQ-3.2、REQ-3.3、REQ-3.4、REQ-3.5、REQ-2.6 | 待回填 |
 
 ## 接口清单（来自 Controller）
 
@@ -132,6 +133,7 @@
 | POST /key/unblock | REQ-1.3 |
 | POST /mcp | REQ-2.6 |
 | POST /mcp：tools/list 合并注册工具；tools/call 支持聚合工具路由 | REQ-2.7 |
+| POST /mcp：新增 MCP 工具 ingest_document / search_knowledge / rag_answer / save_memory / recall_memory / clear_memory | REQ-3.6 |
 | POST /v1/chat/completions | REQ-1.1, REQ-1.2, REQ-1.3 |
 | POST /v1/chat/completions：支持 tools:[{type:mcp | REQ-2.8 |
 | POST /v1/mcp/servers | REQ-2.1 |
@@ -162,7 +164,7 @@
 
 ## 测试
 
-- 377 个 @Test / 68 个测试类
+- 387 个 @Test / 70 个测试类
 
 ## 下一步
 
@@ -170,6 +172,7 @@
 - 验收 REQ-3.2 Embedding 抽象 + 向量存储 → 打开 `acceptance/REQ-3.2.md`
 - 验收 REQ-3.3 检索与重排 → 打开 `acceptance/REQ-3.3.md`
 - 验收 REQ-3.4 RAG 生成 + 引用溯源 → 打开 `acceptance/REQ-3.4.md`
+- 验收 REQ-3.6 RAG/记忆 MCP Server 暴露 → 打开 `acceptance/REQ-3.6.md`
 
 <!-- STATUS:GENERATED:END -->
 

@@ -28,7 +28,7 @@
 | REQ-3.3 | 检索与重排 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 已完成 | REQ-3.2 | additive | `acceptance/REQ-3.3.md` |
 | REQ-3.4 | RAG 生成 + 引用溯源 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 已完成 | REQ-3.3 | additive | `acceptance/REQ-3.4.md` |
 | REQ-3.5 | 记忆服务（session/user） | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 已完成 | REQ-2.1 | additive | `acceptance/REQ-3.5.md` |
-| REQ-3.6 | RAG/记忆 MCP Server 暴露 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 待实现 | REQ-3.4、REQ-3.5 | — | — |
+| REQ-3.6 | RAG/记忆 MCP Server 暴露 | 第 3 期 | `12-项目7-第3期-RAG与记忆服务.md` | 已完成 | REQ-3.4、REQ-3.5 | additive | `acceptance/REQ-3.6.md` |
 | REQ-4.1 | 多租户贯穿与隔离 | 第 4 期 | `13-项目7-第4期-治理收尾.md` | 待实现 | REQ-1.3 | — | — |
 | REQ-4.2 | 全链路 Trace | 第 4 期 | `13-项目7-第4期-治理收尾.md` | 待实现 | REQ-1.5 | — | — |
 | REQ-4.3 | 成本与用量统计 | 第 4 期 | `13-项目7-第4期-治理收尾.md` | 待实现 | REQ-1.5 | — | — |

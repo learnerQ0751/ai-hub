@@ -33,9 +33,10 @@ import java.util.Objects;
 /**
  * ai-hub 的 MCP Server 端点（REQ-2.6）。
  *
- * <p>原生 JSON-RPC 2.0 over HTTP，暴露三个工具：
+ * <p>原生 JSON-RPC 2.0 over HTTP，暴露平台工具与第三期 RAG/记忆工具：
  * {@code chat_completion}（复用 chat 链路）、{@code list_models}、{@code prompts_get}
- * （复用 Prompt 渲染）。鉴权与治理由 AuthFilter / GatewayGovernanceFilter 统一完成。</p>
+ * （复用 Prompt 渲染），以及 {@link McpRagMemoryTools} 提供的 6 个 RAG/记忆工具。
+ * 鉴权与治理由 AuthFilter / GatewayGovernanceFilter 统一完成。</p>
  */
 @RestController
 public class McpServerEndpoint {
@@ -53,6 +54,7 @@ public class McpServerEndpoint {
     private final PromptChatService promptChatService;
     private final McpToolService mcpToolService;
     private final McpCallService mcpCallService;
+    private final McpRagMemoryTools ragMemoryTools;
 
     /**
      * 构造端点。
@@ -63,19 +65,22 @@ public class McpServerEndpoint {
      * @param promptChatService     Prompt 数据面服务
      * @param mcpToolService        工具目录（聚合注册 Server 的工具）
      * @param mcpCallService        MCP 调用代理（聚合工具路由）
+     * @param ragMemoryTools        RAG/记忆 MCP 工具（REQ-3.6）
      */
     public McpServerEndpoint(ObjectMapper objectMapper,
                              ChatCompletionService chatCompletionService,
                              ModelService modelService,
                              PromptChatService promptChatService,
                              McpToolService mcpToolService,
-                             McpCallService mcpCallService) {
+                             McpCallService mcpCallService,
+                             McpRagMemoryTools ragMemoryTools) {
         this.objectMapper = objectMapper;
         this.chatCompletionService = chatCompletionService;
         this.modelService = modelService;
         this.promptChatService = promptChatService;
         this.mcpToolService = mcpToolService;
         this.mcpCallService = mcpCallService;
+        this.ragMemoryTools = ragMemoryTools;
     }
 
     /**
@@ -151,6 +156,8 @@ public class McpServerEndpoint {
                 chatCompletionSchema()));
         tools.add(tool("list_models", "列出 ai-hub 可用的模型别名", emptySchema()));
         tools.add(tool("prompts_get", "渲染 Prompt 模板为消息列表（不调用模型）", promptsGetSchema()));
+        // REQ-3.6：RAG 与记忆工具，schema 与 REST 契约一致。
+        ragMemoryTools.appendToolDefinitions(tools);
         // 统一 MCP 入口（REQ-2.7）：把注册表里的第三方工具聚合暴露给 MCP 客户端。
         for (McpToolResDTO registered : mcpToolService.list(null, null).tools()) {
             try {
@@ -170,6 +177,12 @@ public class McpServerEndpoint {
         JsonNode arguments = params.path("arguments");
         if (!arguments.isObject()) {
             arguments = objectMapper.createObjectNode();
+        }
+        if (ragMemoryTools.supports(toolName)) {
+            // RAG/记忆工具：直接复用内部 Service，结果按 REST 契约序列化。
+            KeyAuthDTO auth = (KeyAuthDTO) request.getAttribute(AuthFilter.KEY_AUTH_ATTRIBUTE);
+            String requestId = (String) request.getAttribute(RequestIdFilter.ATTRIBUTE);
+            return contentResult(ragMemoryTools.call(toolName, arguments, auth, requestId));
         }
         if (!isPlatformTool(toolName)) {
             // 聚合工具：经调用代理路由到上游 MCP Server，result 原样返回。
