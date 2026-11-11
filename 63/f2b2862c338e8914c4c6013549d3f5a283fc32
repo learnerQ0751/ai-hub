@@ -1,0 +1,122 @@
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/RagProperties.java
+  s_46733549857ff7::t_5036cd6335fe5b 98-105
+  s_46733549857ff7::t_cf071fb8b5c7ce 26-33
+  s_46733549857ff7::t_84227506a83ad6 47-48
+  s_46733549857ff7::t_6dcf9dec6b4107 297-393
+ai-workflow/records/REQ-3.3.md
+  s_46733549857ff7::t_3edc3115ecfd5c 1-3,5-81,83-124,132-134,144-146
+  s_46733549857ff7::t_4d453f9a87160e 125-131,135-143,147-151
+  s_46733549857ff7::t_59f7f3ae3bbb2a 82
+  s_46733549857ff7::t_287e5f3bd7832d 4
+ai-hub-common/src/main/java/com/qtua/aihub/common/rag/RagSearchFilter.java
+  s_46733549857ff7::t_a7d14f84576355 1-30,32-64
+  s_46733549857ff7::t_e166b7effa7835 31
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagSearchResDTO.java
+  s_46733549857ff7::t_da728e97ef3e9a 1-34
+ai-hub-tests/src/test/resources/application-test.yml
+  s_46733549857ff7::t_5d2bf1c4d3ff4f 39-48
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagRetrievalResult.java
+  s_46733549857ff7::t_a615d60c8b2cfd 1-31
+ai-workflow/docs/DATA-MODEL.md
+  s_46733549857ff7::t_efa3b66bf6f855 53
+  s_46733549857ff7::t_85293b3c01e6ed 61
+  s_46733549857ff7::t_51acca4b42ffee 48
+  s_46733549857ff7::t_7d0b17ea388bef 31
+  s_46733549857ff7::t_512af6531a3a3f 107-113
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/RagSearchReqDTO.java
+  s_46733549857ff7::t_61fca2b08eaedb 1-22
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/RagChunkMapper.java
+  s_46733549857ff7::t_d265dfa9c76aca 33-39
+  s_46733549857ff7::t_afb0b3d927c283 32
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagSearchHitResDTO.java
+  s_46733549857ff7::t_7a70454b9fea4b 1-24
+ai-hub-service/src/test/java/com/qtua/aihub/service/RagSearchServiceTest.java
+  s_46733549857ff7::t_3cbbd985c9120d 1-160
+ai-hub-start/src/main/resources/application.yml
+  s_46733549857ff7::t_4be3e0f6f9ec5c 81-92
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagRetrievalCoreTest.java
+  s_46733549857ff7::t_51e3876038c572 1-210
+ai-workflow/requirements/INDEX.md
+  s_46733549857ff7::t_a071e80449ddd9 27-28
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagLexicalReranker.java
+  s_46733549857ff7::t_5cea1c663adb19 27
+  s_46733549857ff7::t_bed9f00074d8a6 1-9,11-26,28-36,38-75,78-82,84-113
+  s_46733549857ff7::t_bdb4a902a5d91c 10
+  s_46733549857ff7::t_10e11c1865de2c 76-77
+  s_46733549857ff7::t_43d41ad2552102 83
+  s_46733549857ff7::t_f308517d0e5ce6 37
+ai-hub-api/src/main/java/com/qtua/aihub/api/RagSearchService.java
+  s_46733549857ff7::t_54655b5408a59e 1-20
+config/spotbugs-exclude.xml
+  s_46733549857ff7::t_786df13ed182c8 273-275
+  s_46733549857ff7::t_36a5003499dfaf 305-322,327-341
+  s_46733549857ff7::t_b392fa86128a15 323-326
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/RagSearchFilterDTO.java
+  s_46733549857ff7::t_2a010efb1b144a 1-18
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagRetrievalCore.java
+  s_46733549857ff7::t_0fde304bdbd3ad 3
+  s_46733549857ff7::t_045d85bd75d207 80
+  s_46733549857ff7::t_2b0e37f4edb109 42,51,54-55,60
+  s_46733549857ff7::t_7990b536b2debe 1-2,4-41,43-50,52-53,56-59,61-79,81-149
+ai-hub-service/src/main/java/com/qtua/aihub/service/RagSearchServiceImpl.java
+  s_46733549857ff7::t_ebef93698a8ca9 1-210
+ai-workflow/DESIGN.md
+  s_46733549857ff7::t_b3b99158f97199 433
+  s_46733549857ff7::t_ddf1a212a6ed42 13
+  s_46733549857ff7::t_18eb24afb1c399 409-411
+  s_46733549857ff7::t_e88bba6715877e 4
+  s_46733549857ff7::t_65381bab24ccf4 45
+  s_46733549857ff7::t_a9acdb49752021 326-358
+ai-hub-common/src/main/java/com/qtua/aihub/common/rag/RagSearchRequest.java
+  s_46733549857ff7::t_c91edb59dcf111 1-39
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/rag/RagChunkManager.java
+  s_46733549857ff7::t_d0033e65c67bb3 59-70
+  s_46733549857ff7::t_0a78de11ea2b46 58
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/RagSearchController.java
+  s_46733549857ff7::t_57b2fe889a9412 1-42
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/GatewayGovernanceFilter.java
+  s_46733549857ff7::t_6731148787e445 256-258
+  s_46733549857ff7::t_ef880c5eaa1045 57,65
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagRetrievedChunk.java
+  s_46733549857ff7::t_061e4ecb63e029 1-21
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/RagChunkMapper.xml
+  s_46733549857ff7::t_bf6fb7a4cec4e2 46-55
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagLexicalRerankerTest.java
+  s_46733549857ff7::t_8b16ce5db7d83e 1-70
+ai-workflow/acceptance/REQ-3.3.md
+  s_46733549857ff7::t_ad74fbc93eb0ce 3
+  s_46733549857ff7::t_790f05373dd424 12,14-20,22,24,26-28
+  s_46733549857ff7::t_d0a9c675ba9c47 1-2,4-11,13,21,23,25,29-117
+  s_46733549857ff7::t_1a3efab8b546a0 118-123
+ai-hub-tests/src/test/java/com/qtua/aihub/RagSearchIntegrationTest.java
+  s_46733549857ff7::t_258795f84b69a1 1-99,106-130,133-134,136-138,143-158,160-297
+  s_46733549857ff7::t_46c29811206f3a 159
+  s_46733549857ff7::t_f16f6c9c1260d0 131-132,135,139-142
+  s_46733549857ff7::t_ad5c6f7e8c6be9 100-105
+ai-workflow/STATUS.md
+  s_99caaf43fe4205::t_c6951f340e1034 6,31,69,95,149,162,168
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "63f2b2862c338e8914c4c6013549d3f5a283fc32",
+  "prompts": {},
+  "sessions": {
+    "s_46733549857ff7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f0aec044-4dde-4913-a4d9-fed29e1f8d3d",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_99caaf43fe4205": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "daffa154-6ea9-4269-bbdf-0573c10c0552",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
