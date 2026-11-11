@@ -1,0 +1,42 @@
+# RAG 黄金问题集（离线回归）
+# 说明：
+# - 测试使用确定性 embedding，无法表达语义相似；因此“应命中”问题的文本与目标切片文本一致，
+#   保证离线可重复；真实语义命中由真实模型链路演示覆盖。
+# - min_score 固定 0.9：目标切片余弦为 1.0，无关切片随机余弦远低于阈值。
+# - expect_no_hit=true 的问题不调用模型，答案应为兜底话术且 citations 为空。
+
+documents:
+  - project_id: golden-hr
+    source: 员工手册.md
+    content: 年假 报销
+  - project_id: golden-hr
+    source: 考勤制度.md
+    content: 打卡 迟到
+  - project_id: golden-fin
+    source: 财务制度.md
+    content: 差旅 发票
+
+questions:
+  - id: q1
+    project_id: golden-hr
+    question: 年假 报销
+    min_score: 0.9
+    expected_source: 员工手册.md
+    expect_no_hit: false
+  - id: q2
+    project_id: golden-hr
+    question: 打卡 迟到
+    min_score: 0.9
+    expected_source: 考勤制度.md
+    expect_no_hit: false
+  - id: q3
+    project_id: golden-fin
+    question: 差旅 发票
+    min_score: 0.9
+    expected_source: 财务制度.md
+    expect_no_hit: false
+  - id: q4
+    project_id: golden-hr
+    question: 火星基地建设
+    min_score: 0.9
+    expect_no_hit: true

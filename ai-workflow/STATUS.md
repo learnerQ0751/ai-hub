@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-11 17:17
+**最后更新**：2026-11-11 17:43
 
 ## 需求进度
 
@@ -29,6 +29,7 @@
 | REQ-3.1 | 文档接入（上传/解析/切分） | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（11/11） | 无（文档接入是本批次第一个 RAG 需求） | 待回填 |
 | REQ-3.2 | Embedding 抽象 + 向量存储 | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（13/13） | REQ-3.1 | 待回填 |
 | REQ-3.3 | 检索与重排 | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（13/13） | REQ-3.2 | 63f2b28 |
+| REQ-3.4 | RAG 生成 + 引用溯源 | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（13/13） | REQ-3.3、REQ-1.1 | 待回填 |
 | REQ-3.5 | 记忆服务（session/user） | 已完成 | additive | 已验收（2026-11-11，理解默认通过）（14/14） | REQ-2.1（需求卡前置；本期实现不感知 MCP，MCP 暴露在 REQ-3.6） | c692b9c |
 
 ## 接口清单（来自 Controller）
@@ -62,6 +63,7 @@
 | POST | /v1/prompts/{name}/render | PromptRuntimeController#render | REQ-2.5 |
 | GET | /v1/prompts/{name}/versions | PromptController#versions | REQ-2.4 |
 | POST | /v1/prompts/{name}/versions | PromptController#createVersion | REQ-2.4 |
+| POST | /v1/rag/answer | RagAnswerController#answer | REQ-3.4 |
 | GET | /v1/rag/documents | RagDocumentController#list | REQ-3.1, REQ-3.2 |
 | POST | /v1/rag/documents | RagDocumentController#upload | REQ-3.1, REQ-3.2 |
 | DELETE | /v1/rag/documents/{docId} | RagDocumentController#remove | REQ-3.1, REQ-3.2 |
@@ -144,6 +146,7 @@
 | POST /v1/prompts/{name}/publish | REQ-2.4 |
 | POST /v1/prompts/{name}/render | REQ-2.5 |
 | POST /v1/prompts/{name}/versions | REQ-2.4 |
+| POST /v1/rag/answer | REQ-3.4 |
 | POST /v1/rag/documents | REQ-3.1 |
 | POST /v1/rag/documents/{docId}/reindex | REQ-3.2 |
 | POST /v1/rag/search | REQ-3.3 |
@@ -159,13 +162,14 @@
 
 ## 测试
 
-- 355 个 @Test / 64 个测试类
+- 377 个 @Test / 68 个测试类
 
 ## 下一步
 
 - 验收 REQ-3.1 文档接入（上传/解析/切分） → 打开 `acceptance/REQ-3.1.md`
 - 验收 REQ-3.2 Embedding 抽象 + 向量存储 → 打开 `acceptance/REQ-3.2.md`
 - 验收 REQ-3.3 检索与重排 → 打开 `acceptance/REQ-3.3.md`
+- 验收 REQ-3.4 RAG 生成 + 引用溯源 → 打开 `acceptance/REQ-3.4.md`
 
 <!-- STATUS:GENERATED:END -->
 

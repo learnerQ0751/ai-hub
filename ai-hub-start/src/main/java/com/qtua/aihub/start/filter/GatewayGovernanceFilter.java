@@ -55,6 +55,7 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     private static final String RAG_PREFIX = "/v1/rag/";
     private static final String RAG_DOCUMENTS_PATH = "/v1/rag/documents";
     private static final String RAG_SEARCH_PATH = "/v1/rag/search";
+    private static final String RAG_ANSWER_PATH = "/v1/rag/answer";
     private static final String RAG_REINDEX_SUFFIX = "/reindex";
     private static final String METHOD_POST = "POST";
     private static final String METHOD_DELETE = "DELETE";
@@ -63,6 +64,7 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     private static final String TARGET_DELETE = "delete_document";
     private static final String TARGET_REINDEX = "reindex_document";
     private static final String TARGET_SEARCH = "search_knowledge";
+    private static final String TARGET_ANSWER = "rag_answer";
     private static final String TARGET_RAG = "rag_documents";
     private static final String UTF_8 = "UTF-8";
 
@@ -255,6 +257,9 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
         }
         if (RAG_SEARCH_PATH.equals(relative)) {
             return TARGET_SEARCH;
+        }
+        if (RAG_ANSWER_PATH.equals(relative)) {
+            return TARGET_ANSWER;
         }
         if (relative.endsWith(RAG_REINDEX_SUFFIX)) {
             return TARGET_REINDEX;

@@ -90,3 +90,11 @@ gateway:
       rerank-enabled: true
       rerank-lexical-weight: 0.3
       max-filter-doc-ids: 100
+    answer:
+      default-top-k: 4
+      # 放入 prompt 的资料部分最大字符数
+      max-context-chars: 6000
+      # 无召回时默认不调模型；开启后仍需请求显式 allow_free_answer=true
+      allow-free-answer: false
+      fallback-message: "未在知识库中检索到相关资料，无法回答该问题。"
+      empty-answer-message: "模型未返回有效答案，请补充资料后重试。"

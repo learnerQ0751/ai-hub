@@ -46,3 +46,9 @@ gateway:
       rerank-enabled: true
       rerank-lexical-weight: 0.3
       max-filter-doc-ids: 5
+    answer:
+      default-top-k: 3
+      max-context-chars: 400
+      allow-free-answer: true
+      fallback-message: "未找到相关资料。"
+      empty-answer-message: "模型未返回有效答案。"

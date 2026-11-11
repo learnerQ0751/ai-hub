@@ -1,7 +1,7 @@
 # 设计基线（ai-hub）
 
 - 更新于：2026-11-11
-- 对应状态：第 3 期进行中（REQ-3.1/3.2/3.3/3.5 完成；REQ-3.4 进行中）
+- 对应状态：第 3 期进行中（REQ-3.1/3.2/3.3/3.4/3.5 完成；REQ-3.6 待做）
 - 维护规则：只有架构、运行时链路、跨需求决策发生变化时才更新；需求细节见 `records/`。
 
 ## 1. 系统全景
@@ -10,7 +10,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 
 - 第 1 期：LLM 网关核心（统一入口 / 模型路由 / 虚拟 Key / 限流预算 / 日志计量 / 容错 / 流式）✅
 - 第 2 期：MCP 与 Prompt 中心（MCP 注册/发现/调用代理 + Prompt 模板/渲染 + MCP Server 暴露）✅
-- 第 3 期：RAG 与记忆服务（记忆 REQ-3.5、文档接入 REQ-3.1、向量化 REQ-3.2、检索 REQ-3.3 已完成；生成与引用 REQ-3.4 进行中）
+- 第 3 期：RAG 与记忆服务（记忆 REQ-3.5、文档接入 REQ-3.1、向量化 REQ-3.2、检索 REQ-3.3、生成与引用 REQ-3.4 已完成；REQ-3.6 MCP 暴露待做）
 - 第 4 期：治理收尾（多租户 / Trace / 成本 / 管理端 / 审计）
 
 架构图（唯一活图）：`acceptance/assets/design.svg`（源文件 `design.drawio` 同目录）。
@@ -356,6 +356,43 @@ sequenceDiagram
   请求只能关闭；无 query 词项时保持原序并标记 `reranked=false`。
 - 无命中：HTTP 200 + 空数组 + `no_hit=true`；检索日志只记 query、chunk_id/score、候选数与耗时，不记正文。
 
+### 3.15 RAG 生成与引用溯源（REQ-3.4）
+
+```mermaid
+sequenceDiagram
+    participant C as 业务方
+    participant F as 治理 Filter
+    participant A as RagAnswerService
+    participant S as RagSearchService
+    participant P as RagPromptBuilder
+    participant H as ChatCompletionService
+    participant U as 上游 LLM
+    C->>F: POST /v1/rag/answer
+    F->>F: callType=RAG, target=rag_answer（仅 RPM）
+    F->>A: 放行
+    A->>A: 校验 model；解析 top_k/allow_free_answer
+    A->>S: search(检索参数)
+    S-->>A: results[] / no_hit
+    alt 无召回且不允许自由回答
+        A-->>C: 兜底话术 + citations=[] + no_hit=true（不调模型）
+    else 有召回，或允许自由回答
+        A->>P: build(query, hits, max-context-chars, freeAnswer)
+        P-->>A: numbered prompt + 实际引用
+        A->>H: chat(model, prompt, auth, request_id)
+        H->>U: OpenAI 请求（内部调用，不经 Filter）
+        U-->>H: 响应 + usage
+        H-->>A: rawResponse + usage
+        A->>A: 提取 answer；组装 citations（index 与 [n] 对应）
+        A-->>C: answer + citations[] + usage
+    end
+    F->>F: RPM 结算 + call_logs（call_type=RAG, target=rag_answer, cost=0）
+```
+
+- 检索与生成分层：answer 复用 search，检索语义只有一处；内部 chat 直接调 Service，避免双重治理。
+- 引用契约：prompt 编号与 citations 同源生成、`index` 从 1 连续；citations 只含实际进入 prompt 的切片。
+- 兜底：无召回默认不调模型并返回可配置话术；自由回答需服务端开关 + 请求显式开启，且 citations 为空。
+- 可观测：同一 request_id 记录 query、召回、prompt 长度/hash、usage/耗时与引用清单，不落 prompt 正文。
+
 ## 4. 跨需求设计决策
 
 | 决策 | 理由 | 引入需求 | 日期 |
@@ -409,6 +446,9 @@ sequenceDiagram
 | 检索候选按 `top_k × multiplier` 放大（上限 200），元数据过滤在编排层完成 | 不改动 REQ-3.2 的 `VectorSearchQuery` 契约；过滤/重排淘汰后仍有足够结果，资源边界明确 | REQ-3.3 | 2026-11-11 |
 | 重排只做规则重排（向量分 + query 词项覆盖率），服务端总开关控制 | 无额外模型成本、可解释、可离线测试；需求允许二选一，避免 LLM 重排成本失控 | REQ-3.3 | 2026-11-11 |
 | 无命中返回 200 + `no_hit`，检索日志只记 query 与 id/score | 区分“知识库没有”与“服务异常”；满足 Badcase 归因而日志不落正文 | REQ-3.3 | 2026-11-11 |
+| RAG answer 复用检索服务；内部直接调 `ChatCompletionService` | 检索语义单点维护；治理只在 Filter 做一次，避免双重限流/计量 | REQ-3.4 | 2026-11-11 |
+| prompt 编号与 citations 同源生成，citations 只含实际使用切片 | 从结构上保证 `[n]` 与引用一一对应；避免“返回了但未使用”的假引用 | REQ-3.4 | 2026-11-11 |
+| 无召回默认不调模型；自由回答需服务端 + 请求双开关 | 不编造答案与引用；高风险能力默认关闭，防止调用方绕过 | REQ-3.4 | 2026-11-11 |
 
 ## 5. 演进记录
 
@@ -431,6 +471,7 @@ sequenceDiagram
 | 2026-11-03 | REQ-2.6 | ai-hub 作为 MCP Server 暴露（3 工具 + LangChain4j 客户端验证） |
 | 2026-11-11 | REQ-3.5 | 记忆服务（session/user 两级、TTL 惰性失效、物理删除审计、跨项目共享开关、MEMORY 调用治理） |
 | 2026-11-11 | REQ-3.3 | RAG 检索与重排（`/v1/rag/search`、项目/模型隔离、元数据过滤、阈值/条数、规则重排、no_hit、检索日志） |
+| 2026-11-11 | REQ-3.4 | RAG 生成与引用溯源（`/v1/rag/answer`、引用编号/citations、无召回兜底、自由回答开关、全链路日志、黄金问题集） |
 
 ## 6. 与 LiteLLM 的差异
 

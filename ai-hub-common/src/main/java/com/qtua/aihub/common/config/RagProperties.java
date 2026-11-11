@@ -31,6 +31,8 @@ public class RagProperties {
     private static final int DEFAULT_MAX_QUERY_CHARS = 2000;
     private static final double DEFAULT_RERANK_LEXICAL_WEIGHT = 0.3d;
     private static final int DEFAULT_MAX_FILTER_DOC_IDS = 100;
+    private static final int DEFAULT_ANSWER_TOP_K = 4;
+    private static final int DEFAULT_MAX_CONTEXT_CHARS = 6000;
 
     /** 上传配置。 */
     private Upload upload = new Upload();
@@ -46,6 +48,8 @@ public class RagProperties {
     private VectorStoreSettings vectorStore = new VectorStoreSettings();
     /** 检索配置。 */
     private Search search = new Search();
+    /** 生成配置。 */
+    private Answer answer = new Answer();
 
     public Upload getUpload() {
         return upload;
@@ -101,6 +105,14 @@ public class RagProperties {
 
     public void setSearch(Search search) {
         this.search = search;
+    }
+
+    public Answer getAnswer() {
+        return answer;
+    }
+
+    public void setAnswer(Answer answer) {
+        this.answer = answer;
     }
 
     /**
@@ -389,6 +401,63 @@ public class RagProperties {
 
         public void setMaxFilterDocIds(int maxFilterDocIds) {
             this.maxFilterDocIds = maxFilterDocIds;
+        }
+    }
+
+    /**
+     * 生成配置。
+     */
+    public static class Answer {
+
+        /** 未显式指定时用于检索的条数。 */
+        private int defaultTopK = DEFAULT_ANSWER_TOP_K;
+        /** 放入 prompt 的资料部分最大字符数。 */
+        private int maxContextChars = DEFAULT_MAX_CONTEXT_CHARS;
+        /** 是否允许无召回时自由回答；默认关闭。 */
+        private boolean allowFreeAnswer;
+        /** 无召回时的兜底话术。 */
+        private String fallbackMessage = "未在知识库中检索到相关资料，无法回答该问题。";
+        /** 模型返回空内容时的兜底话术。 */
+        private String emptyAnswerMessage = "模型未返回有效答案，请补充资料后重试。";
+
+        public int getDefaultTopK() {
+            return defaultTopK;
+        }
+
+        public void setDefaultTopK(int defaultTopK) {
+            this.defaultTopK = defaultTopK;
+        }
+
+        public int getMaxContextChars() {
+            return maxContextChars;
+        }
+
+        public void setMaxContextChars(int maxContextChars) {
+            this.maxContextChars = maxContextChars;
+        }
+
+        public boolean isAllowFreeAnswer() {
+            return allowFreeAnswer;
+        }
+
+        public void setAllowFreeAnswer(boolean allowFreeAnswer) {
+            this.allowFreeAnswer = allowFreeAnswer;
+        }
+
+        public String getFallbackMessage() {
+            return fallbackMessage;
+        }
+
+        public void setFallbackMessage(String fallbackMessage) {
+            this.fallbackMessage = fallbackMessage;
+        }
+
+        public String getEmptyAnswerMessage() {
+            return emptyAnswerMessage;
+        }
+
+        public void setEmptyAnswerMessage(String emptyAnswerMessage) {
+            this.emptyAnswerMessage = emptyAnswerMessage;
         }
     }
 }

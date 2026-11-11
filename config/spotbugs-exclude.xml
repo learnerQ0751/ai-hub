@@ -273,6 +273,9 @@
     <Match>
         <Class name="com.qtua.aihub.common.config.RagProperties$Search"/>
     </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$Answer"/>
+    </Match>
     <!-- RAG record 的数组/List 已在紧凑构造器或访问器中防御性复制，SpotBugs 无法推断 -->
     <Match>
         <Class name="com.qtua.aihub.manager.model.RagDocumentBO"/>
@@ -337,6 +340,23 @@
     </Match>
     <Match>
         <Class name="com.qtua.aihub.start.controller.RagSearchController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <!-- RAG 生成（REQ-3.4）：record 的 List 已防御性复制；Spring 注入对象由容器管理 -->
+    <Match>
+        <Class name="com.qtua.aihub.core.rag.RagAnswerPrompt"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.RagAnswerResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.RagAnswerServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.start.controller.RagAnswerController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露（RAG） -->
