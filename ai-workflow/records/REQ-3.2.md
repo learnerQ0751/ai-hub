@@ -126,6 +126,7 @@ regression: ["REQ-3.1 文档上传/切分/列表/删除", "REQ-1.4 限流/RPM", 
 ### 2026-11-11
 
 - 进展：冻结验收标准；实现 Embedding 抽象、pgvector/内存 VectorStore、批量索引与 reindex。
+- 提交：`22d46f1`（实现 + 文档）；`mvn -Pquality verify` 全绿（375 测试）；`RagVectorStoreIntegrationTest` Testcontainers 真库验证通过。
 - 下一步：REQ-3.3 在向量检索之上实现 `/v1/rag/search`、过滤、阈值与重排。
 
 ## 7. 复盘

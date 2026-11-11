@@ -92,5 +92,5 @@ RAG 的向量层做了两层抽象：EmbeddingModel 和 VectorStore，默认实�
 ## 5. 验收记录
 
 - 验收日期：2026-11-11（自检）
-- 结论：实现完成，`mvn -Pquality verify` 全绿（375 测试、0 失败）；pgvector 真库 Testcontainers 验证通过（`RagVectorStoreIntegrationTest`，真实容器 17.3s：Flyway V1–V8 迁移 + upsert 幂等 + project/模型隔离检索 + 级联删除）。
+- 结论：实现完成（`22d46f1`），`mvn -Pquality verify` 全绿（375 测试、0 失败）；pgvector 真库 Testcontainers 验证通过（`RagVectorStoreIntegrationTest`，真实容器 17.3s：Flyway V1–V8 迁移 + upsert 幂等 + project/模型隔离检索 + 级联删除）。
 - 遗留问题：无 Docker 的环境中 `RagVectorStoreIntegrationTest` 按 `disabledWithoutDocker` 自动跳过；master 理解验收待确认。
