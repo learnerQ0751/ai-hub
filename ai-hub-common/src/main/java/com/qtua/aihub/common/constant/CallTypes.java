@@ -17,6 +17,8 @@ public final class CallTypes {
     public static final String MEMORY = "MEMORY";
     /** RAG 文档接入/索引。 */
     public static final String RAG = "RAG";
+    /** 文本向量化。 */
+    public static final String EMBEDDING = "EMBEDDING";
 
     private CallTypes() {
     }

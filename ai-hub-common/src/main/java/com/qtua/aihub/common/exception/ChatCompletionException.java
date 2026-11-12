@@ -89,6 +89,19 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * 上游响应非法（502，不可重试）。
+     *
+     * <p>响应结构/维度/JSON 错误重试无意义，直接返回中文错误，避免无效重试放大延迟。</p>
+     *
+     * @param message 错误描述
+     * @return 业务异常
+     */
+    public static ChatCompletionException upstreamInvalidResponse(String message) {
+        return new ChatCompletionException(HttpStatus.BAD_GATEWAY, message,
+                "upstream_error", null, "502", null, false);
+    }
+
+    /**
      * 上游限流（对外 502，内部标记可重试）。
      *
      * <p>上游 429 与本地 Key 限流语义不同：上游限流可通过切换部署/别名规避，
@@ -288,6 +301,19 @@ public class ChatCompletionException extends RuntimeException {
     public static ChatCompletionException memoryAccessDenied(String message) {
         return new ChatCompletionException(HttpStatus.FORBIDDEN, message,
                 "memory_access_denied", "cross_project", "403", null, false);
+    }
+
+    /**
+     * embedding 模型配置不完整（502）。
+     *
+     * <p>典型场景：远端模型未设置 API Key / base-url。错误信息中文，协议字段保持英文。</p>
+     *
+     * @param detail 缺少的配置描述
+     * @return 业务异常
+     */
+    public static ChatCompletionException embeddingNotConfigured(String detail) {
+        return new ChatCompletionException(HttpStatus.BAD_GATEWAY,
+                "embedding 模型未正确配置：" + detail, "upstream_error", null, "502", null, false);
     }
 
     /**

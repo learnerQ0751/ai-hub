@@ -13,6 +13,9 @@ import com.qtua.aihub.common.metering.TokenEstimate;
 import com.qtua.aihub.common.metering.TokenUsage;
 import com.qtua.aihub.common.pricing.ModelPrice;
 import com.qtua.aihub.common.pricing.PricingCatalog;
+import com.qtua.aihub.common.rag.EmbeddingModel;
+import com.qtua.aihub.common.rag.EmbeddingModelProvider;
+import com.qtua.aihub.common.metering.EmbeddingTokenEstimator;
 import com.qtua.aihub.integration.protocol.OpenAiProtocolAdapter;
 import com.qtua.aihub.manager.CallLogManager;
 import com.qtua.aihub.manager.model.CallLogBO;
@@ -40,6 +43,9 @@ import java.util.Optional;
 @Service
 public class GatewayGovernanceService {
 
+    private static final String JSON_INPUT = "input";
+    private static final String TARGET_RAG_ANSWER = "rag_answer";
+
     private final ModelCatalog modelCatalog;
     private final GatewayGuard gatewayGuard;
     private final PricingCatalog pricingCatalog;
@@ -47,17 +53,19 @@ public class GatewayGovernanceService {
     private final OpenAiProtocolAdapter protocolAdapter;
     private final RateLimitProperties rateLimitProperties;
     private final ObjectMapper objectMapper;
+    private final EmbeddingModelProvider embeddingModelProvider;
 
     /**
      * 构造治理服务。
      *
-     * @param modelCatalog        模型目录
-     * @param gatewayGuard        限流与预算端口
-     * @param pricingCatalog      价格目录
-     * @param callLogManager      调用日志与消费累计门面
-     * @param protocolAdapter     OpenAI 协议适配器（Token 估算）
-     * @param rateLimitProperties 限流配置
-     * @param objectMapper        JSON 解析器
+     * @param modelCatalog         模型目录
+     * @param gatewayGuard         限流与预算端口
+     * @param pricingCatalog       价格目录
+     * @param callLogManager       调用日志与消费累计门面
+     * @param protocolAdapter      OpenAI 协议适配器（Token 估算）
+     * @param rateLimitProperties  限流配置
+     * @param objectMapper         JSON 解析器
+     * @param embeddingModelProvider embedding 模型目录
      */
     public GatewayGovernanceService(ModelCatalog modelCatalog,
                                     GatewayGuard gatewayGuard,
@@ -65,7 +73,8 @@ public class GatewayGovernanceService {
                                     CallLogManager callLogManager,
                                     OpenAiProtocolAdapter protocolAdapter,
                                     RateLimitProperties rateLimitProperties,
-                                    ObjectMapper objectMapper) {
+                                    ObjectMapper objectMapper,
+                                    EmbeddingModelProvider embeddingModelProvider) {
         this.modelCatalog = modelCatalog;
         this.gatewayGuard = gatewayGuard;
         this.pricingCatalog = pricingCatalog;
@@ -73,6 +82,7 @@ public class GatewayGovernanceService {
         this.protocolAdapter = protocolAdapter;
         this.rateLimitProperties = rateLimitProperties;
         this.objectMapper = objectMapper;
+        this.embeddingModelProvider = embeddingModelProvider;
     }
 
     /**
@@ -85,6 +95,10 @@ public class GatewayGovernanceService {
      * @param requestBody 请求体
      */
     public void reserve(GatewayContext context, String requestBody) {
+        if (context.isEmbeddingCall()) {
+            reserveEmbedding(context, requestBody);
+            return;
+        }
         if (context.isToolCall()) {
             reserveToolCall(context);
             return;
@@ -119,6 +133,61 @@ public class GatewayGovernanceService {
     }
 
     /**
+     * embedding 调用预占：解析别名、估算输入 token、按模型单价预估成本。
+     *
+     * @param context     治理上下文
+     * @param requestBody 请求体
+     */
+    private void reserveEmbedding(GatewayContext context, String requestBody) {
+        JsonNode root = parseQuietly(requestBody);
+        if (ObjectUtils.isEmpty(root)) {
+            return;
+        }
+        JsonNode modelNode = root.get(JsonFields.MODEL);
+        if (ObjectUtils.isEmpty(modelNode) || !StringUtils.hasText(modelNode.asText())) {
+            return;
+        }
+        String alias = modelNode.asText();
+        context.setModelAlias(alias);
+        assertModelAccess(context.getAuth(), alias);
+        EmbeddingModel model = embeddingModelProvider.findByAlias(alias)
+                .orElseThrow(() -> ChatCompletionException.invalidModel(alias));
+        long estimatedTokens = estimateEmbeddingTokens(root.get(JSON_INPUT));
+        BigDecimal estimatedCost = costOfEmbedding(model, estimatedTokens);
+        context.setEstimate(estimatedTokens, estimatedCost);
+        KeyAuthDTO auth = context.getAuth();
+        GuardRequest request = new GuardRequest(context.getRequestId(), context.getKeyHash(), alias,
+                auth.rpmLimit(), auth.tpmLimit(), auth.maxBudget(), auth.budgetDuration(),
+                estimatedTokens, estimatedCost);
+        context.setReservation(gatewayGuard.reserve(request));
+    }
+
+    /**
+     * 估算 embedding 输入 token：字符串或字符串数组。
+     *
+     * @param inputNode input 节点
+     * @return token 估算
+     */
+    private long estimateEmbeddingTokens(JsonNode inputNode) {
+        if (ObjectUtils.isEmpty(inputNode) || inputNode.isNull()) {
+            return 0L;
+        }
+        if (inputNode.isTextual()) {
+            return EmbeddingTokenEstimator.estimate(inputNode.asText());
+        }
+        if (inputNode.isArray()) {
+            long total = 0L;
+            for (JsonNode item : inputNode) {
+                if (item.isTextual()) {
+                    total += EmbeddingTokenEstimator.estimate(item.asText());
+                }
+            }
+            return total;
+        }
+        return 0L;
+    }
+
+    /**
      * 工具类调用预占（MCP / 记忆 / RAG）：只做 Key 级 RPM，TPM/预算不适用。
      *
      * @param context 治理上下文
@@ -141,6 +210,14 @@ public class GatewayGovernanceService {
         if (ObjectUtils.isEmpty(context)) {
             return;
         }
+        if (context.isEmbeddingCall()) {
+            completeEmbedding(context);
+            return;
+        }
+        if (context.isRagCall()) {
+            completeRagCall(context);
+            return;
+        }
         if (context.isToolCall()) {
             completeToolCall(context);
             return;
@@ -155,6 +232,92 @@ public class GatewayGovernanceService {
         }
         callLogManager.addSpend(context.getKeyHash(), cost);
         recordLog(context, context.getUsage(), cost, HttpStatus.OK.value(), null);
+    }
+
+    /**
+     * embedding 调用收尾：按实际 usage 与模型单价结算、累计 spend 并写日志。
+     *
+     * @param context 治理上下文
+     */
+    private void completeEmbedding(GatewayContext context) {
+        TokenUsage usage = context.getUsage();
+        EmbeddingModel model = embeddingModelProvider.findByAlias(context.getModelAlias())
+                .orElse(null);
+        BigDecimal cost = Objects.isNull(model) ? BigDecimal.ZERO
+                : costOfEmbedding(model, usage.promptTokens());
+        if (Objects.nonNull(model)) {
+            // deployment_model 记录上游真实模型名，便于审计与复算。
+            context.complete(usage, model.modelId());
+        }
+        GuardReservation reservation = context.getReservation();
+        if (Objects.nonNull(reservation)) {
+            gatewayGuard.settle(reservation, usage, cost);
+        }
+        callLogManager.addSpend(context.getKeyHash(), cost);
+        recordLog(context, usage, cost, HttpStatus.OK.value(), null);
+    }
+
+    /**
+     * RAG 调用收尾：answer 按 chat + embedding 实际成本计价并事后校验预算；
+     * 检索/文档只记录 embedding 成本，不做预算扣减。
+     *
+     * @param context 治理上下文
+     */
+    private void completeRagCall(GatewayContext context) {
+        boolean answer = TARGET_RAG_ANSWER.equals(context.getTargetName());
+        BigDecimal chatCost = answer
+                ? calculateCost(context.getDeploymentModel(), context.getUsage())
+                : BigDecimal.ZERO;
+        BigDecimal embeddingCost = calculateEmbeddingCost(context);
+        BigDecimal totalCost = chatCost.add(embeddingCost);
+        GuardReservation reservation = context.getReservation();
+        if (Objects.nonNull(reservation)) {
+            gatewayGuard.settle(reservation, answer ? context.getUsage() : TokenUsage.ZERO,
+                    totalCost);
+        }
+        String errorType = null;
+        if (answer) {
+            KeyAuthDTO auth = context.getAuth();
+            boolean withinBudget = gatewayGuard.chargeAfterwards(context.getKeyHash(),
+                    auth.budgetDuration(), auth.maxBudget(), totalCost);
+            if (!withinBudget) {
+                errorType = "budget_exceeded";
+            }
+            callLogManager.addSpend(context.getKeyHash(), totalCost);
+        }
+        recordLog(context, answer ? context.getUsage() : TokenUsage.ZERO, totalCost,
+                HttpStatus.OK.value(), errorType);
+    }
+
+    /**
+     * 计算上下文中的辅助 embedding 成本。
+     *
+     * @param context 治理上下文
+     * @return 成本；无 embedding 用量为 0
+     */
+    private BigDecimal calculateEmbeddingCost(GatewayContext context) {
+        if (context.getEmbeddingTokens() <= 0L
+                || !StringUtils.hasText(context.getEmbeddingModel())) {
+            return BigDecimal.ZERO;
+        }
+        return embeddingModelProvider.findByModelId(context.getEmbeddingModel())
+                .map(model -> costOfEmbedding(model, context.getEmbeddingTokens()))
+                .orElse(BigDecimal.ZERO);
+    }
+
+    /**
+     * 按 embedding 模型单价计算成本，空值兜底为 0。
+     *
+     * @param model       模型
+     * @param inputTokens 输入 token
+     * @return 成本
+     */
+    private BigDecimal costOfEmbedding(EmbeddingModel model, long inputTokens) {
+        if (inputTokens <= 0L) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal cost = model.costOfInputTokens(inputTokens);
+        return Objects.isNull(cost) ? BigDecimal.ZERO : cost;
     }
 
     /**

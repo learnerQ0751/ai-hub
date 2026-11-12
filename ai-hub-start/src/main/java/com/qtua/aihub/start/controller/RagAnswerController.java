@@ -4,6 +4,8 @@ import com.qtua.aihub.api.RagAnswerService;
 import com.qtua.aihub.api.model.auth.KeyAuthDTO;
 import com.qtua.aihub.api.model.req.RagAnswerReqDTO;
 import com.qtua.aihub.api.model.res.RagAnswerResDTO;
+import com.qtua.aihub.common.metering.TokenUsage;
+import com.qtua.aihub.service.gateway.model.GatewayContext;
 import com.qtua.aihub.start.filter.AuthFilter;
 import com.qtua.aihub.start.filter.RequestIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,11 +14,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Objects;
+
 /**
  * RAG 生成与引用溯源入口（数据面，任意有效 Key）。
  *
  * <p>治理由外层 GatewayGovernanceFilter 统一完成：callType=RAG，target_name=rag_answer，
- * 只做 RPM，调用轨迹写 call_logs（cost=0）；内部 chat 不再经过 Filter。</p>
+ * 入口只做 RPM；Controller 在响应后回填内部 chat 的 usage/deploymentModel 与查询 embedding
+ * 用量，治理层按实际用量事后计价、预算校验并写 call_logs。</p>
  */
 @RestController
 public class RagAnswerController {
@@ -45,6 +50,16 @@ public class RagAnswerController {
                                   HttpServletRequest request) {
         KeyAuthDTO auth = (KeyAuthDTO) request.getAttribute(AuthFilter.KEY_AUTH_ATTRIBUTE);
         String requestId = (String) request.getAttribute(RequestIdFilter.ATTRIBUTE);
-        return ragAnswerService.answer(reqDTO, auth, requestId);
+        RagAnswerResDTO response = ragAnswerService.answer(reqDTO, auth, requestId);
+        GatewayContext context =
+                (GatewayContext) request.getAttribute(GatewayContext.ATTRIBUTE);
+        if (Objects.nonNull(context)) {
+            TokenUsage usage = new TokenUsage(response.usage().promptTokens(),
+                    response.usage().completionTokens(), response.usage().totalTokens());
+            context.complete(usage, response.deploymentModel(), response.model(), 0, false);
+            context.setModelAlias(response.model());
+            context.setEmbeddingUsage(response.embeddingModel(), response.embeddingTokens());
+        }
+        return response;
     }
 }

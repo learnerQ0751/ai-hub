@@ -69,6 +69,19 @@ class RagDocumentServiceTest {
     }
 
     @Test
+    void ingest_uses_type_specific_upload_limit() {
+        properties.getUpload().getTypeLimits().put("txt", 4);
+
+        assertThatThrownBy(() -> service.ingest("p1", "a.txt", "text/plain", bytes("12345")))
+                .isInstanceOf(ChatCompletionException.class)
+                .satisfies(ex -> {
+                    ChatCompletionException error = (ChatCompletionException) ex;
+                    assertThat(error.getMessage()).contains("4").contains("txt");
+                    assertThat(error.getParam()).isEqualTo("file");
+                });
+    }
+
+    @Test
     void ingest_rejects_oversize_file() {
         assertThatThrownBy(() -> service.ingest("p1", "a.txt", "text/plain",
                 bytes("01234567890123456789")))
@@ -153,6 +166,7 @@ class RagDocumentServiceTest {
         when(documentCore.find("d1", "p1")).thenReturn(Optional.of(document));
         when(documentCore.reindex("d1")).thenReturn(Optional.of(indexed));
         when(embeddingModel.modelId()).thenReturn("model-b");
+        when(embeddingModel.dimension()).thenReturn(384);
 
         RagDocumentResDTO result = service.reindex("d1", "p1");
 

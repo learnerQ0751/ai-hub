@@ -2,18 +2,22 @@ package com.qtua.aihub.common.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 /**
  * RAG 配置（gateway.rag.*）。
  *
- * <p>上传大小、切分参数、去重策略、embedding 与向量存储选择。默认本地
- * all-minilm-l6-v2（384 维）+ PostgreSQL pgvector；测试通过配置切换为确定性
- * embedding 与内存向量存储。</p>
+ * <p>上传大小、切分参数、去重策略、embedding 模型目录与向量存储选择。embedding 目录
+ * 默认配置阿里 DashScope text-embedding-v3；旧单模型字段保留用于测试/离线确定性实现。</p>
  */
 @ConfigurationProperties(prefix = "gateway.rag")
 public class RagProperties {
 
     private static final int DEFAULT_MAX_SIZE_BYTES = 10 * 1024 * 1024;
-    private static final int DEFAULT_MAX_CHARS = 800;
+    /** 0 表示按 embedding 模型窗口自动推导。 */
+    private static final int DEFAULT_MAX_CHARS = 0;
     private static final int DEFAULT_OVERLAP_CHARS = 100;
     private static final int DEFAULT_PERSIST_BATCH_SIZE = 200;
     private static final int DEFAULT_LIST_LIMIT = 100;
@@ -32,6 +36,7 @@ public class RagProperties {
     private static final double DEFAULT_RERANK_LEXICAL_WEIGHT = 0.3d;
     private static final int DEFAULT_MAX_FILTER_DOC_IDS = 100;
     private static final int DEFAULT_ANSWER_TOP_K = 4;
+    private static final int DEFAULT_MAX_INPUTS = 2048;
     private static final int DEFAULT_MAX_CONTEXT_CHARS = 6000;
 
     /** 上传配置。 */
@@ -120,8 +125,10 @@ public class RagProperties {
      */
     public static class Upload {
 
-        /** 单文件最大字节数；同时需与 Spring multipart 上限匹配。 */
+        /** 默认单文件最大字节数；未命中类型上限时使用，同时受 Spring multipart 硬上限约束。 */
         private int maxSizeBytes = DEFAULT_MAX_SIZE_BYTES;
+        /** 扩展名（小写，不含点）→ 最大字节数；覆盖默认上限。 */
+        private Map<String, Integer> typeLimits = new LinkedHashMap<>();
 
         public int getMaxSizeBytes() {
             return maxSizeBytes;
@@ -129,6 +136,14 @@ public class RagProperties {
 
         public void setMaxSizeBytes(int maxSizeBytes) {
             this.maxSizeBytes = maxSizeBytes;
+        }
+
+        public Map<String, Integer> getTypeLimits() {
+            return typeLimits;
+        }
+
+        public void setTypeLimits(Map<String, Integer> typeLimits) {
+            this.typeLimits = typeLimits;
         }
     }
 
@@ -143,6 +158,8 @@ public class RagProperties {
         private int overlapChars = DEFAULT_OVERLAP_CHARS;
         /** 切片落库每批条数。 */
         private int persistBatchSize = DEFAULT_PERSIST_BATCH_SIZE;
+        /** 切片超出 embedding 模型安全窗口时的策略：warn（默认）或 fail（启动失败）。 */
+        private String overflowPolicy = "warn";
 
         public int getMaxChars() {
             return maxChars;
@@ -166,6 +183,14 @@ public class RagProperties {
 
         public void setPersistBatchSize(int persistBatchSize) {
             this.persistBatchSize = persistBatchSize;
+        }
+
+        public String getOverflowPolicy() {
+            return overflowPolicy;
+        }
+
+        public void setOverflowPolicy(String overflowPolicy) {
+            this.overflowPolicy = overflowPolicy;
         }
     }
 
@@ -218,20 +243,52 @@ public class RagProperties {
      */
     public static class Embedding {
 
-        /** 提供方：langchain4j-local（默认）或 deterministic（测试/离线）。 */
+        /** RAG 使用的模型别名；models 为空时作为旧单模型配置的别名。 */
+        private String model = "default";
+        /** 模型别名 → 模型配置；为空时回退到旧单模型字段。 */
+        private Map<String, ModelSettings> models = new LinkedHashMap<>();
+        /** 单次 /v1/embeddings 请求允许的最大输入条数，防止超大请求。 */
+        private int maxInputs = DEFAULT_MAX_INPUTS;
+        /** 旧单模型：提供方：langchain4j-local / deterministic / dashscope / openai-compatible。 */
         private String provider = "langchain4j-local";
-        /** 模型标识（含版本），写入索引元数据。 */
+        /** 旧单模型：模型标识（含版本），写入索引元数据。 */
         private String modelId = "all-minilm-l6-v2";
-        /** 向量维度；默认模型固定 384。 */
+        /** 旧单模型：向量维度。 */
         private int dimension = DEFAULT_EMBEDDING_DIMENSION;
-        /** 每批向量化条数。 */
+        /** 旧单模型：最大输入 token；0 表示按 provider 推断。 */
+        private int maxInputTokens;
+        /** 旧单模型：每批向量化条数。 */
         private int batchSize = DEFAULT_BATCH_SIZE;
-        /** 批次失败最大重试次数。 */
+        /** 旧单模型：批次失败最大重试次数。 */
         private int maxRetries = DEFAULT_MAX_RETRIES;
-        /** 重试退避基数（毫秒），按次数线性放大。 */
+        /** 旧单模型：重试退避基数（毫秒），按次数线性放大。 */
         private long retryBackoffMs = DEFAULT_RETRY_BACKOFF_MS;
-        /** 本地模型专用线程数。 */
+        /** 旧单模型：本地模型专用线程数。 */
         private int threads = DEFAULT_EMBEDDING_THREADS;
+
+        public String getModel() {
+            return model;
+        }
+
+        public void setModel(String model) {
+            this.model = model;
+        }
+
+        public Map<String, ModelSettings> getModels() {
+            return models;
+        }
+
+        public void setModels(Map<String, ModelSettings> models) {
+            this.models = models;
+        }
+
+        public int getMaxInputs() {
+            return maxInputs;
+        }
+
+        public void setMaxInputs(int maxInputs) {
+            this.maxInputs = maxInputs;
+        }
 
         public String getProvider() {
             return provider;
@@ -255,6 +312,14 @@ public class RagProperties {
 
         public void setDimension(int dimension) {
             this.dimension = dimension;
+        }
+
+        public int getMaxInputTokens() {
+            return maxInputTokens;
+        }
+
+        public void setMaxInputTokens(int maxInputTokens) {
+            this.maxInputTokens = maxInputTokens;
         }
 
         public int getBatchSize() {
@@ -286,6 +351,143 @@ public class RagProperties {
         }
 
         public void setThreads(int threads) {
+            this.threads = threads;
+        }
+    }
+
+    /**
+     * 单个 embedding 模型配置。
+     */
+    public static class ModelSettings {
+
+        /** 提供方：dashscope / openai-compatible / langchain4j-local / deterministic。 */
+        private String provider;
+        /** 上游真实模型名。 */
+        private String model;
+        /** 向量维度。 */
+        private Integer dimension;
+        /** 单条文本最大输入 token。 */
+        private Integer maxInputTokens;
+        /** 单次请求最大条数（供应商批量上限）。 */
+        private Integer maxBatchSize;
+        /** 输入单价（每 1M tokens）。 */
+        private BigDecimal inputPerMillion;
+        /** OpenAI 兼容 base-url，不含 /embeddings。 */
+        private String apiBase;
+        /** API Key 明文/占位；禁止入库。 */
+        private String apiKey;
+        /** API Key 环境变量名；apiKey 为空时读取。 */
+        private String apiKeyEnv;
+        /** 连接/读超时（毫秒）。 */
+        private Integer timeoutMs;
+        /** 批次失败最大重试次数。 */
+        private Integer maxRetries;
+        /** 重试退避基数（毫秒）。 */
+        private Long retryBackoffMs;
+        /** 本地模型专用线程数。 */
+        private Integer threads;
+
+        public String getProvider() {
+            return provider;
+        }
+
+        public void setProvider(String provider) {
+            this.provider = provider;
+        }
+
+        public String getModel() {
+            return model;
+        }
+
+        public void setModel(String model) {
+            this.model = model;
+        }
+
+        public Integer getDimension() {
+            return dimension;
+        }
+
+        public void setDimension(Integer dimension) {
+            this.dimension = dimension;
+        }
+
+        public Integer getMaxInputTokens() {
+            return maxInputTokens;
+        }
+
+        public void setMaxInputTokens(Integer maxInputTokens) {
+            this.maxInputTokens = maxInputTokens;
+        }
+
+        public Integer getMaxBatchSize() {
+            return maxBatchSize;
+        }
+
+        public void setMaxBatchSize(Integer maxBatchSize) {
+            this.maxBatchSize = maxBatchSize;
+        }
+
+        public BigDecimal getInputPerMillion() {
+            return inputPerMillion;
+        }
+
+        public void setInputPerMillion(BigDecimal inputPerMillion) {
+            this.inputPerMillion = inputPerMillion;
+        }
+
+        public String getApiBase() {
+            return apiBase;
+        }
+
+        public void setApiBase(String apiBase) {
+            this.apiBase = apiBase;
+        }
+
+        public String getApiKey() {
+            return apiKey;
+        }
+
+        public void setApiKey(String apiKey) {
+            this.apiKey = apiKey;
+        }
+
+        public String getApiKeyEnv() {
+            return apiKeyEnv;
+        }
+
+        public void setApiKeyEnv(String apiKeyEnv) {
+            this.apiKeyEnv = apiKeyEnv;
+        }
+
+        public Integer getTimeoutMs() {
+            return timeoutMs;
+        }
+
+        public void setTimeoutMs(Integer timeoutMs) {
+            this.timeoutMs = timeoutMs;
+        }
+
+        public Integer getMaxRetries() {
+            return maxRetries;
+        }
+
+        public void setMaxRetries(Integer maxRetries) {
+            this.maxRetries = maxRetries;
+        }
+
+        public Long getRetryBackoffMs() {
+            return retryBackoffMs;
+        }
+
+        public void setRetryBackoffMs(Long retryBackoffMs) {
+            this.retryBackoffMs = retryBackoffMs;
+        }
+
+        public Integer getThreads() {
+            return threads;
+        }
+
+        public void setThreads(Integer threads) {
             this.threads = threads;
         }
     }

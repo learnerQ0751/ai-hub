@@ -276,6 +276,58 @@
     <Match>
         <Class name="com.qtua.aihub.common.config.RagProperties$Answer"/>
     </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$ModelSettings"/>
+    </Match>
+    <!-- REQ-3.7：embedding 向量结果/配置/远端实现 -->
+    <Match>
+        <Class name="com.qtua.aihub.common.rag.EmbeddingResult"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.rag.EmbeddingResult"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.EmbeddingDataResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.EmbeddingResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.integration.rag.RemoteEmbeddingModel"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.integration.rag.RemoteEmbeddingModel"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.integration.rag.ConfigurableEmbeddingModelProvider"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.integration.rag.ConfigurableEmbeddingModelProvider"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.integration.rag.ConfigurableEmbeddingModelProvider"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.EmbeddingServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.core.rag.RagChunkSettings"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.start.controller.EmbeddingController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
     <!-- RAG record 的数组/List 已在紧凑构造器或访问器中防御性复制，SpotBugs 无法推断 -->
     <Match>
         <Class name="com.qtua.aihub.manager.model.RagDocumentBO"/>

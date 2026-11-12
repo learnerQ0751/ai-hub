@@ -26,10 +26,21 @@ gateway:
       overlap-chars: 20
       persist-batch-size: 100
     embedding:
-      # 测试不加载 ONNX 模型；使用确定性向量，维度与生产表结构一致
+      # 测试不加载 ONNX/远端模型；确定性向量，维度与生产表结构一致
+      model: deterministic-embedding
+      max-inputs: 64
+      models:
+        deterministic-embedding:
+          provider: deterministic
+          model: deterministic-hash-v1
+          dimension: 384
+          max-input-tokens: 8192
+          max-batch-size: 4
+          input-per-million: 0
       provider: deterministic
       model-id: deterministic-hash-v1
       dimension: 384
+      max-input-tokens: 8192
       batch-size: 4
       max-retries: 1
       retry-backoff-ms: 10

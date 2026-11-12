@@ -19,6 +19,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * RAG 文档服务实现。
@@ -70,7 +71,7 @@ public class RagDocumentServiceImpl implements RagDocumentService {
                                     byte[] content) {
         String normalizedProject = requireProject(projectId);
         String source = normalizeSource(fileName);
-        byte[] bytes = requireContent(content);
+        byte[] bytes = requireContent(content, source);
         try {
             RagIngestResult result = documentCore.ingest(normalizedProject, source,
                     resolveContentType(source, contentType), bytes,
@@ -179,16 +180,38 @@ public class RagDocumentServiceImpl implements RagDocumentService {
         return source;
     }
 
-    private byte[] requireContent(byte[] content) {
+    private byte[] requireContent(byte[] content, String source) {
         if (ObjectUtils.isEmpty(content)) {
             throw ChatCompletionException.invalidRequest("上传文件不能为空", PARAM_FILE);
         }
-        if (content.length > properties.getUpload().getMaxSizeBytes()) {
+        int limit = resolveMaxSize(source);
+        if (content.length > limit) {
             throw ChatCompletionException.invalidRequest(
-                    "文件大小不能超过 " + properties.getUpload().getMaxSizeBytes() + " 字节",
+                    "文件大小不能超过 " + limit + " 字节（扩展名 " + extensionOf(source) + "）",
                     PARAM_FILE);
         }
         return content;
+    }
+
+    /**
+     * 按扩展名解析上传上限；未命中类型回退默认上限。
+     *
+     * @param source 文件名
+     * @return 最大字节数
+     */
+    private int resolveMaxSize(String source) {
+        String extension = extensionOf(source);
+        Integer limit = properties.getUpload().getTypeLimits().get(extension);
+        return ObjectUtils.isEmpty(limit) || limit <= 0
+                ? properties.getUpload().getMaxSizeBytes() : limit;
+    }
+
+    private String extensionOf(String fileName) {
+        String name = StringUtils.getFilename(fileName);
+        if (!StringUtils.hasText(name) || name.lastIndexOf('.') < 0) {
+            return "";
+        }
+        return name.substring(name.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
     }
 
     private int resolveLimit(Integer limit) {
@@ -219,8 +242,11 @@ public class RagDocumentServiceImpl implements RagDocumentService {
     }
 
     private RagDocumentResDTO toResDTO(RagDocumentBO document, boolean duplicated) {
-        boolean reindexRequired = StringUtils.hasText(document.embeddingModel())
+        boolean modelMismatch = StringUtils.hasText(document.embeddingModel())
                 && !document.embeddingModel().equals(embeddingModel.modelId());
+        boolean dimensionMismatch = !ObjectUtils.isEmpty(document.embeddingDimension())
+                && document.embeddingDimension() != embeddingModel.dimension();
+        boolean reindexRequired = modelMismatch || dimensionMismatch;
         return new RagDocumentResDTO(document.docId(), document.projectId(), document.source(),
                 document.contentType(), document.sizeBytes(), document.contentHash(),
                 document.chunkCount(), document.indexStatus(), document.embeddingModel(),

@@ -36,4 +36,19 @@ public interface GatewayGuard {
      * @param reservation 预占结果
      */
     void release(GuardReservation reservation);
+
+    /**
+     * 事后预算校验与扣减（用于无法预估 token 的复合接口，如 RAG answer）。
+     *
+     * <p>响应已成功，不能回滚；本方法检查上限并原子累计实际成本，返回是否仍在预算内，
+     * 供治理层记录可观测错误。</p>
+     *
+     * @param keyHash        虚拟 Key 哈希；master 为 null
+     * @param budgetDuration 预算周期
+     * @param maxBudget      预算上限
+     * @param actualCost     实际成本
+     * @return true 表示未超出预算（或未配置预算）
+     */
+    boolean chargeAfterwards(String keyHash, String budgetDuration, BigDecimal maxBudget,
+                             BigDecimal actualCost);
 }

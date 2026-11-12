@@ -1,12 +1,15 @@
 package com.qtua.aihub.core.rag;
 
 import com.qtua.aihub.common.config.RagProperties;
+import com.qtua.aihub.common.rag.EmbeddingModel;
 import com.qtua.aihub.common.rag.RagChunkDraft;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * REQ-3.1 切分器测试：段落优先、超长定长 + overlap、空文本。
@@ -63,6 +66,8 @@ class RagChunkerTest {
         RagProperties properties = new RagProperties();
         properties.getChunk().setMaxChars(maxChars);
         properties.getChunk().setOverlapChars(overlap);
-        return new RagChunker(properties);
+        EmbeddingModel model = mock(EmbeddingModel.class);
+        when(model.maxInputTokens()).thenReturn(100_000);
+        return new RagChunker(new RagChunkSettings(properties, model));
     }
 }

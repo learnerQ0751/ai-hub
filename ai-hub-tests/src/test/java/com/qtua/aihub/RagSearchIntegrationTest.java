@@ -78,6 +78,8 @@ class RagSearchIntegrationTest {
 
         assertThat(response.path("no_hit").asBoolean()).isFalse();
         assertThat(response.path("count").asInt()).isEqualTo(1);
+        assertThat(response.has("embeddingTokens")).isFalse();
+        assertThat(response.has("embeddingModel")).isFalse();
         JsonNode hit = response.path("results").get(0);
         assertThat(hit.path("content").asText()).isEqualTo(QUERY);
         assertThat(hit.path("source").asText()).isEqualTo("demo.md");

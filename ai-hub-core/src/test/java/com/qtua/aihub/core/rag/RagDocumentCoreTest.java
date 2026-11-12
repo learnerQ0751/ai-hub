@@ -1,6 +1,7 @@
 package com.qtua.aihub.core.rag;
 
 import com.qtua.aihub.common.config.RagProperties;
+import com.qtua.aihub.common.rag.EmbeddingModel;
 import com.qtua.aihub.common.rag.VectorStore;
 import com.qtua.aihub.integration.rag.DocumentParseException;
 import com.qtua.aihub.integration.rag.DocumentTextExtractor;
@@ -61,8 +62,11 @@ class RagDocumentCoreTest {
         RagProperties properties = new RagProperties();
         properties.getChunk().setMaxChars(40);
         properties.getChunk().setOverlapChars(5);
+        EmbeddingModel embeddingModel = mock(EmbeddingModel.class);
+        when(embeddingModel.maxInputTokens()).thenReturn(100_000);
         core = new RagDocumentCore(documentManager, chunkManager,
-                new RagChunker(properties), textExtractor, indexCore, vectorStore, properties);
+                new RagChunker(new RagChunkSettings(properties, embeddingModel)),
+                textExtractor, indexCore, vectorStore, properties);
     }
 
     @Test

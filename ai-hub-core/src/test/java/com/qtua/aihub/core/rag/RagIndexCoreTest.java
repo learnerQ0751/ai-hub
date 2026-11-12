@@ -2,6 +2,7 @@ package com.qtua.aihub.core.rag;
 
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.rag.EmbeddingModel;
+import com.qtua.aihub.common.rag.EmbeddingResult;
 import com.qtua.aihub.common.rag.RagIndexStatus;
 import com.qtua.aihub.common.rag.VectorRecord;
 import com.qtua.aihub.common.rag.VectorStore;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -53,6 +55,7 @@ class RagIndexCoreTest {
         properties.getEmbedding().setDimension(2);
         lenient().when(embeddingModel.modelId()).thenReturn("model-a");
         lenient().when(embeddingModel.dimension()).thenReturn(2);
+        lenient().when(embeddingModel.costOfInputTokens(anyLong())).thenReturn(BigDecimal.ZERO);
         core = new RagIndexCore(documentManager, chunkManager, embeddingModel, vectorStore,
                 properties);
         lenient().when(documentManager.findByDocId("d1"))
@@ -63,14 +66,15 @@ class RagIndexCoreTest {
 
     @Test
     void index_batches_embeddings_and_marks_ready() {
-        when(embeddingModel.embedAll(anyList())).thenAnswer(invocation -> {
+        when(embeddingModel.embedAllWithUsage(anyList(), any())).thenAnswer(invocation -> {
             List<String> texts = invocation.getArgument(0);
-            return texts.stream().map(text -> new float[]{1.0f, 0.0f}).toList();
+            return new EmbeddingResult(
+                    texts.stream().map(text -> new float[]{1.0f, 0.0f}).toList(), 1L);
         });
 
         core.index("d1");
 
-        verify(embeddingModel, times(2)).embedAll(anyList());
+        verify(embeddingModel, times(2)).embedAllWithUsage(anyList(), any());
         ArgumentCaptor<List<VectorRecord>> records = ArgumentCaptor.forClass(List.class);
         verify(vectorStore, times(2)).upsertAll(records.capture());
         assertThat(records.getAllValues().stream().flatMap(List::stream).count()).isEqualTo(3);
@@ -86,27 +90,29 @@ class RagIndexCoreTest {
 
     @Test
     void index_retries_failed_batch_then_succeeds() {
-        when(embeddingModel.embedAll(anyList()))
+        when(embeddingModel.embedAllWithUsage(anyList(), any()))
                 .thenThrow(new IllegalStateException("embedding unavailable"))
                 .thenAnswer(invocation -> {
                     List<String> texts = invocation.getArgument(0);
-                    return texts.stream().map(text -> new float[]{1.0f, 0.0f}).toList();
+                    return new EmbeddingResult(
+                            texts.stream().map(text -> new float[]{1.0f, 0.0f}).toList(), 1L);
                 });
 
         core.index("d1");
 
-        verify(embeddingModel, times(3)).embedAll(anyList());
+        verify(embeddingModel, times(3)).embedAllWithUsage(anyList(), any());
         verify(documentManager).updateStatus("d1", RagIndexStatus.READY.name(), null);
     }
 
     @Test
     void index_marks_failed_when_retries_exhausted_and_reindex_recovers() {
-        when(embeddingModel.embedAll(anyList()))
+        when(embeddingModel.embedAllWithUsage(anyList(), any()))
                 .thenThrow(new IllegalStateException("boom"))
                 .thenThrow(new IllegalStateException("boom"))
                 .thenAnswer(invocation -> {
                     List<String> texts = invocation.getArgument(0);
-                    return texts.stream().map(text -> new float[]{1.0f, 0.0f}).toList();
+                    return new EmbeddingResult(
+                            texts.stream().map(text -> new float[]{1.0f, 0.0f}).toList(), 1L);
                 });
         when(vectorStore.deleteByDocument("d1")).thenReturn(2);
 
@@ -129,7 +135,7 @@ class RagIndexCoreTest {
 
         verify(documentManager).updateStatus("d1", RagIndexStatus.FAILED.name(),
                 "文档没有可索引的切片");
-        verify(embeddingModel, org.mockito.Mockito.never()).embedAll(anyList());
+        verify(embeddingModel, org.mockito.Mockito.never()).embedAllWithUsage(anyList(), any());
     }
 
     @Test

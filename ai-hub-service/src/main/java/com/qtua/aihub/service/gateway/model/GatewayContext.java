@@ -43,6 +43,10 @@ public class GatewayContext {
     private volatile String callType = CallTypes.CHAT;
     /** 调用目标：MCP 工具名 / Prompt 名 / 记忆操作名 / RAG 操作名。 */
     private volatile String targetName;
+    /** 辅助 embedding 用量：RAG 检索/回答的查询向量化 token。 */
+    private volatile long embeddingTokens;
+    /** 辅助 embedding 模型标识（用于按模型单价计价）。 */
+    private volatile String embeddingModel;
 
     /**
      * 构造上下文。
@@ -177,6 +181,25 @@ public class GatewayContext {
         return targetName;
     }
 
+    public long getEmbeddingTokens() {
+        return embeddingTokens;
+    }
+
+    public String getEmbeddingModel() {
+        return embeddingModel;
+    }
+
+    /**
+     * 回填辅助 embedding 用量（RAG 检索/回答）。
+     *
+     * @param model  模型标识
+     * @param tokens 输入 token
+     */
+    public void setEmbeddingUsage(String model, long tokens) {
+        this.embeddingModel = model;
+        this.embeddingTokens = Math.max(0L, tokens);
+    }
+
     /**
      * 设置调用类型与目标（MCP/Prompt/记忆/RAG 等非聊天入口使用）。
      *
@@ -216,7 +239,16 @@ public class GatewayContext {
     }
 
     /**
-     * 是否为工具类调用（MCP / 记忆 / RAG）：只做 RPM，cost=0。
+     * 是否为 embedding 调用。
+     *
+     * @return true 表示 embedding 调用
+     */
+    public boolean isEmbeddingCall() {
+        return CallTypes.EMBEDDING.equals(callType);
+    }
+
+    /**
+     * 是否为工具类调用（MCP / 记忆 / RAG）：只做 RPM 预占。
      *
      * @return true 表示工具类调用
      */

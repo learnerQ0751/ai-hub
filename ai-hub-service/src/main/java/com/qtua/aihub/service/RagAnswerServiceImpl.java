@@ -117,7 +117,7 @@ public class RagAnswerServiceImpl implements RagAnswerService {
         if (search.noHit() && !freeAllowed) {
             LOG.info("rag answer no hit: model={}, projectId={}, fallback=true", model,
                     search.projectId());
-            return fallbackResponse(query, search.projectId(), model);
+            return fallbackResponse(query, search, model);
         }
         boolean freeAnswer = search.noHit() && freeAllowed;
         RagAnswerPrompt prompt = promptBuilder.build(query, toChunks(search),
@@ -139,7 +139,8 @@ public class RagAnswerServiceImpl implements RagAnswerService {
         TokenUsage usage = modelResult.usage();
         return new RagAnswerResDTO(query, search.projectId(), answer, search.noHit(), freeAnswer,
                 citations, new RagUsageResDTO(usage.promptTokens(), usage.completionTokens(),
-                usage.totalTokens()), model);
+                usage.totalTokens()), model, modelResult.deploymentModel(),
+                search.embeddingTokens(), search.embeddingModel());
     }
 
     private String requireModel(String model) {
@@ -156,10 +157,11 @@ public class RagAnswerServiceImpl implements RagAnswerService {
         return Math.max(DEFAULT_TOP_K, properties.getAnswer().getDefaultTopK());
     }
 
-    private RagAnswerResDTO fallbackResponse(String query, String projectId, String model) {
-        return new RagAnswerResDTO(query, projectId,
+    private RagAnswerResDTO fallbackResponse(String query, RagSearchResDTO search, String model) {
+        return new RagAnswerResDTO(query, search.projectId(),
                 properties.getAnswer().getFallbackMessage(), true, false, List.of(),
-                new RagUsageResDTO(0, 0, 0), model);
+                new RagUsageResDTO(0, 0, 0), model, null,
+                search.embeddingTokens(), search.embeddingModel());
     }
 
     private ModelResult callModel(String model, RagAnswerPrompt prompt, KeyAuthDTO auth,
@@ -168,10 +170,12 @@ public class RagAnswerServiceImpl implements RagAnswerService {
         ChatCompletionResDTO result = chatService.chat(
                 new ChatCompletionReqDTO(buildChatRequest(model, prompt), auth, requestId));
         TokenUsage usage = Objects.isNull(result.getUsage()) ? TokenUsage.ZERO : result.getUsage();
-        LOG.info("rag answer model completed: model={}, usage={}, latencyMs={}, answerLength={}",
-                model, usage, Math.max(0L, System.currentTimeMillis() - startedAt),
+        LOG.info("rag answer model completed: model={}, deploymentModel={}, usage={}, latencyMs={}, "
+                        + "answerLength={}",
+                model, result.getDeploymentModel(), usage,
+                Math.max(0L, System.currentTimeMillis() - startedAt),
                 extractAnswer(result.getRawResponse()).length());
-        return new ModelResult(result.getRawResponse(), usage);
+        return new ModelResult(result.getRawResponse(), usage, result.getDeploymentModel());
     }
 
     private String buildChatRequest(String model, RagAnswerPrompt prompt) {
@@ -256,9 +260,10 @@ public class RagAnswerServiceImpl implements RagAnswerService {
     /**
      * 一次模型调用的不可变结果（避免用成员变量承载请求级用量）。
      *
-     * @param rawResponse 上游原始响应
-     * @param usage       Token 用量
+     * @param rawResponse     上游原始响应
+     * @param usage           Token 用量
+     * @param deploymentModel 实际部署模型
      */
-    private record ModelResult(String rawResponse, TokenUsage usage) {
+    private record ModelResult(String rawResponse, TokenUsage usage, String deploymentModel) {
     }
 }

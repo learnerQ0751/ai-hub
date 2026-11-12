@@ -91,7 +91,7 @@ public class RagSearchServiceImpl implements RagSearchService {
                 projectId, result.candidateCount(), hits.size(), hits.isEmpty(),
                 result.reranked());
         return new RagSearchResDTO(query, projectId, hits.size(), hits.isEmpty(),
-                result.reranked(), hits);
+                result.reranked(), hits, result.embeddingTokens(), result.embeddingModel());
     }
 
     private String requireProject(String projectId) {

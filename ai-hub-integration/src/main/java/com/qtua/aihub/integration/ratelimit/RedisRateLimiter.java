@@ -133,6 +133,27 @@ public class RedisRateLimiter {
             return 1
             """, Long.class);
 
+    /**
+     * 事后预算扣减：检查上限后无条件累计实际成本。
+     *
+     * <p>复合接口响应已成功，无法拒绝；无条件累计保证后续请求能看到真实 spend。</p>
+     */
+    private static final RedisScript<Long> BUDGET_CHARGE_SCRIPT = new DefaultRedisScript<>("""
+            local cost = tonumber(ARGV[1])
+            local limit = tonumber(ARGV[2])
+            local ttl = tonumber(ARGV[3])
+            local spent = tonumber(redis.call('GET', KEYS[1]) or '0')
+            local within = 1
+            if limit >= 0 and spent + cost > limit then
+                within = 0
+            end
+            if cost > 0 then
+                redis.call('INCRBY', KEYS[1], cost)
+                redis.call('EXPIRE', KEYS[1], ttl)
+            end
+            return within
+            """, Long.class);
+
     private final StringRedisTemplate redisTemplate;
     private final RateLimitProperties properties;
     private final Clock clock;
@@ -289,6 +310,39 @@ public class RedisRateLimiter {
                     String.valueOf(toMicro(reservedCost)));
         } catch (RuntimeException ex) {
             LOG.warn("failed to release budget key={}", key, ex);
+        }
+    }
+
+    /**
+     * 事后预算扣减：检查上限并累计实际成本。
+     *
+     * @param keyHash        虚拟 Key 哈希
+     * @param budgetDuration 预算周期
+     * @param maxBudget      预算上限
+     * @param actualCost     实际成本
+     * @return true 表示未超出预算（或未配置预算/开关关闭）
+     */
+    public boolean chargeBudgetAfterwards(String keyHash, String budgetDuration,
+                                          BigDecimal maxBudget, BigDecimal actualCost) {
+        if (!properties.isEnabled() || ObjectUtils.isEmpty(maxBudget)
+                || !StringUtils.hasText(budgetDuration)) {
+            return true;
+        }
+        String key = budgetKey(keyHash, budgetDuration);
+        String costMicro = String.valueOf(toMicro(actualCost));
+        String limitMicro = String.valueOf(toMicro(maxBudget));
+        String ttl = String.valueOf(ttlSeconds(budgetDuration));
+        try {
+            Long result = redisTemplate.execute(BUDGET_CHARGE_SCRIPT, List.of(key),
+                    costMicro, limitMicro, ttl);
+            return ObjectUtils.isEmpty(result) || result == 1L;
+        } catch (RuntimeException ex) {
+            if (properties.isFailOpen()) {
+                LOG.warn("rate limiter unavailable, budget charge fail-open key={}", key, ex);
+                return true;
+            }
+            LOG.error("rate limiter unavailable, budget charge fail-closed key={}", key, ex);
+            return false;
         }
     }
 

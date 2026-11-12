@@ -1,6 +1,5 @@
 package com.qtua.aihub.core.rag;
 
-import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.rag.RagChunkDraft;
 import org.springframework.stereotype.Component;
 
@@ -11,14 +10,14 @@ import java.util.List;
  * 段落优先切分器。
  *
  * <p>先按空行拆段落，再贪心打包为不超过 max-chars 的切片；单个段落超长时按
- * max-chars 定长切分，相邻窗口重叠 overlap-chars。输出顺序稳定、chunkIndex 从 0 开始。</p>
+ * max-chars 定长切分，相邻窗口重叠 overlap-chars。输出顺序稳定、chunkIndex 从 0 开始。
+ * 有效 max-chars 由 {@link RagChunkSettings} 按 embedding 模型窗口推导与校验。</p>
  */
 @Component
 public class RagChunker {
 
     private static final String PARAGRAPH_SEPARATOR = "\n\n";
     private static final String PARAGRAPH_SPLIT_REGEX = "\\n\\s*\\n";
-    private static final int MIN_OVERLAP = 0;
 
     private final int maxChars;
     private final int overlapChars;
@@ -26,12 +25,11 @@ public class RagChunker {
     /**
      * 构造切分器。
      *
-     * @param properties RAG 配置
+     * @param settings 切片参数
      */
-    public RagChunker(RagProperties properties) {
-        this.maxChars = Math.max(2, properties.getChunk().getMaxChars());
-        this.overlapChars = Math.max(MIN_OVERLAP,
-                Math.min(properties.getChunk().getOverlapChars(), maxChars - 1));
+    public RagChunker(RagChunkSettings settings) {
+        this.maxChars = settings.maxChars();
+        this.overlapChars = settings.overlapChars();
     }
 
     /**

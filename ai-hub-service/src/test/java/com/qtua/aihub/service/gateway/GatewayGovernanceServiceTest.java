@@ -11,6 +11,8 @@ import com.qtua.aihub.common.metering.TokenEstimate;
 import com.qtua.aihub.common.metering.TokenUsage;
 import com.qtua.aihub.common.pricing.ModelPrice;
 import com.qtua.aihub.common.pricing.PricingCatalog;
+import com.qtua.aihub.common.rag.EmbeddingModel;
+import com.qtua.aihub.common.rag.EmbeddingModelProvider;
 import com.qtua.aihub.integration.protocol.OpenAiProtocolAdapter;
 import com.qtua.aihub.manager.CallLogManager;
 import com.qtua.aihub.manager.model.CallLogBO;
@@ -31,6 +33,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -49,6 +52,7 @@ class GatewayGovernanceServiceTest {
     private PricingCatalog pricingCatalog;
     private CallLogManager callLogManager;
     private OpenAiProtocolAdapter protocolAdapter;
+    private EmbeddingModelProvider embeddingModelProvider;
     private GatewayGovernanceService service;
     private GuardReservation reservation;
 
@@ -59,8 +63,10 @@ class GatewayGovernanceServiceTest {
         pricingCatalog = mock(PricingCatalog.class);
         callLogManager = mock(CallLogManager.class);
         protocolAdapter = mock(OpenAiProtocolAdapter.class);
+        embeddingModelProvider = mock(EmbeddingModelProvider.class);
         service = new GatewayGovernanceService(modelCatalog, gatewayGuard, pricingCatalog,
-                callLogManager, protocolAdapter, new RateLimitProperties(), new ObjectMapper());
+                callLogManager, protocolAdapter, new RateLimitProperties(), new ObjectMapper(),
+                embeddingModelProvider);
         reservation = new GuardReservation(REQUEST_ID, KEY_HASH, "chat-default", "daily",
                 105, RESERVED_COST, true, true);
 
@@ -283,6 +289,107 @@ class GatewayGovernanceServiceTest {
         CallLogBO log = capturedLog();
         assertThat(log.callType()).isEqualTo("RAG");
         assertThat(log.status()).isEqualTo(404);
+    }
+
+    @Test
+    void reserve_embedding_estimates_input_tokens_and_cost() {
+        EmbeddingModel embeddingModel = mock(EmbeddingModel.class);
+        when(embeddingModelProvider.findByAlias("emb")).thenReturn(Optional.of(embeddingModel));
+        when(embeddingModel.costOfInputTokens(3L)).thenReturn(new BigDecimal("0.001"));
+        GatewayContext context = context(KeyAuthDTO.virtualKey(KEY_HASH, List.of("emb"),
+                60, 1000, BigDecimal.TEN, "daily"));
+        context.setCallTarget(CallTypes.EMBEDDING, "embeddings");
+
+        service.reserve(context, "{\"model\":\"emb\",\"input\":[\"你好\",\"abc\"]}");
+
+        assertThat(context.getModelAlias()).isEqualTo("emb");
+        assertThat(context.getEstimatedTokens()).isEqualTo(3);
+        assertThat(context.getEstimatedCost()).isEqualByComparingTo("0.001");
+        ArgumentCaptor<GuardRequest> captor = ArgumentCaptor.forClass(GuardRequest.class);
+        verify(gatewayGuard).reserve(captor.capture());
+        GuardRequest request = captor.getValue();
+        assertThat(request.modelAlias()).isEqualTo("emb");
+        assertThat(request.tpmLimit()).isEqualTo(1000);
+        assertThat(request.maxBudget()).isEqualByComparingTo("10");
+        assertThat(request.estimatedTokens()).isEqualTo(3);
+    }
+
+    @Test
+    void complete_embedding_settles_actual_usage_and_logs_upstream_model() {
+        EmbeddingModel embeddingModel = mock(EmbeddingModel.class);
+        when(embeddingModelProvider.findByAlias("emb")).thenReturn(Optional.of(embeddingModel));
+        when(embeddingModel.modelId()).thenReturn("text-embedding-v3");
+        when(embeddingModel.costOfInputTokens(10L)).thenReturn(new BigDecimal("0.002"));
+        GatewayContext context = context(virtualKey());
+        context.setCallTarget(CallTypes.EMBEDDING, "embeddings");
+        context.setModelAlias("emb");
+        context.setReservation(reservation);
+        context.complete(TokenUsage.of(10, 0), "emb");
+
+        service.complete(context);
+
+        verify(gatewayGuard).settle(reservation, TokenUsage.of(10, 0),
+                new BigDecimal("0.002"));
+        verify(callLogManager).addSpend(KEY_HASH, new BigDecimal("0.002"));
+        CallLogBO log = capturedLog();
+        assertThat(log.callType()).isEqualTo("EMBEDDING");
+        assertThat(log.targetName()).isEqualTo("embeddings");
+        assertThat(log.deploymentModel()).isEqualTo("text-embedding-v3");
+        assertThat(log.cost()).isEqualByComparingTo("0.002");
+    }
+
+    @Test
+    void complete_rag_answer_charges_chat_plus_embedding_and_checks_budget() {
+        EmbeddingModel embeddingModel = mock(EmbeddingModel.class);
+        when(embeddingModelProvider.findByModelId("text-embedding-v3"))
+                .thenReturn(Optional.of(embeddingModel));
+        when(embeddingModel.costOfInputTokens(100L)).thenReturn(new BigDecimal("0.003"));
+        when(gatewayGuard.chargeAfterwards(eq(KEY_HASH), eq("daily"), eq(BigDecimal.TEN),
+                any())).thenReturn(true);
+        GatewayContext context = context(virtualKey());
+        context.setCallTarget(CallTypes.RAG, "rag_answer");
+        context.setModelAlias("chat-default");
+        context.setReservation(reservation);
+        context.complete(new TokenUsage(10, 5, 15), "deepseek-flash",
+                "chat-default", 0, false);
+        context.setEmbeddingUsage("text-embedding-v3", 100);
+
+        service.complete(context);
+
+        BigDecimal expected = new BigDecimal("0.00300820");
+        verify(gatewayGuard).settle(reservation, new TokenUsage(10, 5, 15), expected);
+        verify(gatewayGuard).chargeAfterwards(eq(KEY_HASH), eq("daily"),
+                eq(BigDecimal.TEN), eq(expected));
+        verify(callLogManager).addSpend(KEY_HASH, expected);
+        CallLogBO log = capturedLog();
+        assertThat(log.callType()).isEqualTo("RAG");
+        assertThat(log.targetName()).isEqualTo("rag_answer");
+        assertThat(log.modelAlias()).isEqualTo("chat-default");
+        assertThat(log.deploymentModel()).isEqualTo("deepseek-flash");
+        assertThat(log.usage().promptTokens()).isEqualTo(10);
+        assertThat(log.cost()).isEqualByComparingTo(expected);
+        assertThat(log.errorType()).isNull();
+    }
+
+    @Test
+    void complete_rag_search_records_embedding_cost_without_spend() {
+        EmbeddingModel embeddingModel = mock(EmbeddingModel.class);
+        when(embeddingModelProvider.findByModelId("text-embedding-v3"))
+                .thenReturn(Optional.of(embeddingModel));
+        when(embeddingModel.costOfInputTokens(100L)).thenReturn(new BigDecimal("0.003"));
+        GatewayContext context = context(virtualKey());
+        context.setCallTarget(CallTypes.RAG, "search_knowledge");
+        context.setModelAlias("search_knowledge");
+        context.setReservation(reservation);
+        context.setEmbeddingUsage("text-embedding-v3", 100);
+
+        service.complete(context);
+
+        verify(callLogManager, never()).addSpend(any(), any());
+        CallLogBO log = capturedLog();
+        assertThat(log.cost()).isEqualByComparingTo("0.003");
+        assertThat(log.usage()).isEqualTo(TokenUsage.ZERO);
+        assertThat(log.targetName()).isEqualTo("search_knowledge");
     }
 
     private GatewayContext context(KeyAuthDTO auth) {

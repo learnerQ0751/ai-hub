@@ -1,7 +1,7 @@
 # 设计基线（ai-hub）
 
-- 更新于：2026-11-11
-- 对应状态：第 3 期完成（REQ-3.1~3.6 全部完成；毕业验收文档 `acceptance/THIRD-PHASE.md`）
+- 更新于：2026-11-12
+- 对应状态：第 3 期完成 + 生产化补强（REQ-3.7 Embedding 一等能力 / REQ-3.8 计费与边界补强）
 - 维护规则：只有架构、运行时链路、跨需求决策发生变化时才更新；需求细节见 `records/`。
 
 ## 1. 系统全景
@@ -11,6 +11,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 - 第 1 期：LLM 网关核心（统一入口 / 模型路由 / 虚拟 Key / 限流预算 / 日志计量 / 容错 / 流式）✅
 - 第 2 期：MCP 与 Prompt 中心（MCP 注册/发现/调用代理 + Prompt 模板/渲染 + MCP Server 暴露）✅
 - 第 3 期：RAG 与记忆服务（文档接入 REQ-3.1、向量化 REQ-3.2、检索 REQ-3.3、生成与引用 REQ-3.4、记忆 REQ-3.5、MCP 暴露 REQ-3.6 已完成）
+- 生产化补强：REQ-3.7 Embedding 一等能力（阿里 text-embedding-v3 + `/v1/embeddings` + 计量计价）、REQ-3.8 RAG answer 计费回填 / chunk 推导 / 上传限制
 - 第 4 期：治理收尾（多租户 / Trace / 成本 / 管理端 / 审计）
 
 架构图（唯一活图）：`acceptance/assets/design.svg`（源文件 `design.drawio` 同目录）。
@@ -25,13 +26,13 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 
 | 模块 | 职责 |
 |---|---|
-| `ai-hub-common` | 异常、常量、配置模型（GatewayProperties）、模型目录端口（ModelCatalog/ModelDeployment）、工具 |
-| `ai-hub-api` | Service 接口 + Req/Res DTO（OpenAI 契约） |
-| `ai-hub-manager` | BO 与 BO↔DO 转换（ChatCompletionBO / ApiKeyBO）；模型目录 YAML 实现（YamlModelCatalog）；记忆数据门面与召回端口实现（MemoryManager） |
-| `ai-hub-dal` | MyBatis Mapper + DDL（api_keys / call_logs / mcp_servers / prompt_templates / memories / memory_audit_logs） |
-| `ai-hub-integration` | 上游 HTTP + OpenAI 协议适配 + 协议改写；MCP 探活/工具客户端/stdio 进程管理；Prompt 模板渲染与消息解析 |
-| `ai-hub-core` | 纯业务编排：部署选择、协议改写、上游调用、usage 解析（不含限流/预算/计价/日志） |
-| `ai-hub-service` | 应用服务：请求解析/校验/业务执行；`service/gateway` 为网关治理公共实现（限流/预算/计价/spend/日志）；记忆服务校验与 clear 事务 |
+| `ai-hub-common` | 异常、常量、配置模型（GatewayProperties/RagProperties）、模型目录端口（ModelCatalog/ModelDeployment/EmbeddingModel/EmbeddingModelProvider）、工具 |
+| `ai-hub-api` | Service 接口 + Req/Res DTO（OpenAI 契约，含 Embedding） |
+| `ai-hub-manager` | BO 与 BO↔DO 转换（ChatCompletionBO / ApiKeyBO）；模型目录 YAML 实现（YamlModelCatalog）；pgvector 存储；记忆数据门面 |
+| `ai-hub-dal` | MyBatis Mapper + DDL（api_keys / call_logs / mcp_servers / prompt_templates / memories / memory_audit_logs / rag_*） |
+| `ai-hub-integration` | 上游 HTTP + OpenAI 协议适配 + 协议改写；远端 embedding（DashScope OpenAI 兼容）；MCP 探活/工具客户端/stdio 进程管理；Prompt 模板渲染与消息解析 |
+| `ai-hub-core` | 纯业务编排：部署选择、协议改写、上游调用、usage 解析；RAG 索引/检索/chunk 校验（不含限流/预算/计价/日志） |
+| `ai-hub-service` | 应用服务：请求解析/校验/业务执行；`service/gateway` 为网关治理公共实现（限流/预算/计价/spend/日志）；Embedding 服务 |
 | `ai-hub-start` | 启动类（根包）+ controller / filter / error / config |
 | `ai-hub-tests` | 集成测试 + ArchUnit + JaCoCo 聚合 |
 
@@ -42,7 +43,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 - 表速查（按业务域、用途、关键关系、状态）见 `docs/DATA-MODEL.md`；`STATUS.md` 自动生成同名区块并与 DDL 校验（只显示当前已建表）。
 - DDL 由 Flyway 管理：`ai-hub-dal/src/main/resources/db/migration/Vn__*.sql`，应用启动自动迁移（Spring Boot 4 需 `spring-boot-starter-flyway`）；测试 H2 仍用 `spring.sql.init`（Flyway 测试禁用）。
 - 本地依赖容器：`postgres:16`（5432，db/user/pass=aihub）+ `redis:7.2`（6379）；Docker Hub 不可达时使用本地已有镜像。
-- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5，含 call_type/target_name，REQ-3.5 增加 MEMORY、REQ-3.1 增加 RAG 取值）、`mcp_servers`（REQ-2.1）、`prompt_templates`（REQ-2.4）、`memories` / `memory_audit_logs`（REQ-3.5）、`rag_documents` / `rag_chunks`（REQ-3.1）、`rag_vectors`（REQ-3.2）；规划：`audit_logs`。
+- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5，含 call_type/target_name，REQ-3.5 增加 MEMORY、REQ-3.1 增加 RAG、REQ-3.7 增加 EMBEDDING）、`mcp_servers`（REQ-2.1）、`prompt_templates`（REQ-2.4）、`memories` / `memory_audit_logs`（REQ-3.5）、`rag_documents` / `rag_chunks`（REQ-3.1）、`rag_vectors`（REQ-3.2，V9 放宽为 vector(1024) + 低维零填充）；规划：`audit_logs`。
 - ER 图：`docs/DATA-MODEL.md` 使用 Mermaid erDiagram 速查；第 3 期毕业时与 RAG 表合并输出 `acceptance/assets/data-model.drawio|svg`。
 
 ## 3. 核心运行时链路
@@ -315,8 +316,10 @@ flowchart TD
     P --> C["RagChunker：段落贪心打包，超长定长 + overlap"]
     C --> DB[("rag_documents / rag_chunks")]
     DB --> R
-    F --> L["call_logs（call_type=RAG, target_name=ingest_document, cost=0）"]
+    F --> L["call_logs（call_type=RAG, target_name=ingest_document）"]
 ```
+
+- embedding 成本（REQ-3.7）：索引时按模型单价写入 `rag_documents.embedding_cost`；本地/确定性为 0。
 
 - 去重键：`project_id + content_hash`（SHA-256）；默认幂等返回已有文档，覆盖为显式配置。
 - 原始文件落库而非本机目录：多实例一致，解析失败也可追溯/删除。
@@ -347,7 +350,7 @@ sequenceDiagram
     R->>R: doc_ids/source 过滤 → 可选规则重排 → 截断 topK
     R-->>S: hits + candidateCount + reranked
     S-->>C: results[] + count + no_hit
-    F->>F: RPM 结算 + call_logs（call_type=RAG, target=search_knowledge, cost=0）
+    F->>F: RPM 结算 + call_logs（call_type=RAG, target=search_knowledge, cost=查询 embedding 成本）
 ```
 
 - 候选放大：`candidate = min(max-candidates, top_k × candidate-multiplier)`，抵消过滤/重排淘汰；
@@ -368,7 +371,7 @@ sequenceDiagram
     participant H as ChatCompletionService
     participant U as 上游 LLM
     C->>F: POST /v1/rag/answer
-    F->>F: callType=RAG, target=rag_answer（仅 RPM）
+    F->>F: callType=RAG, target=rag_answer（入口仅 RPM；无法按 messages 预估）
     F->>A: 放行
     A->>A: 校验 model；解析 top_k/allow_free_answer
     A->>S: search(检索参数)
@@ -385,10 +388,13 @@ sequenceDiagram
         A->>A: 提取 answer；组装 citations（index 与 [n] 对应）
         A-->>C: answer + citations[] + usage
     end
-    F->>F: RPM 结算 + call_logs（call_type=RAG, target=rag_answer, cost=0）
+    A->>F: 回填 usage/deploymentModel/embedding 用量
+    F->>F: 按 chat + embedding 实际成本计价；事后预算校验 + spend + call_logs
 ```
 
 - 检索与生成分层：answer 复用 search，检索语义只有一处；内部 chat 直接调 Service，避免双重治理。
+- 计费（REQ-3.8）：入口只做 RPM；响应后按实际 usage 结算，`chargeAfterwards` 检查预算并原子累计，
+  超出预算在 `call_logs.error_type=budget_exceeded` 留痕（不改变已成功响应）。
 - 引用契约：prompt 编号与 citations 同源生成、`index` 从 1 连续；citations 只含实际进入 prompt 的切片。
 - 兜底：无召回默认不调模型并返回可配置话术；自由回答需服务端开关 + 请求显式开启，且 citations 为空。
 - 可观测：同一 request_id 记录 query、召回、prompt 长度/hash、usage/耗时与引用清单，不落 prompt 正文。
@@ -421,6 +427,40 @@ sequenceDiagram
 - 序列化：JSON-RPC 信封用 Jackson 2；工具结果用 Jackson 3（与 Web 一致，内置 java.time）。
 - 日志：`call_logs` 记 `call_type=MCP`、`target_name=工具名`、`request_id` 贯穿；工具入口日志只记
   作用域与内容长度，不打印记忆正文/文档全文。
+
+### 3.17 Embedding 一等能力（REQ-3.7）
+
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant F as 治理 Filter
+    participant S as EmbeddingService
+    participant P as EmbeddingModelProvider
+    participant E as RemoteEmbeddingModel
+    participant U as DashScope
+    participant G as 治理服务
+    C->>F: POST /v1/embeddings {model,input,dimensions}
+    F->>G: reserve（别名→模型目录，估算 token/成本）
+    F->>S: 放行
+    S->>P: findByAlias(model)
+    P-->>S: EmbeddingModel（维度/窗口/单价）
+    loop 每批 ≤ max-batch-size（v3=10）
+        S->>E: embedAllWithUsage(texts, dimensions)
+        E->>U: POST {base-url}/embeddings
+        U-->>E: data[] + usage.prompt_tokens
+    end
+    S-->>C: OpenAI 兼容响应
+    F->>G: complete（实际 usage 计价/结算/spend/call_logs）
+```
+
+- 模型目录：`gateway.rag.embedding.models.*` 多别名；`gateway.rag.embedding.model` 选择 RAG 主模型；
+  旧单模型字段在目录为空时生效（测试/离线兼容）。
+- 远端：OpenAI 兼容 `POST {base-url}/embeddings`；批量上限（v3=10）、可配置重试/退避、连接/读超时、
+  维度校验；供应商 usage 优先，缺失按 CJK 1 字≈1 token 估算。
+- 成本归集：`/v1/embeddings` 走完整治理（RPM/TPM/预算/计价/日志，call_type=EMBEDDING）；
+  RAG 索引成本写文档，检索/回答查询 embedding 成本写 `call_logs.cost`。
+- pgvector：列固定 `vector(1024)`，低维模型零填充；V9 迁移清空派生向量，文档按模型/维度提示
+  `reindex_required`。
 
 ## 4. 跨需求设计决策
 
@@ -480,6 +520,14 @@ sequenceDiagram
 | 无召回默认不调模型；自由回答需服务端 + 请求双开关 | 不编造答案与引用；高风险能力默认关闭，防止调用方绕过 | REQ-3.4 | 2026-11-11 |
 | RAG/记忆 MCP 工具直接调用内部 Service，不复制 REST/Filter 逻辑 | 一份业务与权限规则；治理只在 `/mcp` 入口做一次，避免双重限流/日志 | REQ-3.6 | 2026-11-11 |
 | MCP 工具结果用 Jackson 3 序列化，JSON-RPC 信封保留 Jackson 2 | 与 Web 时间格式一致，避免为 Jackson 2 引入 jsr310 依赖 | REQ-3.6 | 2026-11-11 |
+| embedding 模型目录端口化，保留旧单模型字段 | 多模型切换与测试/离线兼容；业务只依赖 `EmbeddingModel` | REQ-3.7 | 2026-11-12 |
+| 默认阿里 text-embedding-v3（OpenAI 兼容），批量 10、窗口 8192 | 主人决策接云 API；官方限制明确，修复 800 字截断 | REQ-3.7 | 2026-11-12 |
+| 向量列固定 1024，低维模型零填充 | 单列兼容 384/512/768/1024，cosine 语义不变，保留 HNSW | REQ-3.7 | 2026-11-12 |
+| `/v1/embeddings` 复用统一治理，响应级错误不重试 | 横切治理零复制；重试无法修复响应结构问题 | REQ-3.7 | 2026-11-12 |
+| RAG answer 入口 RPM + 事后实际 usage 结算/预算校验 | prompt 由检索动态拼装，入口无法预估 token | REQ-3.8 | 2026-11-12 |
+| 事后预算“检查上限 + 无条件累计” | 响应已成功不可回滚，但必须让后续请求看到真实 spend | REQ-3.8 | 2026-11-12 |
+| chunk 按模型窗口×0.8 推导（上限 800），越界 warn/fail 可配置 | 中文 1 字≈1 token；避免供应商静默截断 | REQ-3.8 | 2026-11-12 |
+| 上传限制按扩展名配置，multipart 为硬上限 | 业务精确拒绝 + 框架防打爆分层 | REQ-3.8 | 2026-11-12 |
 
 ## 5. 演进记录
 
@@ -504,6 +552,8 @@ sequenceDiagram
 | 2026-11-11 | REQ-3.3 | RAG 检索与重排（`/v1/rag/search`、项目/模型隔离、元数据过滤、阈值/条数、规则重排、no_hit、检索日志） |
 | 2026-11-11 | REQ-3.4 | RAG 生成与引用溯源（`/v1/rag/answer`、引用编号/citations、无召回兜底、自由回答开关、全链路日志、黄金问题集） |
 | 2026-11-11 | REQ-3.6 | RAG/记忆 MCP 暴露（6 个工具、schema 与 REST 一致、租户透传、统一治理与调用日志） |
+| 2026-11-12 | REQ-3.7 | Embedding 一等能力（模型目录、DashScope v3 远端、`/v1/embeddings`、计量计价、pgvector 1024 零填充） |
+| 2026-11-12 | REQ-3.8 | 计费与边界补强（RAG answer 实际 usage 回填与事后预算、chunk 窗口推导、上传类型限制） |
 
 ## 6. 与 LiteLLM 的差异
 
@@ -521,4 +571,5 @@ sequenceDiagram
 | MCP Server 暴露 | 自身作为 MCP Server | 已实现（REQ-2.6）；原生 JSON-RPC + 3 工具；LiteLLM 是聚合网关，本方案是能力出口 |
 | 记忆服务 | 会话/用户两级记忆、save/recall/clear | 已实现（REQ-3.5）；PostgreSQL 结构化存储 + TTL 惰性过滤 + 物理删除审计；向量检索预留端口，本期不实现；LiteLLM Memory 未作为行为基线（B-16 待补测） |
 | RAG/记忆 MCP 暴露 | 与 07 笔记 9002/9003 的 MCP 方法同名 | 已实现（REQ-3.6）；原生 JSON-RPC + schema 与 REST 一致；比 07 设计多 `rag_answer`，租户/权限在 Service 统一判定 |
+| Embedding | LiteLLM 经统一入口计量/计价 | 已实现（REQ-3.7）；模型目录 + DashScope OpenAI 兼容 + `/v1/embeddings`；RAG 成本归集到文档/调用；向量单列 1024 零填充 |
 

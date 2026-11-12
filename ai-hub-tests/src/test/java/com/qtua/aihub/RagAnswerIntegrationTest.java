@@ -76,6 +76,8 @@ class RagAnswerIntegrationTest {
         registry.add("gateway.model-list.chat[0].api-base", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.model-list.chat[0].api-key", () -> "upstream-key");
         registry.add("gateway.model-list.chat[0].model", () -> "upstream-chat");
+        registry.add("gateway.pricing.models.upstream-chat.input-per-million", () -> "1.0");
+        registry.add("gateway.pricing.models.upstream-chat.output-per-million", () -> "2.0");
     }
 
     @AfterAll
@@ -93,6 +95,9 @@ class RagAnswerIntegrationTest {
         JsonNode response = answer(answerBody(project, QUERY, "chat", 3, 0.9, null, false));
 
         assertThat(response.path("answer").asText()).isEqualTo(ANSWER);
+        assertThat(response.has("deploymentModel")).isFalse();
+        assertThat(response.has("embeddingModel")).isFalse();
+        assertThat(response.has("embeddingTokens")).isFalse();
         assertThat(response.path("no_hit").asBoolean()).isFalse();
         assertThat(response.path("free_answer").asBoolean()).isFalse();
         JsonNode citation = response.path("citations").get(0);
@@ -196,8 +201,11 @@ class RagAnswerIntegrationTest {
 
         assertThat(log.getCallType()).isEqualTo("RAG");
         assertThat(log.getTargetName()).isEqualTo("rag_answer");
-        assertThat(log.getModelAlias()).isEqualTo("rag_answer");
-        assertThat(log.getCost()).isEqualByComparingTo("0");
+        assertThat(log.getModelAlias()).isEqualTo("chat");
+        assertThat(log.getDeploymentModel()).isEqualTo("upstream-chat");
+        assertThat(log.getPromptTokens()).isEqualTo(1);
+        assertThat(log.getCompletionTokens()).isEqualTo(1);
+        assertThat(log.getCost()).isGreaterThan(new java.math.BigDecimal("0"));
         assertThat(log.getStatus()).isEqualTo(200);
     }
 

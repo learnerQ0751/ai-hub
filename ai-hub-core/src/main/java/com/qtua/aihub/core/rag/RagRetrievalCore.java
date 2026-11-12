@@ -2,6 +2,7 @@ package com.qtua.aihub.core.rag;
 
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.rag.EmbeddingModel;
+import com.qtua.aihub.common.rag.EmbeddingResult;
 import com.qtua.aihub.common.rag.RagSearchRequest;
 import com.qtua.aihub.common.rag.VectorMatch;
 import com.qtua.aihub.common.rag.VectorSearchQuery;
@@ -68,7 +69,8 @@ public class RagRetrievalCore {
      */
     public RagRetrievalResult retrieve(RagSearchRequest request) {
         long startedAt = System.currentTimeMillis();
-        float[] queryVector = embeddingModel.embed(request.query());
+        EmbeddingResult embedded = embeddingModel.embedWithUsage(request.query(), null);
+        float[] queryVector = validateQueryVector(embedded.vectors());
         int candidateLimit = Math.max(request.topK(), request.candidateLimit());
         List<VectorMatch> matches = vectorStore.search(new VectorSearchQuery(request.projectId(),
                 embeddingModel.modelId(), queryVector, candidateLimit, request.minScore()));
@@ -85,7 +87,19 @@ public class RagRetrievalCore {
                 request.projectId(), truncateQuery(request.query()), request.minScore(),
                 matches.size(), candidates.size(), hits.size(), hits.isEmpty(), reranked,
                 Math.max(0L, System.currentTimeMillis() - startedAt), summarizeHits(hits));
-        return new RagRetrievalResult(hits, matches.size(), reranked);
+        return new RagRetrievalResult(hits, matches.size(), reranked,
+                embedded.inputTokens(), embeddingModel.modelId());
+    }
+
+    private float[] validateQueryVector(List<float[]> vectors) {
+        if (Objects.isNull(vectors) || vectors.isEmpty() || Objects.isNull(vectors.get(0))) {
+            throw new IllegalStateException("embedding result is empty");
+        }
+        float[] vector = vectors.get(0);
+        if (vector.length != embeddingModel.dimension()) {
+            throw new IllegalStateException("embedding dimension mismatch");
+        }
+        return vector;
     }
 
     private Map<String, RagChunkBO> loadChunks(List<VectorMatch> matches) {

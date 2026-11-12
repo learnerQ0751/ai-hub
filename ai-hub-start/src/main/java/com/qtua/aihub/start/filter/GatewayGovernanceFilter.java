@@ -44,6 +44,9 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
 
     private static final String CHAT_PATH_V1 = "/v1/chat/completions";
     private static final String CHAT_PATH = "/chat/completions";
+    private static final String EMBEDDING_PATH_V1 = "/v1/embeddings";
+    private static final String EMBEDDING_PATH = "/embeddings";
+    private static final String TARGET_EMBEDDING = "embeddings";
     private static final String MCP_CALL_PREFIX = "/v1/mcp/tools/";
     private static final String MCP_CALL_SUFFIX = ":call";
     private static final String PROMPT_PREFIX = "/v1/prompts/";
@@ -92,7 +95,8 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String relative = relativePath(request);
-        if (CHAT_PATH_V1.equals(relative) || CHAT_PATH.equals(relative)) {
+        if (CHAT_PATH_V1.equals(relative) || CHAT_PATH.equals(relative)
+                || EMBEDDING_PATH_V1.equals(relative) || EMBEDDING_PATH.equals(relative)) {
             return false;
         }
         if (isPromptChat(relative) || MCP_SERVER_PATH.equals(relative)
@@ -189,7 +193,9 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
             return;
         }
         CachedBodyRequestWrapper wrapped = new CachedBodyRequestWrapper(request);
-        if (relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX)) {
+        if (EMBEDDING_PATH_V1.equals(relative) || EMBEDDING_PATH.equals(relative)) {
+            context.setCallTarget(CallTypes.EMBEDDING, TARGET_EMBEDDING);
+        } else if (relative.startsWith(MCP_CALL_PREFIX) && relative.endsWith(MCP_CALL_SUFFIX)) {
             context.setCallTarget(CallTypes.MCP, mcpToolName(request));
         } else if (MCP_SERVER_PATH.equals(relative)) {
             // JSON-RPC 目标从请求体解析（tools/call 取工具名）。

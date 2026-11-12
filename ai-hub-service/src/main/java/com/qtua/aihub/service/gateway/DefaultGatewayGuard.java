@@ -92,6 +92,25 @@ public class DefaultGatewayGuard implements GatewayGuard {
     }
 
     /**
+     * 事后预算校验与扣减。
+     *
+     * @param keyHash        虚拟 Key 哈希
+     * @param budgetDuration 预算周期
+     * @param maxBudget      预算上限
+     * @param actualCost     实际成本
+     * @return true 表示未超出预算
+     */
+    @Override
+    public boolean chargeAfterwards(String keyHash, String budgetDuration,
+                                    BigDecimal maxBudget, BigDecimal actualCost) {
+        if (!StringUtils.hasText(keyHash) || ObjectUtils.isEmpty(maxBudget)
+                || !StringUtils.hasText(budgetDuration)) {
+            return true;
+        }
+        return rateLimiter.chargeBudgetAfterwards(keyHash, budgetDuration, maxBudget, actualCost);
+    }
+
+    /**
      * 失败路径释放。
      *
      * @param reservation 预占结果

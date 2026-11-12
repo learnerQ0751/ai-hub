@@ -1,16 +1,13 @@
 package com.qtua.aihub.integration.rag;
 
-import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.rag.EmbeddingModel;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2EmbeddingModel;
-import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -19,15 +16,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * LangChain4j 本地 embedding 适配（all-minilm-l6-v2）。
+ * LangChain4j 本地 embedding 适配（默认 all-minilm-l6-v2）。
  *
  * <p>ONNX 模型常驻内存，使用专用有界线程池（显式 core/max/队列/拒绝策略），
- * Bean 销毁时关闭线程池。模型维度与配置必须一致；不一致启动失败，避免写入
- * 维度不匹配的向量。</p>
+ * 提供 {@link #shutdown()} 在目录销毁时关闭。模型维度与配置必须一致；不一致启动失败，
+ * 避免写入维度不匹配的向量。</p>
  */
-@Component
-@ConditionalOnProperty(prefix = "gateway.rag.embedding", name = "provider",
-        havingValue = "langchain4j-local", matchIfMissing = true)
 public class LangChain4jEmbeddingModel implements EmbeddingModel {
 
     private static final Logger LOG = LoggerFactory.getLogger(LangChain4jEmbeddingModel.class);
@@ -40,26 +34,30 @@ public class LangChain4jEmbeddingModel implements EmbeddingModel {
     private final ThreadPoolExecutor executor;
     private final String modelId;
     private final int dimension;
+    private final int maxInputTokens;
 
     /**
      * 构造本地模型。
      *
-     * @param properties RAG 配置
+     * @param definition 模型配置
      */
-    public LangChain4jEmbeddingModel(RagProperties properties) {
-        int threads = Math.max(1, properties.getEmbedding().getThreads());
+    public LangChain4jEmbeddingModel(EmbeddingModelDefinition definition) {
+        int threads = Math.max(1, definition.threads());
         this.executor = new ThreadPoolExecutor(threads, threads, KEEP_ALIVE_SECONDS,
                 TimeUnit.SECONDS, new LinkedBlockingQueue<>(QUEUE_CAPACITY),
-                threadFactory(), new ThreadPoolExecutor.CallerRunsPolicy());
+                threadFactory(definition.alias()), new ThreadPoolExecutor.CallerRunsPolicy());
         this.delegate = new AllMiniLmL6V2EmbeddingModel(executor);
-        this.modelId = properties.getEmbedding().getModelId();
+        this.modelId = definition.model();
         this.dimension = delegate.dimension();
-        if (dimension != properties.getEmbedding().getDimension()) {
+        this.maxInputTokens = definition.maxInputTokens();
+        if (dimension != definition.dimension()) {
+            shutdown();
             throw new IllegalStateException("RAG embedding dimension mismatch: configured="
-                    + properties.getEmbedding().getDimension() + ", model=" + dimension);
+                    + definition.dimension() + ", model=" + dimension);
         }
-        LOG.info("local embedding model loaded: modelId={}, dimension={}, threads={}",
-                modelId, dimension, threads);
+        LOG.info("local embedding model loaded: alias={}, modelId={}, dimension={}, threads={}, "
+                        + "maxInputTokens={}",
+                definition.alias(), modelId, dimension, threads, maxInputTokens);
     }
 
     /**
@@ -80,6 +78,27 @@ public class LangChain4jEmbeddingModel implements EmbeddingModel {
     @Override
     public int dimension() {
         return dimension;
+    }
+
+    /**
+     * 单条最大输入 token。
+     *
+     * @return 最大输入 token
+     */
+    @Override
+    public int maxInputTokens() {
+        return maxInputTokens;
+    }
+
+    /**
+     * 本地模型无费用。
+     *
+     * @param inputTokens 输入 token 数
+     * @return 0
+     */
+    @Override
+    public BigDecimal costOfInputTokens(long inputTokens) {
+        return BigDecimal.ZERO;
     }
 
     /**
@@ -116,7 +135,6 @@ public class LangChain4jEmbeddingModel implements EmbeddingModel {
     /**
      * 关闭专用线程池。
      */
-    @PreDestroy
     public void shutdown() {
         executor.shutdown();
         try {
@@ -136,10 +154,11 @@ public class LangChain4jEmbeddingModel implements EmbeddingModel {
         return vector.clone();
     }
 
-    private static ThreadFactory threadFactory() {
+    private static ThreadFactory threadFactory(String alias) {
         AtomicInteger sequence = new AtomicInteger();
         return runnable -> {
-            Thread thread = new Thread(runnable, "rag-embedding-" + sequence.incrementAndGet());
+            Thread thread = new Thread(runnable, "rag-embedding-" + alias + "-"
+                    + sequence.incrementAndGet());
             thread.setDaemon(true);
             return thread;
         };

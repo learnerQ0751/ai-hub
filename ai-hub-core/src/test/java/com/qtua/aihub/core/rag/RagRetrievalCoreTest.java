@@ -2,6 +2,7 @@ package com.qtua.aihub.core.rag;
 
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.rag.EmbeddingModel;
+import com.qtua.aihub.common.rag.EmbeddingResult;
 import com.qtua.aihub.common.rag.RagSearchFilter;
 import com.qtua.aihub.common.rag.RagSearchRequest;
 import com.qtua.aihub.common.rag.VectorMatch;
@@ -48,7 +49,9 @@ class RagRetrievalCoreTest {
         properties = new RagProperties();
         properties.getSearch().setRerankLexicalWeight(0.5);
         lenient().when(embeddingModel.modelId()).thenReturn(MODEL);
-        lenient().when(embeddingModel.embed("年假 报销")).thenReturn(new float[]{1.0f, 0.0f});
+        lenient().when(embeddingModel.dimension()).thenReturn(2);
+        lenient().when(embeddingModel.embedWithUsage(any(), any())).thenAnswer(invocation ->
+                new EmbeddingResult(List.of(new float[]{1.0f, 0.0f}), 3L));
         core = new RagRetrievalCore(embeddingModel, vectorStore, chunkManager,
                 new RagLexicalReranker(), properties);
     }
@@ -125,7 +128,6 @@ class RagRetrievalCoreTest {
 
     @Test
     void rerank_without_query_terms_keeps_order_and_reports_not_reranked() {
-        when(embeddingModel.embed("？？")).thenReturn(new float[]{1.0f, 0.0f});
         when(vectorStore.search(any())).thenReturn(List.of(
                 match("c1", "d1", 0.6), match("c2", "d1", 0.55)));
         when(chunkManager.listByChunkIds(anyList())).thenReturn(List.of(

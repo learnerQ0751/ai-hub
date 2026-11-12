@@ -1,10 +1,8 @@
 package com.qtua.aihub.integration.rag;
 
-import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.rag.EmbeddingModel;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -14,11 +12,8 @@ import java.util.List;
  * 确定性 embedding（测试 / 离线占位）。
  *
  * <p>用 SHA-256 字节扩展为指定维度的单位向量：同一文本永远得到同一向量，
- * 不同文本近似随机。仅用于测试与无模型环境，不用于生产语义检索。</p>
+ * 不同文本近似随机。仅用于测试与无模型环境，不用于生产语义检索；成本恒为 0。</p>
  */
-@Component
-@ConditionalOnProperty(prefix = "gateway.rag.embedding", name = "provider",
-        havingValue = "deterministic")
 public class DeterministicEmbeddingModel implements EmbeddingModel {
 
     private static final String ALGORITHM = "SHA-256";
@@ -30,15 +25,17 @@ public class DeterministicEmbeddingModel implements EmbeddingModel {
 
     private final String modelId;
     private final int dimension;
+    private final int maxInputTokens;
 
     /**
      * 构造确定性模型。
      *
-     * @param properties RAG 配置
+     * @param definition 模型配置
      */
-    public DeterministicEmbeddingModel(RagProperties properties) {
-        this.modelId = properties.getEmbedding().getModelId();
-        this.dimension = properties.getEmbedding().getDimension();
+    public DeterministicEmbeddingModel(EmbeddingModelDefinition definition) {
+        this.modelId = definition.model();
+        this.dimension = definition.dimension();
+        this.maxInputTokens = definition.maxInputTokens();
         if (dimension <= 0) {
             throw new IllegalStateException("RAG embedding dimension must be positive");
         }
@@ -62,6 +59,27 @@ public class DeterministicEmbeddingModel implements EmbeddingModel {
     @Override
     public int dimension() {
         return dimension;
+    }
+
+    /**
+     * 单条最大输入 token。
+     *
+     * @return 最大输入 token
+     */
+    @Override
+    public int maxInputTokens() {
+        return maxInputTokens;
+    }
+
+    /**
+     * 确定性实现无费用。
+     *
+     * @param inputTokens 输入 token 数
+     * @return 0
+     */
+    @Override
+    public BigDecimal costOfInputTokens(long inputTokens) {
+        return BigDecimal.ZERO;
     }
 
     /**

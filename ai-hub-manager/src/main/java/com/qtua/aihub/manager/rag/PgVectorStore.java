@@ -16,14 +16,18 @@ import java.util.Objects;
 /**
  * PostgreSQL pgvector 向量存储（生产默认）。
  *
- * <p>向量以 pgvector 文本格式绑定后 CAST 为 `vector(384)`；检索使用 cosine 距离
- * （1 - distance 作为 score），过滤条件下推到 SQL，HNSW 索引可用于投影/排序。
+ * <p>向量列固定 {@code vector(1024)}：低维模型（384/512/768）零填充到 1024 后写入，
+ * cosine 距离与零填充无关，因此单列可承载多种模型；维度大于 1024 的模型不支持，需迁移列。
+ * 检索使用 cosine 距离（1 - distance 作为 score），过滤条件下推到 SQL，HNSW 索引用于排序。
  * 本类无可变业务状态，多实例安全。</p>
  */
 @Component
 @ConditionalOnProperty(prefix = "gateway.rag.vector-store", name = "type",
         havingValue = "pgvector", matchIfMissing = true)
 public class PgVectorStore implements VectorStore {
+
+    /** 与 V9 迁移后的向量列维度一致。 */
+    private static final int VECTOR_COLUMN_DIMENSION = 1024;
 
     private final RagVectorMapper vectorMapper;
 
@@ -110,18 +114,22 @@ public class PgVectorStore implements VectorStore {
     }
 
     /**
-     * 转为 pgvector 文本；使用 Float.toString 保留精度。
+     * 转为 pgvector 文本；使用 Float.toString 保留精度，低维向量零填充到列维度。
      *
      * @param vector 向量
      * @return "[v1,v2,...]"
      */
     private String toVectorText(float[] vector) {
+        if (vector.length > VECTOR_COLUMN_DIMENSION) {
+            throw new IllegalStateException("embedding dimension " + vector.length
+                    + " exceeds vector column dimension " + VECTOR_COLUMN_DIMENSION);
+        }
         StringBuilder builder = new StringBuilder("[");
-        for (int index = 0; index < vector.length; index++) {
+        for (int index = 0; index < VECTOR_COLUMN_DIMENSION; index++) {
             if (index > 0) {
                 builder.append(',');
             }
-            builder.append(Float.toString(vector[index]));
+            builder.append(Float.toString(index < vector.length ? vector[index] : 0.0f));
         }
         return builder.append(']').toString();
     }

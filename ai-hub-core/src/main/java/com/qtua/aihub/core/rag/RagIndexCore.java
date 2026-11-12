@@ -2,6 +2,7 @@ package com.qtua.aihub.core.rag;
 
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.rag.EmbeddingModel;
+import com.qtua.aihub.common.rag.EmbeddingResult;
 import com.qtua.aihub.common.rag.RagIndexStatus;
 import com.qtua.aihub.common.rag.VectorRecord;
 import com.qtua.aihub.common.rag.VectorStore;
@@ -81,12 +82,14 @@ public class RagIndexCore {
         chunkManager.updateStatusByDocId(docId, RagIndexStatus.PROCESSING.name(), null);
         long startedAt = System.currentTimeMillis();
         try {
-            embedChunks(docId, document.projectId(), chunks);
+            long inputTokens = embedChunks(docId, document.projectId(), chunks);
+            BigDecimal cost = embeddingCost(inputTokens);
             long durationMs = Math.max(0L, System.currentTimeMillis() - startedAt);
-            finishReady(docId, durationMs);
-            LOG.info("rag index ready: docId={}, chunks={}, model={}, dimension={}, durationMs={}",
+            finishReady(docId, durationMs, cost);
+            LOG.info("rag index ready: docId={}, chunks={}, model={}, dimension={}, "
+                            + "inputTokens={}, cost={}, durationMs={}",
                     docId, chunks.size(), embeddingModel.modelId(),
-                    embeddingModel.dimension(), durationMs);
+                    embeddingModel.dimension(), inputTokens, cost, durationMs);
         } catch (RuntimeException ex) {
             markFailed(docId, ex);
         }
@@ -108,12 +111,16 @@ public class RagIndexCore {
         return index(docId);
     }
 
-    private void embedChunks(String docId, String projectId, List<RagChunkBO> chunks) {
+    private long embedChunks(String docId, String projectId, List<RagChunkBO> chunks) {
         int batchSize = Math.max(1, properties.getEmbedding().getBatchSize());
+        long inputTokens = 0L;
         for (int start = 0; start < chunks.size(); start += batchSize) {
             int end = Math.min(start + batchSize, chunks.size());
             List<RagChunkBO> batch = chunks.subList(start, end);
-            List<float[]> vectors = embedWithRetry(batch.stream().map(RagChunkBO::content).toList());
+            EmbeddingResult result = embedWithRetry(
+                    batch.stream().map(RagChunkBO::content).toList());
+            inputTokens += result.inputTokens();
+            List<float[]> vectors = validate(result.vectors());
             List<VectorRecord> records = new ArrayList<>(batch.size());
             for (int index = 0; index < batch.size(); index++) {
                 RagChunkBO chunk = batch.get(index);
@@ -123,14 +130,19 @@ public class RagIndexCore {
             }
             vectorStore.upsertAll(records);
         }
+        return inputTokens;
     }
 
-    private List<float[]> embedWithRetry(List<String> texts) {
+    private EmbeddingResult embedWithRetry(List<String> texts) {
         int attempts = Math.max(1, properties.getEmbedding().getMaxRetries() + 1);
         RuntimeException last = null;
         for (int attempt = 0; attempt < attempts; attempt++) {
             try {
-                return validate(embeddingModel.embedAll(texts));
+                EmbeddingResult result = embeddingModel.embedAllWithUsage(texts, null);
+                if (Objects.isNull(result)) {
+                    throw new IllegalStateException("embedding result is empty");
+                }
+                return result;
             } catch (RuntimeException ex) {
                 last = ex;
                 LOG.warn("rag embedding batch failed: attempt={}, size={}, reason={}",
@@ -155,6 +167,14 @@ public class RagIndexCore {
         return vectors;
     }
 
+    private BigDecimal embeddingCost(long inputTokens) {
+        if (inputTokens <= 0L) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal cost = embeddingModel.costOfInputTokens(inputTokens);
+        return Objects.isNull(cost) ? BigDecimal.ZERO : cost;
+    }
+
     private void sleepBackoff(int attempt) {
         long backoff = Math.max(0L, properties.getEmbedding().getRetryBackoffMs())
                 * (attempt + 1L);
@@ -169,12 +189,12 @@ public class RagIndexCore {
         }
     }
 
-    private void finishReady(String docId, long durationMs) {
+    private void finishReady(String docId, long durationMs, BigDecimal cost) {
         chunkManager.updateEmbeddingMetaByDocId(docId, embeddingModel.modelId(),
                 embeddingModel.dimension());
         chunkManager.updateStatusByDocId(docId, RagIndexStatus.READY.name(), null);
         documentManager.updateEmbeddingMeta(docId, embeddingModel.modelId(),
-                embeddingModel.dimension(), durationMs, BigDecimal.ZERO);
+                embeddingModel.dimension(), durationMs, cost);
         documentManager.updateStatus(docId, RagIndexStatus.READY.name(), null);
     }
 
