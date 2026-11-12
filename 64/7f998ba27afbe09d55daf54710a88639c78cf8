@@ -1,0 +1,275 @@
+ai-hub-service/src/main/java/com/qtua/aihub/service/gateway/GatewayGuard.java
+  s_30c08b9c389efb::t_770b8da8ebd1f8 39-53
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagIndexCoreTest.java
+  s_30c08b9c389efb::t_fbe12c7e9af1cb 138
+  s_30c08b9c389efb::t_ed9deaf2d9cc99 93,97-98,103
+  s_30c08b9c389efb::t_f30004100548e7 109,114-115
+  s_30c08b9c389efb::t_466816c0aadc79 69,71-72,77
+  s_30c08b9c389efb::t_833c894cf373a9 5
+  s_30c08b9c389efb::t_5d84fee29f9e82 58
+  s_30c08b9c389efb::t_234e9253badf00 23
+ai-workflow/requirements/INDEX.md
+  s_30c08b9c389efb::t_1f0d0df447c4c5 32-33
+ai-hub-service/src/main/java/com/qtua/aihub/service/gateway/model/GatewayContext.java
+  s_30c08b9c389efb::t_423eec3c2c473f 184-202
+  s_30c08b9c389efb::t_e0b2fa759a3580 242-251
+  s_30c08b9c389efb::t_be493002dc026b 46-49
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/rag/EmbeddingModelConfig.java
+  s_30c08b9c389efb::t_f129f593a25688 1-30
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/GatewayGovernanceFilter.java
+  s_30c08b9c389efb::t_fcfdabad6e22e0 196-198
+  s_30c08b9c389efb::t_1fb2976ac0a254 47-49
+  s_30c08b9c389efb::t_f4bd305f7f122a 98-99
+ai-hub-service/src/test/java/com/qtua/aihub/service/RagDocumentServiceTest.java
+  s_30c08b9c389efb::t_3f16f7e7cc79a2 169
+  s_30c08b9c389efb::t_7afb13912059a2 72-83
+  s_30c08b9c389efb::t_36ce3e269a1650 71
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/EmbeddingDataResDTO.java
+  s_30c08b9c389efb::t_082ad3a572bda9 1-26
+ai-hub-common/src/main/java/com/qtua/aihub/common/rag/EmbeddingModel.java
+  s_30c08b9c389efb::t_efc69617e2ac2e 109
+  s_30c08b9c389efb::t_06376e63ee31c1 5
+  s_30c08b9c389efb::t_49bb9f71819781 3-4,6-7,13-15,33-47,63-108,110-117
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/ratelimit/RedisRateLimiter.java
+  s_30c08b9c389efb::t_e8ff7119c20cce 136-156,316
+  s_30c08b9c389efb::t_ba3d78a1b6100c 317-348
+ai-workflow/docs/DATA-MODEL.md
+  s_30c08b9c389efb::t_633134f56473fa 14
+  s_30c08b9c389efb::t_ed85dcc6a8bbdd 49-50
+  s_30c08b9c389efb::t_4989a7b8e2ff1c 29,31
+ai-hub-dal/src/main/resources/db/migration/V9__rag_vectors_dimension.sql
+  s_30c08b9c389efb::t_e431bc887b1db0 1-17
+ai-workflow/acceptance/REQ-3.8.md
+  s_30c08b9c389efb::t_34f69dc9e5fbaf 1-2,4-51,59-62,67-70,76-78,86-88,92-94,97-99
+  s_30c08b9c389efb::t_a33b577b8e3042 3
+  s_30c08b9c389efb::t_f6744f88bbb6d7 52-58,63-66,71-75,79-85,89-91,95-96,100-103
+ai-workflow/records/REQ-3.8.md
+  s_30c08b9c389efb::t_7bcca055acda4d 111-116,120-124,128-132
+  s_30c08b9c389efb::t_d87347d137cf28 1-3,5-110,117-119,125-127
+  s_30c08b9c389efb::t_bc105c60a303f1 4
+ai-hub-common/src/main/java/com/qtua/aihub/common/constant/CallTypes.java
+  s_30c08b9c389efb::t_8b0f5f501f3a54 20-21
+ai-hub-service/src/test/java/com/qtua/aihub/service/EmbeddingServiceImplTest.java
+  s_30c08b9c389efb::t_b47920d555a47d 1-134
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/rag/RemoteEmbeddingModel.java
+  s_30c08b9c389efb::t_c5758c5ade4ed8 306
+  s_30c08b9c389efb::t_5f7b02a07345f4 296-297
+  s_30c08b9c389efb::t_544e7768a3510b 210
+  s_30c08b9c389efb::t_533f8a45949505 269
+  s_30c08b9c389efb::t_562ab0e50c20c0 1-209,211-268,270,272-289,291-293,295,298-305,307-308,311-315,318-322,325-330,332-338,340-408
+  s_30c08b9c389efb::t_b26ca958535fd4 290
+  s_30c08b9c389efb::t_4e5c858a1a5c86 294
+  s_30c08b9c389efb::t_dde717c8929882 309-310
+  s_30c08b9c389efb::t_ba482e4b1eca42 316-317,323-324
+  s_30c08b9c389efb::t_d6202983fcecbc 271
+  s_30c08b9c389efb::t_716eb942dd1eff 331,339
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagIndexCore.java
+  s_30c08b9c389efb::t_d7db0c7c12c41b 114,116,120-123,133,136,141-145,170-175
+  s_30c08b9c389efb::t_ba837cca478289 5
+  s_30c08b9c389efb::t_41aa9c643432bf 85-86,88-90,92
+  s_30c08b9c389efb::t_4e1287904d5698 192,197
+  s_30c08b9c389efb::t_7f6c205a7689bf 176-177
+ai-hub-start/src/main/resources/application.yml
+  s_30c08b9c389efb::t_7a338a0a401595 57,59-63,65-66,69-70
+  s_30c08b9c389efb::t_60e50dd979fc17 6-8
+  s_30c08b9c389efb::t_2707c3481292c7 78-98,102
+ai-hub-service/src/main/java/com/qtua/aihub/service/EmbeddingServiceImpl.java
+  s_30c08b9c389efb::t_563451a1aa50d6 1-160
+ai-hub-service/src/main/java/com/qtua/aihub/service/RagDocumentServiceImpl.java
+  s_30c08b9c389efb::t_fda5cc084b232d 245,247-249
+  s_30c08b9c389efb::t_0e49d4dded6f99 183,187-188,190,196-213,215
+  s_30c08b9c389efb::t_732b2bda4479ae 22
+  s_30c08b9c389efb::t_fcabba0066eef9 74
+  s_30c08b9c389efb::t_8b9b0a17fd28bb 214
+  s_0b21f4571628b4::t_38087d69b6d63f 216
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagAnswerResDTO.java
+  s_30c08b9c389efb::t_ae5407ac85c3a4 3,13-14,24-26,36-39,47-64
+  s_0b21f4571628b4::t_85d1bcb43a32a4 65
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagChunkSettingsTest.java
+  s_30c08b9c389efb::t_ce60932b88590b 1-70
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagDocumentCoreTest.java
+  s_30c08b9c389efb::t_12c99ad2689408 4
+  s_30c08b9c389efb::t_d5f289c78dc8d7 65-66,68-69
+ai-hub-tests/src/test/resources/application-test.yml
+  s_30c08b9c389efb::t_eaa7577c7232b3 29,32-39
+  s_30c08b9c389efb::t_4dd173710e0476 30-31,43
+ai-hub-service/src/main/java/com/qtua/aihub/service/RagSearchServiceImpl.java
+  s_30c08b9c389efb::t_7040cffc4d4b80 94
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagSearchResDTO.java
+  s_30c08b9c389efb::t_72bf9339979aaf 3,12-13,21-22,30-32,40-53
+  s_30c08b9c389efb::t_14b12454a68f47 54
+ai-hub-tests/src/test/java/com/qtua/aihub/RagAnswerIntegrationTest.java
+  s_30c08b9c389efb::t_a0c1c8e96065be 79-80
+  s_30c08b9c389efb::t_5fb6aec740dd8f 98-100
+  s_30c08b9c389efb::t_0082b13d898d61 204-208
+ai-workflow/records/REQ-3.7.md
+  s_30c08b9c389efb::t_490e37b3ece584 4
+  s_30c08b9c389efb::t_a3a2c1a46c5bdd 1-3,5-122,124-130,137-139,146-148
+  s_30c08b9c389efb::t_7ee5e22a9ff0ac 123
+  s_30c08b9c389efb::t_7808159a5ffdf7 131-136,140-145,149-153
+ai-hub-tests/src/test/java/com/qtua/aihub/RagSearchIntegrationTest.java
+  s_30c08b9c389efb::t_f6768a91a83b3b 81-82
+ai-hub-api/src/main/java/com/qtua/aihub/api/EmbeddingService.java
+  s_30c08b9c389efb::t_28fd5d5e9a50f4 1-20
+ai-hub-integration/src/test/java/com/qtua/aihub/integration/rag/ConfigurableEmbeddingModelProviderTest.java
+  s_30c08b9c389efb::t_854ca6c39de4e0 40-43
+  s_30c08b9c389efb::t_e1f0cfd70d5237 1-39,44-79
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/rag/EmbeddingModelDefinition.java
+  s_30c08b9c389efb::t_0210f4fbad871f 1-18,20-34,36-56
+  s_30c08b9c389efb::t_cdba7a658d379c 19
+  s_30c08b9c389efb::t_84a9a496a70eac 35
+ai-hub-service/src/main/java/com/qtua/aihub/service/gateway/GatewayGovernanceService.java
+  s_30c08b9c389efb::t_3680e34f20cc47 46-48,56,61-68,76-77,85
+  s_30c08b9c389efb::t_ecaf7d6282fc96 16-18,135,321-322
+  s_30c08b9c389efb::t_c81cc834aa0bd4 275-276
+  s_30c08b9c389efb::t_772916b3b1d244 288-289
+  s_30c08b9c389efb::t_ffd8eb46ea9fb5 98-101
+  s_30c08b9c389efb::t_05b0bb89b5e8bb 213-220,237-274,277-287,290-320
+  s_30c08b9c389efb::t_36a16795edc1e3 136-189
+ai-hub-common/src/main/java/com/qtua/aihub/common/rag/EmbeddingResult.java
+  s_30c08b9c389efb::t_9cb118cf3c4263 1-25
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/EmbeddingResDTO.java
+  s_30c08b9c389efb::t_8972e77a20de01 1-28
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagChunker.java
+  s_30c08b9c389efb::t_ffbdeb492f9b1b 13-14,28,30-32
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/RagProperties.java
+  s_30c08b9c389efb::t_afc219867cc9ec 251
+  s_30c08b9c389efb::t_0c816b8ba2a181 147,246-250,252,254,256,258-260,262,264,266,269-292,317-324,358-490,492
+  s_30c08b9c389efb::t_58cf659ecfa390 5-8,12-13,19-20
+  s_30c08b9c389efb::t_93498c586621e8 39
+  s_30c08b9c389efb::t_3c1659b7b946b0 161-162
+  s_30c08b9c389efb::t_15aacadc9d01e6 128,130-131,140-146
+  s_30c08b9c389efb::t_da30c40d4506db 187-194
+  s_30c08b9c389efb::t_7296f07a5795a2 491
+  s_30c08b9c389efb::t_f1451a6475d71a 493-494
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagRetrievalCore.java
+  s_30c08b9c389efb::t_69d44e8d7be7b4 90-102
+  s_30c08b9c389efb::t_98ab6a57f58439 5
+  s_30c08b9c389efb::t_a2bcc63251c6cb 72-73
+ai-workflow/acceptance/REQ-3.7.md
+  s_30c08b9c389efb::t_7f3e5b15294f03 70-81,86-90,95-99,103-111,115-117,121-122,126-130
+  s_30c08b9c389efb::t_b89deb5ac5a3ea 3
+  s_30c08b9c389efb::t_49ecd1d6e202c9 1-2,4-16,18-69,82-85,91-94,100-102,112-114,118-120,123-125
+  s_30c08b9c389efb::t_fb1488531922a4 17
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/EmbeddingController.java
+  s_30c08b9c389efb::t_e75f9da9bf6579 43
+  s_30c08b9c389efb::t_ab7068536dcc79 1-42,44-57
+ai-hub-service/src/test/java/com/qtua/aihub/service/gateway/GatewayGovernanceServiceTest.java
+  s_30c08b9c389efb::t_7a9eba5093cef6 294-358,361-394
+  s_30c08b9c389efb::t_ce897e86fb9570 15
+  s_30c08b9c389efb::t_0bb0ee60e162da 55
+  s_30c08b9c389efb::t_951bef2919131c 66,68-69
+  s_30c08b9c389efb::t_3a417f94bd5cc1 360
+  s_30c08b9c389efb::t_3a6ce83b3f5133 36
+  s_30c08b9c389efb::t_06484f1f1562c7 359
+  s_30c08b9c389efb::t_0380b5dd8f9110 14
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagRetrievalCoreTest.java
+  s_30c08b9c389efb::t_281d9526016a36 52-54
+  s_30c08b9c389efb::t_1efc54f2078811 5
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/rag/ConfigurableEmbeddingModelProvider.java
+  s_30c08b9c389efb::t_9c016bb4761dc8 1-172,174-184,189-199,201-236
+  s_30c08b9c389efb::t_1498637d9f592f 200
+  s_30c08b9c389efb::t_93bd30a7ea280a 173
+  s_30c08b9c389efb::t_608f8303414eff 185-188
+ai-hub-integration/src/test/java/com/qtua/aihub/integration/rag/RemoteEmbeddingModelTest.java
+  s_30c08b9c389efb::t_1d1a501a2639fc 50-51
+  s_30c08b9c389efb::t_efdc32f7868d7b 1-49,52-100,102-150,152-179
+  s_30c08b9c389efb::t_c9ada31ba7935f 101
+  s_30c08b9c389efb::t_56996278b86ba8 151
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagRetrievalResult.java
+  s_30c08b9c389efb::t_5c497ccc98fc28 12-13,16-17,26-35
+  s_30c08b9c389efb::t_1ed00eb057a5d1 36-37
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/rag/PgVectorStore.java
+  s_30c08b9c389efb::t_4cc2574f1f85d1 19-21,29-30
+  s_30c08b9c389efb::t_9b3623ab0c3e69 117,123-126,128,132
+  s_0b21f4571628b4::t_ecfd796cded294 31
+ai-hub-service/src/main/java/com/qtua/aihub/service/RagAnswerServiceImpl.java
+  s_30c08b9c389efb::t_1ab58d90720e2d 120
+  s_30c08b9c389efb::t_4ed7bd56de250a 173-176,178
+  s_30c08b9c389efb::t_7b6092905b70b4 263-265,267
+  s_30c08b9c389efb::t_2ac512d5fe7fcb 142-143
+  s_30c08b9c389efb::t_b8a15bd78291d5 160-161,163-164
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagChunkSettings.java
+  s_30c08b9c389efb::t_31454767328a5b 1-82
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/rag/LangChain4jEmbeddingModel.java
+  s_30c08b9c389efb::t_17296d67123073 10,19,22-23,37,42,44-45,48,50,52-54,56,58-60,83-103,157,160-161
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/EmbeddingReqDTO.java
+  s_30c08b9c389efb::t_39c50ae238508a 1-64
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/RagSearchController.java
+  s_30c08b9c389efb::t_624fbfad4fa0bd 6-7,13-14,19,38-39,44-52
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/RagAnswerController.java
+  s_30c08b9c389efb::t_bef80a70374111 59
+  s_30c08b9c389efb::t_ba63a288d043da 7-8,17-18,23-24,53-58,60-63
+ai-hub-tests/src/test/java/com/qtua/aihub/EmbeddingEndpointIntegrationTest.java
+  s_30c08b9c389efb::t_c7ef41d07c77f9 1-189
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  s_30c08b9c389efb::t_3f71fe817f99de 91,306-318
+  s_30c08b9c389efb::t_e4cf53000c89e2 92-103
+ai-workflow/DESIGN.md
+  s_30c08b9c389efb::t_dda026609de151 353
+  s_30c08b9c389efb::t_9ad8b61eb57540 555-556
+  s_30c08b9c389efb::t_eb122168f44d21 319,322
+  s_30c08b9c389efb::t_34cf8593fb4c55 14
+  s_30c08b9c389efb::t_05e3b72071d16a 3-4,323
+  s_30c08b9c389efb::t_d80afc52e93527 431-464
+  s_30c08b9c389efb::t_078209b65d68cc 391-392,396-397
+  s_30c08b9c389efb::t_4cca3090291f46 29-35
+  s_30c08b9c389efb::t_0d99a2dc4ca0b3 374
+  s_30c08b9c389efb::t_7ab909a88c3ca1 523-530
+  s_30c08b9c389efb::t_4247c45b4ba614 574
+  s_30c08b9c389efb::t_e6fb1a6b379160 46
+ai-hub-common/src/main/java/com/qtua/aihub/common/metering/EmbeddingTokenEstimator.java
+  s_30c08b9c389efb::t_8aaffb2c7280dc 1-2,5-25,27-75
+  s_30c08b9c389efb::t_fae3cbfcbe15eb 3-4
+  s_30c08b9c389efb::t_3ab5aaa19c6f0e 26
+ai-hub-service/src/main/java/com/qtua/aihub/service/gateway/DefaultGatewayGuard.java
+  s_30c08b9c389efb::t_3c1d68724972dc 95-112
+  s_0b21f4571628b4::t_7eed5a07393677 94
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/EmbeddingUsageResDTO.java
+  s_30c08b9c389efb::t_eeac1f0e66ff47 1-14
+config/spotbugs-exclude.xml
+  s_30c08b9c389efb::t_d21385986ae8bd 312-319
+  s_30c08b9c389efb::t_65d28017d8ec42 324-327
+  s_30c08b9c389efb::t_e23f1cd14c7739 279-311,320-323,328-330
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagChunkerTest.java
+  s_30c08b9c389efb::t_3737e743427a39 4,11-12
+  s_30c08b9c389efb::t_3fe14b691a2c9b 69-71
+ai-hub-common/src/main/java/com/qtua/aihub/common/rag/EmbeddingModelProvider.java
+  s_30c08b9c389efb::t_75dfb1afafbb89 1-43
+ai-hub-integration/src/main/java/com/qtua/aihub/integration/rag/DeterministicEmbeddingModel.java
+  s_30c08b9c389efb::t_9a8ababd909288 5,15,28,33,35-38,64-84
+ai-workflow/STATUS.md
+  s_99caaf43fe4205::t_be9a8e02c81487 6,35-36,43,50,85,100,102,143,163,172,181-182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "647f998ba27afbe09d55daf54710a88639c78cf8",
+  "prompts": {},
+  "sessions": {
+    "s_0b21f4571628b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38ac2ffa-138d-4580-be67-bf463080b97c",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_30c08b9c389efb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "240736d3-234a-495e-b801-e0335b29176d",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_99caaf43fe4205": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "daffa154-6ea9-4269-bbdf-0573c10c0552",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
