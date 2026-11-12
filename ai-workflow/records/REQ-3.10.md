@@ -5,7 +5,7 @@
 - 关联规格：生产化补强第 6 批简报（`task-20261111-pn0j3z`）
 - 依赖需求：REQ-3.2、REQ-3.7
 - 需求来源：主人验收反馈（ai-hub 对标企业生产级解决方案）
-- 提交：待回填
+- 提交：bad76ed
 
 ## 1. 是什么
 
@@ -130,7 +130,7 @@ regression:
 
 - 进展：`RagIndexCore` 改为游标分页逐批 embedding/upsert；Mapper/Manager 新增分页方法；
   新增 `gateway.rag.index.page-size`；补充 2000 切片分页测试与 DAL 游标分页测试。
-- 提交：待回填；`mvn -Pquality verify` 全绿（434 测试，0 失败/0 错误/0 跳过；新增 2）。
+- 提交：bad76ed；`mvn -Pquality verify` 全绿（434 测试，0 失败/0 错误/0 跳过；新增 2）。
 - 验证：`RagIndexCoreTest` 断言不再调用 `listByDocId`、每页 limit=pageSize、分页次数与向量总数；
   `RagMapperTest` 验证游标分页边界（首页/中间/末页/空页）。
 
