@@ -1,0 +1,68 @@
+ai-workflow/requirements/INDEX.md
+  s_6d32c7e597e8eb::t_d60b0df74dd656 35
+ai-hub-tests/src/test/resources/application-test.yml
+  s_6d32c7e597e8eb::t_e1f629bc927819 28-30
+ai-hub-start/src/main/resources/application.yml
+  s_6d32c7e597e8eb::t_ffeb6f344a9ed7 95-97
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagIndexCore.java
+  s_6d32c7e597e8eb::t_29bc9d7fe01419 114-147,150-152
+  s_6d32c7e597e8eb::t_fe92c5b956e206 75-76,85,91
+ai-workflow/records/REQ-3.10.md
+  s_6d32c7e597e8eb::t_04294d65b405ba 4,30,34,54-58,117-123,131-135,139-144,148-152
+  s_6d32c7e597e8eb::t_96ce63aab74fa5 1-3,5-29,31-33,35-53,59-116,124-130,136-138,145-147
+ai-workflow/acceptance/REQ-3.10.md
+  s_6d32c7e597e8eb::t_8fd2e260d13233 3,12,14,16,18,20-21,23,25-28,53-58,63-65,70-74,78-85,89-91,100-104
+  s_6d32c7e597e8eb::t_1790cf553d8456 1-2,4-11,13,15,17,19,22,24,29-52,59-62,66-69,75-77,86-88,92-99
+ai-hub-dal/src/test/java/com/qtua/aihub/dal/mapper/RagMapperTest.java
+  s_6d32c7e597e8eb::t_202228ecab6cba 102-120
+  s_6d32c7e597e8eb::t_ab0646f6134582 101
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagIndexCoreTest.java
+  s_6d32c7e597e8eb::t_0cb3022a7c32e3 19,25,31,37,41-45,71-74,78,87-93,97-98,150,156-157,167-193,195,197-198,200-203,213-220,227-228
+  s_6d32c7e597e8eb::t_f1338670217d7c 196
+  s_6d32c7e597e8eb::t_c9cb58f7e07525 199
+  s_6d32c7e597e8eb::t_e437b93c142b47 204-212
+  s_6d32c7e597e8eb::t_acda038bc8e881 194
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/rag/RagChunkManager.java
+  s_6d32c7e597e8eb::t_ab07b669e0e2dd 59-72
+  s_6d32c7e597e8eb::t_47d4dc3cee8bc4 58
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/RagProperties.java
+  s_6d32c7e597e8eb::t_ff9cc3bc631804 147-154
+  s_6d32c7e597e8eb::t_5b39cd3df5a9b9 856-872
+  s_6d32c7e597e8eb::t_aba7c8ba96fdfa 72-73
+config/spotbugs-exclude.xml
+  s_6d32c7e597e8eb::t_892be3ffc68ad3 469-471
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/RagChunkMapper.xml
+  s_6d32c7e597e8eb::t_744c6da63f8806 46-55
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/RagChunkMapper.java
+  s_6d32c7e597e8eb::t_988d0cd642ff9f 33-43
+  s_6d32c7e597e8eb::t_24724109222130 32
+ai-workflow/DESIGN.md
+  s_6d32c7e597e8eb::t_5cb69fcb0d7773 328-329
+  s_6d32c7e597e8eb::t_280dffef31bbe6 566
+ai-workflow/STATUS.md
+  s_99caaf43fe4205::t_fd6f9f1e70e1d3 6,30,174,179
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bad76edded8682cdbe7bb4402c08ee2f79ad9102",
+  "prompts": {},
+  "sessions": {
+    "s_6d32c7e597e8eb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e43ee48-6127-492a-99ac-afe960481cf5",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_99caaf43fe4205": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "daffa154-6ea9-4269-bbdf-0573c10c0552",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
