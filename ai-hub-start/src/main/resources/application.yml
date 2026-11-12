@@ -92,6 +92,9 @@ gateway:
       persist-batch-size: 200
       # 超出模型安全窗口：warn（默认）或 fail（启动失败）
       overflow-policy: warn
+    index:
+      # 索引游标分页大小；0 = 与 embedding.batch-size 对齐
+      page-size: 0
     dedup:
       # false：重复 hash 返回已有文档；true：删除旧文档后重新接入
       override: false

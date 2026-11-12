@@ -69,6 +69,8 @@ public class RagProperties {
     private Answer answer = new Answer();
     /** 文档解析配置（REQ-3.9）。 */
     private Parse parse = new Parse();
+    /** 索引配置（REQ-3.10）。 */
+    private IndexSettings index = new IndexSettings();
 
     public Upload getUpload() {
         return upload;
@@ -140,6 +142,14 @@ public class RagProperties {
 
     public void setParse(Parse parse) {
         this.parse = parse;
+    }
+
+    public IndexSettings getIndex() {
+        return index;
+    }
+
+    public void setIndex(IndexSettings index) {
+        this.index = index;
     }
 
     /**
@@ -841,6 +851,23 @@ public class RagProperties {
 
         public void setLimitPolicy(String limitPolicy) {
             this.limitPolicy = limitPolicy;
+        }
+    }
+
+    /**
+     * 索引配置（REQ-3.10）。
+     */
+    public static class IndexSettings {
+
+        /** 每页加载的切片数；0 表示与 embedding batch-size 对齐。 */
+        private int pageSize;
+
+        public int getPageSize() {
+            return pageSize;
+        }
+
+        public void setPageSize(int pageSize) {
+            this.pageSize = pageSize;
         }
     }
 }

@@ -325,6 +325,8 @@ flowchart TD
   全局限制（压缩比 1%、单条目 64MB、文本 10M 字符）兜底；加密 OOXML 通过 OLE2 `EncryptionInfo` 识别。
 - 解析上限（REQ-3.9）：输出字符、表格行/单元格、工作表行/列/单元格、幻灯片/形状数均受
   `gateway.rag.parse.*` 约束，默认 `fail`，可配置 `truncate`。
+- 索引加载（REQ-3.10）：`RagIndexCore` 按 `chunk_index` 游标分页读取（`page-size` 默认对齐
+  embedding batch-size），每页向量化并 upsert，内存占用为一页；失败按批重试，整篇 FAILED 可 reindex。
 - embedding 成本（REQ-3.7）：索引时按模型单价写入 `rag_documents.embedding_cost`；本地/确定性为 0。
 
 - 去重键：`project_id + content_hash`（SHA-256）；默认幂等返回已有文档，覆盖为显式配置。
@@ -561,6 +563,7 @@ sequenceDiagram
 | 2026-11-12 | REQ-3.7 | Embedding 一等能力（模型目录、DashScope v3 远端、`/v1/embeddings`、计量计价、pgvector 1024 零填充） |
 | 2026-11-12 | REQ-3.8 | 计费与边界补强（RAG answer 实际 usage 回填与事后预算、chunk 窗口推导、上传类型限制） |
 | 2026-11-12 | REQ-3.9 | 文档解析扩展（解析器注册表、docx/pptx/xlsx/html、`.doc` 拒绝、ZIP 解压预检与 POI 安全限制） |
+| 2026-11-12 | REQ-3.10 | 索引分页加载（`chunk_index` 游标分页、页内 embedding 拆批、`index.page-size` 配置） |
 
 ## 6. 与 LiteLLM 的差异
 

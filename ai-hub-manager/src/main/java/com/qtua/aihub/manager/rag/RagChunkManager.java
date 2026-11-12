@@ -56,6 +56,21 @@ public class RagChunkManager {
     }
 
     /**
+     * 按文档游标分页查询切片（REQ-3.10：索引逐批加载）。
+     *
+     * @param docId           文档 ID
+     * @param afterChunkIndex 游标；首页传 -1
+     * @param limit           每页条数
+     * @return 切片列表（按 chunk_index 升序）
+     */
+    public List<RagChunkBO> listPageByDocId(String docId, int afterChunkIndex, int limit) {
+        int pageSize = Math.max(1, limit);
+        return chunkMapper.selectPageByDocId(docId, afterChunkIndex, pageSize).stream()
+                .map(this::toBO)
+                .toList();
+    }
+
+    /**
      * 按切片 ID 批量查询（检索补齐正文）。
      *
      * @param chunkIds 切片 ID 列表

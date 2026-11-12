@@ -30,6 +30,18 @@ public interface RagChunkMapper {
     List<RagChunkDO> selectByDocId(@Param("docId") String docId);
 
     /**
+     * 按文档游标分页查询切片（索引逐批加载）。
+     *
+     * @param docId           文档 ID
+     * @param afterChunkIndex 游标：只返回 chunk_index 大于该值的切片；首页传 -1
+     * @param limit           每页条数
+     * @return 切片列表（按 chunk_index 升序）
+     */
+    List<RagChunkDO> selectPageByDocId(@Param("docId") String docId,
+                                       @Param("afterChunkIndex") int afterChunkIndex,
+                                       @Param("limit") int limit);
+
+    /**
      * 按切片 ID 批量查询（检索补齐正文）；调用方负责控制每批数量。
      *
      * @param chunkIds 切片 ID 列表（非空）

@@ -43,6 +43,16 @@
         ORDER BY chunk_index ASC
     </select>
 
+    <select id="selectPageByDocId" resultMap="RagChunkResultMap">
+        SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
+               index_status, embedding_model, embedding_dimension, error_message, created_at
+        FROM rag_chunks
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+          AND chunk_index &gt; #{afterChunkIndex,jdbcType=INTEGER}
+        ORDER BY chunk_index ASC
+        LIMIT #{limit,jdbcType=INTEGER}
+    </select>
+
     <select id="selectByChunkIds" resultMap="RagChunkResultMap">
         SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
                index_status, embedding_model, embedding_dimension, error_message, created_at

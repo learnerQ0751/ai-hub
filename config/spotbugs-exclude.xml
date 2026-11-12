@@ -467,6 +467,9 @@
         <Class name="com.qtua.aihub.common.config.RagProperties$Parse"/>
     </Match>
     <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$IndexSettings"/>
+    </Match>
+    <Match>
         <Class name="com.qtua.aihub.integration.rag.DocumentTextExtractor"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>

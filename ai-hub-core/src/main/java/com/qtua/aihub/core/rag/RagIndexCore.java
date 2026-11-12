@@ -72,8 +72,8 @@ public class RagIndexCore {
             return null;
         }
         RagDocumentBO document = found.get();
-        List<RagChunkBO> chunks = chunkManager.listByDocId(docId);
-        if (chunks.isEmpty()) {
+        int chunkCount = chunkManager.countByDocId(docId);
+        if (chunkCount <= 0) {
             documentManager.updateStatus(docId, RagIndexStatus.FAILED.name(),
                     "文档没有可索引的切片");
             return documentManager.findByDocId(docId).orElse(document);
@@ -82,13 +82,13 @@ public class RagIndexCore {
         chunkManager.updateStatusByDocId(docId, RagIndexStatus.PROCESSING.name(), null);
         long startedAt = System.currentTimeMillis();
         try {
-            long inputTokens = embedChunks(docId, document.projectId(), chunks);
+            long inputTokens = embedChunks(docId, document.projectId());
             BigDecimal cost = embeddingCost(inputTokens);
             long durationMs = Math.max(0L, System.currentTimeMillis() - startedAt);
             finishReady(docId, durationMs, cost);
             LOG.info("rag index ready: docId={}, chunks={}, model={}, dimension={}, "
                             + "inputTokens={}, cost={}, durationMs={}",
-                    docId, chunks.size(), embeddingModel.modelId(),
+                    docId, chunkCount, embeddingModel.modelId(),
                     embeddingModel.dimension(), inputTokens, cost, durationMs);
         } catch (RuntimeException ex) {
             markFailed(docId, ex);
@@ -111,12 +111,45 @@ public class RagIndexCore {
         return index(docId);
     }
 
-    private long embedChunks(String docId, String projectId, List<RagChunkBO> chunks) {
+    /**
+     * 游标分页加载并向量化（REQ-3.10）。
+     *
+     * <p>每页内存占用量为 pageSize 条切片；页内再按 embedding batch-size 拆分，保持原有
+     * 重试粒度。最后一页不足 pageSize 时提前结束，避免多一次空查询。</p>
+     *
+     * @param docId     文档 ID
+     * @param projectId 项目 ID
+     * @return 输入 token 总数
+     */
+    private long embedChunks(String docId, String projectId) {
+        int pageSize = resolvePageSize();
+        long inputTokens = 0L;
+        int cursor = -1;
+        while (true) {
+            List<RagChunkBO> page = chunkManager.listPageByDocId(docId, cursor, pageSize);
+            if (page.isEmpty()) {
+                break;
+            }
+            cursor = page.get(page.size() - 1).chunkIndex();
+            inputTokens += embedPage(docId, projectId, page);
+            if (page.size() < pageSize) {
+                break;
+            }
+        }
+        return inputTokens;
+    }
+
+    private int resolvePageSize() {
+        int configured = properties.getIndex().getPageSize();
+        return configured > 0 ? configured : Math.max(1, properties.getEmbedding().getBatchSize());
+    }
+
+    private long embedPage(String docId, String projectId, List<RagChunkBO> page) {
         int batchSize = Math.max(1, properties.getEmbedding().getBatchSize());
         long inputTokens = 0L;
-        for (int start = 0; start < chunks.size(); start += batchSize) {
-            int end = Math.min(start + batchSize, chunks.size());
-            List<RagChunkBO> batch = chunks.subList(start, end);
+        for (int start = 0; start < page.size(); start += batchSize) {
+            int end = Math.min(start + batchSize, page.size());
+            List<RagChunkBO> batch = page.subList(start, end);
             EmbeddingResult result = embedWithRetry(
                     batch.stream().map(RagChunkBO::content).toList());
             inputTokens += result.inputTokens();

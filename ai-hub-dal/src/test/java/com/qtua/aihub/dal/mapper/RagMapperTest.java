@@ -99,6 +99,26 @@ class RagMapperTest {
     }
 
     @Test
+    void selects_chunks_by_cursor_page() {
+        List<RagChunkDO> chunks = new java.util.ArrayList<>();
+        for (int index = 0; index < 5; index++) {
+            chunks.add(chunk("d1-" + index, "d1", index, "c" + index));
+        }
+        chunkMapper.insertBatch(chunks);
+
+        List<RagChunkDO> first = chunkMapper.selectPageByDocId("d1", -1, 2);
+        assertThat(first).extracting(RagChunkDO::getChunkIndex).containsExactly(0, 1);
+
+        List<RagChunkDO> second = chunkMapper.selectPageByDocId("d1", 1, 2);
+        assertThat(second).extracting(RagChunkDO::getChunkIndex).containsExactly(2, 3);
+
+        List<RagChunkDO> third = chunkMapper.selectPageByDocId("d1", 3, 2);
+        assertThat(third).extracting(RagChunkDO::getChunkIndex).containsExactly(4);
+
+        assertThat(chunkMapper.selectPageByDocId("d1", 4, 2)).isEmpty();
+    }
+
+    @Test
     void chunks_batch_insert_update_and_delete() {
         RagChunkDO first = chunk("d1-0000", "d1", 0, "第一段");
         RagChunkDO second = chunk("d1-0001", "d1", 1, "第二段");

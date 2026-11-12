@@ -16,24 +16,32 @@ import org.mockito.ArgumentCaptor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * REQ-3.2 索引编排测试：分批、重试、状态流转、失败可重试与 reindex 清理旧向量。
+ * REQ-3.2 / REQ-3.10 索引编排测试：游标分页、分批、重试、状态流转、失败可重试与 reindex。
  */
 class RagIndexCoreTest {
+
+    private static final int THREE_CHUNKS = 3;
+    private static final int LARGE_CHUNKS = 2000;
+    private static final int LARGE_PAGE_SIZE = 32;
+    private static final int LARGE_BATCH_SIZE = 10;
 
     private RagDocumentManager documentManager;
     private RagChunkManager chunkManager;
@@ -60,12 +68,14 @@ class RagIndexCoreTest {
                 properties);
         lenient().when(documentManager.findByDocId("d1"))
                 .thenReturn(Optional.of(document("d1")));
-        lenient().when(chunkManager.listByDocId("d1")).thenReturn(List.of(chunk("c1"),
-                chunk("c2"), chunk("c3")));
+        lenient().when(chunkManager.countByDocId("d1")).thenReturn(THREE_CHUNKS);
+        lenient().when(chunkManager.listPageByDocId(eq("d1"), anyInt(), anyInt()))
+                .thenAnswer(invocation -> pageOf(invocation.getArgument(1),
+                        invocation.getArgument(2), THREE_CHUNKS));
     }
 
     @Test
-    void index_batches_embeddings_and_marks_ready() {
+    void index_pages_chunks_and_marks_ready() {
         when(embeddingModel.embedAllWithUsage(anyList(), any())).thenAnswer(invocation -> {
             List<String> texts = invocation.getArgument(0);
             return new EmbeddingResult(
@@ -74,10 +84,18 @@ class RagIndexCoreTest {
 
         core.index("d1");
 
+        verify(chunkManager, never()).listByDocId(any());
+        ArgumentCaptor<Integer> cursors = ArgumentCaptor.forClass(Integer.class);
+        ArgumentCaptor<Integer> limits = ArgumentCaptor.forClass(Integer.class);
+        verify(chunkManager, times(2)).listPageByDocId(eq("d1"), cursors.capture(),
+                limits.capture());
+        assertThat(cursors.getAllValues()).containsExactly(-1, 1);
+        assertThat(limits.getAllValues()).containsExactly(2, 2);
         verify(embeddingModel, times(2)).embedAllWithUsage(anyList(), any());
         ArgumentCaptor<List<VectorRecord>> records = ArgumentCaptor.forClass(List.class);
         verify(vectorStore, times(2)).upsertAll(records.capture());
-        assertThat(records.getAllValues().stream().flatMap(List::stream).count()).isEqualTo(3);
+        assertThat(records.getAllValues().stream().flatMap(List::stream).count())
+                .isEqualTo(THREE_CHUNKS);
         assertThat(records.getAllValues().stream().flatMap(List::stream)
                 .map(VectorRecord::modelId).distinct()).containsExactly("model-a");
         verify(documentManager).updateStatus("d1", RagIndexStatus.PROCESSING.name(), null);
@@ -129,13 +147,14 @@ class RagIndexCoreTest {
 
     @Test
     void index_without_chunks_marks_failed() {
-        when(chunkManager.listByDocId("d1")).thenReturn(List.of());
+        when(chunkManager.countByDocId("d1")).thenReturn(0);
 
         core.index("d1");
 
         verify(documentManager).updateStatus("d1", RagIndexStatus.FAILED.name(),
                 "文档没有可索引的切片");
-        verify(embeddingModel, org.mockito.Mockito.never()).embedAllWithUsage(anyList(), any());
+        verify(embeddingModel, never()).embedAllWithUsage(anyList(), any());
+        verify(chunkManager, never()).listPageByDocId(any(), anyInt(), anyInt());
     }
 
     @Test
@@ -145,14 +164,68 @@ class RagIndexCoreTest {
         assertThat(core.index("d-missing")).isNull();
     }
 
+    @Test
+    void index_large_document_pages_with_bounded_batches() {
+        properties.getEmbedding().setBatchSize(LARGE_BATCH_SIZE);
+        properties.getIndex().setPageSize(LARGE_PAGE_SIZE);
+        lenient().when(chunkManager.countByDocId("d1")).thenReturn(LARGE_CHUNKS);
+        lenient().when(chunkManager.listPageByDocId(eq("d1"), anyInt(), anyInt()))
+                .thenAnswer(invocation -> pageOf(invocation.getArgument(1),
+                        invocation.getArgument(2), LARGE_CHUNKS));
+        when(embeddingModel.embedAllWithUsage(anyList(), any())).thenAnswer(invocation -> {
+            List<String> texts = invocation.getArgument(0);
+            return new EmbeddingResult(
+                    texts.stream().map(text -> new float[]{1.0f, 0.0f}).toList(),
+                    texts.size());
+        });
+
+        core.index("d1");
+
+        int expectedPages = (LARGE_CHUNKS + LARGE_PAGE_SIZE - 1) / LARGE_PAGE_SIZE;
+        ArgumentCaptor<Integer> limits = ArgumentCaptor.forClass(Integer.class);
+        ArgumentCaptor<Integer> cursors = ArgumentCaptor.forClass(Integer.class);
+        verify(chunkManager, times(expectedPages)).listPageByDocId(eq("d1"),
+                cursors.capture(), limits.capture());
+        assertThat(limits.getAllValues()).allMatch(limit -> limit == LARGE_PAGE_SIZE);
+        assertThat(cursors.getAllValues().get(0)).isEqualTo(-1);
+        assertThat(cursors.getAllValues()).isSorted();
+        verify(chunkManager, never()).listByDocId(any());
+
+        int expectedEmbeddingBatches = expectedEmbeddingBatches();
+        ArgumentCaptor<List<VectorRecord>> records = ArgumentCaptor.forClass(List.class);
+        verify(vectorStore, times(expectedEmbeddingBatches)).upsertAll(records.capture());
+        assertThat(records.getAllValues().stream().flatMap(List::stream).count())
+                .isEqualTo(LARGE_CHUNKS);
+        verify(embeddingModel, times(expectedEmbeddingBatches))
+                .embedAllWithUsage(anyList(), any());
+        verify(documentManager).updateStatus("d1", RagIndexStatus.READY.name(), null);
+    }
+
+    private int expectedEmbeddingBatches() {
+        int batches = 0;
+        for (int pageStart = 0; pageStart < LARGE_CHUNKS; pageStart += LARGE_PAGE_SIZE) {
+            int pageCount = Math.min(LARGE_PAGE_SIZE, LARGE_CHUNKS - pageStart);
+            batches += (pageCount + LARGE_BATCH_SIZE - 1) / LARGE_BATCH_SIZE;
+        }
+        return batches;
+    }
+
+    private List<RagChunkBO> pageOf(int cursor, int limit, int total) {
+        List<RagChunkBO> page = new ArrayList<>();
+        for (int index = cursor + 1; index < total && page.size() < limit; index++) {
+            page.add(chunk("c" + index, index));
+        }
+        return page;
+    }
+
     private RagDocumentBO document(String docId) {
         Instant now = Instant.now();
         return new RagDocumentBO(docId, "p1", "a.md", "text/markdown", 10L, "hash", null, 3,
                 RagIndexStatus.PENDING.name(), null, null, null, BigDecimal.ZERO, null, now, now);
     }
 
-    private RagChunkBO chunk(String chunkId) {
-        return new RagChunkBO(chunkId, "d1", "p1", 0, "content-" + chunkId, 10, "a.md",
+    private RagChunkBO chunk(String chunkId, int chunkIndex) {
+        return new RagChunkBO(chunkId, "d1", "p1", chunkIndex, "content-" + chunkId, 10, "a.md",
                 RagIndexStatus.PENDING.name(), null, null, null, Instant.now());
     }
 }

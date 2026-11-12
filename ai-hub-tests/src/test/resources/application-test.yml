@@ -25,6 +25,9 @@ gateway:
       max-chars: 120
       overlap-chars: 20
       persist-batch-size: 100
+    index:
+      # 测试用小页大小，覆盖游标分页路径
+      page-size: 2
     embedding:
       # 测试不加载 ONNX/远端模型；确定性向量，维度与生产表结构一致
       model: deterministic-embedding
