@@ -34,7 +34,7 @@
 | REQ-3.6 | RAG/记忆 MCP Server 暴露 | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（11/11） | REQ-3.1、REQ-3.2、REQ-3.3、REQ-3.4、REQ-3.5、REQ-2.6 | 0dc5e9e |
 | REQ-3.7 | Embedding 一等能力（阿里 text-embedding-v3） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（15/15） | REQ-3.1、REQ-3.2、REQ-3.3、REQ-3.4 | 647f998 |
 | REQ-3.8 | 计费与边界补强（RAG answer 计费 / chunk 推导 / 上传限制） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（11/11） | REQ-3.4、REQ-3.7 | 647f998 |
-| REQ-3.9 | 文档解析扩展（docx / pptx / xlsx / html） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（15/15） | REQ-3.1、REQ-3.8 | 待回填 |
+| REQ-3.9 | 文档解析扩展（docx / pptx / xlsx / html） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（15/15） | REQ-3.1、REQ-3.8 | b2dca87 |
 
 ## 接口清单（来自 Controller）
 
