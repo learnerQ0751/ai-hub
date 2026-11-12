@@ -1,11 +1,11 @@
-# REQ-3.7：Embedding 一等能力（阿里 text-embedding-v3）
+﻿# REQ-3.7：Embedding 一等能力（阿里 text-embedding-v3）
 
 - 日期：2026-11-12
 - 状态：已完成
 - 关联规格：生产化补强第 5 批简报（`task-20261111-pn0j3z`）
 - 依赖需求：REQ-3.1、REQ-3.2、REQ-3.3、REQ-3.4
 - 需求来源：主人验收反馈（ai-hub 对标企业生产级解决方案）
-- 提交：<待回填>
+- 提交：647f998
 
 ## 1. 是什么
 
@@ -130,7 +130,7 @@ regression: ["REQ-1.1~1.8 聊天/限流/预算/日志/容错/流式", "REQ-2.x M
 
 - 进展：完成 embedding 模型目录、DashScope OpenAI 兼容远端实现、`/v1/embeddings` 统一治理、
   RAG embedding 成本回填与 pgvector 多维度兼容（V9）；新增 24 个测试。
-- 提交：`<待回填>`（功能 + 文档）；`mvn -Pquality verify` 全绿（453 测试，0 失败/0 错误/0 跳过；
+- 提交：`647f998`（功能 + 文档）；`mvn -Pquality verify` 全绿（453 测试，0 失败/0 错误/0 跳过；
   Checkstyle 0、SpotBugs 0、覆盖率达标、ArchUnit 通过、pgvector Testcontainers 回归通过）。
 - 真实联调：直连 DashScope `compatible-mode/v1/embeddings` 返回 401（环境 `DASHSCOPE_API_KEY`
   存在但被拒），列为主人待确认项；应用内远端调用由 MockWebServer 单测覆盖，不阻塞交付。

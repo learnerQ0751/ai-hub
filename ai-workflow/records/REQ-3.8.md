@@ -1,11 +1,11 @@
-# REQ-3.8：计费与边界补强（RAG answer 计费 / chunk 推导 / 上传限制）
+﻿# REQ-3.8：计费与边界补强（RAG answer 计费 / chunk 推导 / 上传限制）
 
 - 日期：2026-11-12
 - 状态：已完成
 - 关联规格：生产化补强第 5 批简报（`task-20261111-pn0j3z`）
 - 依赖需求：REQ-3.4、REQ-3.7
 - 需求来源：主人验收反馈（ai-hub 对标企业生产级解决方案）
-- 提交：<待回填>
+- 提交：647f998
 
 ## 1. 是什么
 
@@ -110,7 +110,7 @@ regression: ["REQ-3.1 上传（默认 10MB 行为）", "REQ-3.3 检索 RPM-only"
 
 - 进展：RAG answer 回填内部 chat usage/deploymentModel 与查询 embedding 用量，治理层按实际成本
   计价、事后预算校验并累计 spend；chunk 按模型窗口自动推导/校验；上传限制按扩展名差异化。
-- 提交：`<待回填>`（功能 + 文档）；`mvn -Pquality verify` 全绿（453 测试，0 失败/0 错误/0 跳过）。
+- 提交：`647f998`（功能 + 文档）；`mvn -Pquality verify` 全绿（453 测试，0 失败/0 错误/0 跳过）。
 - 验证：`RagAnswerIntegrationTest` 断言 `call_logs` 记录 chat usage/cost 与 upstream deployment；
   `GatewayGovernanceServiceTest` 覆盖 answer/检索的计价与预算分支；`RagChunkSettingsTest` 覆盖
   800/204 推导与 warn/fail；`RagDocumentServiceTest` 覆盖类型上限。

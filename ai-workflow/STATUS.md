@@ -32,8 +32,8 @@
 | REQ-3.4 | RAG 生成 + 引用溯源 | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（13/13） | REQ-3.3、REQ-1.1 | 0063c38 |
 | REQ-3.5 | 记忆服务（session/user） | 已完成 | additive | 已验收（2026-11-11，理解默认通过）（14/14） | REQ-2.1（需求卡前置；本期实现不感知 MCP，MCP 暴露在 REQ-3.6） | c692b9c |
 | REQ-3.6 | RAG/记忆 MCP Server 暴露 | 已完成 | additive | 待验收（2026-11-11，实现与自检完成）（11/11） | REQ-3.1、REQ-3.2、REQ-3.3、REQ-3.4、REQ-3.5、REQ-2.6 | 0dc5e9e |
-| REQ-3.7 | Embedding 一等能力（阿里 text-embedding-v3） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（15/15） | REQ-3.1、REQ-3.2、REQ-3.3、REQ-3.4 | <待回填> |
-| REQ-3.8 | 计费与边界补强（RAG answer 计费 / chunk 推导 / 上传限制） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（11/11） | REQ-3.4、REQ-3.7 | <待回填> |
+| REQ-3.7 | Embedding 一等能力（阿里 text-embedding-v3） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（15/15） | REQ-3.1、REQ-3.2、REQ-3.3、REQ-3.4 | 647f998 |
+| REQ-3.8 | 计费与边界补强（RAG answer 计费 / chunk 推导 / 上传限制） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（11/11） | REQ-3.4、REQ-3.7 | 647f998 |
 
 ## 接口清单（来自 Controller）
 
