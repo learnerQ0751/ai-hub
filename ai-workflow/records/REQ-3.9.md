@@ -168,7 +168,7 @@ regression:
 
 - 进展：完成解析器插件化（6 个解析器 + 格式检测 + 解析限制）与 docx/pptx/xlsx/html 提取；
   `.doc` 拒绝并给出另存为指引；OOXML 解压预检与 POI 全局安全限制；配置、MIME 映射、上传类型上限同步。
-- 提交：待回填；`mvn -Pquality verify` 全绿（432 测试，0 失败/0 错误/0 跳过；新增 26）。
+- 提交：`b2dca87`；`mvn -Pquality verify` 全绿（432 测试，0 失败/0 错误/0 跳过；新增 26）。
 - 验证：`DocumentTextExtractorTest` 16 例、`DocumentParseSecurityTest` 8 例、
   `RagDocumentIntegrationTest` 新增 docx 端到端与 `.doc` 文案用例。
 
