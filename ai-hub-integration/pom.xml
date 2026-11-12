@@ -46,6 +46,30 @@
             <artifactId>pdfbox</artifactId>
             <version>${pdfbox.version}</version>
         </dependency>
+        <!-- RAG：OOXML 文本解析（docx / pptx / xlsx，REQ-3.9）
+             poi-ooxml 默认依赖 poi-ooxml-lite；改用 poi-ooxml-full 覆盖少见 schema -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.poi</groupId>
+                    <artifactId>poi-ooxml-lite</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml-full</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <!-- RAG：HTML 正文解析（REQ-3.9） -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
+        </dependency>
         <!-- RAG：LangChain4j 本地 embedding 模型（all-minilm-l6-v2，REQ-3.2） -->
         <dependency>
             <groupId>dev.langchain4j</groupId>

@@ -30,7 +30,7 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 | `ai-hub-api` | Service 接口 + Req/Res DTO（OpenAI 契约，含 Embedding） |
 | `ai-hub-manager` | BO 与 BO↔DO 转换（ChatCompletionBO / ApiKeyBO）；模型目录 YAML 实现（YamlModelCatalog）；pgvector 存储；记忆数据门面 |
 | `ai-hub-dal` | MyBatis Mapper + DDL（api_keys / call_logs / mcp_servers / prompt_templates / memories / memory_audit_logs / rag_*） |
-| `ai-hub-integration` | 上游 HTTP + OpenAI 协议适配 + 协议改写；远端 embedding（DashScope OpenAI 兼容）；MCP 探活/工具客户端/stdio 进程管理；Prompt 模板渲染与消息解析 |
+| `ai-hub-integration` | 上游 HTTP + OpenAI 协议适配 + 协议改写；远端 embedding（DashScope OpenAI 兼容）；文档解析（PDFBox / POI / jsoup）；MCP 探活/工具客户端/stdio 进程管理；Prompt 模板渲染与消息解析 |
 | `ai-hub-core` | 纯业务编排：部署选择、协议改写、上游调用、usage 解析；RAG 索引/检索/chunk 校验（不含限流/预算/计价/日志） |
 | `ai-hub-service` | 应用服务：请求解析/校验/业务执行；`service/gateway` 为网关治理公共实现（限流/预算/计价/spend/日志）；Embedding 服务 |
 | `ai-hub-start` | 启动类（根包）+ controller / filter / error / config |
@@ -310,7 +310,7 @@ flowchart TD
     S --> H{"project_id + SHA-256 已存在？"}
     H -->|"默认：返回已有文档 duplicated=true"| R["200 RagDocumentResDTO"]
     H -->|"override=true 或旧文档 FAILED"| X["删除旧文档/切片"]
-    H -->|"不存在"| P["DocumentTextExtractor：PDFBox / 严格 UTF-8"]
+    H -->|"不存在"| P["DocumentTextExtractor：按扩展名路由 txt/md/pdf/docx/pptx/xlsx/html"]
     X --> P
     P -->|"失败"| E["持久化 FAILED 文档 + 原始文件（BYTEA）→ 400 中文错误"]
     P --> C["RagChunker：段落贪心打包，超长定长 + overlap"]
@@ -319,6 +319,12 @@ flowchart TD
     F --> L["call_logs（call_type=RAG, target_name=ingest_document）"]
 ```
 
+- 解析器注册表（REQ-3.9）：`DocumentTextParser` 按扩展名注册；txt/md 严格 UTF-8，pdf 用 PDFBox，
+  docx/pptx/xlsx 用 POI（XWPF/XSLF/XSSF），html 用 jsoup；老 `.doc/.xls/.ppt` 拒绝并给出另存为指引。
+- OOXML 安全（REQ-3.9）：解析前读 ZIP 中央目录校验条目数/单条目/解压总大小；POI `ZipSecureFile`
+  全局限制（压缩比 1%、单条目 64MB、文本 10M 字符）兜底；加密 OOXML 通过 OLE2 `EncryptionInfo` 识别。
+- 解析上限（REQ-3.9）：输出字符、表格行/单元格、工作表行/列/单元格、幻灯片/形状数均受
+  `gateway.rag.parse.*` 约束，默认 `fail`，可配置 `truncate`。
 - embedding 成本（REQ-3.7）：索引时按模型单价写入 `rag_documents.embedding_cost`；本地/确定性为 0。
 
 - 去重键：`project_id + content_hash`（SHA-256）；默认幂等返回已有文档，覆盖为显式配置。
@@ -554,6 +560,7 @@ sequenceDiagram
 | 2026-11-11 | REQ-3.6 | RAG/记忆 MCP 暴露（6 个工具、schema 与 REST 一致、租户透传、统一治理与调用日志） |
 | 2026-11-12 | REQ-3.7 | Embedding 一等能力（模型目录、DashScope v3 远端、`/v1/embeddings`、计量计价、pgvector 1024 零填充） |
 | 2026-11-12 | REQ-3.8 | 计费与边界补强（RAG answer 实际 usage 回填与事后预算、chunk 窗口推导、上传类型限制） |
+| 2026-11-12 | REQ-3.9 | 文档解析扩展（解析器注册表、docx/pptx/xlsx/html、`.doc` 拒绝、ZIP 解压预检与 POI 安全限制） |
 
 ## 6. 与 LiteLLM 的差异
 

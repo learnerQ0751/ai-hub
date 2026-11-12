@@ -9,6 +9,7 @@ import com.qtua.aihub.dal.mapper.RagDocumentMapper;
 import com.qtua.aihub.dal.model.CallLogDO;
 import com.qtua.aihub.dal.model.RagChunkDO;
 import com.qtua.aihub.dal.model.RagDocumentDO;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
@@ -153,12 +156,40 @@ class RagDocumentIntegrationTest {
 
     @Test
     void unsupported_type_returns_400() {
-        ResponseEntity<String> response = upload("p-rag-type", "demo.docx", new byte[]{1, 2},
+        ResponseEntity<String> response = upload("p-rag-type", "demo.xyz", new byte[]{1, 2},
                 MediaType.APPLICATION_OCTET_STREAM);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(readJson(response).path("error").path("message").asText())
                 .contains("不支持");
+    }
+
+    @Test
+    void upload_docx_parses_and_becomes_ready() throws IOException {
+        byte[] docx = docxWithParagraph("Word 文档正文");
+
+        ResponseEntity<String> uploaded = upload("p-rag-docx", "demo.docx", docx,
+                MediaType.APPLICATION_OCTET_STREAM);
+
+        assertThat(uploaded.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        JsonNode body = readJson(uploaded);
+        assertThat(body.path("source").asText()).isEqualTo("demo.docx");
+        assertThat(body.path("content_type").asText()).contains("wordprocessingml");
+        assertThat(body.path("index_status").asText()).isEqualTo("READY");
+        assertThat(body.path("chunk_count").asInt()).isGreaterThanOrEqualTo(1);
+        List<RagChunkDO> chunks = chunkMapper.selectByDocId(body.path("doc_id").asText());
+        assertThat(chunks).isNotEmpty();
+        assertThat(chunks.get(0).getContent()).contains("Word 文档正文");
+    }
+
+    @Test
+    void upload_legacy_doc_returns_actionable_message() {
+        ResponseEntity<String> response = upload("p-rag-doc", "legacy.doc", new byte[]{1, 2},
+                MediaType.APPLICATION_OCTET_STREAM);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(readJson(response).path("error").path("message").asText())
+                .contains("另存为 .docx");
     }
 
     @Test
@@ -193,6 +224,15 @@ class RagDocumentIntegrationTest {
         assertThat(log.getModelAlias()).isEqualTo("ingest_document");
         assertThat(log.getCost()).isEqualByComparingTo("0");
         assertThat(log.getStatus()).isEqualTo(200);
+    }
+
+    private byte[] docxWithParagraph(String text) throws IOException {
+        try (XWPFDocument document = new XWPFDocument();
+             ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            document.createParagraph().createRun().setText(text);
+            document.write(output);
+            return output.toByteArray();
+        }
     }
 
     private ResponseEntity<String> upload(String projectId, String fileName, byte[] content,

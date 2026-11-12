@@ -38,6 +38,13 @@ public class RagDocumentServiceImpl implements RagDocumentService {
     private static final String PARAM_FILE = "file";
     private static final String PARAM_LIMIT = "limit";
     private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
+    private static final String MIME_DOCX =
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    private static final String MIME_PPTX =
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    private static final String MIME_XLSX =
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    private static final String MIME_HTML = "text/html; charset=utf-8";
 
     private final RagDocumentCore documentCore;
     private final EmbeddingModel embeddingModel;
@@ -237,6 +244,18 @@ public class RagDocumentServiceImpl implements RagDocumentService {
         }
         if (lower.endsWith(".txt")) {
             return "text/plain";
+        }
+        if (lower.endsWith(".docx")) {
+            return MIME_DOCX;
+        }
+        if (lower.endsWith(".pptx")) {
+            return MIME_PPTX;
+        }
+        if (lower.endsWith(".xlsx")) {
+            return MIME_XLSX;
+        }
+        if (lower.endsWith(".html") || lower.endsWith(".htm")) {
+            return MIME_HTML;
         }
         return DEFAULT_CONTENT_TYPE;
     }

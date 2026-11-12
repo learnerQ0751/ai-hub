@@ -462,4 +462,17 @@
         <Class name="com.qtua.aihub.start.mcp.McpRagMemoryTools"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <!-- REQ-3.9：解析配置为 Spring Binder 可变对象；门面只保存不可变 Map/record -->
+    <Match>
+        <Class name="com.qtua.aihub.common.config.RagProperties$Parse"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.integration.rag.DocumentTextExtractor"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <!-- 启动期校验解析器扩展名重复，非法配置应快速失败 -->
+    <Match>
+        <Class name="com.qtua.aihub.integration.rag.DocumentTextExtractor"/>
+        <Bug pattern="CT_CONSTRUCTOR_THROW"/>
+    </Match>
 </FindBugsFilter>

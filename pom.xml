@@ -38,6 +38,9 @@
         <langchain4j-reactor.version>1.1.0-beta7</langchain4j-reactor.version>
         <mybatis-spring-boot.version>4.1.0</mybatis-spring-boot.version>
         <pdfbox.version>3.0.3</pdfbox.version>
+        <!-- RAG 文档解析（REQ-3.9）：OOXML 用 POI，HTML 用 jsoup -->
+        <poi.version>6.0.0</poi.version>
+        <jsoup.version>1.24.1</jsoup.version>
     </properties>
 
     <dependencyManagement>

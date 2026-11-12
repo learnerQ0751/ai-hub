@@ -38,6 +38,18 @@ public class RagProperties {
     private static final int DEFAULT_ANSWER_TOP_K = 4;
     private static final int DEFAULT_MAX_INPUTS = 2048;
     private static final int DEFAULT_MAX_CONTEXT_CHARS = 6000;
+    private static final int DEFAULT_PARSE_MAX_CHARS = 5_000_000;
+    private static final int DEFAULT_PARSE_MAX_ROWS_PER_SHEET = 50_000;
+    private static final int DEFAULT_PARSE_MAX_CELLS_PER_SHEET = 500_000;
+    private static final int DEFAULT_PARSE_MAX_SHEETS = 200;
+    private static final int DEFAULT_PARSE_MAX_COLUMNS = 256;
+    private static final int DEFAULT_PARSE_MAX_TABLE_ROWS = 10_000;
+    private static final int DEFAULT_PARSE_MAX_TABLE_CELLS = 100_000;
+    private static final int DEFAULT_PARSE_MAX_SLIDES = 2_000;
+    private static final int DEFAULT_PARSE_MAX_SHAPES_PER_SLIDE = 5_000;
+    private static final int DEFAULT_PARSE_MAX_ZIP_ENTRIES = 10_000;
+    private static final long DEFAULT_PARSE_MAX_ZIP_ENTRY_BYTES = 64L * 1024 * 1024;
+    private static final long DEFAULT_PARSE_MAX_ZIP_TOTAL_BYTES = 256L * 1024 * 1024;
 
     /** 上传配置。 */
     private Upload upload = new Upload();
@@ -55,6 +67,8 @@ public class RagProperties {
     private Search search = new Search();
     /** 生成配置。 */
     private Answer answer = new Answer();
+    /** 文档解析配置（REQ-3.9）。 */
+    private Parse parse = new Parse();
 
     public Upload getUpload() {
         return upload;
@@ -118,6 +132,14 @@ public class RagProperties {
 
     public void setAnswer(Answer answer) {
         this.answer = answer;
+    }
+
+    public Parse getParse() {
+        return parse;
+    }
+
+    public void setParse(Parse parse) {
+        this.parse = parse;
     }
 
     /**
@@ -660,6 +682,165 @@ public class RagProperties {
 
         public void setEmptyAnswerMessage(String emptyAnswerMessage) {
             this.emptyAnswerMessage = emptyAnswerMessage;
+        }
+    }
+
+    /**
+     * 文档解析限制（REQ-3.9）。
+     *
+     * <p>非正数在 {@code ParseLimits.from} 中回退默认值；超限策略为 fail（默认）或 truncate。</p>
+     */
+    public static class Parse {
+
+        /** 解析输出最大字符数。 */
+        private int maxChars = DEFAULT_PARSE_MAX_CHARS;
+        /** 单个工作表最大行数。 */
+        private int maxRowsPerSheet = DEFAULT_PARSE_MAX_ROWS_PER_SHEET;
+        /** 单个工作表最大单元格数。 */
+        private int maxCellsPerSheet = DEFAULT_PARSE_MAX_CELLS_PER_SHEET;
+        /** 最大工作表数。 */
+        private int maxSheets = DEFAULT_PARSE_MAX_SHEETS;
+        /** 最大列数。 */
+        private int maxColumns = DEFAULT_PARSE_MAX_COLUMNS;
+        /** Word 表格最大行数。 */
+        private int maxTableRows = DEFAULT_PARSE_MAX_TABLE_ROWS;
+        /** Word 表格最大单元格数。 */
+        private int maxTableCells = DEFAULT_PARSE_MAX_TABLE_CELLS;
+        /** 最大幻灯片数。 */
+        private int maxSlides = DEFAULT_PARSE_MAX_SLIDES;
+        /** 每页最大形状数。 */
+        private int maxShapesPerSlide = DEFAULT_PARSE_MAX_SHAPES_PER_SLIDE;
+        /** 最大 ZIP 条目数。 */
+        private int maxZipEntries = DEFAULT_PARSE_MAX_ZIP_ENTRIES;
+        /** 单个 ZIP 条目解压上限（字节）。 */
+        private long maxZipEntryBytes = DEFAULT_PARSE_MAX_ZIP_ENTRY_BYTES;
+        /** ZIP 解压总大小上限（字节）。 */
+        private long maxZipTotalBytes = DEFAULT_PARSE_MAX_ZIP_TOTAL_BYTES;
+        /** 是否提取 Word 页眉页脚。 */
+        private boolean includeHeadersFooters = true;
+        /** 是否提取 PPT 备注。 */
+        private boolean includeNotes;
+        /** 超限策略：fail（默认）或 truncate。 */
+        private String limitPolicy = "fail";
+
+        public int getMaxChars() {
+            return maxChars;
+        }
+
+        public void setMaxChars(int maxChars) {
+            this.maxChars = maxChars;
+        }
+
+        public int getMaxRowsPerSheet() {
+            return maxRowsPerSheet;
+        }
+
+        public void setMaxRowsPerSheet(int maxRowsPerSheet) {
+            this.maxRowsPerSheet = maxRowsPerSheet;
+        }
+
+        public int getMaxCellsPerSheet() {
+            return maxCellsPerSheet;
+        }
+
+        public void setMaxCellsPerSheet(int maxCellsPerSheet) {
+            this.maxCellsPerSheet = maxCellsPerSheet;
+        }
+
+        public int getMaxSheets() {
+            return maxSheets;
+        }
+
+        public void setMaxSheets(int maxSheets) {
+            this.maxSheets = maxSheets;
+        }
+
+        public int getMaxColumns() {
+            return maxColumns;
+        }
+
+        public void setMaxColumns(int maxColumns) {
+            this.maxColumns = maxColumns;
+        }
+
+        public int getMaxTableRows() {
+            return maxTableRows;
+        }
+
+        public void setMaxTableRows(int maxTableRows) {
+            this.maxTableRows = maxTableRows;
+        }
+
+        public int getMaxTableCells() {
+            return maxTableCells;
+        }
+
+        public void setMaxTableCells(int maxTableCells) {
+            this.maxTableCells = maxTableCells;
+        }
+
+        public int getMaxSlides() {
+            return maxSlides;
+        }
+
+        public void setMaxSlides(int maxSlides) {
+            this.maxSlides = maxSlides;
+        }
+
+        public int getMaxShapesPerSlide() {
+            return maxShapesPerSlide;
+        }
+
+        public void setMaxShapesPerSlide(int maxShapesPerSlide) {
+            this.maxShapesPerSlide = maxShapesPerSlide;
+        }
+
+        public int getMaxZipEntries() {
+            return maxZipEntries;
+        }
+
+        public void setMaxZipEntries(int maxZipEntries) {
+            this.maxZipEntries = maxZipEntries;
+        }
+
+        public long getMaxZipEntryBytes() {
+            return maxZipEntryBytes;
+        }
+
+        public void setMaxZipEntryBytes(long maxZipEntryBytes) {
+            this.maxZipEntryBytes = maxZipEntryBytes;
+        }
+
+        public long getMaxZipTotalBytes() {
+            return maxZipTotalBytes;
+        }
+
+        public void setMaxZipTotalBytes(long maxZipTotalBytes) {
+            this.maxZipTotalBytes = maxZipTotalBytes;
+        }
+
+        public boolean isIncludeHeadersFooters() {
+            return includeHeadersFooters;
+        }
+
+        public void setIncludeHeadersFooters(boolean includeHeadersFooters) {
+            this.includeHeadersFooters = includeHeadersFooters;
+        }
+
+        public boolean isIncludeNotes() {
+            return includeNotes;
+        }
+
+        public void setIncludeNotes(boolean includeNotes) {
+            this.includeNotes = includeNotes;
+        }
+
+        public String getLimitPolicy() {
+            return limitPolicy;
+        }
+
+        public void setLimitPolicy(String limitPolicy) {
+            this.limitPolicy = limitPolicy;
         }
     }
 }

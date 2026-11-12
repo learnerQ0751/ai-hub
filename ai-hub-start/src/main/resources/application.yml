@@ -61,6 +61,30 @@ gateway:
         txt: 20971520
         md: 20971520
         docx: 31457280
+        # pptx 限制到 40MB，保持 multipart 50MB 硬上限不变
+        pptx: 41943040
+        xlsx: 31457280
+        html: 10485760
+        htm: 10485760
+    parse:
+      # 解析输出字符上限；超限按 limit-policy 处理
+      max-chars: 5000000
+      max-rows-per-sheet: 50000
+      max-cells-per-sheet: 500000
+      max-sheets: 200
+      max-columns: 256
+      max-table-rows: 10000
+      max-table-cells: 100000
+      max-slides: 2000
+      max-shapes-per-slide: 5000
+      # 解压炸弹防护：条目数 / 单条目 / 解压总大小
+      max-zip-entries: 10000
+      max-zip-entry-bytes: 67108864
+      max-zip-total-bytes: 268435456
+      include-headers-footers: true
+      include-notes: false
+      # fail（默认，超限报错）或 truncate（截断并追加标记）
+      limit-policy: fail
     chunk:
       # 0 = 按 embedding 模型 max-input-tokens×0.8 自动推导（v3 下为 800 字）
       max-chars: 0
