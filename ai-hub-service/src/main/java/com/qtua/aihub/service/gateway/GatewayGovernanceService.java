@@ -16,6 +16,8 @@ import com.qtua.aihub.common.pricing.PricingCatalog;
 import com.qtua.aihub.common.rag.EmbeddingModel;
 import com.qtua.aihub.common.rag.EmbeddingModelProvider;
 import com.qtua.aihub.common.tenant.TenantScopeGuard;
+import com.qtua.aihub.common.trace.TraceEvent;
+import com.qtua.aihub.common.trace.TraceRecorder;
 import com.qtua.aihub.common.metering.EmbeddingTokenEstimator;
 import com.qtua.aihub.integration.protocol.OpenAiProtocolAdapter;
 import com.qtua.aihub.manager.CallLogManager;
@@ -55,6 +57,7 @@ public class GatewayGovernanceService {
     private final RateLimitProperties rateLimitProperties;
     private final ObjectMapper objectMapper;
     private final EmbeddingModelProvider embeddingModelProvider;
+    private final TraceRecorder traceRecorder;
 
     /**
      * 构造治理服务。
@@ -76,6 +79,33 @@ public class GatewayGovernanceService {
                                     RateLimitProperties rateLimitProperties,
                                     ObjectMapper objectMapper,
                                     EmbeddingModelProvider embeddingModelProvider) {
+        this(modelCatalog, gatewayGuard, pricingCatalog, callLogManager, protocolAdapter,
+                rateLimitProperties, objectMapper, embeddingModelProvider, TraceRecorder.NOOP);
+    }
+
+    /**
+     * 构造治理服务（含 Trace）。
+     *
+     * @param modelCatalog          模型目录
+     * @param gatewayGuard          限流与预算端口
+     * @param pricingCatalog        价格目录
+     * @param callLogManager        调用日志门面
+     * @param protocolAdapter       OpenAI 协议适配器
+     * @param rateLimitProperties   限流配置
+     * @param objectMapper          JSON 解析器
+     * @param embeddingModelProvider embedding 模型目录
+     * @param traceRecorder         Trace 记录端口
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public GatewayGovernanceService(ModelCatalog modelCatalog,
+                                    GatewayGuard gatewayGuard,
+                                    PricingCatalog pricingCatalog,
+                                    CallLogManager callLogManager,
+                                    OpenAiProtocolAdapter protocolAdapter,
+                                    RateLimitProperties rateLimitProperties,
+                                    ObjectMapper objectMapper,
+                                    EmbeddingModelProvider embeddingModelProvider,
+                                    TraceRecorder traceRecorder) {
         this.modelCatalog = modelCatalog;
         this.gatewayGuard = gatewayGuard;
         this.pricingCatalog = pricingCatalog;
@@ -84,6 +114,7 @@ public class GatewayGovernanceService {
         this.rateLimitProperties = rateLimitProperties;
         this.objectMapper = objectMapper;
         this.embeddingModelProvider = embeddingModelProvider;
+        this.traceRecorder = traceRecorder;
     }
 
     /**
@@ -426,6 +457,40 @@ public class GatewayGovernanceService {
         } catch (RuntimeException ex) {
             // 日志失败不影响业务响应。
         }
+        if (!context.isToolCall()) {
+            recordTrace(context, usage, cost, status, errorType);
+        }
+    }
+
+    /**
+     * 记录模型段 Trace（chat/embedding/prompt）。
+     *
+     * @param context   治理上下文
+     * @param usage     用量
+     * @param cost      成本
+     * @param status    状态
+     * @param errorType 错误类型
+     */
+    private void recordTrace(GatewayContext context, TokenUsage usage, BigDecimal cost,
+                             int status, String errorType) {
+        try {
+            java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("alias", context.getModelAlias());
+            payload.put("deployment", context.getDeploymentModel());
+            payload.put("promptTokens", usage.promptTokens());
+            payload.put("completionTokens", usage.completionTokens());
+            payload.put("cost", cost);
+            payload.put("errorType", errorType);
+            traceRecorder.record(new TraceEvent(context.getRequestId(), tenantOf(context),
+                    projectOf(context), context.getKeyHash(), "model", context.getModelAlias(),
+                    status, latencyMs(context), payload, Instant.now()));
+        } catch (RuntimeException ex) {
+            // Trace 失败不影响业务响应。
+        }
+    }
+
+    private String projectOf(GatewayContext context) {
+        return ObjectUtils.isEmpty(context.getAuth()) ? null : context.getAuth().projectId();
     }
 
     /**

@@ -24,7 +24,9 @@ import java.util.UUID;
 public class RequestIdFilter extends OncePerRequestFilter {
 
     public static final String HEADER = "X-Request-Id";
+    public static final String TRACE_HEADER = "X-Trace-Id";
     public static final String MDC_KEY = "request_id";
+    public static final String MDC_TRACE_KEY = "trace_id";
     /** 请求属性名：供 Controller 读取并透传到调用日志。 */
     public static final String ATTRIBUTE = "request_id";
 
@@ -40,12 +42,16 @@ public class RequestIdFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String requestId = UUID.randomUUID().toString();
         MDC.put(MDC_KEY, requestId);
+        MDC.put(MDC_TRACE_KEY, requestId);
         request.setAttribute(ATTRIBUTE, requestId);
+        request.setAttribute(TRACE_HEADER, requestId);
         response.setHeader(HEADER, requestId);
+        response.setHeader(TRACE_HEADER, requestId);
         try {
             filterChain.doFilter(request, response);
         } finally {
             MDC.remove(MDC_KEY);
+            MDC.remove(MDC_TRACE_KEY);
         }
     }
 }

@@ -215,6 +215,18 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * Trace 不存在或不属于当前租户（404）。
+     *
+     * @param traceId 追踪 ID
+     * @return 业务异常
+     */
+    public static ChatCompletionException traceNotFound(String traceId) {
+        return new ChatCompletionException(HttpStatus.NOT_FOUND,
+                "Trace '" + traceId + "' 不存在", "not_found_error",
+                "trace_id", "404", null, false);
+    }
+
+    /**
      * 资源不属于当前租户（404，避免泄露存在性）。
      *
      * @param message 中文描述

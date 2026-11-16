@@ -11,6 +11,8 @@ import com.qtua.aihub.common.mcp.McpServerStatus;
 import com.qtua.aihub.common.mcp.McpToolDescriptor;
 import com.qtua.aihub.common.tenant.TenantIdentity;
 import com.qtua.aihub.common.tenant.TenantScopeGuard;
+import com.qtua.aihub.common.trace.TraceEvent;
+import com.qtua.aihub.common.trace.TraceRecorder;
 import com.qtua.aihub.integration.mcp.McpToolClient;
 import com.qtua.aihub.integration.mcp.McpToolTimeoutException;
 import com.qtua.aihub.manager.mcp.McpServerManager;
@@ -38,12 +40,14 @@ public class McpCallServiceImpl implements McpCallService {
     private static final int MAX_RESULT_BYTES = 1024 * 1024;
     /** 截断时按 4 倍保守估计保留字符数（UTF-8 单字符最多 4 字节）。 */
     private static final int TRUNCATE_CHAR_DIVISOR = 4;
+    private static final int HTTP_OK = 200;
 
     private final McpToolService mcpToolService;
     private final McpServerManager mcpServerManager;
     private final McpToolClient mcpToolClient;
     private final ObjectMapper objectMapper;
     private final TenantScopeGuard tenantScopeGuard;
+    private final TraceRecorder traceRecorder;
 
     /**
      * 构造服务。
@@ -56,7 +60,7 @@ public class McpCallServiceImpl implements McpCallService {
     public McpCallServiceImpl(McpToolService mcpToolService, McpServerManager mcpServerManager,
                               McpToolClient mcpToolClient, ObjectMapper objectMapper) {
         this(mcpToolService, mcpServerManager, mcpToolClient, objectMapper,
-                new TenantScopeGuard());
+                new TenantScopeGuard(), TraceRecorder.NOOP);
     }
 
     /**
@@ -71,12 +75,13 @@ public class McpCallServiceImpl implements McpCallService {
     @org.springframework.beans.factory.annotation.Autowired
     public McpCallServiceImpl(McpToolService mcpToolService, McpServerManager mcpServerManager,
                               McpToolClient mcpToolClient, ObjectMapper objectMapper,
-                              TenantScopeGuard tenantScopeGuard) {
+                              TenantScopeGuard tenantScopeGuard, TraceRecorder traceRecorder) {
         this.mcpToolService = mcpToolService;
         this.mcpServerManager = mcpServerManager;
         this.mcpToolClient = mcpToolClient;
         this.objectMapper = objectMapper;
         this.tenantScopeGuard = tenantScopeGuard;
+        this.traceRecorder = traceRecorder;
     }
 
     /**
@@ -88,6 +93,7 @@ public class McpCallServiceImpl implements McpCallService {
      */
     @Override
     public String call(String toolName, String requestBody) {
+        long startedAt = System.currentTimeMillis();
         String argumentsJson = extractArguments(requestBody);
         McpToolDescriptor tool = mcpToolService.find(toolName)
                 .orElseThrow(() -> ChatCompletionException.mcpToolNotFound(toolName));
@@ -101,7 +107,52 @@ public class McpCallServiceImpl implements McpCallService {
         McpProbeTarget target = new McpProbeTarget(server.name(), server.transport(),
                 server.endpoint(), server.command(), server.args());
         String result = invokeWithRetry(tool, target, argumentsJson);
-        return truncateIfNeeded(toolName, result);
+        String truncated = truncateIfNeeded(toolName, result);
+        recordTrace(tool, server, HTTP_OK, startedAt, truncated.length(), null);
+        return truncated;
+    }
+
+    /**
+     * 记录 MCP 分段（成功/失败均记）。
+     *
+     * @param tool      工具
+     * @param server    Server
+     * @param status    状态
+     * @param startedAt 开始时间
+     * @param resultLen 结果长度
+     * @param errorType 错误类型
+     */
+    private void recordTrace(McpToolDescriptor tool, McpServerBO server, int status,
+                             long startedAt, int resultLen, String errorType) {
+        try {
+            com.qtua.aihub.common.tenant.TenantIdentity identity =
+                    tenantScopeGuard.currentIdentity();
+            java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("tool", tool.exposedName());
+            payload.put("server", server.name());
+            payload.put("resultChars", resultLen);
+            payload.put("errorType", errorType);
+            traceRecorder.record(new TraceEvent(traceId(), tenantOf(identity),
+                    projectOf(identity), ObjectUtils.isEmpty(identity) ? null : identity.keyHash(), "mcp",
+                    tool.exposedName(), status, Math.max(0L, System.currentTimeMillis() - startedAt),
+                    payload, java.time.Instant.now()));
+        } catch (RuntimeException ex) {
+            // Trace 失败不影响调用。
+        }
+    }
+
+    private String traceId() {
+        String traceId = org.slf4j.MDC.get("trace_id");
+        return ObjectUtils.isEmpty(traceId) ? "-" : traceId;
+    }
+
+    private String tenantOf(com.qtua.aihub.common.tenant.TenantIdentity identity) {
+        return ObjectUtils.isEmpty(identity) || ObjectUtils.isEmpty(identity.tenantId())
+                ? TenantScopeGuard.DEFAULT_TENANT : identity.tenantId();
+    }
+
+    private String projectOf(com.qtua.aihub.common.tenant.TenantIdentity identity) {
+        return ObjectUtils.isEmpty(identity) ? null : identity.projectId();
     }
 
     /**

@@ -38,6 +38,9 @@ gateway:
   master-key: ${GATEWAY_MASTER_KEY:}
   # 上游凭证加密密钥（AES-256-GCM）；生产必须配置，缺失时退化为弱编码并告警
   secret-key: ${GATEWAY_SECRET_KEY:}
+  trace:
+    # 采样率 0~1；生产可降到 0.1，默认全量
+    sample-rate: ${GATEWAY_TRACE_SAMPLE_RATE:1.0}
   model-list: {}
   pricing:
     models: {}

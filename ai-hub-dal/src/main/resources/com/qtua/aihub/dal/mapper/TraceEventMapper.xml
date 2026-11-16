@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.TraceEventMapper">
+
+    <resultMap id="TraceEventResultMap" type="com.qtua.aihub.dal.model.TraceEventDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="trace_id" property="traceId" jdbcType="VARCHAR"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="project_id" property="projectId" jdbcType="VARCHAR"/>
+        <result column="key_id" property="keyId" jdbcType="VARCHAR"/>
+        <result column="segment" property="segment" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+        <result column="latency_ms" property="latencyMs" jdbcType="BIGINT"/>
+        <result column="payload" property="payload" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.qtua.aihub.dal.model.TraceEventDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO trace_events
+            (trace_id, tenant_id, project_id, key_id, segment, name, status, latency_ms,
+             payload, created_at)
+        VALUES
+            (#{traceId,jdbcType=VARCHAR}, #{tenantId,jdbcType=VARCHAR},
+             #{projectId,jdbcType=VARCHAR}, #{keyId,jdbcType=VARCHAR},
+             #{segment,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR},
+             #{status,jdbcType=INTEGER}, #{latencyMs,jdbcType=BIGINT},
+             CAST(#{payload,jdbcType=VARCHAR} AS JSONB), #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="selectByTraceId" resultMap="TraceEventResultMap">
+        SELECT id, trace_id, tenant_id, project_id, key_id, segment, name, status, latency_ms,
+               CAST(payload AS VARCHAR) AS payload, created_at
+        FROM trace_events
+        WHERE trace_id = #{traceId,jdbcType=VARCHAR}
+        ORDER BY id ASC
+    </select>
+</mapper>

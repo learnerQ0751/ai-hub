@@ -19,6 +19,9 @@ import com.qtua.aihub.api.model.res.RagSearchResDTO;
 import com.qtua.aihub.api.model.res.RagUsageResDTO;
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.tenant.TenantIdentity;
+import com.qtua.aihub.common.trace.TraceEvent;
+import com.qtua.aihub.common.trace.TraceRecorder;
 import com.qtua.aihub.common.metering.TokenUsage;
 import com.qtua.aihub.core.rag.RagAnswerPrompt;
 import com.qtua.aihub.core.rag.RagPromptBuilder;
@@ -52,6 +55,8 @@ public class RagAnswerServiceImpl implements RagAnswerService {
     private static final int LOG_CITATIONS_MAX = 20;
     private static final int PROMPT_HASH_LENGTH = 16;
     private static final int DEFAULT_TOP_K = 1;
+    private static final int TRACE_MAX_ITEMS = 10;
+    private static final int HTTP_OK = 200;
     private static final String PARAM_MODEL = "model";
     private static final String ROLE_SYSTEM = "system";
     private static final String ROLE_USER = "user";
@@ -69,6 +74,7 @@ public class RagAnswerServiceImpl implements RagAnswerService {
     private final RagPromptBuilder promptBuilder;
     private final ObjectMapper objectMapper;
     private final RagProperties properties;
+    private final TraceRecorder traceRecorder;
 
     /**
      * 构造服务。
@@ -84,11 +90,32 @@ public class RagAnswerServiceImpl implements RagAnswerService {
                                 RagPromptBuilder promptBuilder,
                                 ObjectMapper objectMapper,
                                 RagProperties properties) {
+        this(searchService, chatService, promptBuilder, objectMapper, properties,
+                TraceRecorder.NOOP);
+    }
+
+    /**
+     * 构造服务（含 Trace）。
+     *
+     * @param searchService 检索服务
+     * @param chatService   内部聊天补全服务
+     * @param promptBuilder prompt 构造器
+     * @param objectMapper  JSON 构造/解析器
+     * @param properties    RAG 配置
+     * @param traceRecorder Trace 记录端口
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public RagAnswerServiceImpl(RagSearchService searchService,
+                                ChatCompletionService chatService,
+                                RagPromptBuilder promptBuilder,
+                                ObjectMapper objectMapper,
+                                RagProperties properties, TraceRecorder traceRecorder) {
         this.searchService = searchService;
         this.chatService = chatService;
         this.promptBuilder = promptBuilder;
         this.objectMapper = objectMapper;
         this.properties = properties;
+        this.traceRecorder = traceRecorder;
     }
 
     /**
@@ -137,10 +164,49 @@ public class RagAnswerServiceImpl implements RagAnswerService {
         LOG.info("rag answer citations: model={}, citations={}", model,
                 summarizeCitations(citations));
         TokenUsage usage = modelResult.usage();
+        recordAnswerTrace(model, modelResult.deploymentModel(), search.projectId(),
+                citations, usage, answer.length());
         return new RagAnswerResDTO(query, search.projectId(), answer, search.noHit(), freeAnswer,
                 citations, new RagUsageResDTO(usage.promptTokens(), usage.completionTokens(),
                 usage.totalTokens()), model, modelResult.deploymentModel(),
                 search.embeddingTokens(), search.embeddingModel());
+    }
+
+    /**
+     * 记录回答分段（引用 id、模型与用量摘要）。
+     *
+     * @param model           请求别名
+     * @param deploymentModel 实际模型
+     * @param projectId       项目
+     * @param citations       引用
+     * @param usage           用量
+     * @param answerChars     答案长度
+     */
+    private void recordAnswerTrace(String model, String deploymentModel, String projectId,
+                                   List<RagCitationResDTO> citations, TokenUsage usage,
+                                   int answerChars) {
+        try {
+            TenantIdentity identity = com.qtua.aihub.common.tenant.TenantContextHolder.current();
+            java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("model", model);
+            payload.put("deployment", deploymentModel);
+            payload.put("citations", citations.stream().limit(TRACE_MAX_ITEMS)
+                    .map(RagCitationResDTO::chunkId).toList());
+            payload.put("promptTokens", usage.promptTokens());
+            payload.put("completionTokens", usage.completionTokens());
+            payload.put("answerChars", answerChars);
+            String traceId = org.slf4j.MDC.get("trace_id");
+            String effectiveTraceId = ObjectUtils.isEmpty(traceId) ? "-" : traceId;
+            String tenant = ObjectUtils.isEmpty(identity) || !StringUtils.hasText(identity.tenantId())
+                    ? "default" : identity.tenantId();
+            String keyHash = ObjectUtils.isEmpty(identity) ? null : identity.keyHash();
+            traceRecorder.record(new TraceEvent(effectiveTraceId, tenant, projectId, keyHash,
+                    "model", model, HTTP_OK, 0L, payload, java.time.Instant.now()));
+            traceRecorder.record(new TraceEvent(effectiveTraceId, tenant, projectId, keyHash,
+                    "answer", model, HTTP_OK, 0L, payload, java.time.Instant.now()));
+        } catch (RuntimeException ex) {
+            // Trace 失败不影响回答。
+        }
     }
 
     private String requireModel(String model) {

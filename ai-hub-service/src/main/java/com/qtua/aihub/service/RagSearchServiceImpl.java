@@ -11,6 +11,8 @@ import com.qtua.aihub.common.rag.RagSearchFilter;
 import com.qtua.aihub.common.rag.RagSearchRequest;
 import com.qtua.aihub.common.tenant.TenantScope;
 import com.qtua.aihub.common.tenant.TenantScopeGuard;
+import com.qtua.aihub.common.trace.TraceEvent;
+import com.qtua.aihub.common.trace.TraceRecorder;
 import com.qtua.aihub.core.rag.RagRetrievalCore;
 import com.qtua.aihub.core.rag.RagRetrievalResult;
 import com.qtua.aihub.core.rag.RagRetrievedChunk;
@@ -42,6 +44,8 @@ public class RagSearchServiceImpl implements RagSearchService {
     private static final double MIN_SIMILARITY = -1.0d;
     private static final double MAX_SIMILARITY = 1.0d;
     private static final int LOG_QUERY_MAX_CHARS = 200;
+    private static final int TRACE_MAX_ITEMS = 10;
+    private static final int HTTP_OK = 200;
     private static final String PARAM_QUERY = "query";
     private static final String PARAM_PROJECT = "project_id";
     private static final String PARAM_TOP_K = "top_k";
@@ -52,6 +56,7 @@ public class RagSearchServiceImpl implements RagSearchService {
     private final RagRetrievalCore retrievalCore;
     private final RagProperties properties;
     private final TenantScopeGuard tenantScopeGuard;
+    private final TraceRecorder traceRecorder;
 
     /**
      * 兼容构造器（单元测试）：使用无上下文的作用域守卫。
@@ -60,7 +65,7 @@ public class RagSearchServiceImpl implements RagSearchService {
      * @param properties    RAG 配置
      */
     public RagSearchServiceImpl(RagRetrievalCore retrievalCore, RagProperties properties) {
-        this(retrievalCore, properties, new TenantScopeGuard());
+        this(retrievalCore, properties, new TenantScopeGuard(), TraceRecorder.NOOP);
     }
 
     /**
@@ -72,10 +77,12 @@ public class RagSearchServiceImpl implements RagSearchService {
      */
     @org.springframework.beans.factory.annotation.Autowired
     public RagSearchServiceImpl(RagRetrievalCore retrievalCore, RagProperties properties,
-                                TenantScopeGuard tenantScopeGuard) {
+                                TenantScopeGuard tenantScopeGuard,
+                                TraceRecorder traceRecorder) {
         this.retrievalCore = retrievalCore;
         this.properties = properties;
         this.tenantScopeGuard = tenantScopeGuard;
+        this.traceRecorder = traceRecorder;
     }
 
     /**
@@ -108,6 +115,7 @@ public class RagSearchServiceImpl implements RagSearchService {
                         + "reranked={}",
                 projectId, result.candidateCount(), hits.size(), hits.isEmpty(),
                 result.reranked());
+        recordTrace(scope, query, topK, result, hits);
         return new RagSearchResDTO(query, projectId, hits.size(), hits.isEmpty(),
                 result.reranked(), hits, result.embeddingTokens(), result.embeddingModel());
     }
@@ -214,6 +222,45 @@ public class RagSearchServiceImpl implements RagSearchService {
         long amplified = (long) topK * multiplier;
         int clamped = (int) Math.min((long) maxCandidates, amplified);
         return Math.max(topK, clamped);
+    }
+
+    /**
+     * 记录 RAG 召回分段（只记 id/score 与摘要，不记正文）。
+     *
+     * @param scope  作用域
+     * @param query  查询
+     * @param topK   topK
+     * @param result 检索结果
+     * @param hits   命中
+     */
+    private void recordTrace(TenantScope scope, String query, int topK,
+                             RagRetrievalResult result, List<RagSearchHitResDTO> hits) {
+        try {
+            java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("queryChars", query.length());
+            payload.put("topK", topK);
+            payload.put("candidates", result.candidateCount());
+            payload.put("noHit", hits.isEmpty());
+            payload.put("chunkIds", hits.stream().limit(TRACE_MAX_ITEMS).map(RagSearchHitResDTO::chunkId).toList());
+            payload.put("scores", hits.stream().limit(TRACE_MAX_ITEMS).map(RagSearchHitResDTO::score).toList());
+            payload.put("embeddingTokens", result.embeddingTokens());
+            traceRecorder.record(new TraceEvent(
+                    traceId(), scope.tenantId(), scope.projectId(), keyHash(), "rag",
+                    "search_knowledge", HTTP_OK, 0L, payload, java.time.Instant.now()));
+        } catch (RuntimeException ex) {
+            // Trace 失败不影响检索。
+        }
+    }
+
+    private String traceId() {
+        String traceId = org.slf4j.MDC.get("trace_id");
+        return ObjectUtils.isEmpty(traceId) ? "-" : traceId;
+    }
+
+    private String keyHash() {
+        com.qtua.aihub.common.tenant.TenantIdentity identity =
+                tenantScopeGuard.currentIdentity();
+        return ObjectUtils.isEmpty(identity) ? null : identity.keyHash();
     }
 
     private RagSearchHitResDTO toHit(RagRetrievedChunk chunk) {

@@ -46,6 +46,36 @@
         <Class name="com.qtua.aihub.manager.ApiKeyManager"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <!-- 响应 DTO：payload 已在紧凑构造器中 unmodifiableMap -->
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.TraceEventResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.TraceEventResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <!-- Trace 摘要：构造器已 unmodifiableMap，SpotBugs 无法推断 -->
+    <Match>
+        <Class name="com.qtua.aihub.common.trace.TraceEvent"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.model.TraceEventBO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.trace.TraceEventManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.TraceRecorderImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.TraceServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
     <Match>
         <Class name="com.qtua.aihub.manager.catalog.DbModelCatalog"/>
         <Bug pattern="EI_EXPOSE_REP2"/>

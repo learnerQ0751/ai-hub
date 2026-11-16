@@ -5,6 +5,8 @@ import com.qtua.aihub.api.model.auth.KeyAuthDTO;
 import com.qtua.aihub.api.model.res.ErrorResponse;
 import com.qtua.aihub.common.constant.CallTypes;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.trace.TraceEvent;
+import com.qtua.aihub.common.trace.TraceRecorder;
 import com.qtua.aihub.service.gateway.GatewayGovernanceService;
 import com.qtua.aihub.service.gateway.model.GatewayContext;
 import jakarta.servlet.FilterChain;
@@ -70,20 +72,27 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
     private static final String TARGET_ANSWER = "rag_answer";
     private static final String TARGET_RAG = "rag_documents";
     private static final String UTF_8 = "UTF-8";
+    private static final int HTTP_OK = 200;
 
     private final GatewayGovernanceService governanceService;
     private final ObjectMapper objectMapper;
+    private final org.springframework.beans.factory.ObjectProvider<TraceRecorder>
+            traceRecorderProvider;
 
     /**
      * 构造过滤器。
      *
-     * @param governanceService 网关治理服务
-     * @param objectMapper      JSON 序列化器（错误响应）
+     * @param governanceService     网关治理服务
+     * @param objectMapper          JSON 序列化器（错误响应）
+     * @param traceRecorderProvider Trace 记录端口（切片测试可为空）
      */
     public GatewayGovernanceFilter(GatewayGovernanceService governanceService,
-                                   ObjectMapper objectMapper) {
+                                   ObjectMapper objectMapper,
+                                   org.springframework.beans.factory.ObjectProvider<TraceRecorder>
+                                           traceRecorderProvider) {
         this.governanceService = governanceService;
         this.objectMapper = objectMapper;
+        this.traceRecorderProvider = traceRecorderProvider;
     }
 
     /**
@@ -247,6 +256,39 @@ public class GatewayGovernanceFilter extends OncePerRequestFilter {
             governanceService.fail(context);
         } else {
             governanceService.complete(context);
+        }
+        recordGatewayTrace(context, request);
+    }
+
+    /**
+     * 记录网关分段（入口路径、状态、耗时）。
+     *
+     * @param context 治理上下文
+     * @param request HTTP 请求
+     */
+    private void recordGatewayTrace(GatewayContext context, HttpServletRequest request) {
+        try {
+            java.util.Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("method", request.getMethod());
+            payload.put("path", relativePath(request));
+            payload.put("callType", context.getCallType());
+            payload.put("target", context.getTargetName());
+            int status = context.isFailed() ? context.getStatus() : HTTP_OK;
+            TraceRecorder recorder = traceRecorderProvider.getIfAvailable();
+            if (ObjectUtils.isEmpty(recorder)) {
+                return;
+            }
+            recorder.record(new TraceEvent(context.getRequestId(),
+                    ObjectUtils.isEmpty(context.getAuth()) ? "default"
+                            : (StringUtils.hasText(context.getAuth().tenantId())
+                            ? context.getAuth().tenantId() : "default"),
+                    ObjectUtils.isEmpty(context.getAuth()) ? null
+                            : context.getAuth().projectId(),
+                    context.getKeyHash(), "gateway", relativePath(request), status,
+                    Math.max(0L, System.currentTimeMillis() - context.getStartedAt()), payload,
+                    java.time.Instant.now()));
+        } catch (RuntimeException ex) {
+            // Trace 失败不影响业务响应。
         }
     }
 
