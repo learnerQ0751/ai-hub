@@ -1,0 +1,21 @@
+ai-hub-service/src/main/java/com/qtua/aihub/service/RagSearchServiceImpl.java
+  s_0b21f4571628b4::t_bd8815b98fd8bc 14-15,47-48,59,68,80-81,85,118,227-265
+ai-hub-start/src/main/java/com/qtua/aihub/start/filter/GatewayGovernanceFilter.java
+  s_0b21f4571628b4::t_8efef7cefdf850 8-9,75,79-80,85-87,90-92,95,260-292
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "023cde94174ddb5ca60cffbc52d76475f2f62832",
+  "prompts": {},
+  "sessions": {
+    "s_0b21f4571628b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38ac2ffa-138d-4580-be67-bf463080b97c",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
