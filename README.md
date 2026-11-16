@@ -1,46 +1,69 @@
 # ai-hub
 
-项目 7（Agent 与 MCP 集群）Java 重实现——LLM 网关核心。
+面向 Agent 的 AI 中台：网关、工具（MCP）、记忆与 RAG 的统一下沉层。
 
-## 入口（先看这个）
+一个自建的 OpenAI 兼容网关，把大模型调用、MCP 工具、知识库检索与会话记忆收进同一层，并补齐多租户隔离、全链路 Trace、成本计量与审计。
 
-- AI 工作流：[`ai-workflow/README.md`](ai-workflow/README.md)
-- 开发规范：[`ai-workflow/STANDARDS.md`](ai-workflow/STANDARDS.md) + [`ai-workflow/PROJECT.md`](ai-workflow/PROJECT.md)
-- 开发流程：[`ai-workflow/WORKFLOW.md`](ai-workflow/WORKFLOW.md)
-- 需求记录：[`ai-workflow/records/`](ai-workflow/records/)
-- 需求 1.1 规格：[`specs/001-chat-completions/`](specs/001-chat-completions/)
-- AI 归因报告：[`docs/attribution/`](docs/attribution/)
+## 能力（第 1–4 期已完成）
 
-## 当前进度
+| 域 | 能力 |
+|---|---|
+| 网关 | chat / embeddings 转发，单入口多部署路由、重试与 fallback、SSE 流式、虚拟 Key、限流与预算 |
+| MCP | Server 注册与探活、工具聚合发现、调用代理、chat 内工具自动调用、客户端连接池治理 |
+| Prompt | 模板与版本管理、运行时渲染接入网关 |
+| RAG | 文档接入（pdf/docx/pptx/xlsx/html）、切片与向量化、pgvector 检索与重排、引用溯源生成、RAG/记忆 MCP Server 双协议暴露 |
+| 治理 | 多租户与项目隔离、项目级授权、全链路 Trace（分段事件 + TTFT）、用量与成本统计、管理 API、只追加审计日志 |
 
-需求 1.1 已完成；需求 1.2（模型配置 + 多部署路由）代码完成，待理解验收；下一步需求 1.3（虚拟 Key）。
-技术栈已与 `E:\learing_demo\ai-coder-help` 对齐：Spring Boot 4.1.1 + LangChain4j 1.22.0 + Redis/Lettuce。
+## 模块
 
-## 在 IDEA 中开发
-
-- 用 IntelliJ IDEA 打开 `E:\pro\ai-hub`（或 `pom.xml`）作为 Maven 项目；Project SDK 选 JDK 21。
-- 安装 Claude Code 插件，从项目根目录启动；它会读取根目录 `CLAUDE.md` → `ai-workflow/`。
-- Maven 使用本机 `D:\developtools\maven\apache-maven-3.6.3\conf\settings.xml`。
-- 终端运行 `mvn -Pquality verify`。
-- 不需要 Cursor 的 `.cursor/rules`；它是跨 IDE 兼容层，IDEA 可忽略。
-
-## 本地启动
-
-```bash
-# JDK 21（系统默认 JDK8，构建前显式设置）
-export JAVA_HOME="/c/Program Files/Java/jdk-21.0.12.1"
-export PATH="$JAVA_HOME/bin:$PATH"
-
-# 配置本地密钥（gitignored）
-cp src/main/resources/application-local.yml.example src/main/resources/application-local.yml
-
-mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+ai-hub-common       通用工具与配置
+ai-hub-api          对外契约（DTO / 异常）
+ai-hub-dal          数据访问（MyBatis + Flyway 迁移）
+ai-hub-manager      领域管理服务
+ai-hub-integration  上游适配（模型客户端 / MCP / 向量存储）
+ai-hub-core         业务核心
+ai-hub-service      应用服务
+ai-hub-start        启动与 Controller
+ai-hub-tests        集成测试
 ```
 
-默认端口 `18080`（避免与本机 8080 上的其他服务冲突）。
+依赖方向由 ArchUnit 强制：`start → service → core → manager/integration → api → dal → common`。
 
-## 质量门禁
+## 技术栈
+
+Java 21 · Spring Boot 4.1 · LangChain4j 1.22 · PostgreSQL + pgvector · Redis · MyBatis · Flyway · 质量门禁（Checkstyle / SpotBugs / ArchUnit / JaCoCo）
+
+## 快速开始
+
+```bash
+# 依赖服务
+docker compose up -d
+
+# 必需环境变量（密钥一律走环境变量，不落库不落代码）
+export GATEWAY_MASTER_KEY=<管理主密钥>
+export GATEWAY_SECRET_KEY=<上游凭据加密密钥>
+export DASHSCOPE_API_KEY=<Embedding 密钥>
+
+# 启动，默认端口 18080
+mvn -pl ai-hub-start spring-boot:run
+```
+
+## 质量
 
 ```bash
 mvn -Pquality verify
 ```
+
+包含编译、Checkstyle、SpotBugs、ArchUnit 架构规则、JaCoCo 覆盖率与全部集成测试（H2，无需外部服务即可跑测试）。
+
+## 文档
+
+- 当前状态与数据表速查：[`ai-workflow/STATUS.md`](ai-workflow/STATUS.md)
+- 设计基线：[`ai-workflow/DESIGN.md`](ai-workflow/DESIGN.md)
+- 开发流程：[`ai-workflow/WORKFLOW.md`](ai-workflow/WORKFLOW.md)
+- 单需求验收：[`ai-workflow/acceptance/`](ai-workflow/acceptance/)
+
+## License
+
+[MIT](LICENSE)
