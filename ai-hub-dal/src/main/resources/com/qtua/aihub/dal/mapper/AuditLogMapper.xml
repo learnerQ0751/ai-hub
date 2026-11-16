@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.AuditLogMapper">
+
+    <resultMap id="AuditLogResultMap" type="com.qtua.aihub.dal.model.AuditLogDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="actor" property="actor" jdbcType="VARCHAR"/>
+        <result column="action" property="action" jdbcType="VARCHAR"/>
+        <result column="target" property="target" jdbcType="VARCHAR"/>
+        <result column="before_state" property="beforeState" jdbcType="VARCHAR"/>
+        <result column="after_state" property="afterState" jdbcType="VARCHAR"/>
+        <result column="trace_id" property="traceId" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.qtua.aihub.dal.model.AuditLogDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO audit_logs
+            (tenant_id, actor, action, target, before_state, after_state, trace_id, created_at)
+        VALUES
+            (#{tenantId,jdbcType=VARCHAR}, #{actor,jdbcType=VARCHAR},
+             #{action,jdbcType=VARCHAR}, #{target,jdbcType=VARCHAR},
+             CAST(#{beforeState,jdbcType=VARCHAR} AS JSONB),
+             CAST(#{afterState,jdbcType=VARCHAR} AS JSONB),
+             #{traceId,jdbcType=VARCHAR}, #{createdAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <select id="selectPage" resultMap="AuditLogResultMap">
+        SELECT id, tenant_id, actor, action, target,
+               CAST(before_state AS VARCHAR) AS before_state,
+               CAST(after_state AS VARCHAR) AS after_state,
+               trace_id, created_at
+        FROM audit_logs
+        WHERE 1 = 1
+        <if test="tenantId != null and tenantId != ''">
+            AND tenant_id = #{tenantId,jdbcType=VARCHAR}
+        </if>
+        <if test="action != null and action != ''">
+            AND action = #{action,jdbcType=VARCHAR}
+        </if>
+        <if test="target != null and target != ''">
+            AND target LIKE CONCAT('%', #{target,jdbcType=VARCHAR}, '%')
+        </if>
+        <if test="from != null">
+            AND created_at &gt;= #{from,jdbcType=TIMESTAMP}
+        </if>
+        <if test="to != null">
+            AND created_at &lt;= #{to,jdbcType=TIMESTAMP}
+        </if>
+        ORDER BY id DESC
+        LIMIT #{limit,jdbcType=INTEGER} OFFSET #{offset,jdbcType=INTEGER}
+    </select>
+</mapper>

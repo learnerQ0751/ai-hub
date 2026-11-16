@@ -41,6 +41,9 @@ gateway:
   trace:
     # 采样率 0~1；生产可降到 0.1，默认全量
     sample-rate: ${GATEWAY_TRACE_SAMPLE_RATE:1.0}
+  audit:
+    # 审计保留天数（本期只声明策略，自动清理需合规流程）
+    retention-days: ${GATEWAY_AUDIT_RETENTION_DAYS:365}
   model-list: {}
   pricing:
     models: {}

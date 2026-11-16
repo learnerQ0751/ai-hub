@@ -19,6 +19,7 @@ spring:
         - classpath:db/governance-schema.sql
         - classpath:db/trace-schema.sql
         - classpath:db/usage-schema.sql
+        - classpath:db/audit-schema.sql
 
 gateway:
   secret-key: integration-test-secret

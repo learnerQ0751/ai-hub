@@ -6,6 +6,7 @@ import com.qtua.aihub.api.model.req.KeyGenerateReqDTO;
 import com.qtua.aihub.api.model.res.KeyBlockResDTO;
 import com.qtua.aihub.api.model.res.KeyGenerateResDTO;
 import com.qtua.aihub.api.model.res.KeyInfoResDTO;
+import com.qtua.aihub.common.audit.AuditRecorder;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.common.util.KeyHasher;
@@ -51,14 +52,27 @@ public class KeyServiceImpl implements KeyService {
     private static final int MAX_PROJECT_LENGTH = 64;
 
     private final ApiKeyManager apiKeyManager;
+    private final AuditRecorder auditRecorder;
+
+    /**
+     * 兼容构造器（单元测试）。
+     *
+     * @param apiKeyManager Key 数据门面
+     */
+    public KeyServiceImpl(ApiKeyManager apiKeyManager) {
+        this(apiKeyManager, AuditRecorder.NOOP);
+    }
 
     /**
      * 构造服务。
      *
      * @param apiKeyManager Key 数据门面
+     * @param auditRecorder 审计端口
      */
-    public KeyServiceImpl(ApiKeyManager apiKeyManager) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public KeyServiceImpl(ApiKeyManager apiKeyManager, AuditRecorder auditRecorder) {
         this.apiKeyManager = apiKeyManager;
+        this.auditRecorder = auditRecorder;
     }
 
     /**
@@ -86,6 +100,9 @@ public class KeyServiceImpl implements KeyService {
         LOG.info("generated virtual key hash={} models={} rpm={} tpm={} budget={} expiresAt={}",
                 keyHash, reqDTO.models(), reqDTO.rpmLimit(), reqDTO.tpmLimit(),
                 reqDTO.maxBudget(), expiresAt);
+        auditRecorder.record(tenantId, "KEY_GENERATE", keyHash, java.util.Map.of(),
+                java.util.Map.of("tenantId", tenantId, "projectId", projectId,
+                        "models", reqDTO.models(), "maxBudget", String.valueOf(reqDTO.maxBudget())));
         return new KeyGenerateResDTO(plainKey, reqDTO.models(), BigDecimal.ZERO, reqDTO.metadata(),
                 toIso(expiresAt), reqDTO.maxBudget(), budgetDuration,
                 reqDTO.rpmLimit(), reqDTO.tpmLimit(), false, tenantId, projectId);
@@ -198,6 +215,10 @@ public class KeyServiceImpl implements KeyService {
     private KeyBlockResDTO updateBlocked(String plainKey, boolean blocked) {
         ApiKeyBO apiKey = requireKey(plainKey);
         apiKeyManager.updateBlocked(apiKey.getKeyHash(), blocked);
+        auditRecorder.record(ObjectUtils.isEmpty(apiKey.getTenantId()) ? "default"
+                        : apiKey.getTenantId(), blocked ? "KEY_BLOCK" : "KEY_UNBLOCK",
+                apiKey.getKeyHash(), java.util.Map.of("blocked", !blocked),
+                java.util.Map.of("blocked", blocked));
         LOG.info("virtual key hash={} blocked={}", apiKey.getKeyHash(), blocked);
         return new KeyBlockResDTO(mask(plainKey), blocked);
     }

@@ -46,6 +46,15 @@
         <Class name="com.qtua.aihub.manager.ApiKeyManager"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <!-- 响应 DTO：before/after 已在紧凑构造器中 unmodifiableMap -->
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.AuditLogResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.AuditLogResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
     <!-- 响应 DTO：payload 已在紧凑构造器中 unmodifiableMap -->
     <Match>
         <Class name="com.qtua.aihub.api.model.res.TraceEventResDTO"/>
@@ -61,11 +70,31 @@
         <Bug pattern="EI_EXPOSE_REP"/>
     </Match>
     <Match>
+        <Class name="com.qtua.aihub.manager.model.AuditLogBO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.audit.AuditLogManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
         <Class name="com.qtua.aihub.manager.model.TraceEventBO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
     </Match>
     <Match>
         <Class name="com.qtua.aihub.manager.trace.TraceEventManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.AdminServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.AuditQueryServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.AuditRecorderImpl"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
@@ -126,6 +155,10 @@
     </Match>
     <Match>
         <Class name="com.qtua.aihub.start.filter.GatewayGovernanceFilter"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.start.controller.AdminController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>

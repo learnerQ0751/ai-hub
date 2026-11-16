@@ -215,6 +215,18 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * 模型别名不存在（404）。
+     *
+     * @param alias 别名
+     * @return 业务异常
+     */
+    public static ChatCompletionException modelAliasNotFound(String alias) {
+        return new ChatCompletionException(HttpStatus.NOT_FOUND,
+                "模型别名 '" + alias + "' 不存在", "not_found_error",
+                "alias", "404", null, false);
+    }
+
+    /**
      * Trace 不存在或不属于当前租户（404）。
      *
      * @param traceId 追踪 ID

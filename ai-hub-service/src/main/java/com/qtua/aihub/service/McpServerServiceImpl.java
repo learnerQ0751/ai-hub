@@ -3,6 +3,7 @@ package com.qtua.aihub.service;
 import com.qtua.aihub.api.McpServerService;
 import com.qtua.aihub.api.model.req.McpServerRegisterReqDTO;
 import com.qtua.aihub.api.model.res.McpServerResDTO;
+import com.qtua.aihub.common.audit.AuditRecorder;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.mcp.McpProbeTarget;
 import com.qtua.aihub.common.mcp.McpServerStatus;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
@@ -45,6 +47,7 @@ public class McpServerServiceImpl implements McpServerService {
     private final McpServerProbe mcpServerProbe;
     private final McpToolCatalog mcpToolCatalog;
     private final TenantScopeGuard tenantScopeGuard;
+    private final AuditRecorder auditRecorder;
 
     /**
      * 兼容构造器（单元测试）：使用无上下文的作用域守卫。
@@ -55,7 +58,8 @@ public class McpServerServiceImpl implements McpServerService {
      */
     public McpServerServiceImpl(McpServerManager mcpServerManager, McpServerProbe mcpServerProbe,
                                 McpToolCatalog mcpToolCatalog) {
-        this(mcpServerManager, mcpServerProbe, mcpToolCatalog, new TenantScopeGuard());
+        this(mcpServerManager, mcpServerProbe, mcpToolCatalog, new TenantScopeGuard(),
+                AuditRecorder.NOOP);
     }
 
     /**
@@ -66,13 +70,30 @@ public class McpServerServiceImpl implements McpServerService {
      * @param mcpToolCatalog   工具目录快照（注册/注销时失效）
      * @param tenantScopeGuard 租户作用域守卫
      */
-    @org.springframework.beans.factory.annotation.Autowired
     public McpServerServiceImpl(McpServerManager mcpServerManager, McpServerProbe mcpServerProbe,
                                 McpToolCatalog mcpToolCatalog, TenantScopeGuard tenantScopeGuard) {
+        this(mcpServerManager, mcpServerProbe, mcpToolCatalog, tenantScopeGuard,
+                AuditRecorder.NOOP);
+    }
+
+    /**
+     * 构造服务（含审计）。
+     *
+     * @param mcpServerManager MCP Server 数据门面
+     * @param mcpServerProbe   探活器
+     * @param mcpToolCatalog   工具目录快照
+     * @param tenantScopeGuard 租户守卫
+     * @param auditRecorder    审计端口
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public McpServerServiceImpl(McpServerManager mcpServerManager, McpServerProbe mcpServerProbe,
+                                McpToolCatalog mcpToolCatalog, TenantScopeGuard tenantScopeGuard,
+                                AuditRecorder auditRecorder) {
         this.mcpServerManager = mcpServerManager;
         this.mcpServerProbe = mcpServerProbe;
         this.mcpToolCatalog = mcpToolCatalog;
         this.tenantScopeGuard = tenantScopeGuard;
+        this.auditRecorder = auditRecorder;
     }
 
     /**
@@ -114,6 +135,8 @@ public class McpServerServiceImpl implements McpServerService {
             // 并发注册同名：DB 唯一约束兜底。
             throw ChatCompletionException.mcpServerConflict(name);
         }
+        auditRecorder.record(tenantId, "MCP_REGISTER", name, java.util.Map.of(),
+                java.util.Map.of("serverId", server.serverId(), "transport", transport.value()));
         LOG.info("mcp server registered: name={}, transport={}, serverId={}",
                 name, transport.value(), server.serverId());
         mcpToolCatalog.invalidate();
@@ -149,6 +172,10 @@ public class McpServerServiceImpl implements McpServerService {
         if (!mcpServerManager.delete(server.serverId())) {
             throw ChatCompletionException.mcpServerNotFound(serverId);
         }
+        auditRecorder.record(ObjectUtils.isEmpty(server.tenantId()) ? "default"
+                        : server.tenantId(), "MCP_REMOVE", server.name(),
+                java.util.Map.of("serverId", server.serverId(), "transport",
+                        server.transport().value()), java.util.Map.of());
         LOG.info("mcp server removed: name={}, serverId={}", server.name(), server.serverId());
         mcpToolCatalog.invalidate();
     }

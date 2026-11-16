@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-16 16:20
+**最后更新**：2026-11-16 16:31
 
 ## 需求进度
 
@@ -39,6 +39,8 @@
 | REQ-4.1 | 多租户贯穿与隔离 | 已完成（待主人验收） | extension | 待验收（2026-11-16，实现与自检完成）（10/10） | REQ-1.3、REQ-2.1、REQ-2.4、REQ-3.1~3.5 | 待回填 |
 | REQ-4.2 | 全链路 Trace | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-1.5、REQ-2.3、REQ-3.4、REQ-4.1 | 待回填 |
 | REQ-4.3 | 成本与用量统计 | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-1.5、REQ-4.1 | 待回填 |
+| REQ-4.4 | 管理端（模型/Key/Prompt/MCP/日志） | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-4.1、REQ-4.3、REQ-4.5（审计在 4.5 接入） | 待回填 |
+| REQ-4.5 | 审计日志 + 项目总验收 | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（12/14） | REQ-4.1~4.4 | 待回填 |
 
 ## 接口清单（来自 Controller）
 
@@ -51,6 +53,18 @@
 | GET | /key/info | KeyController#info | REQ-1.3, REQ-1.5 |
 | POST | /key/unblock | KeyController#unblock | REQ-1.3 |
 | GET | /models | ModelController#listModels | REQ-1.2 |
+| GET | /v1/admin/keys | AdminController#listKeys | — |
+| POST | /v1/admin/keys/{keyHash}/block | AdminController#block | — |
+| POST | /v1/admin/keys/{keyHash}/unblock | AdminController#unblock | — |
+| GET | /v1/admin/logs | AdminController#listLogs | — |
+| GET | /v1/admin/models | AdminController#listModels | — |
+| POST | /v1/admin/models | AdminController#createModel | — |
+| DELETE | /v1/admin/models/{alias} | AdminController#deleteModel | — |
+| GET | /v1/admin/models/{alias} | AdminController#getModel | — |
+| PUT | /v1/admin/models/{alias} | AdminController#updateModel | — |
+| POST | /v1/admin/models/{alias}/deployments | AdminController#upsertDeployment | — |
+| POST | /v1/admin/project-authorizations | AdminController#authorize | — |
+| GET | /v1/audit-logs | AuditLogController#query | REQ-4.5 |
 | POST | /v1/chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3, REQ-2.8 |
 | POST | /v1/embeddings | EmbeddingController#embed | REQ-3.7 |
 | GET | /v1/mcp/runtime/stats | McpServerController#runtimeStats | REQ-2.10 |
@@ -101,6 +115,7 @@
 
 | 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
 |---|---|---|---|---|---|
+| audit_logs | 审计：tenant_id / actor（master 或 Key 哈希）/ action / target / before_state（JSONB 脱敏）/ after_state / trace_id / created_at；只追加，PG 触发器拒绝 UPDATE/DELETE | 弱关联 trace_events（trace_id）与 api_keys/prompt_templates/mcp_servers（target） | active | REQ-3.5, REQ-4.5, REQ-4.5 | ✓ |
 | v_usage_daily | 用量/成本实时聚合视图：usage_date / tenant_id / project_id / model_alias / key_id / requests / prompt_tokens / completion_tokens / total_tokens / cost | 直接从 call_logs 聚合；与逐条日志同口径 | active | REQ-4.3 | — |
 | trace_events | 全链路分段事件：trace_id（=request_id）/ tenant_id / project_id / key_id / segment（gateway/model/rag/mcp/answer）/ name / status / latency_ms / payload（JSONB 摘要）/ created_at | 弱关联 call_logs（trace_id）；按 trace_id 聚合成一次请求轨迹 | active | REQ-4.2 | ✓ |
 
@@ -143,6 +158,7 @@
 | [api_keys(+tenant_id | REQ-4.1 |
 | [tenants | REQ-4.1 |
 | api_keys | REQ-1.3, REQ-1.5 |
+| audit_logs | REQ-4.5 |
 | call_logs | REQ-1.5 |
 | call_logs(+project_id | REQ-4.1 |
 | call_logs：使用 V5 已有 call_type/target_name 列 | REQ-2.3 |
@@ -150,6 +166,7 @@
 | DELETE /v1/rag/documents/{docId} | REQ-3.1 |
 | GET /key/info | REQ-1.3, REQ-1.5 |
 | GET /models | REQ-1.2 |
+| GET /v1/audit-logs | REQ-4.5 |
 | GET /v1/mcp/runtime/stats | REQ-2.10 |
 | GET /v1/mcp/servers | REQ-2.1 |
 | GET /v1/mcp/tools | REQ-2.2 |
@@ -211,7 +228,7 @@
 
 ## 测试
 
-- 451 个 @Test / 80 个测试类
+- 457 个 @Test / 82 个测试类
 
 ## 下一步
 
@@ -227,6 +244,8 @@
 - 验收 REQ-4.1 多租户贯穿与隔离 → 打开 `acceptance/REQ-4.1.md`
 - 验收 REQ-4.2 全链路 Trace → 打开 `acceptance/REQ-4.2.md`
 - 验收 REQ-4.3 成本与用量统计 → 打开 `acceptance/REQ-4.3.md`
+- 验收 REQ-4.4 管理端（模型/Key/Prompt/MCP/日志） → 打开 `acceptance/REQ-4.4.md`
+- 验收 REQ-4.5 审计日志 + 项目总验收 → 打开 `acceptance/REQ-4.5.md`
 
 <!-- STATUS:GENERATED:END -->
 

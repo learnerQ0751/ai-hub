@@ -7,6 +7,7 @@ import com.qtua.aihub.api.model.res.PromptListResDTO;
 import com.qtua.aihub.api.model.res.PromptResDTO;
 import com.qtua.aihub.api.model.res.PromptVersionListResDTO;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.audit.AuditRecorder;
 import com.qtua.aihub.common.prompt.PromptStatus;
 import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.integration.prompt.SimpleTemplateRenderer;
@@ -41,6 +42,7 @@ public class PromptServiceImpl implements PromptService {
     private final PromptManager promptManager;
     private final SimpleTemplateRenderer templateRenderer;
     private final TenantScopeGuard tenantScopeGuard;
+    private final AuditRecorder auditRecorder;
 
     /**
      * 兼容构造器（单元测试）：使用无上下文的作用域守卫。
@@ -50,7 +52,7 @@ public class PromptServiceImpl implements PromptService {
      */
     public PromptServiceImpl(PromptManager promptManager,
                              SimpleTemplateRenderer templateRenderer) {
-        this(promptManager, templateRenderer, new TenantScopeGuard());
+        this(promptManager, templateRenderer, new TenantScopeGuard(), AuditRecorder.NOOP);
     }
 
     /**
@@ -60,12 +62,26 @@ public class PromptServiceImpl implements PromptService {
      * @param templateRenderer 模板校验/渲染器
      * @param tenantScopeGuard 租户作用域守卫
      */
-    @org.springframework.beans.factory.annotation.Autowired
     public PromptServiceImpl(PromptManager promptManager, SimpleTemplateRenderer templateRenderer,
                              TenantScopeGuard tenantScopeGuard) {
+        this(promptManager, templateRenderer, tenantScopeGuard, AuditRecorder.NOOP);
+    }
+
+    /**
+     * 构造服务（含审计）。
+     *
+     * @param promptManager    Prompt 数据门面
+     * @param templateRenderer 模板校验/渲染器
+     * @param tenantScopeGuard 租户作用域守卫
+     * @param auditRecorder    审计端口
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public PromptServiceImpl(PromptManager promptManager, SimpleTemplateRenderer templateRenderer,
+                             TenantScopeGuard tenantScopeGuard, AuditRecorder auditRecorder) {
         this.promptManager = promptManager;
         this.templateRenderer = templateRenderer;
         this.tenantScopeGuard = tenantScopeGuard;
+        this.auditRecorder = auditRecorder;
     }
 
     /**
@@ -186,6 +202,8 @@ public class PromptServiceImpl implements PromptService {
                 .orElseThrow(() -> ChatCompletionException.promptVersionNotFound(name, version));
         promptManager.archivePublished(tenantId, name);
         promptManager.publishVersion(tenantId, name, version);
+        auditRecorder.record(tenantId, "PROMPT_PUBLISH", name, java.util.Map.of(),
+                java.util.Map.of("name", name, "version", version));
         LOG.info("prompt published: name={}, version={}", name, version);
         return toResDTO(new PromptTemplateBO(target.name(), target.version(), target.content(),
                 target.variables(), PromptStatus.PUBLISHED.name(), target.tenantId(),
