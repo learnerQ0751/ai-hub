@@ -1,0 +1,68 @@
+ai-hub-api/src/main/java/com/qtua/aihub/api/AdminService.java
+  h_b8fad2c42ba7f8 1-112
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/AliasUpsertReqDTO.java
+  h_b8fad2c42ba7f8 1-33
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/DeploymentUpsertReqDTO.java
+  h_b8fad2c42ba7f8 1-24
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/ProjectAuthorizationReqDTO.java
+  h_b8fad2c42ba7f8 1-18
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminDeploymentResDTO.java
+  h_b8fad2c42ba7f8 1-19
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminKeyPageResDTO.java
+  h_b8fad2c42ba7f8 1-24
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminKeyResDTO.java
+  h_b8fad2c42ba7f8 1-37
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminLogPageResDTO.java
+  h_b8fad2c42ba7f8 1-24
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminLogResDTO.java
+  h_b8fad2c42ba7f8 1-27
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminModelResDTO.java
+  h_b8fad2c42ba7f8 1-28
+ai-hub-common/src/main/java/com/qtua/aihub/common/audit/AuditRecorder.java
+  h_b8fad2c42ba7f8 1-28
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/ApiKeyMapper.java
+  h_b8fad2c42ba7f8 54-67
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/CallLogMapper.java
+  h_b8fad2c42ba7f8 50-73
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/ModelCatalogMapper.java
+  h_b8fad2c42ba7f8 34-41,57-63
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/ModelCatalogRow.java
+  h_b8fad2c42ba7f8 16-17,82-98
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/ApiKeyMapper.xml
+  h_b8fad2c42ba7f8 53-68
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/CallLogMapper.xml
+  h_b8fad2c42ba7f8 64-96
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/ModelCatalogMapper.xml
+  h_b8fad2c42ba7f8 37-38,44-45,53-64,80-86
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/ApiKeyManager.java
+  h_b8fad2c42ba7f8 90-104
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/CallLogManager.java
+  h_b8fad2c42ba7f8 6,66-107
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/catalog/ModelCatalogManager.java
+  h_b8fad2c42ba7f8 9,11-13,16,135-279
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ModelAliasAdminBO.java
+  h_b8fad2c42ba7f8 1-27
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ModelDeploymentAdminBO.java
+  h_b8fad2c42ba7f8 1-15
+ai-hub-service/src/main/java/com/qtua/aihub/service/AdminServiceImpl.java
+  h_b8fad2c42ba7f8 1-321
+ai-hub-start/src/main/java/com/qtua/aihub/start/controller/AdminController.java
+  h_b8fad2c42ba7f8 1-196
+ai-hub-tests/src/test/java/com/qtua/aihub/AdminIntegrationTest.java
+  h_b8fad2c42ba7f8 1-178
+ai-workflow/acceptance/REQ-4.4.md
+  h_b8fad2c42ba7f8 1-80
+ai-workflow/records/REQ-4.4.md
+  h_b8fad2c42ba7f8 1-109
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bad42299a6bd8fded34f94881ddef796f86c14d0",
+  "prompts": {},
+  "humans": {
+    "h_b8fad2c42ba7f8": {
+      "author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
