@@ -1,0 +1,39 @@
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/CallLogDO.java
+  s_99caaf43fe4205::t_ceb78648940837 36-37,201-217
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/RagVectorMapper.xml
+  s_0b21f4571628b4::t_b5eb6f68dc8bac 13,19,26-27,53-54
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/CallLogBO.java
+  s_99caaf43fe4205::t_b6cb0d55180c70 33,51-52,63,85-86
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/rag/PgVectorStore.java
+  s_0b21f4571628b4::t_5295cd3a042f36 77-78
+ai-hub-service/src/main/java/com/qtua/aihub/service/MemoryServiceImpl.java
+  s_99caaf43fe4205::t_252aba37b09d48 18-20,74,77,81,85-98,102,113-114,121-122,140-141,145,149,171-173,175,268-283
+ai-hub-service/src/main/java/com/qtua/aihub/service/RagSearchServiceImpl.java
+  s_0b21f4571628b4::t_33c7ea356421ae 12-13,54,57,63-75,78,92-93,105
+ai-workflow/STATUS.md
+  s_99caaf43fe4205::t_ace74c8376a0d3 6,39,83-94,99-100,106-107,115-117,131-132,135,152-153,180-182,188,196,209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e64a6d3380d8e3d386063066c853102cb0faa8d6",
+  "prompts": {},
+  "sessions": {
+    "s_0b21f4571628b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38ac2ffa-138d-4580-be67-bf463080b97c",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    },
+    "s_99caaf43fe4205": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "daffa154-6ea9-4269-bbdf-0573c10c0552",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
