@@ -1,0 +1,19 @@
+ai-workflow/STATUS.md
+  s_99caaf43fe4205::t_aaa2af997ea0a3 6,39-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fad298b82a7fb693a6777e6072b42a75f1085eb1",
+  "prompts": {},
+  "sessions": {
+    "s_99caaf43fe4205": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "daffa154-6ea9-4269-bbdf-0573c10c0552",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <qiuzhiyun@bestpay.com.cn>"
+    }
+  }
+}
