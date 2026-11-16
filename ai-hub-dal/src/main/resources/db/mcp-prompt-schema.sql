@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS mcp_servers (
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uk_mcp_servers_server_id UNIQUE (server_id),
-    CONSTRAINT uk_mcp_servers_name UNIQUE (name)
+    CONSTRAINT uk_mcp_servers_tenant_name UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS prompt_templates (
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS prompt_templates (
     tenant_id VARCHAR(64),
     created_by VARCHAR(64),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uk_prompt_templates_name_version UNIQUE (name, version)
+    CONSTRAINT uk_prompt_templates_tenant_name_version UNIQUE (tenant_id, name, version)
 );
 
 ALTER TABLE call_logs ADD COLUMN IF NOT EXISTS call_type VARCHAR(16) DEFAULT 'CHAT';

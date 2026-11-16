@@ -15,6 +15,7 @@ import com.qtua.aihub.common.pricing.ModelPrice;
 import com.qtua.aihub.common.pricing.PricingCatalog;
 import com.qtua.aihub.common.rag.EmbeddingModel;
 import com.qtua.aihub.common.rag.EmbeddingModelProvider;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.common.metering.EmbeddingTokenEstimator;
 import com.qtua.aihub.integration.protocol.OpenAiProtocolAdapter;
 import com.qtua.aihub.manager.CallLogManager;
@@ -418,12 +419,27 @@ public class GatewayGovernanceService {
         try {
             callLogManager.record(new CallLogBO(context.getRequestId(), context.getKeyHash(),
                     context.getModelAlias(), context.getDeploymentModel(), usage, cost,
-                    latencyMs(context), status, errorType, null, Instant.now(),
+                    latencyMs(context), status, errorType, tenantOf(context), Instant.now(),
                     context.getServedAlias(), context.getRetryCount(),
-                    context.isFallbackUsed(), context.getCallType(), context.getTargetName()));
+                    context.isFallbackUsed(), context.getCallType(), context.getTargetName(),
+                    ObjectUtils.isEmpty(context.getAuth()) ? null : context.getAuth().projectId()));
         } catch (RuntimeException ex) {
             // 日志失败不影响业务响应。
         }
+    }
+
+    /**
+     * 调用日志租户：虚拟 Key 用绑定租户；master/未绑定记默认租户。
+     *
+     * @param context 治理上下文
+     * @return 租户 ID
+     */
+    private String tenantOf(GatewayContext context) {
+        if (!ObjectUtils.isEmpty(context.getAuth())
+                && StringUtils.hasText(context.getAuth().tenantId())) {
+            return context.getAuth().tenantId();
+        }
+        return TenantScopeGuard.DEFAULT_TENANT;
     }
 
     /**

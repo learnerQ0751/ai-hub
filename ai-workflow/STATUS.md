@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-12 20:05
+**最后更新**：2026-11-16 13:21
 
 ## 需求进度
 
@@ -36,6 +36,7 @@
 | REQ-3.7 | Embedding 一等能力（阿里 text-embedding-v3） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（15/15） | REQ-3.1、REQ-3.2、REQ-3.3、REQ-3.4 | 647f998 |
 | REQ-3.8 | 计费与边界补强（RAG answer 计费 / chunk 推导 / 上传限制） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（11/11） | REQ-3.4、REQ-3.7 | 647f998 |
 | REQ-3.9 | 文档解析扩展（docx / pptx / xlsx / html） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（15/15） | REQ-3.1、REQ-3.8 | b2dca87 |
+| REQ-4.1 | 多租户贯穿与隔离 | 已完成（待主人验收） | extension | 待验收（2026-11-16，实现与自检完成）（10/10） | REQ-1.3、REQ-2.1、REQ-2.4、REQ-3.1~3.5 | 待回填 |
 
 ## 接口清单（来自 Controller）
 
@@ -79,19 +80,31 @@
 
 ## 数据表速查（语义来自 docs/DATA-MODEL.md，DDL 校验）
 
+### 租户与模型目录
+
+| 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
+|---|---|---|---|---|---|
+| tenants | 租户：tenant_id（主键）/ name / status / created_at | 1:N projects、api_keys.tenant_id | active | REQ-4.1 | ✓ |
+| projects | 项目：tenant_id + project_id（联合主键）/ name / status | N:1 tenants；被 api_keys/rag_documents/memories 引用（逻辑） | active | REQ-4.1 | ✓ |
+| project_authorizations | 项目级显式授权：tenant_id / source_project_id / target_project_id / resource_type（MEMORY/KNOWLEDGE/ALL），联合唯一 | 授权源项目访问目标项目；默认隔离 | active | REQ-4.1 | ✓ |
+| model_aliases | 别名：alias（唯一）/ tenant_id（空=全局）/ description / fallbacks（JSONB）/ status | 1:N model_alias_deployments、model_alias_keys | active | REQ-4.1 | ✓ |
+| model_deployments | 部署实例：deployment_key（唯一）/ api_base / api_key_cipher（AES-GCM 密文）/ upstream_model / status | N:M model_aliases | active | REQ-4.1 | ✓ |
+| model_alias_deployments | 别名↔部署：alias_id + deployment_id（联合主键）/ weight / priority | 多对多关系表 | active | REQ-4.1 | ✓ |
+| model_alias_keys | 别名↔虚拟 Key：alias_id + key_hash（联合主键） | 多对多关系表 | active | REQ-4.1 | ✓ |
+
 ### 网关与鉴权
 
 | 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
 |---|---|---|---|---|---|
-| api_keys | 虚拟 Key：SHA-256 哈希、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend | 1:N call_logs（key_id） | active | REQ-1.3, REQ-1.5, REQ-1.3 / REQ-1.4 | ✓ |
-| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias / call_type（CHAT/MCP/PROMPT/MEMORY/RAG/EMBEDDING）/ target_name | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5, REQ-2.3, REQ-1.5 / REQ-1.4 / REQ-1.6 / REQ-2.3 / REQ-3.5 / REQ-3.1 / REQ-3.7 | ✓ |
+| api_keys | 虚拟 Key：SHA-256 哈希、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend、tenant_id / project_id（绑定租户与项目，V10） | 1:N call_logs（key_id）；绑定 tenant/project | active | REQ-1.3, REQ-1.5, REQ-4.1, REQ-1.3 / REQ-1.4 / REQ-4.1 | ✓ |
+| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias / call_type（CHAT/MCP/PROMPT/MEMORY/RAG/EMBEDDING）/ target_name / tenant_id / project_id / trace_id（V10） | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5, REQ-2.3, REQ-4.1, REQ-1.5 / REQ-1.4 / REQ-1.6 / REQ-2.3 / REQ-3.5 / REQ-3.1 / REQ-3.7 | ✓ |
 
 ### MCP 与 Prompt
 
 | 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
 |---|---|---|---|---|---|
-| mcp_servers | MCP Server 注册：server_id（UUID）/ name（唯一、禁 "__"）/ transport / endpoint / command / args / status（ACTIVE/DOWN）/ last_health_at / metadata（description、lastError） | 独立配置类表；工具目录为运行时缓存（REQ-2.2） | active | REQ-2.1 | ✓ |
-| prompt_templates | Prompt 模板与版本：name / version / content / variables / status（DRAFT/PUBLISHED/ARCHIVED） | 同 name 多版本（name+version 唯一） | active | REQ-2.4 | ✓ |
+| mcp_servers | MCP Server 注册：server_id（UUID）/ name（租户内唯一、禁 "__"）/ transport / endpoint / command / args / status（ACTIVE/DOWN）/ last_health_at / metadata（description、lastError） | 独立配置类表；工具目录为运行时缓存（REQ-2.2） | active | REQ-2.1 | ✓ |
+| prompt_templates | Prompt 模板与版本：name / version / content / variables / status（DRAFT/PUBLISHED/ARCHIVED）/ tenant_id | 租户内同 name 多版本（tenant_id+name+version 唯一） | active | REQ-2.4, REQ-2.4 / REQ-4.1 | ✓ |
 
 ### RAG 与记忆
 
@@ -99,9 +112,9 @@
 |---|---|---|---|---|---|
 | memories | 记忆：memory_id（UUID）/ tenant_id / project_id / user_id / session_id / memory_type（SESSION/USER）/ content / metadata（JSONB）/ expires_at；TTL 查询时过滤 | 按 tenant + project + user（+ session）逻辑分组，无强外键；用户级记忆可跨项目共享（配置开启） | active | REQ-3.5 | ✓ |
 | memory_audit_logs | 物理删除审计：audit_id / 作用域 / operation（CLEAR）/ deleted_count / memory_ids（JSONB，最多 1000 条）/ operator_key / reason | 与 memories 通过 audit_id 独立；保存删除快照，不做外键 | active | REQ-3.5 | ✓ |
-| rag_documents | 文档元数据：doc_id / project_id / source / content_type / size_bytes / content_hash / raw_content（BYTEA 原始文件）/ chunk_count / index_status（PENDING/PROCESSING/READY/FAILED）/ embedding_model / embedding_dimension / embedding_duration_ms / embedding_cost（按 embedding 模型单价计算；本地/确定性为 0）/ error_message | 文档 1:N rag_chunks（doc_id 逻辑关联）；同项目 content_hash 唯一 | active | REQ-3.1, REQ-3.2, REQ-3.1 / REQ-3.2 / REQ-3.7 | ✓ |
-| rag_chunks | 切片：chunk_id（doc_id-序号）/ doc_id / project_id / chunk_index / content / char_count / source / index_status / embedding_model / embedding_dimension / error_message | N:1 rag_documents（doc_id 逻辑关联）；向量在 rag_vectors（REQ-3.2） | active | REQ-3.1, REQ-3.2, REQ-3.1 / REQ-3.2 | ✓ |
-| rag_vectors | 切片向量：chunk_id / doc_id / project_id / embedding_model / embedding_dimension / embedding vector(1024)；低维模型零填充；HNSW cosine 索引（V9，REQ-3.7） | 1:1 rag_chunks（chunk_id 唯一）；按 project_id + 模型版本隔离 | active | REQ-3.2, REQ-3.7, REQ-3.2 / REQ-3.7 | ✓ |
+| rag_documents | 文档元数据：doc_id / project_id / source / content_type / size_bytes / content_hash / raw_content（BYTEA 原始文件）/ tenant_id / chunk_count / index_status（PENDING/PROCESSING/READY/FAILED）/ embedding_model / embedding_dimension / embedding_duration_ms / embedding_cost（按 embedding 模型单价计算；本地/确定性为 0）/ error_message | 文档 1:N rag_chunks（doc_id 逻辑关联）；租户+项目内 content_hash 唯一 | active | REQ-3.1, REQ-3.2, REQ-3.1 / REQ-3.2 / REQ-3.7 / REQ-4.1 | ✓ |
+| rag_chunks | 切片：chunk_id（doc_id-序号）/ doc_id / tenant_id / project_id / chunk_index / content / char_count / source / index_status / embedding_model / embedding_dimension / error_message | N:1 rag_documents（doc_id 逻辑关联）；向量在 rag_vectors（REQ-3.2） | active | REQ-3.1, REQ-3.2, REQ-3.1 / REQ-3.2 | ✓ |
+| rag_vectors | 切片向量：chunk_id / doc_id / tenant_id / project_id / embedding_model / embedding_dimension / embedding vector(1024)；低维模型零填充；HNSW cosine 索引（V9，REQ-3.7） | 1:1 rag_chunks（chunk_id 唯一）；按 tenant_id + project_id + 模型版本隔离 | active | REQ-3.2, REQ-3.7, REQ-3.2 / REQ-3.7 / REQ-4.1 | ✓ |
 
 ## 配置（application.yml 顶层键）
 
@@ -115,8 +128,11 @@
 
 | 对象 | 涉及需求 |
 |---|---|
+| [api_keys(+tenant_id | REQ-4.1 |
+| [tenants | REQ-4.1 |
 | api_keys | REQ-1.3, REQ-1.5 |
 | call_logs | REQ-1.5 |
+| call_logs(+project_id | REQ-4.1 |
 | call_logs：使用 V5 已有 call_type/target_name 列 | REQ-2.3 |
 | DELETE /v1/mcp/servers/{serverId} | REQ-2.1 |
 | DELETE /v1/rag/documents/{docId} | REQ-3.1 |
@@ -133,6 +149,8 @@
 | mcp_servers | REQ-2.1 |
 | memories | REQ-3.5 |
 | memory_audit_logs | REQ-3.5 |
+| model_aliases | REQ-4.1 |
+| model_deployments | REQ-4.1 |
 | POST /chat/completions | REQ-1.1, REQ-1.3 |
 | POST /key/block | REQ-1.3 |
 | POST /key/generate | REQ-1.3 |
@@ -159,11 +177,15 @@
 | POST /v1/rag/documents | REQ-3.1 |
 | POST /v1/rag/documents/{docId}/reindex | REQ-3.2 |
 | POST /v1/rag/search | REQ-3.3 |
+| project_authorizations | REQ-4.1 |
+| project_id) | REQ-4.1 |
+| projects | REQ-4.1 |
 | prompt_templates：使用 V5 已建表 | REQ-2.4 |
 | rag_chunks | REQ-3.1, REQ-3.2 |
 | rag_documents | REQ-3.1, REQ-3.2 |
 | rag_vectors | REQ-3.2, REQ-3.7 |
 | server_name}]；流式 + mcp → 400 | REQ-2.8 |
+| trace_id) | REQ-4.1 |
 
 ## 模块依赖
 
@@ -171,7 +193,7 @@
 
 ## 测试
 
-- 442 个 @Test / 76 个测试类
+- 448 个 @Test / 77 个测试类
 
 ## 下一步
 
@@ -184,6 +206,7 @@
 - 验收 REQ-3.7 Embedding 一等能力（阿里 text-embedding-v3） → 打开 `acceptance/REQ-3.7.md`
 - 验收 REQ-3.8 计费与边界补强（RAG answer 计费 / chunk 推导 / 上传限制） → 打开 `acceptance/REQ-3.8.md`
 - 验收 REQ-3.9 文档解析扩展（docx / pptx / xlsx / html） → 打开 `acceptance/REQ-3.9.md`
+- 验收 REQ-4.1 多租户贯穿与隔离 → 打开 `acceptance/REQ-4.1.md`
 
 <!-- STATUS:GENERATED:END -->
 

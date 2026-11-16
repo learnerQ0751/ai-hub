@@ -30,6 +30,7 @@ import java.util.Objects;
  * @param fallbackUsed    是否发生别名级 fallback
  * @param callType        调用类型：CHAT/MCP/PROMPT/MEMORY（REQ-2.3、REQ-3.5）
  * @param targetName      调用目标：MCP 工具名 / Prompt 名（REQ-2.3）
+ * @param projectId       项目 ID（REQ-4.1）
  */
 public record CallLogBO(
         String requestId,
@@ -47,7 +48,8 @@ public record CallLogBO(
         int retryCount,
         boolean fallbackUsed,
         String callType,
-        String targetName) {
+        String targetName,
+        String projectId) {
 
     /**
      * 兼容构造器：聊天链路（callType=CHAT）。
@@ -58,7 +60,7 @@ public record CallLogBO(
                      int retryCount, boolean fallbackUsed) {
         this(requestId, keyId, modelAlias, deploymentModel, usage, cost, latencyMs, status,
                 errorType, tenantId, createdAt, servedAlias, retryCount, fallbackUsed,
-                CallTypes.CHAT, null);
+                CallTypes.CHAT, null, null);
     }
 
     /**
@@ -80,7 +82,8 @@ public record CallLogBO(
                      TokenUsage usage, BigDecimal cost, long latencyMs, int status,
                      String errorType, String tenantId, Instant createdAt) {
         this(requestId, keyId, modelAlias, deploymentModel, usage, cost, latencyMs, status,
-                errorType, tenantId, createdAt, modelAlias, 0, false, CallTypes.CHAT, null);
+                errorType, tenantId, createdAt, modelAlias, 0, false, CallTypes.CHAT, null,
+                null);
     }
 
     /**

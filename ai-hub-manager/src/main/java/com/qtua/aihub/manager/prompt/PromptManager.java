@@ -64,8 +64,8 @@ public class PromptManager {
      * @param name 模板名
      * @return 新版本号
      */
-    public int nextVersion(String name) {
-        Integer max = promptTemplateMapper.selectMaxVersion(name);
+    public int nextVersion(String tenantId, String name) {
+        Integer max = promptTemplateMapper.selectMaxVersion(tenantId, name);
         return ObjectUtils.isEmpty(max) ? 1 : max + 1;
     }
 
@@ -75,8 +75,8 @@ public class PromptManager {
      * @param name 模板名
      * @return 业务对象；不存在为空
      */
-    public Optional<PromptTemplateBO> findPublished(String name) {
-        return promptTemplateMapper.selectPublished(name).map(this::toBO);
+    public Optional<PromptTemplateBO> findPublished(String tenantId, String name) {
+        return promptTemplateMapper.selectPublished(tenantId, name).map(this::toBO);
     }
 
     /**
@@ -86,8 +86,8 @@ public class PromptManager {
      * @param version 版本
      * @return 业务对象；不存在为空
      */
-    public Optional<PromptTemplateBO> findByVersion(String name, int version) {
-        return promptTemplateMapper.selectByVersion(name, version).map(this::toBO);
+    public Optional<PromptTemplateBO> findByVersion(String tenantId, String name, int version) {
+        return promptTemplateMapper.selectByVersion(tenantId, name, version).map(this::toBO);
     }
 
     /**
@@ -96,8 +96,9 @@ public class PromptManager {
      * @param name 模板名
      * @return 版本列表
      */
-    public List<PromptTemplateBO> findVersions(String name) {
-        return promptTemplateMapper.selectVersions(name).stream().map(this::toBO).toList();
+    public List<PromptTemplateBO> findVersions(String tenantId, String name) {
+        return promptTemplateMapper.selectVersions(tenantId, name).stream().map(this::toBO)
+                .toList();
     }
 
     /**
@@ -105,8 +106,8 @@ public class PromptManager {
      *
      * @return 发布版本列表
      */
-    public List<PromptTemplateBO> findAllPublished() {
-        return promptTemplateMapper.selectAllPublished().stream().map(this::toBO).toList();
+    public List<PromptTemplateBO> findAllPublished(String tenantId) {
+        return promptTemplateMapper.selectAllPublished(tenantId).stream().map(this::toBO).toList();
     }
 
     /**
@@ -115,8 +116,8 @@ public class PromptManager {
      * @param name 模板名
      * @return 是否存在
      */
-    public boolean lockByName(String name) {
-        return !ObjectUtils.isEmpty(promptTemplateMapper.lockByName(name));
+    public boolean lockByName(String tenantId, String name) {
+        return !ObjectUtils.isEmpty(promptTemplateMapper.lockByName(tenantId, name));
     }
 
     /**
@@ -125,8 +126,8 @@ public class PromptManager {
      * @param name 模板名
      * @return 受影响行数
      */
-    public int archivePublished(String name) {
-        return promptTemplateMapper.archivePublished(name);
+    public int archivePublished(String tenantId, String name) {
+        return promptTemplateMapper.archivePublished(tenantId, name);
     }
 
     /**
@@ -136,8 +137,8 @@ public class PromptManager {
      * @param version 版本
      * @return 是否成功
      */
-    public boolean publishVersion(String name, int version) {
-        return promptTemplateMapper.publishVersion(name, version) > 0;
+    public boolean publishVersion(String tenantId, String name, int version) {
+        return promptTemplateMapper.publishVersion(tenantId, name, version) > 0;
     }
 
     private PromptTemplateBO toBO(PromptTemplateDO dataObject) {

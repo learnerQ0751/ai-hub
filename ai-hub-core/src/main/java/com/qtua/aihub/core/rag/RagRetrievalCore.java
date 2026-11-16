@@ -73,8 +73,9 @@ public class RagRetrievalCore {
         float[] queryVector = validateQueryVector(embedded.vectors());
         int candidateLimit = Math.max(request.topK(), request.candidateLimit());
         List<VectorMatch> matches = vectorStore.search(new VectorSearchQuery(request.projectId(),
-                embeddingModel.modelId(), queryVector, candidateLimit, request.minScore()));
-        Map<String, RagChunkBO> chunks = loadChunks(matches);
+                embeddingModel.modelId(), queryVector, candidateLimit, request.minScore(),
+                request.tenantId()));
+        Map<String, RagChunkBO> chunks = loadChunks(request.tenantId(), matches);
         List<RagRetrievedChunk> candidates = filter(matches, chunks, request);
         boolean reranked = request.rerank() && !reranker.terms(request.query()).isEmpty();
         List<RagRetrievedChunk> ordered = reranked
@@ -102,12 +103,13 @@ public class RagRetrievalCore {
         return vector;
     }
 
-    private Map<String, RagChunkBO> loadChunks(List<VectorMatch> matches) {
+    private Map<String, RagChunkBO> loadChunks(String tenantId, List<VectorMatch> matches) {
         List<String> chunkIds = matches.stream().map(VectorMatch::chunkId).distinct().toList();
         Map<String, RagChunkBO> chunks = new HashMap<>();
         for (int start = 0; start < chunkIds.size(); start += CHUNK_BATCH_SIZE) {
             int end = Math.min(start + CHUNK_BATCH_SIZE, chunkIds.size());
-            for (RagChunkBO chunk : chunkManager.listByChunkIds(chunkIds.subList(start, end))) {
+            for (RagChunkBO chunk : chunkManager.listByChunkIdsInTenant(tenantId,
+                    chunkIds.subList(start, end))) {
                 chunks.put(chunk.chunkId(), chunk);
             }
         }
@@ -125,7 +127,8 @@ public class RagRetrievalCore {
                 continue;
             }
             // 双保险：即使向量表误写，也不返回其他项目的切片。
-            if (!Objects.equals(chunk.projectId(), request.projectId())) {
+            if (!Objects.equals(chunk.projectId(), request.projectId())
+                    || !Objects.equals(chunk.tenantId(), request.tenantId())) {
                 continue;
             }
             if (!request.filter().matches(chunk.docId(), chunk.source())) {

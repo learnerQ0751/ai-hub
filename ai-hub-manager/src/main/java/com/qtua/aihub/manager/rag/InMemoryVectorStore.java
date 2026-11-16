@@ -68,6 +68,7 @@ public class InMemoryVectorStore implements VectorStore {
         float[] queryVector = query.vector();
         int topK = Math.max(1, query.topK());
         return records.values().stream()
+                .filter(record -> Objects.equals(record.tenantId(), query.tenantId()))
                 .filter(record -> Objects.equals(record.projectId(), query.projectId()))
                 .filter(record -> Objects.equals(record.modelId(), query.modelId()))
                 .filter(record -> record.dimension() == queryVector.length)

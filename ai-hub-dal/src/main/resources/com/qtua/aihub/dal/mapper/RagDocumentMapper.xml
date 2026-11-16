@@ -21,18 +21,19 @@
         <result column="error_message" property="errorMessage" jdbcType="VARCHAR"/>
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
         <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="columns">
         id, doc_id, project_id, source, content_type, size_bytes, content_hash,
         raw_content, chunk_count, index_status, embedding_model, embedding_dimension,
-        embedding_duration_ms, embedding_cost, error_message, created_at, updated_at
+        embedding_duration_ms, embedding_cost, error_message, created_at, updated_at, tenant_id
     </sql>
 
     <sql id="listColumns">
         id, doc_id, project_id, source, content_type, size_bytes, content_hash,
         chunk_count, index_status, embedding_model, embedding_dimension,
-        embedding_duration_ms, embedding_cost, error_message, created_at, updated_at
+        embedding_duration_ms, embedding_cost, error_message, created_at, updated_at, tenant_id
     </sql>
 
     <insert id="insert" parameterType="com.qtua.aihub.dal.model.RagDocumentDO"
@@ -40,7 +41,8 @@
         INSERT INTO rag_documents
             (doc_id, project_id, source, content_type, size_bytes, content_hash,
              raw_content, chunk_count, index_status, embedding_model, embedding_dimension,
-             embedding_duration_ms, embedding_cost, error_message, created_at, updated_at)
+             embedding_duration_ms, embedding_cost, error_message, created_at, updated_at,
+             tenant_id)
         VALUES
             (#{docId,jdbcType=VARCHAR}, #{projectId,jdbcType=VARCHAR},
              #{source,jdbcType=VARCHAR}, #{contentType,jdbcType=VARCHAR},
@@ -49,7 +51,8 @@
              #{indexStatus,jdbcType=VARCHAR}, #{embeddingModel,jdbcType=VARCHAR},
              #{embeddingDimension,jdbcType=INTEGER}, #{embeddingDurationMs,jdbcType=BIGINT},
              #{embeddingCost,jdbcType=DECIMAL}, #{errorMessage,jdbcType=VARCHAR},
-             #{createdAt,jdbcType=TIMESTAMP}, #{updatedAt,jdbcType=TIMESTAMP})
+             #{createdAt,jdbcType=TIMESTAMP}, #{updatedAt,jdbcType=TIMESTAMP},
+             COALESCE(#{tenantId,jdbcType=VARCHAR}, 'default'))
     </insert>
 
     <select id="selectByDocId" resultMap="RagDocumentResultMap">
@@ -63,6 +66,30 @@
         FROM rag_documents
         WHERE project_id = #{projectId,jdbcType=VARCHAR}
           AND content_hash = #{contentHash,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectByDocIdInTenant" resultMap="RagDocumentResultMap">
+        SELECT <include refid="columns"/>
+        FROM rag_documents
+        WHERE doc_id = #{docId,jdbcType=VARCHAR}
+          AND tenant_id = #{tenantId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectByProjectAndHashInTenant" resultMap="RagDocumentResultMap">
+        SELECT <include refid="columns"/>
+        FROM rag_documents
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND project_id = #{projectId,jdbcType=VARCHAR}
+          AND content_hash = #{contentHash,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectByProjectInTenant" resultMap="RagDocumentResultMap">
+        SELECT <include refid="listColumns"/>
+        FROM rag_documents
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND project_id = #{projectId,jdbcType=VARCHAR}
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{limit,jdbcType=INTEGER}
     </select>
 
     <select id="selectByProject" resultMap="RagDocumentResultMap">

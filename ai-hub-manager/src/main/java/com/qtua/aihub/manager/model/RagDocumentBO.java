@@ -23,12 +23,26 @@ import java.util.Objects;
  * @param errorMessage        错误信息
  * @param createdAt           创建时间
  * @param updatedAt           更新时间
+ * @param tenantId            租户 ID（REQ-4.1）
  */
 public record RagDocumentBO(String docId, String projectId, String source, String contentType,
                             long sizeBytes, String contentHash, byte[] rawContent, int chunkCount,
                             String indexStatus, String embeddingModel, Integer embeddingDimension,
                             Long embeddingDurationMs, BigDecimal embeddingCost, String errorMessage,
-                            Instant createdAt, Instant updatedAt) {
+                            Instant createdAt, Instant updatedAt, String tenantId) {
+
+    /**
+     * 兼容构造器：未指定租户（旧调用/测试）。
+     */
+    public RagDocumentBO(String docId, String projectId, String source, String contentType,
+                         long sizeBytes, String contentHash, byte[] rawContent, int chunkCount,
+                         String indexStatus, String embeddingModel, Integer embeddingDimension,
+                         Long embeddingDurationMs, BigDecimal embeddingCost, String errorMessage,
+                         Instant createdAt, Instant updatedAt) {
+        this(docId, projectId, source, contentType, sizeBytes, contentHash, rawContent,
+                chunkCount, indexStatus, embeddingModel, embeddingDimension, embeddingDurationMs,
+                embeddingCost, errorMessage, createdAt, updatedAt, "default");
+    }
 
     /**
      * 返回原始文件副本。

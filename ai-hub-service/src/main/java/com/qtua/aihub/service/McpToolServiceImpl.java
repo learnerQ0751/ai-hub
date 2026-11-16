@@ -5,6 +5,8 @@ import com.qtua.aihub.api.model.res.McpToolListResDTO;
 import com.qtua.aihub.api.model.res.McpToolResDTO;
 import com.qtua.aihub.common.mcp.McpToolDescriptor;
 import com.qtua.aihub.common.mcp.ToolAggregationResult;
+import com.qtua.aihub.common.tenant.TenantIdentity;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.core.mcp.McpToolAggregator;
 import com.qtua.aihub.manager.mcp.McpServerManager;
 import com.qtua.aihub.manager.mcp.McpToolCatalog;
@@ -12,6 +14,7 @@ import com.qtua.aihub.manager.model.McpServerBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
@@ -37,19 +40,37 @@ public class McpToolServiceImpl implements McpToolService {
     private final McpToolCatalog mcpToolCatalog;
     private final McpToolAggregator mcpToolAggregator;
     private final McpServerManager mcpServerManager;
+    private final TenantScopeGuard tenantScopeGuard;
+
+    /**
+     * 兼容构造器（单元测试）：使用无上下文的作用域守卫。
+     *
+     * @param mcpToolCatalog    工具目录快照缓存
+     * @param mcpToolAggregator 工具聚合器
+     * @param mcpServerManager  MCP Server 数据门面
+     */
+    public McpToolServiceImpl(McpToolCatalog mcpToolCatalog, McpToolAggregator mcpToolAggregator,
+                              McpServerManager mcpServerManager) {
+        this(mcpToolCatalog, mcpToolAggregator, mcpServerManager, new TenantScopeGuard());
+    }
 
     /**
      * 构造服务。
      *
-     * @param mcpToolCatalog   工具目录快照缓存
+     * @param mcpToolCatalog    工具目录快照缓存
      * @param mcpToolAggregator 工具聚合器
-     * @param mcpServerManager MCP Server 数据门面
+     * @param mcpServerManager  MCP Server 数据门面
+     * @param tenantScopeGuard  租户作用域守卫
      */
-    public McpToolServiceImpl(McpToolCatalog mcpToolCatalog, McpToolAggregator mcpToolAggregator,
-                              McpServerManager mcpServerManager) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public McpToolServiceImpl(McpToolCatalog mcpToolCatalog,
+                              McpToolAggregator mcpToolAggregator,
+                              McpServerManager mcpServerManager,
+                              TenantScopeGuard tenantScopeGuard) {
         this.mcpToolCatalog = mcpToolCatalog;
         this.mcpToolAggregator = mcpToolAggregator;
         this.mcpServerManager = mcpServerManager;
+        this.tenantScopeGuard = tenantScopeGuard;
     }
 
     /**
@@ -62,9 +83,12 @@ public class McpToolServiceImpl implements McpToolService {
     @Override
     public McpToolListResDTO list(String serverIdOrName, String tenantId) {
         McpToolCatalog.Snapshot snapshot = ensureSnapshot();
+        TenantIdentity identity = tenantScopeGuard.currentIdentity();
+        String effectiveTenant = !ObjectUtils.isEmpty(identity) && identity.master()
+                ? tenantId : tenantScopeGuard.resolveTenant(tenantId);
         List<McpToolResDTO> tools = snapshot.tools().stream()
                 .filter(tool -> matchesServer(tool, serverIdOrName))
-                .filter(tool -> matchesTenant(tool, tenantId))
+                .filter(tool -> matchesTenant(tool, effectiveTenant))
                 .map(this::toResDTO)
                 .toList();
         return new McpToolListResDTO(tools, snapshot.degradedServers(),

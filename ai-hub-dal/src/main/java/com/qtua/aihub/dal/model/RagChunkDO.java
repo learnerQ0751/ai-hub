@@ -13,6 +13,8 @@ public class RagChunkDO {
     private String chunkId;
     private String docId;
     private String projectId;
+    /** 租户 ID（REQ-4.1）。 */
+    private String tenantId;
     private int chunkIndex;
     private String content;
     private int charCount;
@@ -125,5 +127,13 @@ public class RagChunkDO {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 }

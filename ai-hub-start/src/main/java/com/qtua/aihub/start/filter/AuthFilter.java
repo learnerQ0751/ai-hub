@@ -6,6 +6,9 @@ import com.qtua.aihub.api.model.auth.KeyAuthDTO;
 import com.qtua.aihub.api.model.res.ErrorResponse;
 import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.tenant.ProjectAuthorizationPort;
+import com.qtua.aihub.common.tenant.TenantContextHolder;
+import com.qtua.aihub.common.tenant.TenantIdentity;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -48,22 +52,29 @@ public class AuthFilter extends OncePerRequestFilter {
             "/key/", "/v1/mcp/servers", "/v1/mcp/runtime", "/v1/prompts"};
     /** Prompt 数据面子路径后缀：render/chat 允许任意 Key（REQ-2.5）。 */
     private static final String[] PROMPT_DATA_SUFFIXES = {"/render", "/chat"};
+    /** 管理面前缀：虚拟 Key 访问返回 403（REQ-4.4）。 */
+    private static final String[] ADMIN_PREFIXES = {"/v1/admin", "/v1/audit-logs"};
 
     private final GatewayProperties properties;
     private final KeyService keyService;
     private final ObjectMapper objectMapper;
+    private final ObjectProvider<ProjectAuthorizationPort> authorizationPortProvider;
 
     /**
      * 构造过滤器。
      *
-     * @param properties   网关配置
-     * @param keyService   虚拟 Key 鉴权服务
-     * @param objectMapper JSON 序列化器（用于写错误体）
+     * @param properties                网关配置
+     * @param keyService                虚拟 Key 鉴权服务
+     * @param objectMapper              JSON 序列化器（用于写错误体）
+     * @param authorizationPortProvider 项目授权端口（切片测试中可为空）
      */
-    public AuthFilter(GatewayProperties properties, KeyService keyService, ObjectMapper objectMapper) {
+    public AuthFilter(GatewayProperties properties, KeyService keyService,
+                      ObjectMapper objectMapper,
+                      ObjectProvider<ProjectAuthorizationPort> authorizationPortProvider) {
         this.properties = properties;
         this.keyService = keyService;
         this.objectMapper = objectMapper;
+        this.authorizationPortProvider = authorizationPortProvider;
     }
 
     /**
@@ -77,23 +88,71 @@ public class AuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
-            KeyAuthDTO auth = authenticate(request);
+            KeyAuthDTO auth = enrich(authenticate(request));
             // 管理面（/key/*）只允许 master key，虚拟 Key 不能自行生成或封禁 Key。
             if (isMasterOnly(request) && !auth.masterKey()) {
                 throw ChatCompletionException.masterKeyRequired();
             }
+            if (isAdminOnly(request) && !auth.masterKey()) {
+                throw ChatCompletionException.adminRequired();
+            }
             request.setAttribute(KEY_AUTH_ATTRIBUTE, auth);
+            TenantContextHolder.set(auth.masterKey()
+                    ? TenantIdentity.masterIdentity()
+                    : TenantIdentity.virtualKey(auth.keyHash(), auth.tenantId(),
+                            auth.projectId(), auth.authorizedProjects()));
+            filterChain.doFilter(request, response);
         } catch (ChatCompletionException ex) {
             LOG.warn("authentication rejected: type={}, message={}", ex.getType(), ex.getMessage());
             writeError(response, ex);
-            return;
         } catch (RuntimeException ex) {
             // 查库等基础设施异常不能静默吞没，也不能把内部细节返回给客户端。
             LOG.error("authentication failed", ex);
             writeError(response, ChatCompletionException.internalError("鉴权失败", ex));
-            return;
+        } finally {
+            // 线程池复用：请求结束必须清理租户上下文，避免串租户。
+            TenantContextHolder.clear();
         }
-        filterChain.doFilter(request, response);
+    }
+
+    /**
+     * 为虚拟 Key 补充项目级授权列表（跨项目记忆/知识库共享）。
+     *
+     * @param auth 认证上下文
+     * @return 补充授权项目后的上下文
+     */
+    private KeyAuthDTO enrich(KeyAuthDTO auth) {
+        if (auth.masterKey() || !StringUtils.hasText(auth.tenantId())
+                || !StringUtils.hasText(auth.projectId())) {
+            return auth;
+        }
+        ProjectAuthorizationPort port = authorizationPortProvider.getIfAvailable();
+        return KeyAuthDTO.virtualKey(auth.keyHash(), auth.models(), auth.rpmLimit(),
+                auth.tpmLimit(), auth.maxBudget(), auth.budgetDuration(), auth.tenantId(),
+                auth.projectId(), java.util.Objects.isNull(port) ? java.util.List.of()
+                        : port.findAuthorizedProjects(auth.tenantId(), auth.projectId()));
+    }
+
+    /**
+     * 是否为管理面（虚拟 Key 返回 403）。
+     *
+     * @param request HTTP 请求
+     * @return true 表示管理面
+     */
+    private boolean isAdminOnly(HttpServletRequest request) {
+        String path = relativePath(request);
+        for (String prefix : ADMIN_PREFIXES) {
+            if (path.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String relativePath(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        return uri.startsWith(contextPath) ? uri.substring(contextPath.length()) : uri;
     }
 
     /**

@@ -15,10 +15,19 @@ import java.util.Objects;
  * @param dimension 向量维度
  * @param vector    向量
  * @param createdAt 创建时间
+ * @param tenantId  租户 ID（REQ-4.1）
  */
 public record VectorRecord(String chunkId, String documentId, String projectId,
                            String modelId, int dimension, float[] vector,
-                           Instant createdAt) {
+                           Instant createdAt, String tenantId) {
+
+    /**
+     * 兼容构造器：未指定租户（旧调用/测试）。
+     */
+    public VectorRecord(String chunkId, String documentId, String projectId, String modelId,
+                        int dimension, float[] vector, Instant createdAt) {
+        this(chunkId, documentId, projectId, modelId, dimension, vector, createdAt, "default");
+    }
 
     /**
      * 校验并复制向量，避免外部修改内部状态。

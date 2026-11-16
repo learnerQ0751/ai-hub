@@ -16,13 +16,15 @@
         <result column="blocked" property="blocked" jdbcType="BOOLEAN"/>
         <result column="metadata" property="metadata" jdbcType="VARCHAR"/>
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="project_id" property="projectId" jdbcType="VARCHAR"/>
     </resultMap>
 
     <insert id="insert" parameterType="com.qtua.aihub.dal.model.ApiKeyDO"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO api_keys
             (key_hash, models, spend, max_budget, budget_duration, rpm_limit, tpm_limit,
-             expires_at, blocked, metadata, created_at)
+             expires_at, blocked, metadata, created_at, tenant_id, project_id)
         VALUES
             (#{keyHash,jdbcType=VARCHAR}, CAST(#{models,jdbcType=VARCHAR} AS JSONB),
              #{spend,jdbcType=NUMERIC}, #{maxBudget,jdbcType=NUMERIC},
@@ -30,13 +32,14 @@
              #{rpmLimit,jdbcType=INTEGER}, #{tpmLimit,jdbcType=INTEGER},
              #{expiresAt,jdbcType=TIMESTAMP}, #{blocked,jdbcType=BOOLEAN},
              CAST(#{metadata,jdbcType=VARCHAR} AS JSONB),
-             #{createdAt,jdbcType=TIMESTAMP})
+             #{createdAt,jdbcType=TIMESTAMP},
+             #{tenantId,jdbcType=VARCHAR}, #{projectId,jdbcType=VARCHAR})
     </insert>
 
     <select id="selectByKeyHash" resultMap="ApiKeyResultMap">
         SELECT id, key_hash, CAST(models AS VARCHAR) AS models, spend, max_budget,
                budget_duration, rpm_limit, tpm_limit, expires_at, blocked,
-               CAST(metadata AS VARCHAR) AS metadata, created_at
+               CAST(metadata AS VARCHAR) AS metadata, created_at, tenant_id, project_id
         FROM api_keys
         WHERE key_hash = #{keyHash,jdbcType=VARCHAR}
     </select>

@@ -61,6 +61,8 @@ public class ApiKeyManager {
         dataObject.setBlocked(apiKey.isBlocked());
         dataObject.setMetadata(writeJson(apiKey.getMetadata()));
         dataObject.setCreatedAt(apiKey.getCreatedAt());
+        dataObject.setTenantId(apiKey.getTenantId());
+        dataObject.setProjectId(apiKey.getProjectId());
         apiKeyMapper.insert(dataObject);
     }
 
@@ -97,7 +99,8 @@ public class ApiKeyManager {
                 dataObject.getExpiresAt(),
                 dataObject.isBlocked(),
                 readMetadata(dataObject.getMetadata()),
-                dataObject.getCreatedAt());
+                dataObject.getCreatedAt(),
+                dataObject.getTenantId(), dataObject.getProjectId());
     }
 
     private List<String> readModels(String json) {

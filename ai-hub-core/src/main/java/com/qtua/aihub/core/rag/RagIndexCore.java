@@ -82,7 +82,7 @@ public class RagIndexCore {
         chunkManager.updateStatusByDocId(docId, RagIndexStatus.PROCESSING.name(), null);
         long startedAt = System.currentTimeMillis();
         try {
-            long inputTokens = embedChunks(docId, document.projectId());
+            long inputTokens = embedChunks(docId, document.projectId(), document.tenantId());
             BigDecimal cost = embeddingCost(inputTokens);
             long durationMs = Math.max(0L, System.currentTimeMillis() - startedAt);
             finishReady(docId, durationMs, cost);
@@ -121,7 +121,7 @@ public class RagIndexCore {
      * @param projectId 项目 ID
      * @return 输入 token 总数
      */
-    private long embedChunks(String docId, String projectId) {
+    private long embedChunks(String docId, String projectId, String tenantId) {
         int pageSize = resolvePageSize();
         long inputTokens = 0L;
         int cursor = -1;
@@ -131,7 +131,7 @@ public class RagIndexCore {
                 break;
             }
             cursor = page.get(page.size() - 1).chunkIndex();
-            inputTokens += embedPage(docId, projectId, page);
+            inputTokens += embedPage(docId, projectId, tenantId, page);
             if (page.size() < pageSize) {
                 break;
             }
@@ -144,7 +144,8 @@ public class RagIndexCore {
         return configured > 0 ? configured : Math.max(1, properties.getEmbedding().getBatchSize());
     }
 
-    private long embedPage(String docId, String projectId, List<RagChunkBO> page) {
+    private long embedPage(String docId, String projectId, String tenantId,
+                           List<RagChunkBO> page) {
         int batchSize = Math.max(1, properties.getEmbedding().getBatchSize());
         long inputTokens = 0L;
         for (int start = 0; start < page.size(); start += batchSize) {
@@ -159,7 +160,7 @@ public class RagIndexCore {
                 RagChunkBO chunk = batch.get(index);
                 records.add(new VectorRecord(chunk.chunkId(), docId, projectId,
                         embeddingModel.modelId(), embeddingModel.dimension(), vectors.get(index),
-                        Instant.now()));
+                        Instant.now(), tenantId));
             }
             vectorStore.upsertAll(records);
         }

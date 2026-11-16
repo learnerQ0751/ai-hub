@@ -9,6 +9,8 @@ import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.mcp.McpProbeTarget;
 import com.qtua.aihub.common.mcp.McpServerStatus;
 import com.qtua.aihub.common.mcp.McpToolDescriptor;
+import com.qtua.aihub.common.tenant.TenantIdentity;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.integration.mcp.McpToolClient;
 import com.qtua.aihub.integration.mcp.McpToolTimeoutException;
 import com.qtua.aihub.manager.mcp.McpServerManager;
@@ -16,6 +18,7 @@ import com.qtua.aihub.manager.model.McpServerBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.nio.charset.StandardCharsets;
@@ -40,6 +43,7 @@ public class McpCallServiceImpl implements McpCallService {
     private final McpServerManager mcpServerManager;
     private final McpToolClient mcpToolClient;
     private final ObjectMapper objectMapper;
+    private final TenantScopeGuard tenantScopeGuard;
 
     /**
      * 构造服务。
@@ -51,10 +55,28 @@ public class McpCallServiceImpl implements McpCallService {
      */
     public McpCallServiceImpl(McpToolService mcpToolService, McpServerManager mcpServerManager,
                               McpToolClient mcpToolClient, ObjectMapper objectMapper) {
+        this(mcpToolService, mcpServerManager, mcpToolClient, objectMapper,
+                new TenantScopeGuard());
+    }
+
+    /**
+     * 构造服务（租户隔离）。
+     *
+     * @param mcpToolService   工具目录服务
+     * @param mcpServerManager Server 数据门面
+     * @param mcpToolClient    工具调用客户端
+     * @param objectMapper     JSON 解析器
+     * @param tenantScopeGuard 租户作用域守卫
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public McpCallServiceImpl(McpToolService mcpToolService, McpServerManager mcpServerManager,
+                              McpToolClient mcpToolClient, ObjectMapper objectMapper,
+                              TenantScopeGuard tenantScopeGuard) {
         this.mcpToolService = mcpToolService;
         this.mcpServerManager = mcpServerManager;
         this.mcpToolClient = mcpToolClient;
         this.objectMapper = objectMapper;
+        this.tenantScopeGuard = tenantScopeGuard;
     }
 
     /**
@@ -71,6 +93,7 @@ public class McpCallServiceImpl implements McpCallService {
                 .orElseThrow(() -> ChatCompletionException.mcpToolNotFound(toolName));
         McpServerBO server = mcpServerManager.findByServerId(tool.serverId())
                 .orElseThrow(() -> ChatCompletionException.mcpToolNotFound(toolName));
+        assertServerTenant(server);
         if (server.status() != McpServerStatus.ACTIVE) {
             throw ChatCompletionException.upstreamError(
                     "MCP Server '" + server.name() + "' 当前不可用", null);
@@ -79,6 +102,24 @@ public class McpCallServiceImpl implements McpCallService {
                 server.endpoint(), server.command(), server.args());
         String result = invokeWithRetry(tool, target, argumentsJson);
         return truncateIfNeeded(toolName, result);
+    }
+
+    /**
+     * 校验工具所属 Server 与调用方租户一致（master 可调用全部）。
+     *
+     * @param server 工具所属 Server
+     */
+    private void assertServerTenant(McpServerBO server) {
+        TenantIdentity identity = tenantScopeGuard.currentIdentity();
+        if (!ObjectUtils.isEmpty(identity) && identity.master()) {
+            return;
+        }
+        String tenantId = tenantScopeGuard.resolveTenant(null);
+        if (!ObjectUtils.isEmpty(server.tenantId()) && !tenantId.equals(server.tenantId())) {
+            LOG.warn("mcp cross-tenant call denied: keyHash={}, server={}, tenant={}",
+                    ObjectUtils.isEmpty(identity) ? null : identity.keyHash(), server.name(), server.tenantId());
+            throw ChatCompletionException.mcpToolNotFound(null);
+        }
     }
 
     /**

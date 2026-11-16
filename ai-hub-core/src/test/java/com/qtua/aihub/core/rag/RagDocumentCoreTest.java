@@ -72,7 +72,7 @@ class RagDocumentCoreTest {
     @Test
     void ingest_saves_document_and_chunks_with_metadata() {
         byte[] content = bytes("段落一\n\n段落二");
-        when(documentManager.findByProjectAndHash(eq("p1"), anyString())).thenReturn(Optional.empty());
+        when(documentManager.findByProjectAndHash(eq("default"), eq("p1"), anyString())).thenReturn(Optional.empty());
         when(textExtractor.extract("a.md", content)).thenReturn("段落一\n\n段落二");
 
         RagIngestResult result = core.ingest("p1", "a.md", "text/markdown", content, false);
@@ -102,7 +102,7 @@ class RagDocumentCoreTest {
     @Test
     void parse_failure_persists_failed_document_and_raw_content() {
         byte[] content = bytes("broken");
-        when(documentManager.findByProjectAndHash(eq("p1"), anyString())).thenReturn(Optional.empty());
+        when(documentManager.findByProjectAndHash(eq("default"), eq("p1"), anyString())).thenReturn(Optional.empty());
         when(textExtractor.extract("broken.pdf", content))
                 .thenThrow(new DocumentParseException("PDF 文件解析失败"));
 
@@ -122,7 +122,7 @@ class RagDocumentCoreTest {
     @Test
     void duplicate_returns_existing_without_reparsing() {
         RagDocumentBO existing = document("d-existing", "READY");
-        when(documentManager.findByProjectAndHash(eq("p1"), anyString()))
+        when(documentManager.findByProjectAndHash(eq("default"), eq("p1"), anyString()))
                 .thenReturn(Optional.of(existing));
 
         RagIngestResult result = core.ingest("p1", "a.md", "text/markdown", bytes("same"),
@@ -138,7 +138,7 @@ class RagDocumentCoreTest {
     void override_deletes_existing_before_reingest() {
         RagDocumentBO existing = document("d-existing", "READY");
         byte[] content = bytes("new content");
-        when(documentManager.findByProjectAndHash(eq("p1"), anyString()))
+        when(documentManager.findByProjectAndHash(eq("default"), eq("p1"), anyString()))
                 .thenReturn(Optional.of(existing));
         when(textExtractor.extract("a.md", content)).thenReturn("new content");
 
@@ -154,7 +154,7 @@ class RagDocumentCoreTest {
     void failed_document_is_reingested_without_override() {
         RagDocumentBO existing = document("d-failed", "FAILED");
         byte[] content = bytes("retry content");
-        when(documentManager.findByProjectAndHash(eq("p1"), anyString()))
+        when(documentManager.findByProjectAndHash(eq("default"), eq("p1"), anyString()))
                 .thenReturn(Optional.of(existing));
         when(textExtractor.extract("a.txt", content)).thenReturn("retry content");
 

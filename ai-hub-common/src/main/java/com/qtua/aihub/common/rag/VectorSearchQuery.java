@@ -12,9 +12,18 @@ import java.util.Objects;
  * @param vector    查询向量
  * @param topK      返回条数
  * @param minScore  最小相似度（含）
+ * @param tenantId  租户 ID（REQ-4.1）
  */
 public record VectorSearchQuery(String projectId, String modelId, float[] vector,
-                                int topK, double minScore) {
+                                int topK, double minScore, String tenantId) {
+
+    /**
+     * 兼容构造器：未指定租户（旧调用/测试）。
+     */
+    public VectorSearchQuery(String projectId, String modelId, float[] vector,
+                             int topK, double minScore) {
+        this(projectId, modelId, vector, topK, minScore, "default");
+    }
 
     /**
      * 校验并复制查询向量。

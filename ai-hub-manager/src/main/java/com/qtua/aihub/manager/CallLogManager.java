@@ -127,6 +127,8 @@ public class CallLogManager {
         dataObject.setFallbackUsed(callLog.fallbackUsed());
         dataObject.setCallType(callLog.callType());
         dataObject.setTargetName(callLog.targetName());
+        dataObject.setProjectId(callLog.projectId());
+        dataObject.setTraceId(callLog.requestId());
         return dataObject;
     }
 }

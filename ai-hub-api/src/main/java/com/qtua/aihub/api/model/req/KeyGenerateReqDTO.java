@@ -29,7 +29,9 @@ public record KeyGenerateReqDTO(
         @JsonProperty("max_budget") BigDecimal maxBudget,
         @JsonProperty("budget_duration") String budgetDuration,
         @JsonProperty("rpm_limit") Integer rpmLimit,
-        @JsonProperty("tpm_limit") Integer tpmLimit) {
+        @JsonProperty("tpm_limit") Integer tpmLimit,
+        @JsonProperty("tenant_id") String tenantId,
+        @JsonProperty("project_id") String projectId) {
 
     /**
      * 防御性复制集合，避免调用方修改内部状态。
@@ -38,5 +40,15 @@ public record KeyGenerateReqDTO(
         models = Objects.isNull(models) ? List.of() : List.copyOf(models);
         metadata = Objects.isNull(metadata) || metadata.isEmpty()
                 ? null : Collections.unmodifiableMap(new LinkedHashMap<>(metadata));
+    }
+
+    /**
+     * 兼容构造器：未指定租户/项目（绑定默认作用域）。
+     */
+    public KeyGenerateReqDTO(List<String> models, String duration, Map<String, Object> metadata,
+                             BigDecimal maxBudget, String budgetDuration, Integer rpmLimit,
+                             Integer tpmLimit) {
+        this(models, duration, metadata, maxBudget, budgetDuration, rpmLimit, tpmLimit,
+                null, null);
     }
 }

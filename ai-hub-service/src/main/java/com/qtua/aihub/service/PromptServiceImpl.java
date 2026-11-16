@@ -8,6 +8,7 @@ import com.qtua.aihub.api.model.res.PromptResDTO;
 import com.qtua.aihub.api.model.res.PromptVersionListResDTO;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.prompt.PromptStatus;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.integration.prompt.SimpleTemplateRenderer;
 import com.qtua.aihub.manager.model.PromptTemplateBO;
 import com.qtua.aihub.manager.prompt.PromptManager;
@@ -39,16 +40,32 @@ public class PromptServiceImpl implements PromptService {
 
     private final PromptManager promptManager;
     private final SimpleTemplateRenderer templateRenderer;
+    private final TenantScopeGuard tenantScopeGuard;
+
+    /**
+     * 兼容构造器（单元测试）：使用无上下文的作用域守卫。
+     *
+     * @param promptManager    Prompt 数据门面
+     * @param templateRenderer 模板校验/渲染器
+     */
+    public PromptServiceImpl(PromptManager promptManager,
+                             SimpleTemplateRenderer templateRenderer) {
+        this(promptManager, templateRenderer, new TenantScopeGuard());
+    }
 
     /**
      * 构造服务。
      *
      * @param promptManager    Prompt 数据门面
      * @param templateRenderer 模板校验/渲染器
+     * @param tenantScopeGuard 租户作用域守卫
      */
-    public PromptServiceImpl(PromptManager promptManager, SimpleTemplateRenderer templateRenderer) {
+    @org.springframework.beans.factory.annotation.Autowired
+    public PromptServiceImpl(PromptManager promptManager, SimpleTemplateRenderer templateRenderer,
+                             TenantScopeGuard tenantScopeGuard) {
         this.promptManager = promptManager;
         this.templateRenderer = templateRenderer;
+        this.tenantScopeGuard = tenantScopeGuard;
     }
 
     /**
@@ -60,14 +77,16 @@ public class PromptServiceImpl implements PromptService {
     @Override
     public PromptResDTO create(PromptCreateReqDTO reqDTO) {
         String name = validateName(reqDTO.name());
+        String tenantId = tenantScopeGuard.resolveTenant(reqDTO.tenantId());
         validateContentAndVariables(reqDTO.content(), reqDTO.variables());
-        if (!promptManager.findVersions(name).isEmpty()) {
+        if (!promptManager.findVersions(tenantId, name).isEmpty()) {
             throw ChatCompletionException.invalidRequest(
                     "Prompt '" + name + "' 已存在，请使用追加版本接口", "name");
         }
-        PromptTemplateBO prompt = new PromptTemplateBO(name, promptManager.nextVersion(name),
+        PromptTemplateBO prompt = new PromptTemplateBO(name,
+                promptManager.nextVersion(tenantId, name),
                 reqDTO.content(), reqDTO.variables(), PromptStatus.DRAFT.name(),
-                reqDTO.tenantId(), reqDTO.createdBy(), Instant.now());
+                tenantId, reqDTO.createdBy(), Instant.now());
         promptManager.save(prompt);
         LOG.info("prompt created: name={}, version={}", name, prompt.version());
         return toResDTO(prompt);
@@ -82,13 +101,15 @@ public class PromptServiceImpl implements PromptService {
      */
     @Override
     public PromptResDTO createVersion(String name, PromptVersionCreateReqDTO reqDTO) {
-        List<PromptTemplateBO> versions = promptManager.findVersions(name);
+        String tenantId = tenantScopeGuard.resolveTenant(null);
+        List<PromptTemplateBO> versions = promptManager.findVersions(tenantId, name);
         if (versions.isEmpty()) {
             throw ChatCompletionException.promptNotFound(name);
         }
         validateContentAndVariables(reqDTO.content(), reqDTO.variables());
         PromptTemplateBO latest = versions.get(0);
-        PromptTemplateBO prompt = new PromptTemplateBO(name, promptManager.nextVersion(name),
+        PromptTemplateBO prompt = new PromptTemplateBO(name,
+                promptManager.nextVersion(tenantId, name),
                 reqDTO.content(), reqDTO.variables(), PromptStatus.DRAFT.name(),
                 latest.tenantId(), latest.createdBy(), Instant.now());
         promptManager.save(prompt);
@@ -105,12 +126,13 @@ public class PromptServiceImpl implements PromptService {
      */
     @Override
     public PromptResDTO get(String name, Integer version) {
+        String tenantId = tenantScopeGuard.resolveTenant(null);
         if (Objects.nonNull(version)) {
-            return promptManager.findByVersion(name, version)
+            return promptManager.findByVersion(tenantId, name, version)
                     .map(this::toResDTO)
                     .orElseThrow(() -> ChatCompletionException.promptVersionNotFound(name, version));
         }
-        return promptManager.findPublished(name)
+        return promptManager.findPublished(tenantId, name)
                 .map(this::toResDTO)
                 .orElseThrow(() -> ChatCompletionException.promptNotFound(name));
     }
@@ -123,7 +145,8 @@ public class PromptServiceImpl implements PromptService {
      */
     @Override
     public PromptVersionListResDTO versions(String name) {
-        List<PromptTemplateBO> versions = promptManager.findVersions(name);
+        String tenantId = tenantScopeGuard.resolveTenant(null);
+        List<PromptTemplateBO> versions = promptManager.findVersions(tenantId, name);
         if (versions.isEmpty()) {
             throw ChatCompletionException.promptNotFound(name);
         }
@@ -138,10 +161,8 @@ public class PromptServiceImpl implements PromptService {
      */
     @Override
     public PromptListResDTO list(String tenantId) {
-        List<PromptResDTO> prompts = promptManager.findAllPublished().stream()
-                .filter(prompt -> !StringUtils.hasText(tenantId)
-                        || Objects.isNull(prompt.tenantId())
-                        || tenantId.equals(prompt.tenantId()))
+        String effectiveTenant = tenantScopeGuard.resolveTenant(tenantId);
+        List<PromptResDTO> prompts = promptManager.findAllPublished(effectiveTenant).stream()
                 .map(this::toResDTO)
                 .toList();
         return new PromptListResDTO(prompts);
@@ -157,13 +178,14 @@ public class PromptServiceImpl implements PromptService {
     @Override
     @Transactional
     public PromptResDTO publish(String name, int version) {
-        if (!promptManager.lockByName(name)) {
+        String tenantId = tenantScopeGuard.resolveTenant(null);
+        if (!promptManager.lockByName(tenantId, name)) {
             throw ChatCompletionException.promptNotFound(name);
         }
-        PromptTemplateBO target = promptManager.findByVersion(name, version)
+        PromptTemplateBO target = promptManager.findByVersion(tenantId, name, version)
                 .orElseThrow(() -> ChatCompletionException.promptVersionNotFound(name, version));
-        promptManager.archivePublished(name);
-        promptManager.publishVersion(name, version);
+        promptManager.archivePublished(tenantId, name);
+        promptManager.publishVersion(tenantId, name, version);
         LOG.info("prompt published: name={}, version={}", name, version);
         return toResDTO(new PromptTemplateBO(target.name(), target.version(), target.content(),
                 target.variables(), PromptStatus.PUBLISHED.name(), target.tenantId(),

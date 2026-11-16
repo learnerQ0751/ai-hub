@@ -7,6 +7,7 @@ import com.qtua.aihub.api.model.res.KeyBlockResDTO;
 import com.qtua.aihub.api.model.res.KeyGenerateResDTO;
 import com.qtua.aihub.api.model.res.KeyInfoResDTO;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.common.util.KeyHasher;
 import com.qtua.aihub.manager.ApiKeyManager;
 import com.qtua.aihub.manager.model.ApiKeyBO;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,6 +47,8 @@ public class KeyServiceImpl implements KeyService {
     private static final Pattern DURATION_PATTERN = Pattern.compile("^(\\d+)([smhd])$");
     private static final String BUDGET_DURATION_DAILY = "daily";
     private static final String BUDGET_DURATION_MONTHLY = "monthly";
+    private static final int MAX_TENANT_LENGTH = 64;
+    private static final int MAX_PROJECT_LENGTH = 64;
 
     private final ApiKeyManager apiKeyManager;
 
@@ -70,9 +74,13 @@ public class KeyServiceImpl implements KeyService {
         String keyHash = KeyHasher.sha256Hex(plainKey);
         Instant createdAt = Instant.now();
         Instant expiresAt = resolveExpiry(reqDTO.duration(), createdAt);
+        String tenantId = normalizeScope(reqDTO.tenantId(), TenantScopeGuard.DEFAULT_TENANT,
+                "tenant_id", MAX_TENANT_LENGTH);
+        String projectId = normalizeScope(reqDTO.projectId(), TenantScopeGuard.DEFAULT_PROJECT,
+                "project_id", MAX_PROJECT_LENGTH);
         ApiKeyBO apiKey = new ApiKeyBO(keyHash, reqDTO.models(), BigDecimal.ZERO,
                 reqDTO.maxBudget(), budgetDuration, reqDTO.rpmLimit(), reqDTO.tpmLimit(),
-                expiresAt, false, reqDTO.metadata(), createdAt);
+                expiresAt, false, reqDTO.metadata(), createdAt, tenantId, projectId);
         apiKeyManager.save(apiKey);
         // 只记录哈希用于审计关联，绝不记录明文 Key。
         LOG.info("generated virtual key hash={} models={} rpm={} tpm={} budget={} expiresAt={}",
@@ -80,7 +88,28 @@ public class KeyServiceImpl implements KeyService {
                 reqDTO.maxBudget(), expiresAt);
         return new KeyGenerateResDTO(plainKey, reqDTO.models(), BigDecimal.ZERO, reqDTO.metadata(),
                 toIso(expiresAt), reqDTO.maxBudget(), budgetDuration,
-                reqDTO.rpmLimit(), reqDTO.tpmLimit(), false);
+                reqDTO.rpmLimit(), reqDTO.tpmLimit(), false, tenantId, projectId);
+    }
+
+    /**
+     * 归一化租户/项目绑定：空值回退默认作用域，超长报 400。
+     *
+     * @param value     字段值
+     * @param fallback  默认值
+     * @param param     字段名
+     * @param maxLength 长度上限
+     * @return 归一化值
+     */
+    private String normalizeScope(String value, String fallback, String param, int maxLength) {
+        if (!StringUtils.hasText(value)) {
+            return fallback;
+        }
+        String trimmed = value.trim();
+        if (trimmed.length() > maxLength) {
+            throw ChatCompletionException.invalidRequest(
+                    param + " 长度不能超过 " + maxLength + " 个字符", param);
+        }
+        return trimmed;
     }
 
     /**
@@ -123,7 +152,8 @@ public class KeyServiceImpl implements KeyService {
         }
         return KeyAuthDTO.virtualKey(apiKey.getKeyHash(), apiKey.getModels(),
                 apiKey.getRpmLimit(), apiKey.getTpmLimit(),
-                apiKey.getMaxBudget(), apiKey.getBudgetDuration());
+                apiKey.getMaxBudget(), apiKey.getBudgetDuration(),
+                apiKey.getTenantId(), apiKey.getProjectId(), List.of());
     }
 
     /**

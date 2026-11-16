@@ -47,6 +47,26 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
+        <Class name="com.qtua.aihub.manager.catalog.DbModelCatalog"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.catalog.ModelCatalogManager"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.catalog.ModelCatalogManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.catalog.ModelCatalogSeeder"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.tenant.ProjectAuthorizationManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
         <Class name="com.qtua.aihub.manager.CallLogManager"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>

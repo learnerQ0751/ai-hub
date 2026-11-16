@@ -7,6 +7,8 @@ import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.mcp.McpProbeTarget;
 import com.qtua.aihub.common.mcp.McpServerStatus;
 import com.qtua.aihub.common.mcp.TransportType;
+import com.qtua.aihub.common.tenant.TenantIdentity;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.common.util.UrlMasker;
 import com.qtua.aihub.integration.mcp.McpServerProbe;
 import com.qtua.aihub.integration.mcp.ProbeResult;
@@ -17,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
@@ -41,6 +44,19 @@ public class McpServerServiceImpl implements McpServerService {
     private final McpServerManager mcpServerManager;
     private final McpServerProbe mcpServerProbe;
     private final McpToolCatalog mcpToolCatalog;
+    private final TenantScopeGuard tenantScopeGuard;
+
+    /**
+     * 兼容构造器（单元测试）：使用无上下文的作用域守卫。
+     *
+     * @param mcpServerManager MCP Server 数据门面
+     * @param mcpServerProbe   探活器
+     * @param mcpToolCatalog   工具目录快照
+     */
+    public McpServerServiceImpl(McpServerManager mcpServerManager, McpServerProbe mcpServerProbe,
+                                McpToolCatalog mcpToolCatalog) {
+        this(mcpServerManager, mcpServerProbe, mcpToolCatalog, new TenantScopeGuard());
+    }
 
     /**
      * 构造服务。
@@ -48,12 +64,15 @@ public class McpServerServiceImpl implements McpServerService {
      * @param mcpServerManager MCP Server 数据门面
      * @param mcpServerProbe   探活器
      * @param mcpToolCatalog   工具目录快照（注册/注销时失效）
+     * @param tenantScopeGuard 租户作用域守卫
      */
+    @org.springframework.beans.factory.annotation.Autowired
     public McpServerServiceImpl(McpServerManager mcpServerManager, McpServerProbe mcpServerProbe,
-                                McpToolCatalog mcpToolCatalog) {
+                                McpToolCatalog mcpToolCatalog, TenantScopeGuard tenantScopeGuard) {
         this.mcpServerManager = mcpServerManager;
         this.mcpServerProbe = mcpServerProbe;
         this.mcpToolCatalog = mcpToolCatalog;
+        this.tenantScopeGuard = tenantScopeGuard;
     }
 
     /**
@@ -69,7 +88,10 @@ public class McpServerServiceImpl implements McpServerService {
         String endpoint = normalizeEndpoint(transport, reqDTO.endpoint());
         String command = validateCommand(transport, reqDTO.command());
 
-        if (mcpServerManager.findByName(name).isPresent()) {
+        String tenantId = tenantScopeGuard.resolveTenant(reqDTO.tenantId());
+        if (mcpServerManager.findByName(name)
+                .filter(existing -> tenantId.equals(existing.tenantId()))
+                .isPresent()) {
             throw ChatCompletionException.mcpServerConflict(name);
         }
 
@@ -80,7 +102,7 @@ public class McpServerServiceImpl implements McpServerService {
                 endpoint,
                 command,
                 reqDTO.args(),
-                reqDTO.tenantId(),
+                tenantId,
                 McpServerStatus.DOWN,
                 null,
                 reqDTO.description(),
@@ -105,7 +127,15 @@ public class McpServerServiceImpl implements McpServerService {
      */
     @Override
     public List<McpServerResDTO> list() {
-        return mcpServerManager.findAll().stream().map(this::toResDTO).toList();
+        TenantIdentity identity = tenantScopeGuard.currentIdentity();
+        if (!ObjectUtils.isEmpty(identity) && identity.master()) {
+            return mcpServerManager.findAll().stream().map(this::toResDTO).toList();
+        }
+        String tenantId = tenantScopeGuard.resolveTenant(null);
+        return mcpServerManager.findAll().stream()
+                .filter(server -> tenantId.equals(server.tenantId()))
+                .map(this::toResDTO)
+                .toList();
     }
 
     /**
@@ -115,13 +145,32 @@ public class McpServerServiceImpl implements McpServerService {
      */
     @Override
     public void remove(String serverId) {
-        McpServerBO server = mcpServerManager.findByServerId(serverId)
-                .orElseThrow(() -> ChatCompletionException.mcpServerNotFound(serverId));
+        McpServerBO server = requireAccessibleServer(serverId);
         if (!mcpServerManager.delete(server.serverId())) {
             throw ChatCompletionException.mcpServerNotFound(serverId);
         }
         LOG.info("mcp server removed: name={}, serverId={}", server.name(), server.serverId());
         mcpToolCatalog.invalidate();
+    }
+
+    /**
+     * 校验服务器属于当前租户（master 可访问全部）。
+     *
+     * @param serverId 服务器 ID
+     * @return 服务器
+     */
+    private McpServerBO requireAccessibleServer(String serverId) {
+        McpServerBO server = mcpServerManager.findByServerId(serverId)
+                .orElseThrow(() -> ChatCompletionException.mcpServerNotFound(serverId));
+        TenantIdentity identity = tenantScopeGuard.currentIdentity();
+        if (!ObjectUtils.isEmpty(identity) && identity.master()) {
+            return server;
+        }
+        String tenantId = tenantScopeGuard.resolveTenant(null);
+        if (!tenantId.equals(server.tenantId())) {
+            throw ChatCompletionException.mcpServerNotFound(serverId);
+        }
+        return server;
     }
 
     /**
@@ -132,8 +181,7 @@ public class McpServerServiceImpl implements McpServerService {
      */
     @Override
     public McpServerResDTO reprobe(String serverId) {
-        McpServerBO server = mcpServerManager.findByServerId(serverId)
-                .orElseThrow(() -> ChatCompletionException.mcpServerNotFound(serverId));
+        McpServerBO server = requireAccessibleServer(serverId);
         return toResDTO(probeAndUpdate(server));
     }
 

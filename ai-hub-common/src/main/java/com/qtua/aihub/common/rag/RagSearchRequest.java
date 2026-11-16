@@ -15,9 +15,19 @@ import java.util.Objects;
  * @param filter         元数据过滤
  * @param rerank         是否请求规则重排（服务端总开关在 Service 收敛）
  * @param candidateLimit 向量召回条数（放大候选）
+ * @param tenantId       租户 ID（REQ-4.1）
  */
 public record RagSearchRequest(String projectId, String query, int topK, double minScore,
-                               RagSearchFilter filter, boolean rerank, int candidateLimit) {
+                               RagSearchFilter filter, boolean rerank, int candidateLimit,
+                               String tenantId) {
+
+    /**
+     * 兼容构造器：未指定租户（旧调用/测试）。
+     */
+    public RagSearchRequest(String projectId, String query, int topK, double minScore,
+                            RagSearchFilter filter, boolean rerank, int candidateLimit) {
+        this(projectId, query, topK, minScore, filter, rerank, candidateLimit, "default");
+    }
 
     /**
      * 校验必填字段与基本范围。

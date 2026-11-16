@@ -14,6 +14,8 @@ public class RagVectorDO {
     private String chunkId;
     private String docId;
     private String projectId;
+    /** 租户 ID（REQ-4.1）。 */
+    private String tenantId;
     private String embeddingModel;
     private int embeddingDimension;
     /** pgvector 文本，例如 "[0.1,0.2]"；由 VectorStore 实现负责编解码。 */
@@ -92,5 +94,13 @@ public class RagVectorDO {
 
     public void setScore(Double score) {
         this.score = score;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 }

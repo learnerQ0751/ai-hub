@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.ModelCatalogMapper">
+
+    <resultMap id="AliasResultMap" type="com.qtua.aihub.dal.model.ModelAliasDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="alias" property="alias" jdbcType="VARCHAR"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="fallbacks" property="fallbacks" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <resultMap id="DeploymentResultMap" type="com.qtua.aihub.dal.model.ModelDeploymentDO">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="deployment_key" property="deploymentKey" jdbcType="VARCHAR"/>
+        <result column="api_base" property="apiBase" jdbcType="VARCHAR"/>
+        <result column="api_key_cipher" property="apiKeyCipher" jdbcType="VARCHAR"/>
+        <result column="upstream_model" property="upstreamModel" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <resultMap id="CatalogRowResultMap" type="com.qtua.aihub.dal.model.ModelCatalogRow">
+        <result column="alias" property="alias" jdbcType="VARCHAR"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="fallbacks" property="fallbacks" jdbcType="VARCHAR"/>
+        <result column="api_base" property="apiBase" jdbcType="VARCHAR"/>
+        <result column="api_key_cipher" property="apiKeyCipher" jdbcType="VARCHAR"/>
+        <result column="upstream_model" property="upstreamModel" jdbcType="VARCHAR"/>
+        <result column="weight" property="weight" jdbcType="INTEGER"/>
+        <result column="priority" property="priority" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <select id="selectCatalogRows" resultMap="CatalogRowResultMap">
+        SELECT a.alias, a.tenant_id, CAST(a.fallbacks AS VARCHAR) AS fallbacks,
+               d.api_base, d.api_key_cipher, d.upstream_model,
+               ad.weight, ad.priority
+        FROM model_aliases a
+        JOIN model_alias_deployments ad ON ad.alias_id = a.id
+        JOIN model_deployments d ON d.id = ad.deployment_id
+        WHERE a.status = 'ACTIVE' AND d.status = 'ACTIVE'
+        ORDER BY a.alias ASC, ad.priority ASC, d.id ASC
+    </select>
+
+    <select id="selectAliasNames" resultType="java.lang.String">
+        SELECT alias FROM model_aliases WHERE status = 'ACTIVE' ORDER BY alias ASC
+    </select>
+
+    <select id="countAliases" resultType="int">
+        SELECT COUNT(1) FROM model_aliases
+    </select>
+
+    <select id="selectByAlias" resultMap="AliasResultMap">
+        SELECT id, alias, tenant_id, description, CAST(fallbacks AS VARCHAR) AS fallbacks,
+               status, created_at, updated_at
+        FROM model_aliases
+        WHERE alias = #{alias,jdbcType=VARCHAR}
+    </select>
+
+    <insert id="insertAlias" parameterType="com.qtua.aihub.dal.model.ModelAliasDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO model_aliases
+            (alias, tenant_id, description, fallbacks, status, created_at, updated_at)
+        VALUES
+            (#{alias,jdbcType=VARCHAR}, #{tenantId,jdbcType=VARCHAR},
+             #{description,jdbcType=VARCHAR}, CAST(#{fallbacks,jdbcType=VARCHAR} AS JSONB),
+             #{status,jdbcType=VARCHAR}, #{createdAt,jdbcType=TIMESTAMP},
+             #{updatedAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateAlias" parameterType="com.qtua.aihub.dal.model.ModelAliasDO">
+        UPDATE model_aliases
+        SET tenant_id = #{tenantId,jdbcType=VARCHAR},
+            description = #{description,jdbcType=VARCHAR},
+            fallbacks = CAST(#{fallbacks,jdbcType=VARCHAR} AS JSONB),
+            status = #{status,jdbcType=VARCHAR},
+            updated_at = #{updatedAt,jdbcType=TIMESTAMP}
+        WHERE alias = #{alias,jdbcType=VARCHAR}
+    </update>
+
+    <delete id="deleteAlias">
+        DELETE FROM model_aliases WHERE alias = #{alias,jdbcType=VARCHAR}
+    </delete>
+
+    <select id="selectDeploymentByKey" resultMap="DeploymentResultMap">
+        SELECT id, deployment_key, api_base, api_key_cipher, upstream_model, status,
+               created_at, updated_at
+        FROM model_deployments
+        WHERE deployment_key = #{deploymentKey,jdbcType=VARCHAR}
+    </select>
+
+    <insert id="insertDeployment" parameterType="com.qtua.aihub.dal.model.ModelDeploymentDO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO model_deployments
+            (deployment_key, api_base, api_key_cipher, upstream_model, status,
+             created_at, updated_at)
+        VALUES
+            (#{deploymentKey,jdbcType=VARCHAR}, #{apiBase,jdbcType=VARCHAR},
+             #{apiKeyCipher,jdbcType=VARCHAR}, #{upstreamModel,jdbcType=VARCHAR},
+             #{status,jdbcType=VARCHAR}, #{createdAt,jdbcType=TIMESTAMP},
+             #{updatedAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="updateDeployment" parameterType="com.qtua.aihub.dal.model.ModelDeploymentDO">
+        UPDATE model_deployments
+        SET api_base = #{apiBase,jdbcType=VARCHAR},
+            api_key_cipher = #{apiKeyCipher,jdbcType=VARCHAR},
+            upstream_model = #{upstreamModel,jdbcType=VARCHAR},
+            status = #{status,jdbcType=VARCHAR},
+            updated_at = #{updatedAt,jdbcType=TIMESTAMP}
+        WHERE deployment_key = #{deploymentKey,jdbcType=VARCHAR}
+    </update>
+
+    <delete id="deleteDeployment">
+        DELETE FROM model_deployments WHERE deployment_key = #{deploymentKey,jdbcType=VARCHAR}
+    </delete>
+
+    <insert id="insertAliasDeployment">
+        INSERT INTO model_alias_deployments (alias_id, deployment_id, weight, priority)
+        VALUES (#{aliasId,jdbcType=BIGINT}, #{deploymentId,jdbcType=BIGINT},
+                #{weight,jdbcType=INTEGER}, #{priority,jdbcType=INTEGER})
+    </insert>
+
+    <update id="updateAliasDeployment">
+        UPDATE model_alias_deployments
+        SET weight = #{weight,jdbcType=INTEGER}, priority = #{priority,jdbcType=INTEGER}
+        WHERE alias_id = #{aliasId,jdbcType=BIGINT}
+          AND deployment_id = #{deploymentId,jdbcType=BIGINT}
+    </update>
+
+    <delete id="deleteAliasDeployments">
+        DELETE FROM model_alias_deployments WHERE alias_id = #{aliasId,jdbcType=BIGINT}
+    </delete>
+
+    <delete id="deleteDeploymentAliases">
+        DELETE FROM model_alias_deployments WHERE deployment_id = #{deploymentId,jdbcType=BIGINT}
+    </delete>
+
+    <insert id="insertAliasKey">
+        INSERT INTO model_alias_keys (alias_id, key_hash)
+        SELECT #{aliasId,jdbcType=BIGINT}, #{keyHash,jdbcType=VARCHAR}
+        WHERE NOT EXISTS (
+            SELECT 1 FROM model_alias_keys
+            WHERE alias_id = #{aliasId,jdbcType=BIGINT}
+              AND key_hash = #{keyHash,jdbcType=VARCHAR})
+    </insert>
+
+    <select id="selectAliasKeys" resultType="java.lang.String">
+        SELECT key_hash FROM model_alias_keys WHERE alias_id = #{aliasId,jdbcType=BIGINT}
+    </select>
+</mapper>

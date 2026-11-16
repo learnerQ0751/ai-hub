@@ -33,6 +33,8 @@ public class CallLogDO {
     private String errorType;
     /** 租户 ID；本期未启用。 */
     private String tenantId;
+    private String projectId;
+    private String traceId;
     private Instant createdAt;
     /** 本请求内失败尝试次数（REQ-1.6）。 */
     private int retryCount;
@@ -195,5 +197,21 @@ public class CallLogDO {
 
     public void setTargetName(String targetName) {
         this.targetName = targetName;
+    }
+
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
+    }
+
+    public String getTraceId() {
+        return traceId;
+    }
+
+    public void setTraceId(String traceId) {
+        this.traceId = traceId;
     }
 }

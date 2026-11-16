@@ -84,6 +84,21 @@ public class RagChunkManager {
     }
 
     /**
+     * 按切片 ID 批量查询（租户隔离）。
+     *
+     * @param tenantId 租户
+     * @param chunkIds 切片 ID 列表
+     * @return 切片列表；空入参返回空列表
+     */
+    public List<RagChunkBO> listByChunkIdsInTenant(String tenantId, List<String> chunkIds) {
+        if (ObjectUtils.isEmpty(chunkIds)) {
+            return List.of();
+        }
+        return chunkMapper.selectByChunkIdsInTenant(tenantId, chunkIds).stream()
+                .map(this::toBO).toList();
+    }
+
+    /**
      * 统计文档切片数。
      *
      * @param docId 文档 ID
@@ -139,6 +154,7 @@ public class RagChunkManager {
         dataObject.setEmbeddingDimension(chunk.embeddingDimension());
         dataObject.setErrorMessage(chunk.errorMessage());
         dataObject.setCreatedAt(chunk.createdAt());
+        dataObject.setTenantId(chunk.tenantId());
         return dataObject;
     }
 
@@ -147,6 +163,7 @@ public class RagChunkManager {
                 dataObject.getProjectId(), dataObject.getChunkIndex(), dataObject.getContent(),
                 dataObject.getCharCount(), dataObject.getSource(), dataObject.getIndexStatus(),
                 dataObject.getEmbeddingModel(), dataObject.getEmbeddingDimension(),
-                dataObject.getErrorMessage(), dataObject.getCreatedAt());
+                dataObject.getErrorMessage(), dataObject.getCreatedAt(),
+                dataObject.getTenantId());
     }
 }

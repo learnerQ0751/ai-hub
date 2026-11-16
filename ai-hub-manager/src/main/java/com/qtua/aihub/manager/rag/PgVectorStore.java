@@ -74,8 +74,8 @@ public class PgVectorStore implements VectorStore {
     public List<VectorMatch> search(VectorSearchQuery query) {
         int topK = Math.max(1, query.topK());
         String vectorText = toVectorText(query.vector());
-        return vectorMapper.selectSimilar(query.projectId(), query.modelId(), vectorText, topK,
-                        query.minScore())
+        return vectorMapper.selectSimilar(query.tenantId(), query.projectId(), query.modelId(),
+                        vectorText, topK, query.minScore())
                 .stream()
                 .map(this::toMatch)
                 .filter(match -> Objects.nonNull(match))

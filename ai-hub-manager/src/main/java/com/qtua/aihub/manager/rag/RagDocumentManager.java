@@ -50,6 +50,18 @@ public class RagDocumentManager {
     }
 
     /**
+     * 按 doc_id + 租户查询（租户隔离）。
+     *
+     * @param tenantId 租户
+     * @param docId    文档 ID
+     * @return 文档；不存在为空
+     */
+    public Optional<RagDocumentBO> findByDocId(String tenantId, String docId) {
+        return Optional.ofNullable(documentMapper.selectByDocIdInTenant(docId, tenantId))
+                .map(this::toBO);
+    }
+
+    /**
      * 按项目 + hash 查询（去重）。
      *
      * @param projectId   项目 ID
@@ -62,6 +74,20 @@ public class RagDocumentManager {
     }
 
     /**
+     * 按租户 + 项目 + hash 查询（去重）。
+     *
+     * @param tenantId    租户
+     * @param projectId   项目 ID
+     * @param contentHash 文件 SHA-256
+     * @return 文档；不存在为空
+     */
+    public Optional<RagDocumentBO> findByProjectAndHash(String tenantId, String projectId,
+                                                        String contentHash) {
+        return Optional.ofNullable(documentMapper.selectByProjectAndHashInTenant(tenantId,
+                projectId, contentHash)).map(this::toBO);
+    }
+
+    /**
      * 按项目查询文档列表。
      *
      * @param projectId 项目 ID
@@ -70,6 +96,19 @@ public class RagDocumentManager {
      */
     public List<RagDocumentBO> listByProject(String projectId, int limit) {
         return documentMapper.selectByProject(projectId, limit).stream().map(this::toBO).toList();
+    }
+
+    /**
+     * 按租户 + 项目查询文档列表。
+     *
+     * @param tenantId  租户
+     * @param projectId 项目 ID
+     * @param limit     返回条数
+     * @return 文档列表
+     */
+    public List<RagDocumentBO> listByProject(String tenantId, String projectId, int limit) {
+        return documentMapper.selectByProjectInTenant(tenantId, projectId, limit).stream()
+                .map(this::toBO).toList();
     }
 
     /**
@@ -136,6 +175,7 @@ public class RagDocumentManager {
         dataObject.setErrorMessage(document.errorMessage());
         dataObject.setCreatedAt(document.createdAt());
         dataObject.setUpdatedAt(document.updatedAt());
+        dataObject.setTenantId(document.tenantId());
         return dataObject;
     }
 
@@ -146,6 +186,6 @@ public class RagDocumentManager {
                 dataObject.getIndexStatus(), dataObject.getEmbeddingModel(),
                 dataObject.getEmbeddingDimension(), dataObject.getEmbeddingDurationMs(),
                 dataObject.getEmbeddingCost(), dataObject.getErrorMessage(),
-                dataObject.getCreatedAt(), dataObject.getUpdatedAt());
+                dataObject.getCreatedAt(), dataObject.getUpdatedAt(), dataObject.getTenantId());
     }
 }

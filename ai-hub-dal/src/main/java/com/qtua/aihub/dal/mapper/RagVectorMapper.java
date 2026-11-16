@@ -41,6 +41,7 @@ public interface RagVectorMapper {
     /**
      * 相似度检索；分数 = 1 - cosine 距离。
      *
+     * @param tenantId  租户 ID
      * @param projectId 项目 ID
      * @param modelId   模型标识
      * @param vector    查询向量文本（pgvector 格式）
@@ -48,7 +49,8 @@ public interface RagVectorMapper {
      * @param minScore  最小相似度
      * @return 命中列表（分数降序）
      */
-    List<RagVectorDO> selectSimilar(@Param("projectId") String projectId,
+    List<RagVectorDO> selectSimilar(@Param("tenantId") String tenantId,
+                                    @Param("projectId") String projectId,
                                     @Param("modelId") String modelId,
                                     @Param("vector") String vector,
                                     @Param("topK") int topK,

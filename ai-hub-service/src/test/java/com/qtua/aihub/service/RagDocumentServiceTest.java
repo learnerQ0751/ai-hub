@@ -92,7 +92,7 @@ class RagDocumentServiceTest {
 
     @Test
     void ingest_maps_parse_failure_to_chinese_400() {
-        when(documentCore.ingest(anyString(), anyString(), anyString(), any(byte[].class),
+        when(documentCore.ingest(anyString(), anyString(), anyString(), anyString(), any(byte[].class),
                 anyBoolean())).thenThrow(new DocumentParseException("PDF 文件解析失败"));
 
         assertThatThrownBy(() -> service.ingest("p1", "a.pdf", "application/pdf", bytes("%PDF")))
@@ -109,10 +109,10 @@ class RagDocumentServiceTest {
     @Test
     void ingest_returns_duplicated_document() {
         RagDocumentBO document = document("d1", "p1", "b16");
-        when(documentCore.ingest(eq("p1"), eq("a.md"), eq("text/markdown"),
+        when(documentCore.ingest(eq("default"), eq("p1"), eq("a.md"), eq("text/markdown"),
                 any(byte[].class), eq(false)))
                 .thenReturn(new RagIngestResult(document, true, false));
-        when(documentCore.find("d1", "p1")).thenReturn(Optional.of(document));
+        when(documentCore.find("default", "d1", "p1")).thenReturn(Optional.of(document));
 
         RagDocumentResDTO result = service.ingest("p1", "a.md", "text/markdown", bytes("hello"));
 
@@ -123,7 +123,7 @@ class RagDocumentServiceTest {
 
     @Test
     void list_uses_default_limit_and_maps_documents() {
-        when(documentCore.list("p1", 10)).thenReturn(List.of(document("d1", "p1", "b16")));
+        when(documentCore.list("default", "p1", 10)).thenReturn(List.of(document("d1", "p1", "b16")));
 
         RagDocumentListResDTO result = service.list("p1", null);
 
@@ -133,12 +133,12 @@ class RagDocumentServiceTest {
 
     @Test
     void list_clamps_limit_to_max() {
-        when(documentCore.list("p1", 20)).thenReturn(List.of());
+        when(documentCore.list("default", "p1", 20)).thenReturn(List.of());
 
         RagDocumentListResDTO result = service.list("p1", 999);
 
         assertThat(result.count()).isZero();
-        verify(documentCore).list("p1", 20);
+        verify(documentCore).list("default", "p1", 20);
     }
 
     @Test
@@ -148,7 +148,7 @@ class RagDocumentServiceTest {
                 document.source(), document.contentType(), document.sizeBytes(),
                 document.contentHash(), null, document.chunkCount(), "READY", "model-a", 384,
                 10L, BigDecimal.ZERO, null, document.createdAt(), document.updatedAt());
-        when(documentCore.list("p1", 10)).thenReturn(List.of(indexed));
+        when(documentCore.list("default", "p1", 10)).thenReturn(List.of(indexed));
         when(embeddingModel.modelId()).thenReturn("model-b");
 
         RagDocumentListResDTO result = service.list("p1", null);
@@ -163,8 +163,8 @@ class RagDocumentServiceTest {
                 document.source(), document.contentType(), document.sizeBytes(),
                 document.contentHash(), null, document.chunkCount(), "READY", "model-b", 384,
                 20L, BigDecimal.ZERO, null, document.createdAt(), document.updatedAt());
-        when(documentCore.find("d1", "p1")).thenReturn(Optional.of(document));
-        when(documentCore.reindex("d1")).thenReturn(Optional.of(indexed));
+        when(documentCore.find("default", "d1", "p1")).thenReturn(Optional.of(document));
+        when(documentCore.reindex("default", "d1")).thenReturn(Optional.of(indexed));
         when(embeddingModel.modelId()).thenReturn("model-b");
         when(embeddingModel.dimension()).thenReturn(384);
 
@@ -177,7 +177,7 @@ class RagDocumentServiceTest {
 
     @Test
     void reindex_unknown_document_returns_404() {
-        when(documentCore.find("d1", "p1")).thenReturn(Optional.empty());
+        when(documentCore.find("default", "d1", "p1")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.reindex("d1", "p1"))
                 .isInstanceOf(ChatCompletionException.class)
@@ -187,7 +187,7 @@ class RagDocumentServiceTest {
 
     @Test
     void remove_returns_404_for_unknown_or_cross_project_document() {
-        when(documentCore.find("d1", "p2")).thenReturn(Optional.empty());
+        when(documentCore.find("default", "d1", "p2")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.remove("d1", "p2"))
                 .isInstanceOf(ChatCompletionException.class)
@@ -198,7 +198,7 @@ class RagDocumentServiceTest {
     @Test
     void remove_cascades_and_returns_counts() {
         RagDocumentBO document = document("d1", "p1", "b16");
-        when(documentCore.find("d1", "p1")).thenReturn(Optional.of(document));
+        when(documentCore.find("default", "d1", "p1")).thenReturn(Optional.of(document));
         when(documentCore.delete("d1")).thenReturn(new RagDeleteResult(true, 3, 3));
 
         RagDocumentDeleteResDTO result = service.remove("d1", "p1");

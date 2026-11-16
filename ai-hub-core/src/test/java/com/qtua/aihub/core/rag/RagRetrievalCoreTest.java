@@ -21,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -60,7 +61,7 @@ class RagRetrievalCoreTest {
     void search_pushes_project_model_topk_and_threshold() {
         when(vectorStore.search(any())).thenReturn(List.of(
                 match("c1", "d1", 0.9), match("c2", "d1", 0.8), match("c3", "d2", 0.7)));
-        when(chunkManager.listByChunkIds(anyList())).thenReturn(List.of(
+        when(chunkManager.listByChunkIdsInTenant(eq("default"), anyList())).thenReturn(List.of(
                 chunk("c1", "d1", "demo.md", "年假 报销", 0, 0), chunk("c2", "d1", "demo.md",
                         "报销流程", 1, 0), chunk("c3", "d2", "other.md", "其他内容", 0, 0)));
 
@@ -82,7 +83,7 @@ class RagRetrievalCoreTest {
     void filters_by_doc_ids_and_source() {
         when(vectorStore.search(any())).thenReturn(List.of(
                 match("c1", "d1", 0.9), match("c2", "d2", 0.8), match("c3", "d1", 0.7)));
-        when(chunkManager.listByChunkIds(anyList())).thenReturn(List.of(
+        when(chunkManager.listByChunkIdsInTenant(eq("default"), anyList())).thenReturn(List.of(
                 chunk("c1", "d1", "a.md", "内容 A", 0, 0),
                 chunk("c2", "d2", "b.md", "内容 B", 0, 0),
                 chunk("c3", "d1", "b.md", "内容 C", 1, 0)));
@@ -98,7 +99,7 @@ class RagRetrievalCoreTest {
     void rerank_reorders_candidates_when_enabled() {
         when(vectorStore.search(any())).thenReturn(List.of(
                 match("c1", "d1", 0.6), match("c2", "d1", 0.55)));
-        when(chunkManager.listByChunkIds(anyList())).thenReturn(List.of(
+        when(chunkManager.listByChunkIdsInTenant(eq("default"), anyList())).thenReturn(List.of(
                 chunk("c1", "d1", "demo.md", "报销流程说明", 0, 0),
                 chunk("c2", "d1", "demo.md", "年假与报销制度", 1, 0)));
 
@@ -114,7 +115,7 @@ class RagRetrievalCoreTest {
     void rerank_disabled_keeps_vector_score_order() {
         when(vectorStore.search(any())).thenReturn(List.of(
                 match("c1", "d1", 0.6), match("c2", "d1", 0.55)));
-        when(chunkManager.listByChunkIds(anyList())).thenReturn(List.of(
+        when(chunkManager.listByChunkIdsInTenant(eq("default"), anyList())).thenReturn(List.of(
                 chunk("c1", "d1", "demo.md", "报销流程说明", 0, 0),
                 chunk("c2", "d1", "demo.md", "年假与报销制度", 1, 0)));
 
@@ -130,7 +131,7 @@ class RagRetrievalCoreTest {
     void rerank_without_query_terms_keeps_order_and_reports_not_reranked() {
         when(vectorStore.search(any())).thenReturn(List.of(
                 match("c1", "d1", 0.6), match("c2", "d1", 0.55)));
-        when(chunkManager.listByChunkIds(anyList())).thenReturn(List.of(
+        when(chunkManager.listByChunkIdsInTenant(eq("default"), anyList())).thenReturn(List.of(
                 chunk("c1", "d1", "demo.md", "内容一", 0, 0),
                 chunk("c2", "d1", "demo.md", "内容二", 1, 0)));
 
@@ -146,7 +147,7 @@ class RagRetrievalCoreTest {
     void missing_chunk_is_skipped() {
         when(vectorStore.search(any())).thenReturn(List.of(
                 match("c1", "d1", 0.9), match("c2", "d1", 0.8)));
-        when(chunkManager.listByChunkIds(anyList())).thenReturn(List.of(
+        when(chunkManager.listByChunkIdsInTenant(eq("default"), anyList())).thenReturn(List.of(
                 chunk("c1", "d1", "demo.md", "年假 报销", 0, 0)));
 
         RagRetrievalResult result = core.retrieve(request(5, 10, 0.0, null, false));
@@ -164,7 +165,7 @@ class RagRetrievalCoreTest {
         assertThat(result.hits()).isEmpty();
         assertThat(result.candidateCount()).isZero();
         assertThat(result.noHit()).isTrue();
-        verify(chunkManager, times(0)).listByChunkIds(anyList());
+        verify(chunkManager, times(0)).listByChunkIdsInTenant(eq("default"), anyList());
     }
 
     @Test
@@ -174,12 +175,12 @@ class RagRetrievalCoreTest {
             matches.add(match("c" + index, "d1", 0.5));
         }
         when(vectorStore.search(any())).thenReturn(matches);
-        when(chunkManager.listByChunkIds(anyList())).thenReturn(List.of());
+        when(chunkManager.listByChunkIdsInTenant(eq("default"), anyList())).thenReturn(List.of());
 
         core.retrieve(request(5, 250, 0.0, null, false));
 
         ArgumentCaptor<List<String>> batches = ArgumentCaptor.forClass(List.class);
-        verify(chunkManager, times(3)).listByChunkIds(batches.capture());
+        verify(chunkManager, times(3)).listByChunkIdsInTenant(eq("default"), batches.capture());
         assertThat(batches.getAllValues()).extracting(List::size).containsExactly(100, 100, 50);
     }
 

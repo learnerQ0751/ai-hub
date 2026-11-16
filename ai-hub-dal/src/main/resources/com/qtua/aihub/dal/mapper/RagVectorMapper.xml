@@ -10,19 +10,21 @@
         <result column="embedding_model" property="embeddingModel" jdbcType="VARCHAR"/>
         <result column="embedding_dimension" property="embeddingDimension" jdbcType="INTEGER"/>
         <result column="score" property="score" jdbcType="DOUBLE"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
     </resultMap>
 
     <insert id="insertBatch">
         INSERT INTO rag_vectors
             (chunk_id, doc_id, project_id, embedding_model, embedding_dimension,
-             embedding, created_at)
+             embedding, created_at, tenant_id)
         VALUES
         <foreach collection="vectors" item="item" separator=",">
             (#{item.chunkId,jdbcType=VARCHAR}, #{item.docId,jdbcType=VARCHAR},
              #{item.projectId,jdbcType=VARCHAR}, #{item.embeddingModel,jdbcType=VARCHAR},
              #{item.embeddingDimension,jdbcType=INTEGER},
              CAST(#{item.embedding,jdbcType=VARCHAR} AS vector),
-             #{item.createdAt,jdbcType=TIMESTAMP})
+             #{item.createdAt,jdbcType=TIMESTAMP},
+             COALESCE(#{item.tenantId,jdbcType=VARCHAR}, 'default'))
         </foreach>
         ON CONFLICT (chunk_id) DO UPDATE
         SET doc_id = EXCLUDED.doc_id,
@@ -48,7 +50,8 @@
         SELECT chunk_id, doc_id, project_id, embedding_model, embedding_dimension,
                1 - (embedding &lt;=&gt; CAST(#{vector,jdbcType=VARCHAR} AS vector)) AS score
         FROM rag_vectors
-        WHERE project_id = #{projectId,jdbcType=VARCHAR}
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND project_id = #{projectId,jdbcType=VARCHAR}
           AND embedding_model = #{modelId,jdbcType=VARCHAR}
           AND 1 - (embedding &lt;=&gt; CAST(#{vector,jdbcType=VARCHAR} AS vector)) &gt;= #{minScore,jdbcType=DOUBLE}
         ORDER BY embedding &lt;=&gt; CAST(#{vector,jdbcType=VARCHAR} AS vector)

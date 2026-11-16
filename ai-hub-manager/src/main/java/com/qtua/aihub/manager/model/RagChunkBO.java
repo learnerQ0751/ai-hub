@@ -17,9 +17,21 @@ import java.time.Instant;
  * @param embeddingDimension 向量维度
  * @param errorMessage       错误信息
  * @param createdAt          创建时间
+ * @param tenantId           租户 ID（REQ-4.1）
  */
 public record RagChunkBO(String chunkId, String docId, String projectId, int chunkIndex,
                          String content, int charCount, String source, String indexStatus,
                          String embeddingModel, Integer embeddingDimension, String errorMessage,
-                         Instant createdAt) {
+                         Instant createdAt, String tenantId) {
+
+    /**
+     * 兼容构造器：未指定租户（旧调用/测试）。
+     */
+    public RagChunkBO(String chunkId, String docId, String projectId, int chunkIndex,
+                      String content, int charCount, String source, String indexStatus,
+                      String embeddingModel, Integer embeddingDimension, String errorMessage,
+                      Instant createdAt) {
+        this(chunkId, docId, projectId, chunkIndex, content, charCount, source, indexStatus,
+                embeddingModel, embeddingDimension, errorMessage, createdAt, "default");
+    }
 }

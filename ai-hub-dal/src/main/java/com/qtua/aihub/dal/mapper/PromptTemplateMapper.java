@@ -26,7 +26,8 @@ public interface PromptTemplateMapper {
      * @param name 模板名
      * @return 最大版本；无记录时为 null
      */
-    Integer selectMaxVersion(@Param("name") String name);
+    Integer selectMaxVersion(@Param("tenantId") String tenantId,
+                             @Param("name") String name);
 
     /**
      * 查询最新发布版本。
@@ -34,7 +35,8 @@ public interface PromptTemplateMapper {
      * @param name 模板名
      * @return 发布版本；不存在为空
      */
-    Optional<PromptTemplateDO> selectPublished(@Param("name") String name);
+    Optional<PromptTemplateDO> selectPublished(@Param("tenantId") String tenantId,
+                                               @Param("name") String name);
 
     /**
      * 按版本查询。
@@ -43,7 +45,8 @@ public interface PromptTemplateMapper {
      * @param version 版本
      * @return 版本记录；不存在为空
      */
-    Optional<PromptTemplateDO> selectByVersion(@Param("name") String name,
+    Optional<PromptTemplateDO> selectByVersion(@Param("tenantId") String tenantId,
+                                               @Param("name") String name,
                                                @Param("version") int version);
 
     /**
@@ -52,14 +55,15 @@ public interface PromptTemplateMapper {
      * @param name 模板名
      * @return 版本列表
      */
-    List<PromptTemplateDO> selectVersions(@Param("name") String name);
+    List<PromptTemplateDO> selectVersions(@Param("tenantId") String tenantId,
+                                          @Param("name") String name);
 
     /**
      * 查询全部已发布版本（多 name）。
      *
      * @return 发布版本列表
      */
-    List<PromptTemplateDO> selectAllPublished();
+    List<PromptTemplateDO> selectAllPublished(@Param("tenantId") String tenantId);
 
     /**
      * 锁定同 name 的行（发布事务用）。
@@ -67,7 +71,7 @@ public interface PromptTemplateMapper {
      * @param name 模板名
      * @return 锁定行 id；name 不存在时为 null
      */
-    Long lockByName(@Param("name") String name);
+    Long lockByName(@Param("tenantId") String tenantId, @Param("name") String name);
 
     /**
      * 把同 name 的 PUBLISHED 全部置为 ARCHIVED。
@@ -75,7 +79,7 @@ public interface PromptTemplateMapper {
      * @param name 模板名
      * @return 受影响行数
      */
-    int archivePublished(@Param("name") String name);
+    int archivePublished(@Param("tenantId") String tenantId, @Param("name") String name);
 
     /**
      * 发布指定版本。
@@ -84,5 +88,6 @@ public interface PromptTemplateMapper {
      * @param version 版本
      * @return 受影响行数
      */
-    int publishVersion(@Param("name") String name, @Param("version") int version);
+    int publishVersion(@Param("tenantId") String tenantId, @Param("name") String name,
+                       @Param("version") int version);
 }

@@ -15,6 +15,9 @@ import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.memory.MemoryEntry;
 import com.qtua.aihub.common.memory.MemoryQuery;
 import com.qtua.aihub.common.memory.MemoryScope;
+import com.qtua.aihub.common.tenant.TenantIdentity;
+import com.qtua.aihub.common.tenant.TenantScope;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.manager.memory.MemoryManager;
 import com.qtua.aihub.manager.model.MemoryBO;
 import com.qtua.aihub.manager.model.MemoryClearResult;
@@ -68,19 +71,35 @@ public class MemoryServiceImpl implements MemoryService {
     private final MemoryManager memoryManager;
     private final MemoryProperties properties;
     private final ObjectMapper objectMapper;
+    private final TenantScopeGuard tenantScopeGuard;
+
+    /**
+     * 兼容构造器（单元测试）：使用无上下文的作用域守卫。
+     *
+     * @param memoryManager 记忆数据门面
+     * @param properties    记忆配置
+     * @param objectMapper  JSON 序列化器
+     */
+    public MemoryServiceImpl(MemoryManager memoryManager, MemoryProperties properties,
+                             ObjectMapper objectMapper) {
+        this(memoryManager, properties, objectMapper, new TenantScopeGuard());
+    }
 
     /**
      * 构造服务。
      *
-     * @param memoryManager 记忆数据门面
-     * @param properties    记忆配置
-     * @param objectMapper  JSON 序列化器（metadata 大小校验）
+     * @param memoryManager    记忆数据门面
+     * @param properties       记忆配置
+     * @param objectMapper     JSON 序列化器（metadata 大小校验）
+     * @param tenantScopeGuard 租户作用域守卫
      */
+    @org.springframework.beans.factory.annotation.Autowired
     public MemoryServiceImpl(MemoryManager memoryManager, MemoryProperties properties,
-                             ObjectMapper objectMapper) {
+                             ObjectMapper objectMapper, TenantScopeGuard tenantScopeGuard) {
         this.memoryManager = memoryManager;
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.tenantScopeGuard = tenantScopeGuard;
     }
 
     /**
@@ -91,15 +110,16 @@ public class MemoryServiceImpl implements MemoryService {
      */
     @Override
     public MemorySaveResDTO save(MemorySaveReqDTO reqDTO) {
-        validateScope(reqDTO.tenantId(), reqDTO.projectId(), reqDTO.userId(), reqDTO.sessionId());
+        TenantScope scope = tenantScopeGuard.resolve(reqDTO.tenantId(), reqDTO.projectId());
+        validateScope(scope.tenantId(), scope.projectId(), reqDTO.userId(), reqDTO.sessionId());
         String content = validateContent(reqDTO.content());
         Map<String, Object> metadata = validateMetadata(reqDTO.metadata());
         Instant now = Instant.now();
         Instant expiresAt = resolveExpiresAt(reqDTO.ttlSeconds(), now);
         String sessionId = trimToNull(reqDTO.sessionId());
         String memoryType = Objects.isNull(sessionId) ? MemoryBO.TYPE_USER : MemoryBO.TYPE_SESSION;
-        MemoryBO memory = new MemoryBO(UUID.randomUUID().toString(), reqDTO.tenantId().trim(),
-                reqDTO.projectId().trim(), reqDTO.userId().trim(), sessionId, memoryType,
+        MemoryBO memory = new MemoryBO(UUID.randomUUID().toString(), scope.tenantId(),
+                scope.projectId(), reqDTO.userId().trim(), sessionId, memoryType,
                 content, metadata, expiresAt, now);
         memoryManager.save(memory);
         LOG.info("memory saved: memoryId={}, tenantId={}, projectId={}, userId={}, sessionId={}, "
@@ -117,14 +137,16 @@ public class MemoryServiceImpl implements MemoryService {
      */
     @Override
     public MemoryRecallResDTO recall(MemoryRecallReqDTO reqDTO) {
-        validateScope(reqDTO.tenantId(), reqDTO.projectId(), reqDTO.userId(), reqDTO.sessionId());
+        TenantScope scope = tenantScopeGuard.resolve(reqDTO.tenantId(), reqDTO.projectId());
+        validateScope(scope.tenantId(), scope.projectId(), reqDTO.userId(), reqDTO.sessionId());
         String sessionId = trimToNull(reqDTO.sessionId());
         boolean crossProject = Boolean.TRUE.equals(reqDTO.crossProject());
         validateCrossProject(crossProject, sessionId);
+        validateCrossProjectAuthorization(crossProject);
         String keywordPattern = keywordPattern(reqDTO.keyword());
         validateTimeRange(reqDTO.from(), reqDTO.to());
         int limit = resolveLimit(reqDTO.limit());
-        MemoryQuery query = new MemoryQuery(reqDTO.tenantId().trim(), reqDTO.projectId().trim(),
+        MemoryQuery query = new MemoryQuery(scope.tenantId(), scope.projectId(),
                 reqDTO.userId().trim(), sessionId, keywordPattern, reqDTO.from(), reqDTO.to(),
                 limit, crossProject);
         List<MemoryEntry> entries = memoryManager.recall(query);
@@ -146,9 +168,11 @@ public class MemoryServiceImpl implements MemoryService {
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public MemoryClearResDTO clear(MemoryClearReqDTO reqDTO, String operatorKey) {
-        validateScope(reqDTO.tenantId(), reqDTO.projectId(), reqDTO.userId(), reqDTO.sessionId());
+        TenantScope effective = tenantScopeGuard.resolve(reqDTO.tenantId(), reqDTO.projectId());
+        validateScope(effective.tenantId(), effective.projectId(), reqDTO.userId(),
+                reqDTO.sessionId());
         String reason = validateReason(reqDTO.reason());
-        MemoryScope scope = new MemoryScope(reqDTO.tenantId().trim(), reqDTO.projectId().trim(),
+        MemoryScope scope = new MemoryScope(effective.tenantId(), effective.projectId(),
                 reqDTO.userId().trim(), trimToNull(reqDTO.sessionId()));
         MemoryClearResult result = memoryManager.clear(scope, reason, operatorKey);
         LOG.info("memory cleared: tenantId={}, projectId={}, userId={}, sessionId={}, deleted={}, "
@@ -239,6 +263,22 @@ public class MemoryServiceImpl implements MemoryService {
                     PARAM_TTL + " 不能超过 " + properties.getMaxTtlSeconds() + " 秒", PARAM_TTL);
         }
         return now.plusSeconds(ttlSeconds);
+    }
+
+    /**
+     * 虚拟 Key 跨项目召回必须存在项目级授权（REQ-4.1）。
+     *
+     * @param crossProject 是否请求跨项目
+     */
+    private void validateCrossProjectAuthorization(boolean crossProject) {
+        if (!crossProject) {
+            return;
+        }
+        TenantIdentity identity = tenantScopeGuard.currentIdentity();
+        if (!ObjectUtils.isEmpty(identity) && !identity.master() && identity.authorizedProjects().isEmpty()) {
+            throw ChatCompletionException.memoryAccessDenied(
+                    "当前 API Key 未被授权跨项目访问记忆，请联系管理员配置项目授权。");
+        }
     }
 
     private void validateCrossProject(boolean crossProject, String sessionId) {

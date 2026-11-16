@@ -13,6 +13,7 @@ import com.qtua.aihub.api.model.res.ChatCompletionResDTO;
 import com.qtua.aihub.api.model.res.PromptChatResDTO;
 import com.qtua.aihub.api.model.res.PromptRenderResDTO;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.common.prompt.PromptMessage;
 import com.qtua.aihub.integration.prompt.PromptMessageParser;
 import com.qtua.aihub.integration.prompt.SimpleTemplateRenderer;
@@ -39,6 +40,7 @@ public class PromptChatServiceImpl implements PromptChatService {
     private final PromptMessageParser messageParser;
     private final ChatCompletionService chatCompletionService;
     private final ObjectMapper objectMapper;
+    private final TenantScopeGuard tenantScopeGuard;
 
     /**
      * 构造服务。
@@ -54,11 +56,32 @@ public class PromptChatServiceImpl implements PromptChatService {
                                  PromptMessageParser messageParser,
                                  ChatCompletionService chatCompletionService,
                                  ObjectMapper objectMapper) {
+        this(promptManager, templateRenderer, messageParser, chatCompletionService, objectMapper,
+                new TenantScopeGuard());
+    }
+
+    /**
+     * 构造服务（租户隔离）。
+     *
+     * @param promptManager         Prompt 数据门面
+     * @param templateRenderer      模板渲染器
+     * @param messageParser         消息解析器
+     * @param chatCompletionService 内部 chat 服务
+     * @param objectMapper          JSON 编解码器
+     * @param tenantScopeGuard      租户作用域守卫
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public PromptChatServiceImpl(PromptManager promptManager,
+                                 SimpleTemplateRenderer templateRenderer,
+                                 PromptMessageParser messageParser,
+                                 ChatCompletionService chatCompletionService,
+                                 ObjectMapper objectMapper, TenantScopeGuard tenantScopeGuard) {
         this.promptManager = promptManager;
         this.templateRenderer = templateRenderer;
         this.messageParser = messageParser;
         this.chatCompletionService = chatCompletionService;
         this.objectMapper = objectMapper;
+        this.tenantScopeGuard = tenantScopeGuard;
     }
 
     /**
@@ -103,10 +126,12 @@ public class PromptChatServiceImpl implements PromptChatService {
 
     private PromptTemplateBO resolve(String name, Integer version) {
         if (Objects.nonNull(version)) {
-            return promptManager.findByVersion(name, version)
+            String tenantId = tenantScopeGuard.resolveTenant(null);
+            return promptManager.findByVersion(tenantId, name, version)
                     .orElseThrow(() -> ChatCompletionException.promptVersionNotFound(name, version));
         }
-        return promptManager.findPublished(name)
+        String tenantId = tenantScopeGuard.resolveTenant(null);
+        return promptManager.findPublished(tenantId, name)
                 .orElseThrow(() -> ChatCompletionException.promptNotFound(name));
     }
 

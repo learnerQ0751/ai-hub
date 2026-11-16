@@ -24,6 +24,8 @@ import java.util.Objects;
  * @param rpmLimit       每分钟请求上限
  * @param tpmLimit       每分钟 Token 上限
  * @param blocked        是否封禁
+ * @param tenantId       绑定租户（REQ-4.1）
+ * @param projectId      绑定项目（REQ-4.1）
  */
 public record KeyGenerateResDTO(
         String key,
@@ -35,7 +37,20 @@ public record KeyGenerateResDTO(
         @JsonProperty("budget_duration") String budgetDuration,
         @JsonProperty("rpm_limit") Integer rpmLimit,
         @JsonProperty("tpm_limit") Integer tpmLimit,
-        boolean blocked) {
+        boolean blocked,
+        @JsonProperty("tenant_id") String tenantId,
+        @JsonProperty("project_id") String projectId) {
+
+    /**
+     * 兼容构造器：未绑定租户（旧调用/测试）。
+     */
+    public KeyGenerateResDTO(String key, List<String> models, BigDecimal spend,
+                             Map<String, Object> metadata, String expires, BigDecimal maxBudget,
+                             String budgetDuration, Integer rpmLimit, Integer tpmLimit,
+                             boolean blocked) {
+        this(key, models, spend, metadata, expires, maxBudget, budgetDuration, rpmLimit,
+                tpmLimit, blocked, null, null);
+    }
 
     /**
      * 防御性复制集合，避免调用方修改内部状态。

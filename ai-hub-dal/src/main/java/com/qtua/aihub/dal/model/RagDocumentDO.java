@@ -14,6 +14,8 @@ public class RagDocumentDO {
     private Long id;
     private String docId;
     private String projectId;
+    /** 租户 ID（REQ-4.1）。 */
+    private String tenantId;
     private String source;
     private String contentType;
     private long sizeBytes;
@@ -163,5 +165,13 @@ public class RagDocumentDO {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 }

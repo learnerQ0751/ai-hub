@@ -9,6 +9,8 @@ import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.rag.RagSearchFilter;
 import com.qtua.aihub.common.rag.RagSearchRequest;
+import com.qtua.aihub.common.tenant.TenantScope;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.core.rag.RagRetrievalCore;
 import com.qtua.aihub.core.rag.RagRetrievalResult;
 import com.qtua.aihub.core.rag.RagRetrievedChunk;
@@ -49,16 +51,31 @@ public class RagSearchServiceImpl implements RagSearchService {
 
     private final RagRetrievalCore retrievalCore;
     private final RagProperties properties;
+    private final TenantScopeGuard tenantScopeGuard;
 
     /**
-     * 构造服务。
+     * 兼容构造器（单元测试）：使用无上下文的作用域守卫。
      *
      * @param retrievalCore 检索编排
      * @param properties    RAG 配置
      */
     public RagSearchServiceImpl(RagRetrievalCore retrievalCore, RagProperties properties) {
+        this(retrievalCore, properties, new TenantScopeGuard());
+    }
+
+    /**
+     * 构造服务。
+     *
+     * @param retrievalCore    检索编排
+     * @param properties       RAG 配置
+     * @param tenantScopeGuard 租户作用域守卫
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public RagSearchServiceImpl(RagRetrievalCore retrievalCore, RagProperties properties,
+                                TenantScopeGuard tenantScopeGuard) {
         this.retrievalCore = retrievalCore;
         this.properties = properties;
+        this.tenantScopeGuard = tenantScopeGuard;
     }
 
     /**
@@ -72,7 +89,8 @@ public class RagSearchServiceImpl implements RagSearchService {
         if (Objects.isNull(reqDTO)) {
             throw ChatCompletionException.invalidRequest("请求体不能为空", null);
         }
-        String projectId = requireProject(reqDTO.projectId());
+        TenantScope scope = tenantScopeGuard.resolveProject(reqDTO.projectId());
+        String projectId = requireProject(scope.projectId());
         String query = requireQuery(reqDTO.query());
         int topK = resolveTopK(reqDTO.topK());
         double minScore = resolveMinScore(reqDTO.minScore());
@@ -84,7 +102,7 @@ public class RagSearchServiceImpl implements RagSearchService {
                 projectId, truncateQuery(query), topK, minScore, candidateLimit, rerank,
                 filter.docIds().size(), filter.source());
         RagRetrievalResult result = retrievalCore.retrieve(new RagSearchRequest(projectId, query,
-                topK, minScore, filter, rerank, candidateLimit));
+                topK, minScore, filter, rerank, candidateLimit, scope.tenantId()));
         List<RagSearchHitResDTO> hits = result.hits().stream().map(this::toHit).toList();
         LOG.info("rag search completed: projectId={}, candidates={}, count={}, noHit={}, "
                         + "reranked={}",

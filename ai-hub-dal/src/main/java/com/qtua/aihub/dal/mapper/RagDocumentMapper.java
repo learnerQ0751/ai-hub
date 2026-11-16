@@ -33,6 +33,16 @@ public interface RagDocumentMapper {
     RagDocumentDO selectByDocId(@Param("docId") String docId);
 
     /**
+     * 按 doc_id + 租户查询（租户隔离）。
+     *
+     * @param docId    文档 ID
+     * @param tenantId 租户
+     * @return 文档；不存在为 null
+     */
+    RagDocumentDO selectByDocIdInTenant(@Param("docId") String docId,
+                                        @Param("tenantId") String tenantId);
+
+    /**
      * 按项目 + hash 查询，用于去重。
      *
      * @param projectId   项目 ID
@@ -43,6 +53,18 @@ public interface RagDocumentMapper {
                                          @Param("contentHash") String contentHash);
 
     /**
+     * 按租户 + 项目 + hash 查询，用于去重。
+     *
+     * @param tenantId    租户
+     * @param projectId   项目 ID
+     * @param contentHash 文件 SHA-256
+     * @return 文档；不存在为 null
+     */
+    RagDocumentDO selectByProjectAndHashInTenant(@Param("tenantId") String tenantId,
+                                                 @Param("projectId") String projectId,
+                                                 @Param("contentHash") String contentHash);
+
+    /**
      * 按项目查询文档列表（按创建时间倒序）。
      *
      * @param projectId 项目 ID
@@ -51,6 +73,18 @@ public interface RagDocumentMapper {
      */
     List<RagDocumentDO> selectByProject(@Param("projectId") String projectId,
                                         @Param("limit") int limit);
+
+    /**
+     * 按租户 + 项目查询文档列表。
+     *
+     * @param tenantId  租户
+     * @param projectId 项目 ID
+     * @param limit     返回条数
+     * @return 文档列表
+     */
+    List<RagDocumentDO> selectByProjectInTenant(@Param("tenantId") String tenantId,
+                                                @Param("projectId") String projectId,
+                                                @Param("limit") int limit);
 
     /**
      * 更新索引状态与错误信息；errorMessage 为 null 时清空。

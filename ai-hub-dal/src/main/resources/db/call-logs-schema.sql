@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS call_logs (
     status INTEGER NOT NULL,
     error_type VARCHAR(64),
     tenant_id VARCHAR(64),
+    project_id VARCHAR(64),
+    trace_id VARCHAR(64),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     retry_count INTEGER NOT NULL DEFAULT 0,
     fallback_used BOOLEAN NOT NULL DEFAULT FALSE,

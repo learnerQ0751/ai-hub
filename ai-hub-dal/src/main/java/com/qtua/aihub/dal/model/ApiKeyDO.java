@@ -28,6 +28,10 @@ public class ApiKeyDO {
     /** 任意元信息 JSON 对象。 */
     private String metadata;
     private Instant createdAt;
+    /** 绑定租户（REQ-4.1）；未绑定为 null。 */
+    private String tenantId;
+    /** 绑定项目（REQ-4.1）；未绑定为 null。 */
+    private String projectId;
 
     public Long getId() {
         return id;
@@ -123,5 +127,21 @@ public class ApiKeyDO {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public String getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(String projectId) {
+        this.projectId = projectId;
     }
 }

@@ -17,12 +17,14 @@
         <result column="embedding_dimension" property="embeddingDimension" jdbcType="INTEGER"/>
         <result column="error_message" property="errorMessage" jdbcType="VARCHAR"/>
         <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
     </resultMap>
 
     <insert id="insertBatch">
         INSERT INTO rag_chunks
             (chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
-             index_status, embedding_model, embedding_dimension, error_message, created_at)
+             index_status, embedding_model, embedding_dimension, error_message, created_at,
+             tenant_id)
         VALUES
         <foreach collection="chunks" item="item" separator=",">
             (#{item.chunkId,jdbcType=VARCHAR}, #{item.docId,jdbcType=VARCHAR},
@@ -31,13 +33,15 @@
              #{item.source,jdbcType=VARCHAR}, #{item.indexStatus,jdbcType=VARCHAR},
              #{item.embeddingModel,jdbcType=VARCHAR},
              #{item.embeddingDimension,jdbcType=INTEGER},
-             #{item.errorMessage,jdbcType=VARCHAR}, #{item.createdAt,jdbcType=TIMESTAMP})
+             #{item.errorMessage,jdbcType=VARCHAR}, #{item.createdAt,jdbcType=TIMESTAMP},
+             COALESCE(#{item.tenantId,jdbcType=VARCHAR}, 'default'))
         </foreach>
     </insert>
 
     <select id="selectByDocId" resultMap="RagChunkResultMap">
         SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
-               index_status, embedding_model, embedding_dimension, error_message, created_at
+               index_status, embedding_model, embedding_dimension, error_message, created_at,
+               tenant_id
         FROM rag_chunks
         WHERE doc_id = #{docId,jdbcType=VARCHAR}
         ORDER BY chunk_index ASC
@@ -45,7 +49,8 @@
 
     <select id="selectPageByDocId" resultMap="RagChunkResultMap">
         SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
-               index_status, embedding_model, embedding_dimension, error_message, created_at
+               index_status, embedding_model, embedding_dimension, error_message, created_at,
+               tenant_id
         FROM rag_chunks
         WHERE doc_id = #{docId,jdbcType=VARCHAR}
           AND chunk_index &gt; #{afterChunkIndex,jdbcType=INTEGER}
@@ -55,9 +60,22 @@
 
     <select id="selectByChunkIds" resultMap="RagChunkResultMap">
         SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
-               index_status, embedding_model, embedding_dimension, error_message, created_at
+               index_status, embedding_model, embedding_dimension, error_message, created_at,
+               tenant_id
         FROM rag_chunks
         WHERE chunk_id IN
+        <foreach collection="chunkIds" item="chunkId" open="(" separator="," close=")">
+            #{chunkId,jdbcType=VARCHAR}
+        </foreach>
+    </select>
+
+    <select id="selectByChunkIdsInTenant" resultMap="RagChunkResultMap">
+        SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
+               index_status, embedding_model, embedding_dimension, error_message, created_at,
+               tenant_id
+        FROM rag_chunks
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND chunk_id IN
         <foreach collection="chunkIds" item="chunkId" open="(" separator="," close=")">
             #{chunkId,jdbcType=VARCHAR}
         </foreach>

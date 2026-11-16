@@ -1,6 +1,7 @@
 package com.qtua.aihub.common.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.util.StringUtils;
 
 /**
  * 网关业务异常。
@@ -184,6 +185,44 @@ public class ChatCompletionException extends RuntimeException {
     public static ChatCompletionException masterKeyRequired() {
         return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
                 "鉴权失败：管理接口需要 master key。", "auth_error", null, "401", null, false);
+    }
+
+    /**
+     * 管理面权限不足（403，REQ-4.4）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException adminRequired() {
+        return new ChatCompletionException(HttpStatus.FORBIDDEN,
+                "当前调用方没有管理权限。", "authorization_error", null, "403", null, false);
+    }
+
+    /**
+     * 租户/项目越权（403，REQ-4.1）。
+     *
+     * <p>错误体字段保持英文协议值；日志由 {@code TenantScopeGuard} 记录 Key 哈希与范围。</p>
+     *
+     * @param reason           中文原因
+     * @param requestedTenant  请求声明的租户
+     * @param requestedProject 请求声明的项目
+     * @return 业务异常
+     */
+    public static ChatCompletionException tenantAccessDenied(String reason, String requestedTenant,
+                                                             String requestedProject) {
+        String param = StringUtils.hasText(requestedTenant) ? "tenant_id" : "project_id";
+        return new ChatCompletionException(HttpStatus.FORBIDDEN, reason,
+                "tenant_access_denied", param, "403", null, false);
+    }
+
+    /**
+     * 资源不属于当前租户（404，避免泄露存在性）。
+     *
+     * @param message 中文描述
+     * @return 业务异常
+     */
+    public static ChatCompletionException tenantResourceNotFound(String message) {
+        return new ChatCompletionException(HttpStatus.NOT_FOUND, message,
+                "not_found_error", null, "404", null, false);
     }
 
     /**

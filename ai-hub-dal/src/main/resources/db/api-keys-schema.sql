@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS api_keys (
     expires_at TIMESTAMP WITH TIME ZONE,
     blocked BOOLEAN NOT NULL DEFAULT FALSE,
     metadata JSONB,
+    tenant_id VARCHAR(64),
+    project_id VARCHAR(64),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uk_api_keys_key_hash UNIQUE (key_hash)
 );

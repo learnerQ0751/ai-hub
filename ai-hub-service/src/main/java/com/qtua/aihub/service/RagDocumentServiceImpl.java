@@ -7,6 +7,8 @@ import com.qtua.aihub.api.model.res.RagDocumentResDTO;
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.rag.EmbeddingModel;
+import com.qtua.aihub.common.tenant.TenantScope;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.core.rag.RagDeleteResult;
 import com.qtua.aihub.core.rag.RagDocumentCore;
 import com.qtua.aihub.core.rag.RagIngestResult;
@@ -49,19 +51,35 @@ public class RagDocumentServiceImpl implements RagDocumentService {
     private final RagDocumentCore documentCore;
     private final EmbeddingModel embeddingModel;
     private final RagProperties properties;
+    private final TenantScopeGuard tenantScopeGuard;
 
     /**
-     * 构造服务。
+     * 兼容构造器（单元测试）：使用无上下文的作用域守卫。
      *
      * @param documentCore   文档编排
-     * @param embeddingModel 当前向量模型（用于判断是否需要重建索引）
+     * @param embeddingModel 当前向量模型
      * @param properties     RAG 配置
      */
     public RagDocumentServiceImpl(RagDocumentCore documentCore, EmbeddingModel embeddingModel,
                                   RagProperties properties) {
+        this(documentCore, embeddingModel, properties, new TenantScopeGuard());
+    }
+
+    /**
+     * 构造服务。
+     *
+     * @param documentCore     文档编排
+     * @param embeddingModel   当前向量模型（用于判断是否需要重建索引）
+     * @param properties       RAG 配置
+     * @param tenantScopeGuard 租户作用域守卫
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public RagDocumentServiceImpl(RagDocumentCore documentCore, EmbeddingModel embeddingModel,
+                                  RagProperties properties, TenantScopeGuard tenantScopeGuard) {
         this.documentCore = documentCore;
         this.embeddingModel = embeddingModel;
         this.properties = properties;
+        this.tenantScopeGuard = tenantScopeGuard;
     }
 
     /**
@@ -76,14 +94,15 @@ public class RagDocumentServiceImpl implements RagDocumentService {
     @Override
     public RagDocumentResDTO ingest(String projectId, String fileName, String contentType,
                                     byte[] content) {
-        String normalizedProject = requireProject(projectId);
+        TenantScope scope = tenantScopeGuard.resolveProject(projectId);
+        String normalizedProject = requireProject(scope.projectId());
         String source = normalizeSource(fileName);
         byte[] bytes = requireContent(content, source);
         try {
-            RagIngestResult result = documentCore.ingest(normalizedProject, source,
+            RagIngestResult result = documentCore.ingest(scope.tenantId(), normalizedProject, source,
                     resolveContentType(source, contentType), bytes,
                     properties.getDedup().isOverride());
-            RagDocumentBO document = documentCore.find(result.document().docId(),
+            RagDocumentBO document = documentCore.find(scope.tenantId(), result.document().docId(),
                     normalizedProject).orElse(result.document());
             LOG.info("rag ingest completed: docId={}, projectId={}, source={}, size={}, "
                             + "chunks={}, duplicated={}",
@@ -104,9 +123,11 @@ public class RagDocumentServiceImpl implements RagDocumentService {
      */
     @Override
     public RagDocumentListResDTO list(String projectId, Integer limit) {
-        String normalizedProject = requireProject(projectId);
+        TenantScope scope = tenantScopeGuard.resolveProject(projectId);
+        String normalizedProject = requireProject(scope.projectId());
         int resolvedLimit = resolveLimit(limit);
-        List<RagDocumentResDTO> documents = documentCore.list(normalizedProject, resolvedLimit)
+        List<RagDocumentResDTO> documents = documentCore.list(scope.tenantId(), normalizedProject,
+                        resolvedLimit)
                 .stream()
                 .map(document -> toResDTO(document, false))
                 .toList();
@@ -122,11 +143,12 @@ public class RagDocumentServiceImpl implements RagDocumentService {
      */
     @Override
     public RagDocumentResDTO reindex(String docId, String projectId) {
-        String normalizedProject = requireProject(projectId);
+        TenantScope scope = tenantScopeGuard.resolveProject(projectId);
+        String normalizedProject = requireProject(scope.projectId());
         String normalizedDocId = requireDocId(docId);
-        documentCore.find(normalizedDocId, normalizedProject)
+        documentCore.find(scope.tenantId(), normalizedDocId, normalizedProject)
                 .orElseThrow(() -> ChatCompletionException.ragDocumentNotFound(docId));
-        RagDocumentBO document = documentCore.reindex(normalizedDocId)
+        RagDocumentBO document = documentCore.reindex(scope.tenantId(), normalizedDocId)
                 .orElseThrow(() -> ChatCompletionException.ragDocumentNotFound(docId));
         LOG.info("rag reindex completed: docId={}, projectId={}, status={}",
                 document.docId(), normalizedProject, document.indexStatus());
@@ -142,11 +164,12 @@ public class RagDocumentServiceImpl implements RagDocumentService {
      */
     @Override
     public RagDocumentDeleteResDTO remove(String docId, String projectId) {
-        String normalizedProject = requireProject(projectId);
+        TenantScope scope = tenantScopeGuard.resolveProject(projectId);
+        String normalizedProject = requireProject(scope.projectId());
         if (!StringUtils.hasText(docId)) {
             throw ChatCompletionException.invalidRequest("doc_id 不能为空", "doc_id");
         }
-        documentCore.find(docId.trim(), normalizedProject)
+        documentCore.find(scope.tenantId(), docId.trim(), normalizedProject)
                 .orElseThrow(() -> ChatCompletionException.ragDocumentNotFound(docId));
         RagDeleteResult result = documentCore.delete(docId.trim());
         LOG.info("rag document removed: docId={}, projectId={}, chunksDeleted={}, "

@@ -33,36 +33,43 @@
     </insert>
 
     <select id="selectMaxVersion" resultType="java.lang.Integer">
-        SELECT MAX(version) FROM prompt_templates WHERE name = #{name,jdbcType=VARCHAR}
+        SELECT MAX(version) FROM prompt_templates
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND name = #{name,jdbcType=VARCHAR}
     </select>
 
     <select id="selectPublished" resultMap="PromptResultMap">
         <include refid="columns"/>
-        WHERE name = #{name,jdbcType=VARCHAR} AND status = 'PUBLISHED'
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND name = #{name,jdbcType=VARCHAR} AND status = 'PUBLISHED'
         ORDER BY version DESC
         LIMIT 1
     </select>
 
     <select id="selectByVersion" resultMap="PromptResultMap">
         <include refid="columns"/>
-        WHERE name = #{name,jdbcType=VARCHAR} AND version = #{version,jdbcType=INTEGER}
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND name = #{name,jdbcType=VARCHAR} AND version = #{version,jdbcType=INTEGER}
     </select>
 
     <select id="selectVersions" resultMap="PromptResultMap">
         <include refid="columns"/>
-        WHERE name = #{name,jdbcType=VARCHAR}
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND name = #{name,jdbcType=VARCHAR}
         ORDER BY version DESC
     </select>
 
     <select id="selectAllPublished" resultMap="PromptResultMap">
         <include refid="columns"/>
-        WHERE status = 'PUBLISHED'
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND status = 'PUBLISHED'
         ORDER BY name ASC, version DESC
     </select>
 
     <select id="lockByName" resultType="java.lang.Long">
         SELECT id FROM prompt_templates
-        WHERE name = #{name,jdbcType=VARCHAR}
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND name = #{name,jdbcType=VARCHAR}
         ORDER BY id ASC
         LIMIT 1
         FOR UPDATE
@@ -71,12 +78,14 @@
     <update id="archivePublished">
         UPDATE prompt_templates
         SET status = 'ARCHIVED'
-        WHERE name = #{name,jdbcType=VARCHAR} AND status = 'PUBLISHED'
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND name = #{name,jdbcType=VARCHAR} AND status = 'PUBLISHED'
     </update>
 
     <update id="publishVersion">
         UPDATE prompt_templates
         SET status = 'PUBLISHED'
-        WHERE name = #{name,jdbcType=VARCHAR} AND version = #{version,jdbcType=INTEGER}
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND name = #{name,jdbcType=VARCHAR} AND version = #{version,jdbcType=INTEGER}
     </update>
 </mapper>

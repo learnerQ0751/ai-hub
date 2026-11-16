@@ -36,6 +36,8 @@ logging:
 
 gateway:
   master-key: ${GATEWAY_MASTER_KEY:}
+  # 上游凭证加密密钥（AES-256-GCM）；生产必须配置，缺失时退化为弱编码并告警
+  secret-key: ${GATEWAY_SECRET_KEY:}
   model-list: {}
   pricing:
     models: {}

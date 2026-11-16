@@ -85,9 +85,25 @@ public class RagDocumentCore {
      */
     public RagIngestResult ingest(String projectId, String source, String contentType,
                                   byte[] content, boolean override) {
+        return ingest("default", projectId, source, contentType, content, override);
+    }
+
+    /**
+     * 接入文档（租户隔离）。
+     *
+     * @param tenantId    租户 ID
+     * @param projectId   项目 ID
+     * @param source      文件名
+     * @param contentType 内容类型
+     * @param content     文件字节
+     * @param override    是否覆盖重复文档
+     * @return 接入结果
+     */
+    public RagIngestResult ingest(String tenantId, String projectId, String source,
+                                  String contentType, byte[] content, boolean override) {
         String contentHash = sha256(content);
-        Optional<RagDocumentBO> existing = documentManager.findByProjectAndHash(projectId,
-                contentHash);
+        Optional<RagDocumentBO> existing = documentManager.findByProjectAndHash(tenantId,
+                projectId, contentHash);
         if (existing.isPresent()) {
             RagDocumentBO document = existing.get();
             if (!override && !RagIndexStatus.FAILED.name().equals(document.indexStatus())) {
@@ -99,15 +115,15 @@ public class RagDocumentCore {
         try {
             text = textExtractor.extract(source, content);
         } catch (DocumentParseException ex) {
-            RagDocumentBO failed = persistDocument(projectId, source, contentType, content,
-                    contentHash, List.of(), RagIndexStatus.FAILED, ex.getMessage());
+            RagDocumentBO failed = persistDocument(tenantId, projectId, source, contentType,
+                    content, contentHash, List.of(), RagIndexStatus.FAILED, ex.getMessage());
             LOG.warn("rag document parse failed: docId={}, source={}, size={}",
                     failed.docId(), source, content.length);
             throw ex;
         }
         List<RagChunkDraft> drafts = chunker.split(text);
-        RagDocumentBO document = persistDocument(projectId, source, contentType, content,
-                contentHash, drafts, RagIndexStatus.PENDING, null);
+        RagDocumentBO document = persistDocument(tenantId, projectId, source, contentType,
+                content, contentHash, drafts, RagIndexStatus.PENDING, null);
         document = indexCore.index(document.docId());
         LOG.info("rag document ingested: docId={}, projectId={}, source={}, size={}, chunks={}, "
                         + "status={}",
@@ -116,20 +132,20 @@ public class RagDocumentCore {
         return new RagIngestResult(document, false, existing.isPresent());
     }
 
-    private RagDocumentBO persistDocument(String projectId, String source, String contentType,
-                                          byte[] content, String contentHash,
+    private RagDocumentBO persistDocument(String tenantId, String projectId, String source,
+                                          String contentType, byte[] content, String contentHash,
                                           List<RagChunkDraft> drafts, RagIndexStatus status,
                                           String errorMessage) {
         Instant now = Instant.now();
         String docId = UUID.randomUUID().toString();
         RagDocumentBO document = new RagDocumentBO(docId, projectId, source, contentType,
                 content.length, contentHash, content, drafts.size(), status.name(), null, null,
-                null, BigDecimal.ZERO, truncate(errorMessage), now, now);
+                null, BigDecimal.ZERO, truncate(errorMessage), now, now, tenantId);
         try {
             documentManager.insert(document);
         } catch (DataIntegrityViolationException ex) {
             // 并发上传同一文件：唯一约束保证只有一个文档，冲突方返回已有文档。
-            return documentManager.findByProjectAndHash(projectId, contentHash)
+            return documentManager.findByProjectAndHash(tenantId, projectId, contentHash)
                     .orElseThrow(() -> ex);
         }
         saveChunks(document, drafts, now);
@@ -144,7 +160,8 @@ public class RagDocumentCore {
                 .map(draft -> new RagChunkBO(chunkId(document.docId(), draft.chunkIndex()),
                         document.docId(), document.projectId(), draft.chunkIndex(),
                         draft.content(), draft.charCount(), document.source(),
-                        RagIndexStatus.PENDING.name(), null, null, null, now))
+                        RagIndexStatus.PENDING.name(), null, null, null, now,
+                        document.tenantId()))
                 .toList();
         chunkManager.insertAll(chunks, properties.getChunk().getPersistBatchSize());
     }
@@ -162,6 +179,19 @@ public class RagDocumentCore {
     }
 
     /**
+     * 查询文档（租户 + 项目归属校验）。
+     *
+     * @param tenantId  租户 ID
+     * @param docId     文档 ID
+     * @param projectId 项目 ID
+     * @return 文档；不存在或越权为空
+     */
+    public Optional<RagDocumentBO> find(String tenantId, String docId, String projectId) {
+        return documentManager.findByDocId(tenantId, docId)
+                .filter(document -> Objects.equals(document.projectId(), projectId));
+    }
+
+    /**
      * 按项目查询文档列表。
      *
      * @param projectId 项目 ID
@@ -170,6 +200,18 @@ public class RagDocumentCore {
      */
     public List<RagDocumentBO> list(String projectId, int limit) {
         return documentManager.listByProject(projectId, limit);
+    }
+
+    /**
+     * 按租户 + 项目查询文档列表。
+     *
+     * @param tenantId  租户 ID
+     * @param projectId 项目 ID
+     * @param limit     返回条数
+     * @return 文档列表
+     */
+    public List<RagDocumentBO> list(String tenantId, String projectId, int limit) {
+        return documentManager.listByProject(tenantId, projectId, limit);
     }
 
     /**
@@ -193,6 +235,20 @@ public class RagDocumentCore {
      * @return 索引后的文档；不存在为空
      */
     public Optional<RagDocumentBO> reindex(String docId) {
+        return Optional.ofNullable(indexCore.reindex(docId));
+    }
+
+    /**
+     * 重建文档索引（租户归属校验）。
+     *
+     * @param tenantId 租户 ID
+     * @param docId    文档 ID
+     * @return 索引后的文档；不存在或越权为空
+     */
+    public Optional<RagDocumentBO> reindex(String tenantId, String docId) {
+        if (documentManager.findByDocId(tenantId, docId).isEmpty()) {
+            return Optional.empty();
+        }
         return Optional.ofNullable(indexCore.reindex(docId));
     }
 

@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:aihub;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:aihub-${random.uuid};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -16,8 +16,12 @@ spring:
         - classpath:db/mcp-prompt-schema.sql
         - classpath:db/memories-schema.sql
         - classpath:db/rag-schema.sql
+        - classpath:db/governance-schema.sql
 
 gateway:
+  secret-key: integration-test-secret
+  # 测试库跨上下文共享：每次启动按 YAML 覆盖，避免指向已关闭的 MockWebServer
+  catalog-seed-mode: refresh
   rag:
     upload:
       max-size-bytes: 1048576

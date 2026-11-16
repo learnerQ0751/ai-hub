@@ -50,6 +50,16 @@ public interface RagChunkMapper {
     List<RagChunkDO> selectByChunkIds(@Param("chunkIds") List<String> chunkIds);
 
     /**
+     * 按切片 ID 批量查询（租户隔离）。
+     *
+     * @param tenantId 租户
+     * @param chunkIds 切片 ID 列表
+     * @return 切片列表
+     */
+    List<RagChunkDO> selectByChunkIdsInTenant(@Param("tenantId") String tenantId,
+                                              @Param("chunkIds") List<String> chunkIds);
+
+    /**
      * 统计文档切片数。
      *
      * @param docId 文档 ID
