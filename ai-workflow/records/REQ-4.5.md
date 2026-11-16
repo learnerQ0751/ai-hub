@@ -4,7 +4,7 @@
 - 状态：已完成（待主人验收）
 - 关联规格：`13-项目7-第4期-治理收尾.md` REQ-4.5 + 四期毕业验收
 - 依赖需求：REQ-4.1~4.4
-- 提交：待回填
+- 提交：eeab125
 
 ## 1. 是什么
 
@@ -102,7 +102,7 @@ regression:
 
 - 2026-11-16：V13、AuditRecorder/Manager/Query API、5 类动作接入；
   `AuditLogIntegrationTest` 覆盖字段完整性与非管理员 403；总验收材料写入 acceptance。
-- 提交：待回填。
+- 提交：eeab125。
 
 ## 7. 复盘
 

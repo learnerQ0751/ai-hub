@@ -470,6 +470,21 @@ sequenceDiagram
 - pgvector：列固定 `vector(1024)`，低维模型零填充；V9 迁移清空派生向量，文档按模型/维度提示
   `reindex_required`。
 
+### 3.18 第 4 期治理（REQ-4.1~4.5）
+
+- **租户上下文**：`AuthFilter` 解析 Key → `TenantIdentity` → `TenantContextHolder`（ThreadLocal）→
+  `TenantScopeGuard` 在 Service 入口校验请求声明；不一致 403，禁止参数覆盖 Key 绑定。
+- **隔离落点**：RAG 文档/切片/向量、Prompt、MCP、记忆、call_logs、trace_events、audit_logs
+  全部带 `tenant_id`；RAG 向量先过滤再排序；跨项目只经 `project_authorizations` 显式授权。
+- **模型目录**：YAML → DB（`model_aliases/model_deployments/别名↔部署/别名↔Key`）；
+  `DbModelCatalog`（@Primary）每请求读库，`ModelCatalogSeeder` 空库时从 YAML 灌入；
+  上游凭证 AES-256-GCM（`SecretCipher`）。
+- **Trace**：`request_id = trace_id`，MDC + `X-Trace-Id`；`trace_events` 分段（gateway/model/
+  rag/answer/mcp），`TraceRecorder` 端口 + 有界线程池异步写，按 trace 确定性采样。
+- **用量**：`v_usage_daily` 实时视图，`/v1/usage` + CSV，缺价模型单列告警。
+- **管理端**：`/v1/admin/**` 仅 master，Key/模型/日志/项目授权；api-key 永不回显。
+- **审计**：`audit_logs` 只追加 + PG 触发器；`AuditRecorder` 记录脱敏快照与 trace_id。
+
 ## 4. 跨需求设计决策
 
 | 决策 | 理由 | 引入需求 | 日期 |
@@ -564,6 +579,11 @@ sequenceDiagram
 | 2026-11-12 | REQ-3.8 | 计费与边界补强（RAG answer 实际 usage 回填与事后预算、chunk 窗口推导、上传类型限制） |
 | 2026-11-12 | REQ-3.9 | 文档解析扩展（解析器注册表、docx/pptx/xlsx/html、`.doc` 拒绝、ZIP 解压预检与 POI 安全限制） |
 | 2026-11-12 | REQ-3.10 | 索引分页加载（`chunk_index` 游标分页、页内 embedding 拆批、`index.page-size` 配置） |
+| 2026-11-16 | REQ-4.1 | 多租户贯穿（Key 绑租户/项目、TenantContext、服务端强制过滤、授权表、模型目录 DB 化+AES-GCM） |
+| 2026-11-16 | REQ-4.2 | 全链路 Trace（request_id=trace_id、分段事件、异步采样、`/v1/traces`） |
+| 2026-11-16 | REQ-4.3 | 用量统计（`v_usage_daily` 实时视图、`/v1/usage`+CSV、缺价告警） |
+| 2026-11-16 | REQ-4.4 | 管理端 API（`/v1/admin`：Key/模型/日志/授权、脱敏、分页） |
+| 2026-11-16 | REQ-4.5 | 审计日志（只追加+PG 触发器）与项目总验收材料 |
 
 ## 6. 与 LiteLLM 的差异
 
