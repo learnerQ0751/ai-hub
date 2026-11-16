@@ -6,3 +6,8 @@ target/
 application-local.yml
 .env
 *.log
+
+# OpenMausBot dev-bot skill junctions (link to E:/AIWorkbench/.claude/skills)
+.claude/skills/qi-*/
+.claude/skills/code-reviewer/
+.claude/settings.json
