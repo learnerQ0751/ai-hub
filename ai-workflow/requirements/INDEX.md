@@ -34,7 +34,7 @@
 | REQ-3.9 | 文档解析扩展（docx/pptx/xlsx/html） | 生产化补强 | 主人验收反馈（第 6 批简报） | 已完成 | REQ-3.1、REQ-3.8 | additive | `acceptance/REQ-3.9.md` |
 | REQ-3.10 | 索引分页加载与限制策略 | 生产化补强 | 主人验收反馈（第 6 批简报） | 已完成 | REQ-3.2、REQ-3.7 | additive | `acceptance/REQ-3.10.md` |
 | REQ-4.1 | 多租户贯穿与隔离 | 第 4 期 | `13-项目7-第4期-治理收尾.md` | 已完成 | REQ-1.3 | extension | `acceptance/REQ-4.1.md` |
-| REQ-4.2 | 全链路 Trace | 第 4 期 | `13-项目7-第4期-治理收尾.md` | 待实现 | REQ-1.5 | — | — |
-| REQ-4.3 | 成本与用量统计 | 第 4 期 | `13-项目7-第4期-治理收尾.md` | 待实现 | REQ-1.5 | — | — |
+| REQ-4.2 | 全链路 Trace | 第 4 期 | `13-项目7-第4期-治理收尾.md` | 已完成 | REQ-1.5 | additive | `acceptance/REQ-4.2.md` |
+| REQ-4.3 | 成本与用量统计 | 第 4 期 | `13-项目7-第4期-治理收尾.md` | 已完成 | REQ-1.5 | additive | `acceptance/REQ-4.3.md` |
 | REQ-4.4 | 管理端 | 第 4 期 | `13-项目7-第4期-治理收尾.md` | 待实现 | REQ-4.1、REQ-4.3 | — | — |
 | REQ-4.5 | 审计日志 + 总验收 | 第 4 期 | `13-项目7-第4期-治理收尾.md` | 待实现 | REQ-4.2、REQ-4.4 | — | — |

@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-16 13:21
+**最后更新**：2026-11-16 16:20
 
 ## 需求进度
 
@@ -37,6 +37,8 @@
 | REQ-3.8 | 计费与边界补强（RAG answer 计费 / chunk 推导 / 上传限制） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（11/11） | REQ-3.4、REQ-3.7 | 647f998 |
 | REQ-3.9 | 文档解析扩展（docx / pptx / xlsx / html） | 已完成 | additive | 待验收（2026-11-12，实现与自检完成）（15/15） | REQ-3.1、REQ-3.8 | b2dca87 |
 | REQ-4.1 | 多租户贯穿与隔离 | 已完成（待主人验收） | extension | 待验收（2026-11-16，实现与自检完成）（10/10） | REQ-1.3、REQ-2.1、REQ-2.4、REQ-3.1~3.5 | 待回填 |
+| REQ-4.2 | 全链路 Trace | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-1.5、REQ-2.3、REQ-3.4、REQ-4.1 | 待回填 |
+| REQ-4.3 | 成本与用量统计 | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-1.5、REQ-4.1 | 待回填 |
 
 ## 接口清单（来自 Controller）
 
@@ -77,6 +79,9 @@
 | DELETE | /v1/rag/documents/{docId} | RagDocumentController#remove | REQ-3.1, REQ-3.2 |
 | POST | /v1/rag/documents/{docId}/reindex | RagDocumentController#reindex | REQ-3.2 |
 | POST | /v1/rag/search | RagSearchController#search | REQ-3.3 |
+| GET | /v1/traces/{traceId} | TraceController#get | REQ-4.2 |
+| GET | /v1/usage | UsageController#query | REQ-4.3 |
+| GET | /v1/usage/export | UsageController#export | REQ-4.3 |
 
 ## 数据表速查（语义来自 docs/DATA-MODEL.md，DDL 校验）
 
@@ -91,6 +96,13 @@
 | model_deployments | 部署实例：deployment_key（唯一）/ api_base / api_key_cipher（AES-GCM 密文）/ upstream_model / status | N:M model_aliases | active | REQ-4.1 | ✓ |
 | model_alias_deployments | 别名↔部署：alias_id + deployment_id（联合主键）/ weight / priority | 多对多关系表 | active | REQ-4.1 | ✓ |
 | model_alias_keys | 别名↔虚拟 Key：alias_id + key_hash（联合主键） | 多对多关系表 | active | REQ-4.1 | ✓ |
+
+### 可观测性
+
+| 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
+|---|---|---|---|---|---|
+| v_usage_daily | 用量/成本实时聚合视图：usage_date / tenant_id / project_id / model_alias / key_id / requests / prompt_tokens / completion_tokens / total_tokens / cost | 直接从 call_logs 聚合；与逐条日志同口径 | active | REQ-4.3 | — |
+| trace_events | 全链路分段事件：trace_id（=request_id）/ tenant_id / project_id / key_id / segment（gateway/model/rag/mcp/answer）/ name / status / latency_ms / payload（JSONB 摘要）/ created_at | 弱关联 call_logs（trace_id）；按 trace_id 聚合成一次请求轨迹 | active | REQ-4.2 | ✓ |
 
 ### 网关与鉴权
 
@@ -146,6 +158,9 @@
 | GET /v1/prompts/{name} | REQ-2.4 |
 | GET /v1/prompts/{name}/versions | REQ-2.4 |
 | GET /v1/rag/documents | REQ-3.1 |
+| GET /v1/traces/{traceId} | REQ-4.2 |
+| GET /v1/usage | REQ-4.3 |
+| GET /v1/usage/export | REQ-4.3 |
 | mcp_servers | REQ-2.1 |
 | memories | REQ-3.5 |
 | memory_audit_logs | REQ-3.5 |
@@ -185,7 +200,10 @@
 | rag_documents | REQ-3.1, REQ-3.2 |
 | rag_vectors | REQ-3.2, REQ-3.7 |
 | server_name}]；流式 + mcp → 400 | REQ-2.8 |
+| trace_events | REQ-4.2 |
 | trace_id) | REQ-4.1 |
+| v_usage_daily | REQ-4.3 |
+| 响应头新增 X-Trace-Id | REQ-4.2 |
 
 ## 模块依赖
 
@@ -193,7 +211,7 @@
 
 ## 测试
 
-- 448 个 @Test / 77 个测试类
+- 451 个 @Test / 80 个测试类
 
 ## 下一步
 
@@ -207,6 +225,8 @@
 - 验收 REQ-3.8 计费与边界补强（RAG answer 计费 / chunk 推导 / 上传限制） → 打开 `acceptance/REQ-3.8.md`
 - 验收 REQ-3.9 文档解析扩展（docx / pptx / xlsx / html） → 打开 `acceptance/REQ-3.9.md`
 - 验收 REQ-4.1 多租户贯穿与隔离 → 打开 `acceptance/REQ-4.1.md`
+- 验收 REQ-4.2 全链路 Trace → 打开 `acceptance/REQ-4.2.md`
+- 验收 REQ-4.3 成本与用量统计 → 打开 `acceptance/REQ-4.3.md`
 
 <!-- STATUS:GENERATED:END -->
 
