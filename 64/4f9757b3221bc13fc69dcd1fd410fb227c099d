@@ -1,0 +1,16 @@
+LICENSE
+  h_bbd60dd32c40c2 1-21
+README.md
+  h_bbd60dd32c40c2 3,5,7-17,19-29,31,33,35,37,40-41,43-46,48-49,52,57-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "644f9757b3221bc13fc69dcd1fd410fb227c099d",
+  "prompts": {},
+  "humans": {
+    "h_bbd60dd32c40c2": {
+      "author": "qtua <learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
