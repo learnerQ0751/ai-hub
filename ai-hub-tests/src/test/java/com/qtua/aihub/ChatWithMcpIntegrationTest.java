@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.dal.mapper.CallLogMapper;
 import com.qtua.aihub.dal.model.CallLogDO;
@@ -32,12 +36,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * REQ-2.8 端到端验收：chat 请求声明 MCP 工具 → 模型 tool_calls → 网关执行 MCP 工具 → 回填再调模型。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class ChatWithMcpIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private String dataKey;
+
+    /**
+     * 数据面测试统一使用虚拟 Key（master key 仅控制面可用）。
+     */
+    @org.junit.jupiter.api.BeforeEach
+    void initDataPlaneKey() {
+        dataKey = TestKeys.create(keyService, "test-tenant", "test-project");
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.manager.mcp.McpServerManager mcpServerManager;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.manager.mcp.McpToolCatalog mcpToolCatalog;
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final AtomicInteger MCP_CALLS = new AtomicInteger();
     private static final AtomicInteger UPSTREAM_CALLS = new AtomicInteger();
     private static final java.util.concurrent.atomic.AtomicReference<String> LAST_STREAM_BODY =
@@ -68,7 +91,7 @@ class ChatWithMcpIntegrationTest {
     static void gatewayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_chat_mcp;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
         registry.add("gateway.model-list.chat[0].api-base", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.model-list.chat[0].api-key", () -> "upstream-key");
         registry.add("gateway.model-list.chat[0].model", () -> "upstream-chat");
@@ -84,19 +107,13 @@ class ChatWithMcpIntegrationTest {
 
     @Test
     void chat_auto_calls_mcp_tool_and_returns_final_answer() throws Exception {
-        ResponseEntity<String> registered = restClient.post()
-                .uri("/v1/mcp/servers")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("name", "chat_mcp_srv", "transport", "http",
-                        "endpoint", MCP_SRV.url("/mcp").toString()))
-                .retrieve().toEntity(String.class);
-        assertThat(registered.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        McpTestSupport.register(mcpServerManager, mcpToolCatalog, "chat_mcp_srv",
+                MCP_SRV.url("/mcp").toString(), "test-tenant");
         MCP_CALLS.set(0);
 
         ResponseEntity<String> response = restClient.post()
                 .uri("/v1/chat/completions")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("{\"model\":\"chat\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],"
                         + "\"tools\":[{\"type\":\"mcp\",\"server_name\":\"chat_mcp_srv\"}]}")
@@ -114,18 +131,12 @@ class ChatWithMcpIntegrationTest {
 
     @Test
     void streaming_with_mcp_expands_tools_and_proxies_sse() throws Exception {
-        ResponseEntity<String> registered = restClient.post()
-                .uri("/v1/mcp/servers")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("name", "chat_mcp_stream", "transport", "http",
-                        "endpoint", MCP_SRV.url("/mcp").toString()))
-                .retrieve().toEntity(String.class);
-        assertThat(registered.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        McpTestSupport.register(mcpServerManager, mcpToolCatalog, "chat_mcp_stream",
+                MCP_SRV.url("/mcp").toString(), "test-tenant");
 
         ResponseEntity<String> response = restClient.post()
                 .uri("/v1/chat/completions")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("{\"model\":\"chat\",\"stream\":true,"
                         + "\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],"
@@ -144,7 +155,7 @@ class ChatWithMcpIntegrationTest {
     void plain_chat_is_unaffected() {
         ResponseEntity<String> response = restClient.post()
                 .uri("/v1/chat/completions")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("{\"model\":\"chat\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}")
                 .retrieve().toEntity(String.class);

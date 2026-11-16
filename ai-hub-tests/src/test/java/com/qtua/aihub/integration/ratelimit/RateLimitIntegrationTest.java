@@ -1,6 +1,9 @@
 package com.qtua.aihub.integration.ratelimit;
 
-import com.qtua.aihub.AiHubApplication;
+import com.qtua.aihub.api.KeyService;
+
+import com.qtua.aihub.TestKeys;
+import com.qtua.aihub.gateway.GatewayApplication;
 import com.qtua.aihub.common.config.RateLimitProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +38,22 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 并发用例验证多实例共享同一 Redis 时计数一致。</p>
  */
 @Testcontainers(disabledWithoutDocker = true)
-@SpringBootTest(classes = AiHubApplication.class)
+@SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 class RateLimitIntegrationTest {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private String dataKey;
+
+    /**
+     * 数据面测试统一使用虚拟 Key（master key 仅控制面可用）。
+     */
+    @org.junit.jupiter.api.BeforeEach
+    void initDataPlaneKey() {
+        dataKey = TestKeys.create(keyService, "test-tenant", "test-project");
+    }
 
     @Container
     static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7.2")

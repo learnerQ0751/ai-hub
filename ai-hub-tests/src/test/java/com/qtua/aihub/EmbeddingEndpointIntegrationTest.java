@@ -1,5 +1,7 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +9,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.qtua.aihub.dal.mapper.CallLogMapper;
 import com.qtua.aihub.dal.model.CallLogDO;
+import com.qtua.aihub.api.KeyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +30,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * REQ-3.7 /v1/embeddings 端到端：OpenAI 契约、输入校验、治理日志（确定性模型，不依赖外部 API）。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class EmbeddingEndpointIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private String dataKey;
+
+    /**
+     * 数据面测试统一使用虚拟 Key（master key 仅控制面可用）。
+     */
+    @org.junit.jupiter.api.BeforeEach
+    void initDataPlaneKey() {
+        dataKey = TestKeys.create(keyService, "test-tenant", "test-project");
+    }
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final String MODEL = "deterministic-embedding";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -58,7 +74,7 @@ class EmbeddingEndpointIntegrationTest {
     static void gatewayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_embedding;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
     }
 
     @Test
@@ -156,7 +172,7 @@ class EmbeddingEndpointIntegrationTest {
     private ResponseEntity<String> post(ObjectNode body) {
         return restClient.post()
                 .uri("/v1/embeddings")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body.toString())
                 .retrieve()

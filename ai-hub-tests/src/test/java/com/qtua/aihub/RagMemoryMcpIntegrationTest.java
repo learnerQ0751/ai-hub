@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,18 +43,35 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * REQ-3.6 端到端验收：MCP Client 调用 RAG 与记忆工具、跨项目授权、未授权拒绝与调用日志。
  *
  * <p>使用 H2 + 确定性 embedding + 内存向量存储；跨项目共享开关保持默认关闭。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class RagMemoryMcpIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private final java.util.Map<String, String> keys = new java.util.HashMap<>();
+
+    /**
+     * 按项目取虚拟 Key。
+     *
+     * @param projectId 项目
+     * @return 明文 Key
+     */
+    private String keyFor(String projectId) {
+        return keys.computeIfAbsent(projectId,
+                ignored -> TestKeys.create(keyService, TENANT, projectId));
+    }
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final String TENANT = "t-mcp";
     private static final String USER = "u-mcp";
     private static final String UPSTREAM_RESPONSE = """
@@ -87,7 +108,7 @@ class RagMemoryMcpIntegrationTest {
     static void gatewayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_rag_memory_mcp;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
         registry.add("gateway.model-list.chat[0].api-base", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.model-list.chat[0].api-key", () -> "upstream-key");
         registry.add("gateway.model-list.chat[0].model", () -> "upstream-chat");
@@ -100,7 +121,7 @@ class RagMemoryMcpIntegrationTest {
 
     @Test
     void mcp_client_discovers_rag_and_memory_tools() throws Exception {
-        try (McpClient client = newClient()) {
+        try (McpClient client = newClient("p-mcp-default")) {
             List<ToolSpecification> tools = client.listTools();
             assertThat(tools).extracting(ToolSpecification::name)
                     .contains("chat_completion", "list_models", "prompts_get",
@@ -119,19 +140,22 @@ class RagMemoryMcpIntegrationTest {
 
     @Test
     void ingest_and_search_tools_return_correct_chunks_with_project_isolation() throws Exception {
-        try (McpClient client = newClient()) {
-            JsonNode ingested = callTool(client, "ingest_document", """
+        String docId;
+        try (McpClient clientA = newClient("p-mcp-a")) {
+            JsonNode ingested = callTool(clientA, "ingest_document", """
                     {"project_id":"p-mcp-a","file_name":"hr.md","content":"年假 5 天 报销流程"}
                     """);
-            String docId = ingested.path("doc_id").asText();
+            docId = ingested.path("doc_id").asText();
             assertThat(docId).isNotBlank();
             assertThat(ingested.path("index_status").asText()).isEqualTo("READY");
-
-            callTool(client, "ingest_document", """
+        }
+        try (McpClient clientB = newClient("p-mcp-b")) {
+            callTool(clientB, "ingest_document", """
                     {"project_id":"p-mcp-b","file_name":"other.md","content":"年假 5 天 报销流程"}
                     """);
-
-            JsonNode hit = callTool(client, "search_knowledge",
+        }
+        try (McpClient clientA = newClient("p-mcp-a")) {
+            JsonNode hit = callTool(clientA, "search_knowledge",
                     "{\"query\":\"年假 5 天 报销流程\",\"project_id\":\"p-mcp-a\"}");
             assertThat(hit.path("no_hit").asBoolean()).isFalse();
             assertThat(hit.path("count").asInt()).isEqualTo(1);
@@ -139,14 +163,16 @@ class RagMemoryMcpIntegrationTest {
             assertThat(first.path("doc_id").asText()).isEqualTo(docId);
             assertThat(first.path("source").asText()).isEqualTo("hr.md");
             assertThat(first.path("content").asText()).contains("年假 5 天");
-
-            JsonNode otherProject = callTool(client, "search_knowledge",
+        }
+        try (McpClient clientB = newClient("p-mcp-b")) {
+            JsonNode otherProject = callTool(clientB, "search_knowledge",
                     "{\"query\":\"年假 5 天 报销流程\",\"project_id\":\"p-mcp-b\"}");
             for (JsonNode result : otherProject.path("results")) {
                 assertThat(result.path("doc_id").asText()).isNotEqualTo(docId);
             }
-
-            JsonNode noHit = callTool(client, "search_knowledge",
+        }
+        try (McpClient clientEmpty = newClient("p-mcp-empty")) {
+            JsonNode noHit = callTool(clientEmpty, "search_knowledge",
                     "{\"query\":\"不存在的火星基地问题\",\"project_id\":\"p-mcp-empty\"}");
             assertThat(noHit.path("no_hit").asBoolean()).isTrue();
             assertThat(noHit.path("count").asInt()).isZero();
@@ -157,7 +183,7 @@ class RagMemoryMcpIntegrationTest {
     void ingest_supports_base64_content() throws Exception {
         String base64 = java.util.Base64.getEncoder()
                 .encodeToString("base64 文本内容".getBytes(StandardCharsets.UTF_8));
-        try (McpClient client = newClient()) {
+        try (McpClient client = newClient("p-mcp-b64")) {
             JsonNode ingested = callTool(client, "ingest_document", "{\"project_id\":\"p-mcp-b64\","
                     + "\"file_name\":\"note.txt\",\"content_type\":\"text/plain\","
                     + "\"content_base64\":\"" + base64 + "\"}");
@@ -168,7 +194,7 @@ class RagMemoryMcpIntegrationTest {
 
     @Test
     void rag_answer_tool_returns_answer_with_citations() throws Exception {
-        try (McpClient client = newClient()) {
+        try (McpClient client = newClient("p-mcp-answer")) {
             JsonNode ingested = callTool(client, "ingest_document", """
                     {"project_id":"p-mcp-answer","file_name":"hr.md","content":"年假 5 天 报销流程"}
                     """);
@@ -187,7 +213,7 @@ class RagMemoryMcpIntegrationTest {
     @Test
     void memory_tools_save_recall_and_clear() throws Exception {
         String project = "p-mcp-memory";
-        try (McpClient client = newClient()) {
+        try (McpClient client = newClient(project)) {
             JsonNode saved = callTool(client, "save_memory", "{\"tenant_id\":\"" + TENANT + "\","
                     + "\"project_id\":\"" + project + "\",\"user_id\":\"" + USER + "\","
                     + "\"content\":\"用户对芒果过敏\",\"metadata\":{\"source\":\"chat\"},"
@@ -222,12 +248,13 @@ class RagMemoryMcpIntegrationTest {
     void cross_project_and_cross_tenant_memory_are_rejected_or_empty() throws Exception {
         String projectA = "p-mcp-cross-a";
         String projectB = "p-mcp-cross-b";
-        try (McpClient client = newClient()) {
-            callTool(client, "save_memory", "{\"tenant_id\":\"" + TENANT + "\","
+        try (McpClient clientA = newClient(projectA)) {
+            callTool(clientA, "save_memory", "{\"tenant_id\":\"" + TENANT + "\","
                     + "\"project_id\":\"" + projectA + "\",\"user_id\":\"" + USER + "\","
                     + "\"content\":\"用户画像：偏好中文\"}");
-
-            JsonNode isolated = callTool(client, "recall_memory", "{\"tenant_id\":\"" + TENANT
+        }
+        try (McpClient clientB = newClient(projectB)) {
+            JsonNode isolated = callTool(clientB, "recall_memory", "{\"tenant_id\":\"" + TENANT
                     + "\",\"project_id\":\"" + projectB + "\",\"user_id\":\"" + USER + "\"}");
             assertThat(isolated.path("count").asInt()).isZero();
         }
@@ -238,8 +265,8 @@ class RagMemoryMcpIntegrationTest {
                 + "\"cross_project\":true}}}");
         assertThat(rejected.path("error").path("message").asText()).contains("跨项目");
 
-        try (McpClient client = newClient()) {
-            callTool(client, "save_memory", "{\"tenant_id\":\"" + TENANT + "\","
+        try (McpClient clientA = newClient(projectA)) {
+            callTool(clientA, "save_memory", "{\"tenant_id\":\"" + TENANT + "\","
                     + "\"project_id\":\"" + projectA + "\",\"user_id\":\"" + USER + "\","
                     + "\"session_id\":\"s-mcp\",\"content\":\"会话内容\"}");
         }
@@ -249,11 +276,11 @@ class RagMemoryMcpIntegrationTest {
                 + "\"session_id\":\"s-mcp\",\"cross_project\":true}}}");
         assertThat(sessionRejected.path("error").path("message").asText()).contains("会话");
 
-        try (McpClient client = newClient()) {
-            JsonNode otherTenant = callTool(client, "recall_memory",
+        try (McpClient clientA = newClient(projectA)) {
+            assertThatThrownBy(() -> callTool(clientA, "recall_memory",
                     "{\"tenant_id\":\"t-other\",\"project_id\":\"" + projectA + "\","
-                            + "\"user_id\":\"" + USER + "\"}");
-            assertThat(otherTenant.path("count").asInt()).isZero();
+                            + "\"user_id\":\"" + USER + "\"}"))
+                    .hasMessageContaining("租户");
         }
     }
 
@@ -271,7 +298,7 @@ class RagMemoryMcpIntegrationTest {
 
     @Test
     void mcp_tool_call_is_logged_with_tool_target_and_request_id() throws Exception {
-        try (McpClient client = newClient()) {
+        try (McpClient client = newClient("p-mcp-log")) {
             callTool(client, "ingest_document", """
                     {"project_id":"p-mcp-log","file_name":"log.md","content":"日志目标验证"}
                     """);
@@ -291,12 +318,12 @@ class RagMemoryMcpIntegrationTest {
         assertThat(log.getStatus()).isEqualTo(200);
     }
 
-    private McpClient newClient() {
+    private McpClient newClient(String projectId) {
         return new DefaultMcpClient.Builder()
                 .key("aihub-req36-test")
                 .transport(new StreamableHttpMcpTransport.Builder()
                         .url("http://localhost:" + port + "/mcp")
-                        .customHeaders(Map.of("Authorization", "Bearer " + MASTER_KEY))
+                        .customHeaders(Map.of("Authorization", "Bearer " + keyFor(projectId)))
                         .timeout(Duration.ofSeconds(20))
                         .build())
                 .build();
@@ -311,6 +338,16 @@ class RagMemoryMcpIntegrationTest {
         return readJson(result.resultText());
     }
 
+    private String keyForRpc(String body) {
+        try {
+            String project = objectMapper.readTree(body).path("params").path("arguments")
+                    .path("project_id").asText("");
+            return keyFor(project.isEmpty() ? "p-mcp-default" : project);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("invalid rpc body", ex);
+        }
+    }
+
     private JsonNode rpc(String body) {
         ResponseEntity<String> response = rpcEntity(body);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -320,7 +357,7 @@ class RagMemoryMcpIntegrationTest {
     private ResponseEntity<String> rpcEntity(String body) {
         return restClient.post()
                 .uri("/mcp")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + keyForRpc(body))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()

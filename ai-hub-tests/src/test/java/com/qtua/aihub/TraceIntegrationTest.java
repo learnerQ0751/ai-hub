@@ -1,7 +1,9 @@
 package com.qtua.aihub;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.qtua.aihub.gateway.GatewayApplication;
+import com.qtua.aihub.manager.model.TraceEventBO;
+import com.qtua.aihub.manager.trace.TraceEventManager;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -9,17 +11,15 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
@@ -29,15 +29,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * REQ-4.2 端到端验收：一次 RAG 请求可通过 trace_id 查到
- * gateway / rag / model / answer 分段，且响应头与查询一致。
+ * REQ-4.2 / REQ-5.1 验收：一次 RAG 请求产生 gateway / rag / model / answer 分段，
+ * 事件带租户且不串租户。查询端点归控制面，数据面测试直接读事件表。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class TraceIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
     private static final String UPSTREAM_RESPONSE = """
             {"id":"x","object":"chat.completion","model":"upstream",
              "choices":[{"index":0,"message":{"role":"assistant","content":"年假为 5 天。"},
@@ -49,6 +48,15 @@ class TraceIntegrationTest {
 
     @LocalServerPort
     private int port;
+
+    @Autowired
+    private com.qtua.aihub.api.KeyService keyService;
+
+    @Autowired
+    private com.qtua.aihub.core.rag.RagDocumentCore ragDocumentCore;
+
+    @Autowired
+    private TraceEventManager traceEventManager;
 
     private RestClient restClient;
 
@@ -68,7 +76,7 @@ class TraceIntegrationTest {
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> "trace-admin-key");
         registry.add("gateway.model-list.chat[0].api-base", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.model-list.chat[0].api-key", () -> "upstream-key");
         registry.add("gateway.model-list.chat[0].model", () -> "upstream-chat");
@@ -77,72 +85,40 @@ class TraceIntegrationTest {
     @Test
     void rag_answer_trace_contains_all_segments_and_isolates_tenants() throws Exception {
         String suffix = java.util.UUID.randomUUID().toString().substring(0, 8);
-        String key = generateKey("tenant-trace-" + suffix, "project-trace-" + suffix);
+        String tenant = "tenant-trace-" + suffix;
+        String project = "project-trace-" + suffix;
+        String key = TestKeys.create(keyService, tenant, project);
 
-        ResponseEntity<String> upload = restClient.post().uri("/v1/rag/documents")
-                .header("Authorization", "Bearer " + key)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(uploadBody("leave.txt", "员工年假为 5 天。", "project-trace-" + suffix))
-                .retrieve().toEntity(String.class);
-        assertThat(upload.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        ragDocumentCore.ingest(tenant, project, "leave.txt", "text/plain",
+                "员工年假为 5 天。".getBytes(java.nio.charset.StandardCharsets.UTF_8), false);
 
         ResponseEntity<String> answer = restClient.post().uri("/v1/rag/answer")
                 .header("Authorization", "Bearer " + key)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body("{\"query\":\"年假几天\",\"project_id\":\"project-trace-" + suffix
+                .body("{\"query\":\"年假几天\",\"project_id\":\"" + project
                         + "\",\"model\":\"chat\"}")
                 .retrieve().toEntity(String.class);
         assertThat(answer.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(answer.getBody()).contains("5 天");
         String traceId = answer.getHeaders().getFirst("X-Trace-Id");
         assertThat(traceId).isNotBlank();
 
-        JsonNode trace = awaitTrace(key, traceId);
-        assertThat(trace.path("trace_id").asText()).isEqualTo(traceId);
+        List<TraceEventBO> events = awaitTrace(traceId);
         List<String> segments = new ArrayList<>();
-        trace.path("events").forEach(event -> segments.add(event.path("segment").asText()));
+        events.forEach(event -> segments.add(event.segment()));
         assertThat(segments).contains("gateway", "rag", "model", "answer");
-
-        String otherKey = generateKey("tenant-other-" + suffix, "project-other-" + suffix);
-        ResponseEntity<String> forbidden = restClient.get().uri("/v1/traces/" + traceId)
-                .header("Authorization", "Bearer " + otherKey)
-                .retrieve().toEntity(String.class);
-        assertThat(forbidden.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(events).allSatisfy(event -> assertThat(event.tenantId()).isEqualTo(tenant));
     }
 
-    private JsonNode awaitTrace(String key, String traceId) throws Exception {
-        for (int attempt = 0; attempt < 40; attempt++) {
-            ResponseEntity<String> response = restClient.get().uri("/v1/traces/" + traceId)
-                    .header("Authorization", "Bearer " + key)
-                    .retrieve().toEntity(String.class);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                return objectMapper.readTree(response.getBody());
+    private List<TraceEventBO> awaitTrace(String traceId) throws Exception {
+        for (int attempt = 0; attempt < 100; attempt++) {
+            List<TraceEventBO> events = traceEventManager.findByTraceId(traceId);
+            if (events.size() >= 4) {
+                return events;
             }
             Thread.sleep(50L);
         }
-        throw new IllegalStateException("trace not available: " + traceId);
-    }
-
-    private String generateKey(String tenantId, String projectId) throws Exception {
-        ResponseEntity<String> response = restClient.post().uri("/key/generate")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{\"models\":[],\"tenant_id\":\"" + tenantId
-                        + "\",\"project_id\":\"" + projectId + "\"}")
-                .retrieve().toEntity(String.class);
-        return objectMapper.readTree(response.getBody()).path("key").asText();
-    }
-
-    private MultiValueMap<String, Object> uploadBody(String fileName, String content,
-                                                    String projectId) {
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new ByteArrayResource(content.getBytes()) {
-            @Override
-            public String getFilename() {
-                return fileName;
-            }
-        });
-        body.add("project_id", projectId);
-        return body;
+        return traceEventManager.findByTraceId(traceId);
     }
 
     private static MockWebServer startServer() {

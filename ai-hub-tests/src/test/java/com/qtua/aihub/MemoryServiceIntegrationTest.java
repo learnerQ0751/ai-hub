@@ -1,5 +1,7 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,6 +9,7 @@ import com.qtua.aihub.dal.mapper.CallLogMapper;
 import com.qtua.aihub.dal.mapper.MemoryAuditMapper;
 import com.qtua.aihub.dal.model.CallLogDO;
 import com.qtua.aihub.dal.model.MemoryAuditDO;
+import com.qtua.aihub.api.KeyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,12 +34,29 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>使用 H2（PostgreSQL 兼容模式），不依赖本机 PostgreSQL/Docker。
  * 默认配置下跨项目共享关闭，验证默认隔离与授权拒绝。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class MemoryServiceIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private final java.util.Map<String, String> keys = new java.util.HashMap<>();
+
+    /**
+     * 按请求作用域取虚拟 Key：拆分后 Key 绑定 (tenant_id, project_id)。
+     *
+     * @param tenantId  租户
+     * @param projectId 项目
+     * @return 明文 Key
+     */
+    private String keyFor(String tenantId, String projectId) {
+        return keys.computeIfAbsent(tenantId + "/" + projectId,
+                ignored -> TestKeys.create(keyService, tenantId, projectId));
+    }
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final String TENANT = "tenant-a";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -65,7 +85,7 @@ class MemoryServiceIntegrationTest {
     static void gatewayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_memory;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
     }
 
     @Test
@@ -187,7 +207,7 @@ class MemoryServiceIntegrationTest {
 
     @Test
     void invalid_request_returns_chinese_message_with_english_type() {
-        ResponseEntity<String> response = post("/v1/memory/save", MASTER_KEY,
+        ResponseEntity<String> response = post("/v1/memory/save", keyFor(TENANT, "p-invalid"),
                 saveBody(TENANT, "p-invalid", " ", null, "x", null, null));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -200,7 +220,7 @@ class MemoryServiceIntegrationTest {
     private ResponseEntity<String> save(String tenantId, String projectId, String userId,
                                         String sessionId, String content,
                                         Map<String, Object> metadata, Long ttlSeconds) {
-        return post("/v1/memory/save", MASTER_KEY,
+        return post("/v1/memory/save", keyFor(tenantId, projectId),
                 saveBody(tenantId, projectId, userId, sessionId, content, metadata, ttlSeconds));
     }
 
@@ -233,7 +253,7 @@ class MemoryServiceIntegrationTest {
         body.put("from", from);
         body.put("to", to);
         body.put("cross_project", false);
-        return post("/v1/memory/recall", MASTER_KEY, toJson(body));
+        return post("/v1/memory/recall", keyFor(tenantId, projectId), toJson(body));
     }
 
     private ResponseEntity<String> recallWithCrossProject(String tenantId, String projectId,
@@ -246,7 +266,7 @@ class MemoryServiceIntegrationTest {
         body.put("session_id", sessionId);
         body.put("keyword", keyword);
         body.put("cross_project", true);
-        return post("/v1/memory/recall", MASTER_KEY, toJson(body));
+        return post("/v1/memory/recall", keyFor(tenantId, projectId), toJson(body));
     }
 
     private ResponseEntity<String> clear(String tenantId, String projectId, String userId,
@@ -257,7 +277,7 @@ class MemoryServiceIntegrationTest {
         body.put("user_id", userId);
         body.put("session_id", sessionId);
         body.put("reason", reason);
-        return post("/v1/memory/clear", MASTER_KEY, toJson(body));
+        return post("/v1/memory/clear", keyFor(tenantId, projectId), toJson(body));
     }
 
     private ResponseEntity<String> post(String path, String token, String body) {

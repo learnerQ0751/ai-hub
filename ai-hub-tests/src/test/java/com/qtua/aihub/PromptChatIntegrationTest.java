@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.dal.mapper.CallLogMapper;
@@ -30,12 +34,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * REQ-2.5 端到端验收：Prompt 渲染（不调模型）与对话（渲染→chat 链路→治理日志）。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class PromptChatIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private String dataKey;
+
+    /**
+     * 数据面测试统一使用虚拟 Key（master key 仅控制面可用）。
+     */
+    @org.junit.jupiter.api.BeforeEach
+    void initDataPlaneKey() {
+        dataKey = TestKeys.create(keyService, "test-tenant", "test-project");
+    }
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final MockWebServer UPSTREAM = startServer();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -44,6 +61,9 @@ class PromptChatIntegrationTest {
 
     @Autowired
     private CallLogMapper callLogMapper;
+
+    @Autowired
+    private com.qtua.aihub.manager.prompt.PromptManager promptManager;
 
     private RestClient restClient;
 
@@ -60,7 +80,7 @@ class PromptChatIntegrationTest {
     static void gatewayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_prompt_chat;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
         registry.add("gateway.model-list.chat[0].api-base", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.model-list.chat[0].api-key", () -> "upstream-key");
         registry.add("gateway.model-list.chat[0].model", () -> "upstream-chat");
@@ -104,7 +124,7 @@ class PromptChatIntegrationTest {
 
         ResponseEntity<String> response = restClient.post()
                 .uri("/v1/prompts/chat_tpl/chat")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("{\"model\":\"chat\",\"variables\":{\"name\":\"御风\"}}")
                 .retrieve().toEntity(String.class);
@@ -124,34 +144,26 @@ class PromptChatIntegrationTest {
         createAndPublish("chat_v", "User: hi", List.of());
         ResponseEntity<String> response = restClient.post()
                 .uri("/v1/prompts/chat_v/chat")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("{\"model\":\"chat\",\"version\":9,\"variables\":{}}")
                 .retrieve().toEntity(String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    private void createAndPublish(String name, String content, List<String> variables)
-            throws Exception {
-        ResponseEntity<String> created = restClient.post()
-                .uri("/v1/prompts")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("name", name, "content", content, "variables", variables))
-                .retrieve().toEntity(String.class);
-        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        restClient.post()
-                .uri("/v1/prompts/" + name + "/publish")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{\"version\":1}")
-                .retrieve().toEntity(String.class);
+    /**
+     * 控制面管理端点不在数据面；测试直接通过 PromptManager 造已发布模板。
+     */
+    private void createAndPublish(String name, String content, List<String> variables) {
+        promptManager.save(new com.qtua.aihub.manager.model.PromptTemplateBO(name, 1, content,
+                variables, "DRAFT", "test-tenant", "test", java.time.Instant.now()));
+        assertThat(promptManager.publishVersion("test-tenant", name, 1)).isTrue();
     }
 
     private ResponseEntity<String> render(String name, String body) {
         return restClient.post()
                 .uri("/v1/prompts/" + name + "/render")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve().toEntity(String.class);

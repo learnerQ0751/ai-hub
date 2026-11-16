@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,12 +42,31 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 指向期望文档、“应无命中”的返回兜底且不调模型。使用 H2 + 确定性 embedding + MockWebServer，
  * 可作为轻量评测入口按需扩展；不建设评测平台。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class RagGoldenQuestionRegressionTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.core.rag.RagDocumentCore ragDocumentCore;
+
+    private final java.util.Map<String, String> keys = new java.util.HashMap<>();
+
+    /**
+     * 按项目取虚拟 Key。
+     *
+     * @param projectId 项目
+     * @return 明文 Key
+     */
+    private String keyFor(String projectId) {
+        return keys.computeIfAbsent(projectId,
+                ignored -> TestKeys.create(keyService, "test-tenant", projectId));
+    }
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final String MODEL = "chat";
     private static final String ANSWER = "根据资料回答 [1]";
     private static final String DATASET = "rag/golden-questions.yml";
@@ -69,7 +92,7 @@ class RagGoldenQuestionRegressionTest {
     static void gatewayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_rag_golden;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
         registry.add("gateway.model-list.chat[0].api-base", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.model-list.chat[0].api-key", () -> "upstream-key");
         registry.add("gateway.model-list.chat[0].model", () -> "upstream-chat");
@@ -140,24 +163,10 @@ class RagGoldenQuestionRegressionTest {
 
     private void uploadDocuments(List<Map<String, Object>> documents) {
         for (Map<String, Object> document : documents) {
-            MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
-            byte[] bytes = asString(document, "content").getBytes(StandardCharsets.UTF_8);
             String source = asString(document, "source");
-            parts.add("file", new ByteArrayResource(bytes) {
-                @Override
-                public String getFilename() {
-                    return source;
-                }
-            });
-            parts.add("project_id", asString(document, "project_id"));
-            ResponseEntity<String> response = restClient.post()
-                    .uri("/v1/rag/documents")
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
-                    .header("Authorization", "Bearer " + MASTER_KEY)
-                    .body(parts)
-                    .retrieve()
-                    .toEntity(String.class);
-            assertThat(response.getStatusCode()).isIn(HttpStatus.CREATED, HttpStatus.OK);
+            String projectId = asString(document, "project_id");
+            ragDocumentCore.ingest("test-tenant", projectId, source, "text/plain",
+                    asString(document, "content").getBytes(StandardCharsets.UTF_8), false);
         }
     }
 
@@ -169,7 +178,7 @@ class RagGoldenQuestionRegressionTest {
                 + ",\"allow_free_answer\":false}";
         ResponseEntity<String> response = restClient.post()
                 .uri("/v1/rag/answer")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + keyFor(asString(question, "project_id")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()

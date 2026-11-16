@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,6 +31,7 @@ import org.springframework.web.client.RestClient;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,12 +42,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>使用 H2（PostgreSQL 兼容模式）与 MockWebServer，不依赖本机 Docker/真实上游。
  * chat 配置价格，reasoner 故意不配价格以验证「告警且 cost=0」。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class CallLogIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @Autowired
+    private KeyService keyService;
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final String CHAT_BODY =
             "{\"model\":\"chat\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}";
     private static final String REASONER_BODY =
@@ -76,7 +84,7 @@ class CallLogIntegrationTest {
 
     @DynamicPropertySource
     static void gatewayProperties(DynamicPropertyRegistry registry) {
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
         registry.add("gateway.model-list.chat[0].api-base", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.model-list.chat[0].api-key", () -> "upstream-key");
         registry.add("gateway.model-list.chat[0].model", () -> "upstream-chat");
@@ -94,7 +102,7 @@ class CallLogIntegrationTest {
 
     @Test
     void successful_call_writes_one_log_and_accumulates_spend() {
-        String plainKey = generateKey("[\"chat\"]");
+        String plainKey = generateKey(List.of("chat"));
 
         ResponseEntity<String> response = post("/v1/chat/completions", plainKey, CHAT_BODY);
 
@@ -123,7 +131,7 @@ class CallLogIntegrationTest {
 
     @Test
     void two_calls_accumulate_spend_and_key_info_reflects_it() {
-        String plainKey = generateKey("[\"chat\"]");
+        String plainKey = generateKey(List.of("chat"));
 
         ResponseEntity<String> first = post("/v1/chat/completions", plainKey, CHAT_BODY);
         ResponseEntity<String> second = post("/v1/chat/completions", plainKey, CHAT_BODY);
@@ -134,14 +142,13 @@ class CallLogIntegrationTest {
         assertThat(apiKeyMapper.selectByKeyHash(keyHash).orElseThrow().getSpend())
                 .isEqualByComparingTo(CALL_COST.multiply(BigDecimal.valueOf(2)));
 
-        ResponseEntity<String> info = get("/key/info?key=" + plainKey, MASTER_KEY);
-        JsonNode spend = readJson(info).get("info").get("spend");
-        assertThat(spend.decimalValue()).isEqualByComparingTo(CALL_COST.multiply(BigDecimal.valueOf(2)));
+        assertThat(keyService.info(plainKey).info().spend())
+                .isEqualByComparingTo(CALL_COST.multiply(BigDecimal.valueOf(2)));
     }
 
     @Test
     void denied_call_is_logged_with_status_403() {
-        String plainKey = generateKey("[\"chat\"]");
+        String plainKey = generateKey(List.of("chat"));
 
         ResponseEntity<String> response = post("/v1/chat/completions", plainKey, REASONER_BODY);
 
@@ -156,7 +163,7 @@ class CallLogIntegrationTest {
 
     @Test
     void missing_price_records_zero_cost_and_no_spend() {
-        String plainKey = generateKey("[\"reasoner\"]");
+        String plainKey = generateKey(List.of("reasoner"));
 
         ResponseEntity<String> response = post("/v1/chat/completions", plainKey, REASONER_BODY);
 
@@ -169,13 +176,12 @@ class CallLogIntegrationTest {
     }
 
     @Test
-    void master_call_is_logged_without_key_id() {
-        ResponseEntity<String> response = post("/v1/chat/completions", MASTER_KEY, CHAT_BODY);
+    void master_key_is_rejected_on_data_plane() {
+        ResponseEntity<String> response = post("/v1/chat/completions", ADMIN_KEY, CHAT_BODY);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        CallLogDO log = awaitLog(response.getHeaders().getFirst("X-Request-Id"));
-        assertThat(log.getKeyId()).isNull();
-        assertThat(log.getStatus()).isEqualTo(200);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(readJson(response).path("error").path("type").asText())
+                .isEqualTo("authorization_error");
     }
 
     /**
@@ -200,11 +206,8 @@ class CallLogIntegrationTest {
         return callLogMapper.selectByRequestId(requestId).orElseThrow();
     }
 
-    private String generateKey(String modelsJson) {
-        String body = "{\"models\":" + modelsJson + ",\"duration\":\"1h\"}";
-        ResponseEntity<String> response = post("/key/generate", MASTER_KEY, body);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return readJson(response).get("key").asText();
+    private String generateKey(List<String> models) {
+        return TestKeys.create(keyService, "test-tenant", "test-project", models);
     }
 
     private ResponseEntity<String> post(String path, String token, String body) {

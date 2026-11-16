@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.dal.mapper.CallLogMapper;
@@ -35,12 +39,31 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>MockWebServer 模拟 MCP Server：initialize / tools/list / tools/call。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class McpProxyIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private String dataKey;
+
+    /**
+     * 数据面测试统一使用虚拟 Key（master key 仅控制面可用）。
+     */
+    @org.junit.jupiter.api.BeforeEach
+    void initDataPlaneKey() {
+        dataKey = TestKeys.create(keyService, "test-tenant", "test-project");
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.manager.mcp.McpServerManager mcpServerManager;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.manager.mcp.McpToolCatalog mcpToolCatalog;
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final String BIG_TEXT = "x".repeat(1024 * 1024 + 2048);
     private static final MockWebServer MCP = startServer();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -67,7 +90,7 @@ class McpProxyIntegrationTest {
         // 独立 H2：避免与其它 MCP 测试类共享注册表。
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_proxy;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
     }
 
     @AfterAll
@@ -137,13 +160,9 @@ class McpProxyIntegrationTest {
     @Test
     void virtual_key_rpm_limit_applies_to_mcp_calls() throws Exception {
         register("proxy_rpm", MCP.url("/mcp").toString());
-        ResponseEntity<String> generated = restClient.post()
-                .uri("/key/generate")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{\"models\":[\"chat\"],\"rpm_limit\":1}")
-                .retrieve().toEntity(String.class);
-        String virtualKey = objectMapper.readTree(generated.getBody()).path("key").asText();
+        String virtualKey = keyService.generate(new com.qtua.aihub.api.model.req.KeyGenerateReqDTO(
+                java.util.List.of("chat"), "1h", null, null, null, 1, null,
+                "test-tenant", "test-project")).key();
 
         ResponseEntity<String> first = restClient.post()
                 .uri("/v1/mcp/tools/proxy_rpm__echo:call")
@@ -163,20 +182,14 @@ class McpProxyIntegrationTest {
         assertThat(second.getBody()).contains("rate_limit_error");
     }
 
-    private void register(String name, String endpoint) throws Exception {
-        ResponseEntity<String> response = restClient.post()
-                .uri("/v1/mcp/servers")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("name", name, "transport", "http", "endpoint", endpoint))
-                .retrieve().toEntity(String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    private void register(String name, String endpoint) {
+        McpTestSupport.register(mcpServerManager, mcpToolCatalog, name, endpoint, "test-tenant");
     }
 
     private ResponseEntity<String> call(String tool, String body) {
         return restClient.post()
                 .uri("/v1/mcp/tools/" + tool + ":call")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve().toEntity(String.class);

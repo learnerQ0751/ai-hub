@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,12 +38,31 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>使用 H2 + 确定性 embedding + 内存向量存储。离线回归中让查询文本与目标切片文本一致，
  * 保证确定性 embedding 下余弦为 1；真实语义命中由 REQ-3.4 的真实链路演示覆盖。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class RagSearchIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.core.rag.RagDocumentCore ragDocumentCore;
+
+    private final java.util.Map<String, String> keys = new java.util.HashMap<>();
+
+    /**
+     * 按项目取虚拟 Key（Key 绑定租户+项目）。
+     *
+     * @param projectId 项目
+     * @return 明文 Key
+     */
+    private String keyFor(String projectId) {
+        return keys.computeIfAbsent(projectId,
+                ignored -> TestKeys.create(keyService, "test-tenant", projectId));
+    }
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final String QUERY = "年假 报销";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -65,7 +88,7 @@ class RagSearchIntegrationTest {
     static void gatewayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_rag_search;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
     }
 
     @Test
@@ -176,13 +199,13 @@ class RagSearchIntegrationTest {
 
     @Test
     void invalid_parameters_return_chinese_errors() {
-        ResponseEntity<String> missingProject = searchEntity(
-                "{\"query\":\"年假\"}");
-        assertThat(missingProject.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        JsonNode error = readJson(missingProject).path("error");
-        assertThat(error.path("message").asText()).contains("project_id");
+        ResponseEntity<String> missingQuery = searchEntity(
+                "{\"project_id\":\"p-search-error\"}");
+        assertThat(missingQuery.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        JsonNode error = readJson(missingQuery).path("error");
+        assertThat(error.path("message").asText()).contains("query");
         assertThat(error.path("type").asText()).isEqualTo("invalid_request_error");
-        assertThat(error.path("param").asText()).isEqualTo("project_id");
+        assertThat(error.path("param").asText()).isEqualTo("query");
         assertThat(error.path("code").asText()).isEqualTo("400");
 
         ResponseEntity<String> badScore = searchEntity(
@@ -209,24 +232,8 @@ class RagSearchIntegrationTest {
     }
 
     private String upload(String projectId, String fileName, String content) {
-        MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
-        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
-        parts.add("file", new ByteArrayResource(bytes) {
-            @Override
-            public String getFilename() {
-                return fileName;
-            }
-        });
-        parts.add("project_id", projectId);
-        ResponseEntity<String> response = restClient.post()
-                .uri("/v1/rag/documents")
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .headers(headers -> headers.setBearerAuth(MASTER_KEY))
-                .body(parts)
-                .retrieve()
-                .toEntity(String.class);
-        assertThat(response.getStatusCode()).isIn(HttpStatus.CREATED, HttpStatus.OK);
-        return readJson(response).path("doc_id").asText();
+        return ragDocumentCore.ingest("test-tenant", projectId, fileName, "text/plain",
+                content.getBytes(StandardCharsets.UTF_8), false).document().docId();
     }
 
     private JsonNode search(String body) {
@@ -235,10 +242,18 @@ class RagSearchIntegrationTest {
         return readJson(response);
     }
 
+    private String keyForBody(String body) {
+        try {
+            return keyFor(objectMapper.readTree(body).path("project_id").asText());
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            throw new IllegalStateException("invalid request body", ex);
+        }
+    }
+
     private ResponseEntity<String> searchEntity(String body) {
         return restClient.post()
                 .uri("/v1/rag/search")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + keyForBody(body))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()

@@ -23,12 +23,15 @@ ai-hub-dal          数据访问（MyBatis + Flyway 迁移）
 ai-hub-manager      领域管理服务
 ai-hub-integration  上游适配（模型客户端 / MCP / 向量存储）
 ai-hub-core         业务核心
-ai-hub-service      应用服务
-ai-hub-start        启动与 Controller
+ai-hub-service      应用服务（shared / admin / gateway 分面）
+ai-hub-start        公共壳（配置 / 过滤器 / 异常处理）
+ai-hub-gateway      数据面启动模块 :18080（聊天 / 嵌入 / RAG / MCP / 记忆）
+ai-hub-console      控制面启动模块 :18081（Key / 管理 / 文档接入 / 查询；Flyway）
 ai-hub-tests        集成测试
 ```
 
-依赖方向由 ArchUnit 强制：`start → service → core → manager/integration → api → dal → common`。
+依赖方向由 ArchUnit 强制：`gateway/console → start/service → core → manager/integration → api → dal → common`。
+鉴权物理隔离：gateway 只收虚拟 Key，console 只收 master key。
 
 ## 技术栈
 
@@ -45,8 +48,9 @@ export GATEWAY_MASTER_KEY=<管理主密钥>
 export GATEWAY_SECRET_KEY=<上游凭据加密密钥>
 export DASHSCOPE_API_KEY=<Embedding 密钥>
 
-# 启动，默认端口 18080
-mvn -pl ai-hub-start spring-boot:run
+# 先 console（执行 Flyway，:18081），再 gateway（:18080）
+mvn -pl ai-hub-console spring-boot:run
+mvn -pl ai-hub-gateway spring-boot:run
 ```
 
 ## 质量

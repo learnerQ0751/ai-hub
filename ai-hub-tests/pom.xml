@@ -16,6 +16,14 @@
         </dependency>
         <dependency>
             <groupId>com.qtua</groupId>
+            <artifactId>ai-hub-gateway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.qtua</groupId>
+            <artifactId>ai-hub-console</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.qtua</groupId>
             <artifactId>ai-hub-api</artifactId>
         </dependency>
         <dependency>
@@ -119,6 +127,8 @@
                                 <file>${project.basedir}/../ai-hub-core/target/classes</file>
                                 <file>${project.basedir}/../ai-hub-service/target/classes</file>
                                 <file>${project.basedir}/../ai-hub-start/target/classes</file>
+                                <file>${project.basedir}/../ai-hub-gateway/target/classes</file>
+                                <file>${project.basedir}/../ai-hub-console/target/classes</file>
                             </classFiles>
                             <rules>
                                 <rule>

@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -34,12 +38,34 @@ import static org.assertj.core.api.Assertions.assertThat;
  * REQ-2.6 端到端验收：ai-hub 作为 MCP Server 暴露（LangChain4j 客户端发现 + 调用），
  * 且 REST/MCP 双路径结果一致。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class McpServerEndpointTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private String dataKey;
+
+    /**
+     * 数据面测试统一使用虚拟 Key（master key 仅控制面可用）。
+     */
+    @org.junit.jupiter.api.BeforeEach
+    void initDataPlaneKey() {
+        dataKey = TestKeys.create(keyService, "test-tenant", "test-project");
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.manager.mcp.McpServerManager mcpServerManager;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.manager.prompt.PromptManager promptManager;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.manager.mcp.McpToolCatalog mcpToolCatalog;
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final String UPSTREAM_RESPONSE = """
             {"id":"x","object":"chat.completion","model":"upstream-chat",
              "choices":[{"index":0,"message":{"role":"assistant","content":"MCP 你好"},
@@ -68,7 +94,7 @@ class McpServerEndpointTest {
     static void gatewayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_mcp_endpoint;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
         registry.add("gateway.model-list.chat[0].api-base", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.model-list.chat[0].api-key", () -> "upstream-key");
         registry.add("gateway.model-list.chat[0].model", () -> "upstream-chat");
@@ -100,7 +126,7 @@ class McpServerEndpointTest {
     void rest_and_mcp_produce_consistent_results() throws Exception {
         ResponseEntity<String> rest = restClient.post()
                 .uri("/v1/chat/completions")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("{\"model\":\"chat\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}")
                 .retrieve().toEntity(String.class);
@@ -121,16 +147,10 @@ class McpServerEndpointTest {
 
     @Test
     void prompts_get_tool_returns_rendered_messages() throws Exception {
-        restClient.post().uri("/v1/prompts")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{\"name\":\"mcp_tpl\",\"content\":\"User: 你好 {{name}}\",\"variables\":[\"name\"]}")
-                .retrieve().toEntity(String.class);
-        restClient.post().uri("/v1/prompts/mcp_tpl/publish")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{\"version\":1}")
-                .retrieve().toEntity(String.class);
+        promptManager.save(new com.qtua.aihub.manager.model.PromptTemplateBO("mcp_tpl", 1,
+                "User: 你好 {{name}}", java.util.List.of("name"), "DRAFT", "test-tenant",
+                "test", java.time.Instant.now()));
+        assertThat(promptManager.publishVersion("test-tenant", "mcp_tpl", 1)).isTrue();
 
         try (McpClient client = newClient()) {
             ToolExecutionResult result = client.executeTool(ToolExecutionRequest.builder()
@@ -156,15 +176,9 @@ class McpServerEndpointTest {
 
     @Test
     void gateway_exposes_registered_server_tools_over_mcp() throws Exception {
-        // 注册一个第三方 MCP Server（mock）到 ai-hub 注册表
-        ResponseEntity<String> registered = restClient.post()
-                .uri("/v1/mcp/servers")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{\"name\":\"mock_srv\",\"transport\":\"http\",\"endpoint\":\""
-                        + MCP_SRV.url("/mcp").toString() + "\"}")
-                .retrieve().toEntity(String.class);
-        assertThat(registered.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        // 注册端点属于控制面；数据面测试直接写注册表
+        McpTestSupport.register(mcpServerManager, mcpToolCatalog, "mock_srv",
+                MCP_SRV.url("/mcp").toString(), "test-tenant");
 
         try (McpClient client = newClient()) {
             List<ToolSpecification> tools = client.listTools();
@@ -185,7 +199,7 @@ class McpServerEndpointTest {
                 .key("aihub-test")
                 .transport(new StreamableHttpMcpTransport.Builder()
                         .url("http://localhost:" + port + "/mcp")
-                        .customHeaders(Map.of("Authorization", "Bearer " + MASTER_KEY))
+                        .customHeaders(Map.of("Authorization", "Bearer " + dataKey))
                         .timeout(Duration.ofSeconds(10))
                         .build())
                 .build();

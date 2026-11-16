@@ -1,12 +1,13 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.console.ConsoleApplication;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.dal.mapper.CallLogMapper;
 import com.qtua.aihub.dal.mapper.RagChunkMapper;
 import com.qtua.aihub.dal.mapper.RagDocumentMapper;
-import com.qtua.aihub.dal.model.CallLogDO;
 import com.qtua.aihub.dal.model.RagChunkDO;
 import com.qtua.aihub.dal.model.RagDocumentDO;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -30,7 +31,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>使用 H2（PostgreSQL 兼容模式）与确定性 embedding/内存向量存储，不依赖本机
  * PostgreSQL/Docker/ONNX 模型。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = ConsoleApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class RagDocumentIntegrationTest {
@@ -213,17 +213,15 @@ class RagDocumentIntegrationTest {
     }
 
     @Test
-    void rag_call_is_logged_with_call_type_and_zero_cost() {
+    void control_plane_ingest_is_not_gateway_governed() {
         ResponseEntity<String> uploaded = upload("p-rag-log", "log.txt",
                 "log me".getBytes(StandardCharsets.UTF_8), MediaType.TEXT_PLAIN);
+        assertThat(uploaded.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         String requestId = uploaded.getHeaders().getFirst("X-Request-Id");
+        assertThat(requestId).isNotBlank();
 
-        CallLogDO log = awaitLog(requestId);
-        assertThat(log.getCallType()).isEqualTo("RAG");
-        assertThat(log.getTargetName()).isEqualTo("ingest_document");
-        assertThat(log.getModelAlias()).isEqualTo("ingest_document");
-        assertThat(log.getCost()).isEqualByComparingTo("0");
-        assertThat(log.getStatus()).isEqualTo(200);
+        // 文档接入归控制面：不经过 gateway 治理链，不写 call_logs。
+        assertThat(callLogMapper.selectByRequestId(requestId)).isEmpty();
     }
 
     private byte[] docxWithParagraph(String text) throws IOException {
@@ -280,19 +278,5 @@ class RagDocumentIntegrationTest {
         }
     }
 
-    private CallLogDO awaitLog(String requestId) {
-        for (int i = 0; i < 50; i++) {
-            Optional<CallLogDO> log = callLogMapper.selectByRequestId(requestId);
-            if (log.isPresent()) {
-                return log.get();
-            }
-            try {
-                Thread.sleep(50L);
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-        return callLogMapper.selectByRequestId(requestId).orElseThrow();
-    }
+
 }

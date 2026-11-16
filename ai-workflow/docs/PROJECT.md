@@ -27,31 +27,36 @@
 - 推荐 **IntelliJ IDEA**：打开 `E:\pro\ai-hub`（或 `pom.xml`）作为 Maven 项目，Project SDK 选 JDK 21。
 - Claude Code 插件从项目根目录启动；读取根目录 `CLAUDE.md` → `ai-workflow/`。
 - Maven 使用本机 settings.xml；终端运行 `mvn -Pquality verify`。
-- 本地运行：`mvn -pl ai-hub-start -am package -DskipTests` 后执行 `ai-hub-start/target/ai-hub-start-*-exec.jar`。
+- 本地运行：`mvn -pl ai-hub-gateway,ai-hub-console -am package -DskipTests` 后先执行
+  `ai-hub-console/target/ai-hub-console-*-exec.jar`（执行 Flyway），再执行
+  `ai-hub-gateway/target/ai-hub-gateway-*-exec.jar`。
 - `.vscode/settings.json` 是 Cursor 兼容配置，IDEA 不使用。
 
 ## 模块结构（覆盖通用 §2，对齐监管报送 data-submission）
 
-**Maven 多模块（9 个模块）**：
+**Maven 多模块（11 个模块，REQ-5.1 数据面/控制面拆分）**：
 
 ```text
 ai-hub（父 POM）
 ├── ai-hub-common       异常/常量/配置模型（GatewayProperties）
 ├── ai-hub-api          Service 接口 + OpenAI 契约 DTO
 ├── ai-hub-manager      BO（ChatCompletionBO / ChatCompletionResultBO）
-├── ai-hub-dal          数据访问（1.3 起填充）
+├── ai-hub-dal          数据访问 + Flyway 迁移脚本
 ├── ai-hub-integration  上游 HTTP + OpenAI 协议适配
 ├── ai-hub-core         业务编排 + 路由策略
-├── ai-hub-service      ServiceImpl（校验 + DTO↔BO + 编排 core）
-├── ai-hub-start        启动类（根包）+ start/controller、filter、error、config
+├── ai-hub-service      ServiceImpl；shared / admin / gateway 子包按面归属
+├── ai-hub-start        公共壳：application-common.yml、RequestIdFilter、error、config
+├── ai-hub-gateway      数据面启动模块：9 个 Controller、AuthFilter、GatewayGovernanceFilter、/mcp
+├── ai-hub-console      控制面启动模块：8 个 Controller、AdminAuthFilter；Flyway 唯一执行方
 └── ai-hub-tests        集成测试 + ArchUnit + JaCoCo 聚合
 ```
 
-- 依赖方向：`start → service → core → manager/integration → dal → common`；禁止反向与跨层，ArchUnit 检查
-- `api`：Service 接口 + Req/Res DTO；`service`：Impl；`core`：`@Component` 编排 + 路由，不碰报文；`integration`：协议改写 + HTTP；`common`：异常/常量/配置模型
-- Controller 只依赖 `api` 接口，实现由 `service` 模块提供；启动类 `com.qtua.aihub.AiHubApplication`（start 模块根包）
-- 可执行包：`ai-hub-start/target/ai-hub-start-*-exec.jar`（主 artifact 为普通 jar，供 tests 模块依赖）
-- 本期无数据库；1.3 起在 manager/dal 引入 PostgreSQL
+- 依赖方向：`gateway/console → start/service → core → manager/integration → dal → common`；禁止反向与跨层，ArchUnit 检查
+- 数据面只装载 `service.shared` + `service` 根包 + `service.gateway`（正则排除 `service.admin`）；控制面只装载 `service.shared` + `service.admin`，排除 `service.gateway` 与 RAG 检索核心
+- 鉴权物理隔离：gateway 只收虚拟 Key（master key 403）；console 只收 master key（虚拟 Key 403）；`/actuator/**` 免鉴权
+- 两个启动类：`com.qtua.aihub.gateway.GatewayApplication`、`com.qtua.aihub.console.ConsoleApplication`
+- 可执行包：`ai-hub-gateway/target/ai-hub-gateway-*-exec.jar`、`ai-hub-console/target/ai-hub-console-*-exec.jar`
+- 两应用共享同一数据库与 dal/common；跨应用事务不存在，控制面写入必须幂等（REQ-5.2）
 
 ## 关键设计决策（2026-10-30 拍板）
 
@@ -77,7 +82,8 @@ ai-hub（父 POM）
 
 ## 质量债务与待办
 
-- [x] 单模块包分层 → Maven 多模块（9 模块，对齐监管报送）
+- [x] 单模块包分层 → Maven 多模块（9 模块，对齐监管报送；REQ-5.1 起 11 模块）
+- [x] 数据面/控制面拆分：双启动包、鉴权物理隔离、Flyway 只由 console 执行（REQ-5.1）
 - [x] `SmoothWeightedSelector` 替换为无状态 `WeightedRandomSelector`
 - [x] 补类/方法/关键行注释
 - [x] 技术栈补齐：Spring Boot 4.1.1、Redis + Lettuce、LangChain4j 1.22.0、docker-compose（Redis/PostgreSQL）

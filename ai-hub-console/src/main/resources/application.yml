@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: ai-hub-console
+  config:
+    import: classpath:application-common.yml
+  # 控制面是迁移唯一归属：启动时执行 V1..Vn。
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+
+server:
+  port: ${CONSOLE_PORT:18081}
+
+management:
+  health:
+    # console 不使用 Redis；避免共享配置里的 Redis 健康检查误报 DOWN。
+    redis:
+      enabled: false

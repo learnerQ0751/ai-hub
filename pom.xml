@@ -27,6 +27,8 @@
         <module>ai-hub-core</module>
         <module>ai-hub-service</module>
         <module>ai-hub-start</module>
+        <module>ai-hub-gateway</module>
+        <module>ai-hub-console</module>
         <module>ai-hub-tests</module>
     </modules>
 
@@ -83,6 +85,16 @@
             <dependency>
                 <groupId>com.qtua</groupId>
                 <artifactId>ai-hub-start</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qtua</groupId>
+                <artifactId>ai-hub-gateway</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.qtua</groupId>
+                <artifactId>ai-hub-console</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

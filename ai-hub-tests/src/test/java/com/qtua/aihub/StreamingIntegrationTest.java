@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,12 +49,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * MockWebServer 按 OpenAI SSE 格式返回分块，最后一块携带 usage。</p>
  */
 @Testcontainers(disabledWithoutDocker = true)
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class StreamingIntegrationTest {
 
-    private static final String MASTER_KEY = "stream-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private static final String ADMIN_KEY = "stream-master";
     private static final int OK = HttpStatus.OK.value();
     private static final BigDecimal CALL_COST = new BigDecimal("0.00002470");
     private static final String SSE_BODY = """
@@ -96,7 +103,7 @@ class StreamingIntegrationTest {
 
     @DynamicPropertySource
     static void gatewayProperties(DynamicPropertyRegistry registry) {
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
         registry.add("gateway.model-list.chat[0].api-base", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.model-list.chat[0].api-key", () -> "upstream-key");
         registry.add("gateway.model-list.chat[0].model", () -> "upstream-chat");
@@ -168,15 +175,14 @@ class StreamingIntegrationTest {
     }
 
     private String generateKey(String modelsJson) {
-        ResponseEntity<String> response = restClient.post()
-                .uri("/key/generate")
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> headers.setBearerAuth(MASTER_KEY))
-                .body("{\"models\":" + modelsJson + ",\"duration\":\"1h\"}")
-                .retrieve()
-                .toEntity(String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return readJson(response).get("key").asText();
+        try {
+            java.util.List<String> models = objectMapper.readValue(modelsJson,
+                    new com.fasterxml.jackson.core.type.TypeReference<java.util.List<String>>() {
+                    });
+            return TestKeys.create(keyService, "test-tenant", "test-project", models);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            throw new IllegalStateException("invalid models json", ex);
+        }
     }
 
     private String waitForLogByKey(String plainKey) {

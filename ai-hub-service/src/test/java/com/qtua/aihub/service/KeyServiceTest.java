@@ -1,5 +1,6 @@
 package com.qtua.aihub.service;
 
+import com.qtua.aihub.service.shared.KeyServiceImpl;
 import com.qtua.aihub.api.model.auth.KeyAuthDTO;
 import com.qtua.aihub.api.model.req.KeyGenerateReqDTO;
 import com.qtua.aihub.api.model.res.KeyBlockResDTO;

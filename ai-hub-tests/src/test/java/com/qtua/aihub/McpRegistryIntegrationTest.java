@@ -1,5 +1,7 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.console.ConsoleApplication;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -31,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>HTTP MCP Server 用 MockWebServer 模拟（JSON-RPC initialize）；stdio 用独立 JVM 进程
  * {@link com.qtua.aihub.mcp.InMemoryStdioServer}。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = ConsoleApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class McpRegistryIntegrationTest {
@@ -173,7 +175,8 @@ class McpRegistryIntegrationTest {
                 .header("Authorization", "Bearer " + virtualKey)
                 .retrieve()
                 .toEntity(String.class);
-        assertThat(list.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(list.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(list.getBody()).contains("authorization_error");
     }
 
     @Test

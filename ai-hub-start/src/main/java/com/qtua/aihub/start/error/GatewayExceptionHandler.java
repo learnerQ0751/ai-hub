@@ -137,6 +137,24 @@ public class GatewayExceptionHandler {
     }
 
     /**
+     * 处理当前应用不提供的接口（REQ-5.1 拆分后跨面访问）。
+     *
+     * @param ex      资源不存在异常
+     * @param request HTTP 请求（回填治理上下文）
+     * @return 404 规范错误体
+     */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(
+            org.springframework.web.servlet.resource.NoResourceFoundException ex,
+            HttpServletRequest request) {
+        LOG.warn("endpoint not found on this application: {}", ex.getResourcePath());
+        markFailure(request, HttpStatus.NOT_FOUND.value(), "not_found");
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(ErrorResponse.of("接口不存在", "not_found", null, "404"));
+    }
+
+    /**
      * 兜底异常处理，避免泄露内部细节。
      *
      * @param ex      未知异常

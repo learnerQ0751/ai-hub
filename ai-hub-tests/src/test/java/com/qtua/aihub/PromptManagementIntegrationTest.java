@@ -1,5 +1,7 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.console.ConsoleApplication;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * REQ-2.4 端到端验收：Prompt 模板 CRUD、版本、发布/回滚、变量校验与安全。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = ConsoleApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class PromptManagementIntegrationTest {
@@ -111,7 +113,7 @@ class PromptManagementIntegrationTest {
     }
 
     @Test
-    void management_requires_master_key_but_render_will_not() throws Exception {
+    void management_requires_master_key() throws Exception {
         ResponseEntity<String> generated = restClient.post()
                 .uri("/key/generate")
                 .header("Authorization", "Bearer " + MASTER_KEY)
@@ -124,7 +126,8 @@ class PromptManagementIntegrationTest {
                 .uri("/v1/prompts")
                 .header("Authorization", "Bearer " + virtualKey)
                 .retrieve().toEntity(String.class);
-        assertThat(list.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(list.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(list.getBody()).contains("authorization_error");
     }
 
     private ResponseEntity<String> create(String name, String content, List<String> variables) {

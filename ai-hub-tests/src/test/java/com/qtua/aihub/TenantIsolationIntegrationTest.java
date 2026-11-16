@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.dal.mapper.CallLogMapper;
@@ -31,12 +35,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * REQ-4.1 端到端验收：虚拟 Key 绑定租户/项目、服务端派生过滤、越权 403、
  * 事务授权后跨项目记忆可读、调用日志带租户。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class TenantIsolationIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @LocalServerPort
@@ -49,6 +58,9 @@ class TenantIsolationIntegrationTest {
 
     @Autowired
     private PromptManager promptManager;
+
+    @Autowired
+    private com.qtua.aihub.core.rag.RagDocumentCore ragDocumentCore;
 
     @Autowired
     private CallLogMapper callLogMapper;
@@ -65,7 +77,7 @@ class TenantIsolationIntegrationTest {
 
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
     }
 
     @Test
@@ -151,18 +163,16 @@ class TenantIsolationIntegrationTest {
         publishPrompt(tenantA, "shared-prompt", "tenant-a-content-" + suffix);
         publishPrompt(tenantB, "shared-prompt", "tenant-b-content-" + suffix);
 
-        ResponseEntity<String> upload = restClient.post().uri("/v1/rag/documents")
-                .header("Authorization", "Bearer " + keyT1)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(uploadBody("a.txt", "tenant-a knowledge", projectA))
-                .retrieve().toEntity(String.class);
-        assertThat(upload.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        // 文档接入属于控制面；测试直接走核心入库，再验证数据面检索隔离。
+        ragDocumentCore.ingest(tenantA, projectA, "a.txt", "text/plain",
+                "tenant-a knowledge".getBytes(java.nio.charset.StandardCharsets.UTF_8), false);
 
-        ResponseEntity<String> otherList = restClient.get()
-                .uri("/v1/rag/documents?project_id=" + projectA)
+        ResponseEntity<String> otherTenantSearch = restClient.post().uri("/v1/rag/search")
                 .header("Authorization", "Bearer " + keyT2)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"query\":\"tenant-a\",\"project_id\":\"" + projectA + "\"}")
                 .retrieve().toEntity(String.class);
-        assertThat(otherList.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(otherTenantSearch.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
         ResponseEntity<String> promptT1 = restClient.post()
                 .uri("/v1/prompts/shared-prompt/render")
@@ -181,19 +191,6 @@ class TenantIsolationIntegrationTest {
                 .body("{}")
                 .retrieve().toEntity(String.class);
         assertThat(promptT2.getBody()).contains("tenant-b-content-" + suffix);
-    }
-
-    @Test
-    void virtual_key_gets_403_on_admin_endpoints() throws Exception {
-        String suffix = java.util.UUID.randomUUID().toString().substring(0, 8);
-        String key = generateKey("tenant-a-" + suffix, "project-a-" + suffix);
-
-        ResponseEntity<String> response = restClient.get().uri("/v1/admin/keys")
-                .header("Authorization", "Bearer " + key)
-                .retrieve().toEntity(String.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        assertThat(response.getBody()).contains("authorization_error");
     }
 
     @Test
@@ -223,15 +220,8 @@ class TenantIsolationIntegrationTest {
         assertThat(logs.get(0).getProjectId()).isEqualTo(project);
     }
 
-    private String generateKey(String tenantId, String projectId) throws Exception {
-        ResponseEntity<String> response = restClient.post().uri("/key/generate")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{\"models\":[],\"tenant_id\":\"" + tenantId
-                        + "\",\"project_id\":\"" + projectId + "\"}")
-                .retrieve().toEntity(String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        return extractField(response.getBody(), "key");
+    private String generateKey(String tenantId, String projectId) {
+        return TestKeys.create(keyService, tenantId, projectId);
     }
 
     private String extractField(String body, String field) {

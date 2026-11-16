@@ -1,5 +1,6 @@
 package com.qtua.aihub.service;
 
+import com.qtua.aihub.service.shared.RagDocumentServiceImpl;
 import com.qtua.aihub.api.model.res.RagDocumentDeleteResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentListResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentResDTO;

@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: ai-hub-gateway
+  config:
+    import: classpath:application-common.yml
+  # Flyway 只由控制面（console）执行，数据面不跑迁移。
+  flyway:
+    enabled: false
+
+server:
+  port: ${GATEWAY_PORT:18080}

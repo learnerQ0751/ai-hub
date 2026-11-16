@@ -1,5 +1,7 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.console.ConsoleApplication;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.common.util.KeyHasher;
@@ -23,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * REQ-4.5 端到端验收：Key 封禁、项目授权、Prompt 发布产生可查审计；
  * 字段完整（actor/action/target/before/after/trace_id）；非管理员不可查。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = ConsoleApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class AuditLogIntegrationTest {

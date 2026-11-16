@@ -1,4 +1,5 @@
-# ai-hub 本地依赖：Redis（共享状态/限流/预算/锁）+ PostgreSQL（Key/日志/预算）
+# ai-hub 本地依赖 + 双应用（REQ-5.1）
+# console 先启动执行 Flyway，gateway 依赖 console 健康后启动。
 services:
   redis:
     image: redis:7.2
@@ -21,6 +22,60 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+
+  ai-hub-console:
+    build:
+      context: .
+      args:
+        JAR_FILE: ai-hub-console/target/ai-hub-console-0.0.1-SNAPSHOT-exec.jar
+    container_name: ai-hub-console
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/aihub
+      DB_USER: aihub
+      DB_PASSWORD: aihub
+      REDIS_HOST: redis
+      GATEWAY_MASTER_KEY: ${GATEWAY_MASTER_KEY:-local-master-key}
+      GATEWAY_SECRET_KEY: ${GATEWAY_SECRET_KEY:-local-secret-key}
+    ports:
+      - "18081:18081"
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:18081/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  ai-hub-gateway:
+    build:
+      context: .
+      args:
+        JAR_FILE: ai-hub-gateway/target/ai-hub-gateway-0.0.1-SNAPSHOT-exec.jar
+    container_name: ai-hub-gateway
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/aihub
+      DB_USER: aihub
+      DB_PASSWORD: aihub
+      REDIS_HOST: redis
+      GATEWAY_MASTER_KEY: ${GATEWAY_MASTER_KEY:-local-master-key}
+      GATEWAY_SECRET_KEY: ${GATEWAY_SECRET_KEY:-local-secret-key}
+    ports:
+      - "18080:18080"
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_started
+      ai-hub-console:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:18080/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
 
 volumes:
   redis-data:

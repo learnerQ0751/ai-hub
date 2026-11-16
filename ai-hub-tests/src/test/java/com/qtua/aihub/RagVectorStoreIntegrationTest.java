@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.qtua.aihub.common.rag.VectorMatch;
 import com.qtua.aihub.common.rag.VectorRecord;
 import com.qtua.aihub.common.rag.VectorSearchQuery;
@@ -29,9 +33,22 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>镜像默认取本机已有的 daocloud 镜像名，可用 {@code -Drag.pgvector.image} 覆盖。</p>
  */
 @Testcontainers(disabledWithoutDocker = true)
-@SpringBootTest(classes = AiHubApplication.class)
+@SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 class RagVectorStoreIntegrationTest {
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private String dataKey;
+
+    /**
+     * 数据面测试统一使用虚拟 Key（master key 仅控制面可用）。
+     */
+    @org.junit.jupiter.api.BeforeEach
+    void initDataPlaneKey() {
+        dataKey = TestKeys.create(keyService, "test-tenant", "test-project");
+    }
 
     private static final String IMAGE = System.getProperty("rag.pgvector.image",
             "m.daocloud.io/docker.io/pgvector/pgvector:pg16");

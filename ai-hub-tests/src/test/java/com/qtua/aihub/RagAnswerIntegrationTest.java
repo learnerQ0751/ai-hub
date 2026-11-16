@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,12 +42,31 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>H2 + 确定性 embedding + 内存向量存储 + MockWebServer 上游；不依赖本机 PostgreSQL 与真实模型。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class RagAnswerIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.core.rag.RagDocumentCore ragDocumentCore;
+
+    private final java.util.Map<String, String> keys = new java.util.HashMap<>();
+
+    /**
+     * 按项目取虚拟 Key（Key 绑定租户+项目）。
+     *
+     * @param projectId 项目
+     * @return 明文 Key
+     */
+    private String keyFor(String projectId) {
+        return keys.computeIfAbsent(projectId,
+                ignored -> TestKeys.create(keyService, "test-tenant", projectId));
+    }
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final String QUERY = "年假 报销";
     private static final String ANSWER = "年假为 5 天 [1]";
     private static final MockWebServer UPSTREAM = startServer();
@@ -72,7 +95,7 @@ class RagAnswerIntegrationTest {
     static void gatewayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_rag_answer;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
         registry.add("gateway.model-list.chat[0].api-base", () -> UPSTREAM.url("/").toString());
         registry.add("gateway.model-list.chat[0].api-key", () -> "upstream-key");
         registry.add("gateway.model-list.chat[0].model", () -> "upstream-chat");
@@ -210,24 +233,16 @@ class RagAnswerIntegrationTest {
     }
 
     private String upload(String projectId, String fileName, String content) {
-        MultiValueMap<String, Object> parts = new LinkedMultiValueMap<>();
-        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
-        parts.add("file", new ByteArrayResource(bytes) {
-            @Override
-            public String getFilename() {
-                return fileName;
-            }
-        });
-        parts.add("project_id", projectId);
-        ResponseEntity<String> response = restClient.post()
-                .uri("/v1/rag/documents")
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .headers(headers -> headers.setBearerAuth(MASTER_KEY))
-                .body(parts)
-                .retrieve()
-                .toEntity(String.class);
-        assertThat(response.getStatusCode()).isIn(HttpStatus.CREATED, HttpStatus.OK);
-        return readJson(response).path("doc_id").asText();
+        return ragDocumentCore.ingest("test-tenant", projectId, fileName, "text/plain",
+                content.getBytes(StandardCharsets.UTF_8), false).document().docId();
+    }
+
+    private String keyForBody(String body) {
+        try {
+            return keyFor(objectMapper.readTree(body).path("project_id").asText());
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            throw new IllegalStateException("invalid request body", ex);
+        }
     }
 
     private JsonNode answer(String body) {
@@ -239,7 +254,7 @@ class RagAnswerIntegrationTest {
     private ResponseEntity<String> answerEntity(String body) {
         return restClient.post()
                 .uri("/v1/rag/answer")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + keyForBody(body))
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()

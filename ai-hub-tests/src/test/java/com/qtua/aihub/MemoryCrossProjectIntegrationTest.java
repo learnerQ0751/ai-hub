@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,18 +26,37 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * REQ-3.5 跨项目共享验收：开关开启后，仅用户级记忆可按同一租户跨项目召回。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class MemoryCrossProjectIntegrationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private final java.util.Map<String, String> keys = new java.util.HashMap<>();
+
+    /**
+     * 按项目取虚拟 Key：跨项目召回用目标项目自己的 Key。
+     *
+     * @param projectId 项目
+     * @return 明文 Key
+     */
+    private String keyFor(String projectId) {
+        return keys.computeIfAbsent(projectId,
+                ignored -> TestKeys.create(keyService, TENANT, projectId));
+    }
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final String TENANT = "tenant-a";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @LocalServerPort
     private int port;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.manager.tenant.ProjectAuthorizationManager authorizationManager;
 
     private RestClient restClient;
 
@@ -50,13 +73,14 @@ class MemoryCrossProjectIntegrationTest {
     static void gatewayProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_memory_cross;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
         registry.add("gateway.memory.cross-project-sharing-enabled", () -> "true");
     }
 
     @Test
     void user_level_memory_is_shared_across_projects_when_enabled() throws Exception {
         save("project-a", "u-share", null, "用户画像：芒果过敏");
+        authorizationManager.authorize(TENANT, "project-b", "project-a", "MEMORY");
 
         JsonNode shared = recall("project-b", "u-share", null, true, "画像");
         assertThat(shared.path("count").asInt()).isEqualTo(1);
@@ -96,7 +120,7 @@ class MemoryCrossProjectIntegrationTest {
         body.put("user_id", userId);
         body.put("session_id", sessionId);
         body.put("content", content);
-        ResponseEntity<String> response = post("/v1/memory/save", body);
+        ResponseEntity<String> response = post("/v1/memory/save", body, keyFor(projectId));
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     }
 
@@ -115,15 +139,15 @@ class MemoryCrossProjectIntegrationTest {
         body.put("session_id", sessionId);
         body.put("cross_project", crossProject);
         body.put("keyword", keyword);
-        return post("/v1/memory/recall", body);
+        return post("/v1/memory/recall", body, keyFor(projectId));
     }
 
-    private ResponseEntity<String> post(String path, Map<String, Object> body) {
+    private ResponseEntity<String> post(String path, Map<String, Object> body, String key) {
         try {
             return restClient.post()
                     .uri(path)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .headers(headers -> headers.setBearerAuth(MASTER_KEY))
+                    .headers(headers -> headers.setBearerAuth(key))
                     .body(objectMapper.writeValueAsString(body))
                     .retrieve()
                     .toEntity(String.class);

@@ -198,6 +198,20 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * 管理凭证被用于数据面（403，REQ-5.1）。
+     *
+     * <p>拆分后 master key 只属于控制面；数据面只接受虚拟 Key，避免管理凭证
+     * 直接出现在请求路径上。</p>
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException adminKeyNotAllowed() {
+        return new ChatCompletionException(HttpStatus.FORBIDDEN,
+                "数据面不接受管理凭证，请使用虚拟 API Key。",
+                "authorization_error", null, "403", null, false);
+    }
+
+    /**
      * 租户/项目越权（403，REQ-4.1）。
      *
      * <p>错误体字段保持英文协议值；日志由 {@code TenantScopeGuard} 记录 Key 哈希与范围。</p>

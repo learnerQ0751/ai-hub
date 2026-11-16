@@ -1,5 +1,7 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,7 +42,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>使用 H2（PostgreSQL 兼容模式）与 MockWebServer，不依赖本机 Docker/真实上游。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class KeyManagementIntegrationTest {
@@ -67,6 +69,9 @@ class KeyManagementIntegrationTest {
 
     @Autowired
     private ApiKeyManager apiKeyManager;
+
+    @Autowired
+    private com.qtua.aihub.api.KeyService keyService;
 
     private RestClient restClient;
 
@@ -125,29 +130,27 @@ class KeyManagementIntegrationTest {
     }
 
     @Test
-    void master_key_can_call_any_model() {
+    void master_key_is_rejected_on_data_plane() {
         ResponseEntity<String> response = post("/v1/chat/completions", MASTER_KEY, REASONER_BODY);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).contains("\"model\":\"reasoner\"");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(readJson(response).get("error").get("type").asText())
+                .isEqualTo("authorization_error");
     }
 
     @Test
     void blocked_key_is_rejected_and_unblock_restores_access() {
         String plainKey = generateKey("[\"chat\"]");
 
-        ResponseEntity<String> blockResponse = post("/key/block", MASTER_KEY,
-                "{\"key\":\"" + plainKey + "\"}");
+        // 封禁/解封端点属于控制面；数据面测试直接调用 KeyService。
+        keyService.block(plainKey);
         ResponseEntity<String> blockedChat = post("/v1/chat/completions", plainKey, CHAT_BODY);
-        ResponseEntity<String> unblockResponse = post("/key/unblock", MASTER_KEY,
-                "{\"key\":\"" + plainKey + "\"}");
+        keyService.unblock(plainKey);
         ResponseEntity<String> restoredChat = post("/v1/chat/completions", plainKey, CHAT_BODY);
 
-        assertThat(blockResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(blockedChat.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(readJson(blockedChat).get("error").get("type").asText()).isEqualTo("auth_error");
         assertThat(readJson(blockedChat).get("error").get("message").asText()).contains("封禁");
-        assertThat(unblockResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(restoredChat.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
@@ -169,25 +172,22 @@ class KeyManagementIntegrationTest {
     void key_info_returns_spend_models_and_masks_key() {
         String plainKey = generateKey("[\"chat\"]");
 
-        ResponseEntity<String> response = get("/key/info?key=" + plainKey, MASTER_KEY);
+        com.qtua.aihub.api.model.res.KeyInfoResDTO body = keyService.info(plainKey);
 
-        JsonNode body = readJson(response);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(body.get("key").asText()).startsWith("sk-****").endsWith(lastFour(plainKey));
-        assertThat(body.get("key").asText()).isNotEqualTo(plainKey);
-        assertThat(body.get("info").get("spend").decimalValue()).isZero();
-        assertThat(body.get("info").get("models").get(0).asText()).isEqualTo("chat");
-        assertThat(response.getBody()).doesNotContain(plainKey);
+        assertThat(body.key()).startsWith("sk-****").endsWith(lastFour(plainKey));
+        assertThat(body.key()).isNotEqualTo(plainKey);
+        assertThat(body.info().spend()).isZero();
+        assertThat(body.info().models().get(0)).isEqualTo("chat");
     }
 
     @Test
-    void virtual_key_cannot_use_management_endpoint() {
+    void management_endpoints_are_not_exposed_on_data_plane() {
         String plainKey = generateKey("[\"chat\"]");
 
         ResponseEntity<String> response = post("/key/generate", plainKey, "{\"models\":[]}");
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-        assertThat(readJson(response).get("error").get("type").asText()).isEqualTo("auth_error");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(readJson(response).get("error").get("type").asText()).isEqualTo("not_found");
     }
 
     @Test
@@ -199,14 +199,16 @@ class KeyManagementIntegrationTest {
     }
 
     private String generateKey(String modelsJson) {
-        String body = "{\"models\":" + modelsJson + ",\"duration\":\"1h\","
-                + "\"metadata\":{\"user\":\"integration\"}}";
-        ResponseEntity<String> response = post("/key/generate", MASTER_KEY, body);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        JsonNode json = readJson(response);
-        assertThat(json.get("key").asText()).startsWith("sk-");
-        assertThat(json.get("expires").asText()).isNotBlank();
-        return json.get("key").asText();
+        try {
+            java.util.List<String> models = objectMapper.readValue(modelsJson,
+                    new com.fasterxml.jackson.core.type.TypeReference<java.util.List<String>>() {
+                    });
+            String plainKey = TestKeys.create(keyService, "test-tenant", "test-project", models);
+            assertThat(plainKey).startsWith("sk-");
+            return plainKey;
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("invalid models json", ex);
+        }
     }
 
     private ResponseEntity<String> post(String path, String token, String body) {

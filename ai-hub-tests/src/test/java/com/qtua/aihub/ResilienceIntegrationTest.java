@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,12 +45,25 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 每个场景使用独立别名，避免 Redis 冷却状态互相干扰。</p>
  */
 @Testcontainers(disabledWithoutDocker = true)
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class ResilienceIntegrationTest {
 
-    private static final String MASTER_KEY = "resilience-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private String dataKey;
+
+    /**
+     * 数据面测试统一使用虚拟 Key（master key 仅控制面可用）。
+     */
+    @org.junit.jupiter.api.BeforeEach
+    void initDataPlaneKey() {
+        dataKey = TestKeys.create(keyService, "test-tenant", "test-project");
+    }
+
+    private static final String ADMIN_KEY = "resilience-master";
     private static final int DEFAULT_PRIMARY_STATUS = HttpStatus.UNAUTHORIZED.value();
     private static final String UPSTREAM_RESPONSE = """
             {"id":"x","object":"chat.completion","model":"upstream",
@@ -97,7 +114,7 @@ class ResilienceIntegrationTest {
 
     @DynamicPropertySource
     static void gatewayProperties(DynamicPropertyRegistry registry) {
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
         registry.add("spring.data.redis.host", REDIS::getHost);
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
         registry.add("gateway.resilience.num-retries", () -> "1");
@@ -182,7 +199,7 @@ class ResilienceIntegrationTest {
         return restClient.post()
                 .uri("/v1/chat/completions")
                 .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> headers.setBearerAuth(MASTER_KEY))
+                .headers(headers -> headers.setBearerAuth(dataKey))
                 .body(body)
                 .retrieve()
                 .onStatus(status -> true, (request, response) -> {

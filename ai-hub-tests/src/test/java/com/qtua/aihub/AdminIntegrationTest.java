@@ -1,5 +1,7 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.console.ConsoleApplication;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.common.util.KeyHasher;
@@ -19,18 +21,25 @@ import org.springframework.web.client.RestClient;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * REQ-4.4 端到端验收：Key 列表/封禁、模型别名 CRUD、日志查询、项目授权；
  * 响应不返回明文 Key 或上游 api-key；非管理员 403。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = ConsoleApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class AdminIntegrationTest {
 
     private static final String MASTER_KEY = "integration-master";
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    private com.qtua.aihub.api.KeyService keyService;
+
+    @Autowired
+    private com.qtua.aihub.manager.tenant.ProjectAuthorizationManager authorizationManager;
 
     @LocalServerPort
     private int port;
@@ -68,15 +77,13 @@ class AdminIntegrationTest {
         assertThat(blocked.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(blocked.getBody()).contains("\"blocked\":true");
 
-        ResponseEntity<String> call = postWithKey("/v1/memory/save",
-                "{\"user_id\":\"u1\",\"content\":\"x\"}", plainKey);
-        assertThat(call.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        // 数据面端点不在控制面；封禁效果通过 KeyService 鉴权直接验证。
+        assertThatThrownBy(() -> keyService.authenticate(plainKey))
+                .hasMessageContaining("封禁");
 
         ResponseEntity<String> unblocked = post("/v1/admin/keys/" + hash + "/unblock", "{}");
         assertThat(unblocked.getStatusCode()).isEqualTo(HttpStatus.OK);
-        ResponseEntity<String> restored = postWithKey("/v1/memory/save",
-                "{\"user_id\":\"u1\",\"content\":\"x\"}", plainKey);
-        assertThat(restored.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(keyService.authenticate(plainKey)).isNotNull();
     }
 
     @Test
@@ -112,17 +119,15 @@ class AdminIntegrationTest {
     }
 
     @Test
-    void project_authorization_api_unlocks_cross_project_memory() throws Exception {
+    void project_authorization_api_records_cross_project_grant() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         String tenant = "tenant-authz-" + suffix;
         String projectA = "project-a-" + suffix;
         String projectB = "project-b-" + suffix;
         String key = generateKey(tenant, projectA);
 
-        ResponseEntity<String> denied = postWithKey("/v1/memory/save",
-                "{\"project_id\":\"" + projectB + "\",\"user_id\":\"u1\",\"content\":\"x\"}",
-                key);
-        assertThat(denied.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(authorizationManager.findAuthorizedProjects(tenant, projectA))
+                .doesNotContain(projectB);
 
         ResponseEntity<String> authorized = post("/v1/admin/project-authorizations",
                 "{\"tenant_id\":\"" + tenant + "\",\"source_project_id\":\"" + projectA
@@ -130,10 +135,9 @@ class AdminIntegrationTest {
                         + "\",\"resource_type\":\"MEMORY\"}");
         assertThat(authorized.getStatusCode()).isEqualTo(HttpStatus.OK);
 
-        ResponseEntity<String> allowed = postWithKey("/v1/memory/save",
-                "{\"project_id\":\"" + projectB + "\",\"user_id\":\"u1\",\"content\":\"x\"}",
-                key);
-        assertThat(allowed.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        // 授权落库；跨项目放行链路由 TenantIsolationIntegrationTest 在数据面验证。
+        assertThat(authorizationManager.findAuthorizedProjects(tenant, projectA))
+                .contains(projectB);
     }
 
     @Test

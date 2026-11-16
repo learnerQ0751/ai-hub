@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-16 17:07
+**最后更新**：2026-11-16 20:42
 
 ## 需求进度
 
@@ -41,6 +41,7 @@
 | REQ-4.3 | 成本与用量统计 | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-1.5、REQ-4.1 | c6ef262 |
 | REQ-4.4 | 管理端（模型/Key/Prompt/MCP/日志） | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-4.1、REQ-4.3、REQ-4.5（审计在 4.5 接入） | f333e7d |
 | REQ-4.5 | 审计日志 + 项目总验收 | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（12/14） | REQ-4.1~4.4 | a5954a9 |
+| REQ-5.1 | 数据面 / 控制面拆分 | 已完成（待主人验收） | breaking | 待验收（2026-11-16，实现与自检完成）（6/6） | REQ-4.1 ~ REQ-4.5 | 待回填（feature/phase5-split） |
 
 ## 接口清单（来自 Controller）
 
@@ -145,11 +146,7 @@
 
 ## 配置（application.yml 顶层键）
 
-- `spring`
-- `mybatis`
-- `server`
-- `logging`
-- `gateway`
+- —
 
 ## 变更矩阵（接口 / 表 → 涉及需求）
 
@@ -228,7 +225,7 @@
 
 ## 测试
 
-- 457 个 @Test / 82 个测试类
+- 468 个 @Test / 84 个测试类
 
 ## 下一步
 
@@ -246,6 +243,7 @@
 - 验收 REQ-4.3 成本与用量统计 → 打开 `acceptance/REQ-4.3.md`
 - 验收 REQ-4.4 管理端（模型/Key/Prompt/MCP/日志） → 打开 `acceptance/REQ-4.4.md`
 - 验收 REQ-4.5 审计日志 + 项目总验收 → 打开 `acceptance/REQ-4.5.md`
+- 验收 REQ-5.1 数据面 / 控制面拆分 → 打开 `acceptance/REQ-5.1.md`
 
 <!-- STATUS:GENERATED:END -->
 

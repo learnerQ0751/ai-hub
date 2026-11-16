@@ -1,5 +1,9 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.gateway.GatewayApplication;
+
+import com.qtua.aihub.api.KeyService;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.Dispatcher;
@@ -34,12 +38,31 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>HTTP MCP Server 用 MockWebServer 模拟；每个 Server 通过路径区分（/mcp/a、/mcp/b），
  * dispatcher 支持 initialize 与 tools/list，并统计 tools/list 调用次数。</p>
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = GatewayApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class McpToolAggregationTest {
 
-    private static final String MASTER_KEY = "integration-master";
+    @org.springframework.beans.factory.annotation.Autowired
+    private KeyService keyService;
+
+    private String dataKey;
+
+    /**
+     * 数据面测试统一使用虚拟 Key（master key 仅控制面可用）。
+     */
+    @org.junit.jupiter.api.BeforeEach
+    void initDataPlaneKey() {
+        dataKey = TestKeys.create(keyService, "test-tenant", "test-project");
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.manager.mcp.McpServerManager mcpServerManager;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.qtua.aihub.manager.mcp.McpToolCatalog mcpToolCatalog;
+
+    private static final String ADMIN_KEY = "integration-master";
     private static final AtomicInteger TOOLS_LIST_CALLS = new AtomicInteger();
     private static final AtomicReference<List<String>> B_TOOLS =
             new AtomicReference<>(List.of("search", "fetch"));
@@ -67,7 +90,7 @@ class McpToolAggregationTest {
         // 独立 H2 库：工具聚合是全表 ACTIVE 扫描，避免与其他测试类注册的 Server 交叉污染。
         registry.add("spring.datasource.url", () -> "jdbc:h2:mem:aihub_tools;"
                 + "MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1");
-        registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.master-key", () -> ADMIN_KEY);
     }
 
     @AfterAll
@@ -160,44 +183,28 @@ class McpToolAggregationTest {
         cleanup("inv_a");
     }
 
-    private String register(String name, String endpoint) throws Exception {
-        ResponseEntity<String> response = restClient.post()
-                .uri("/v1/mcp/servers")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("name", name, "transport", "http", "endpoint", endpoint))
-                .retrieve()
-                .toEntity(String.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        return objectMapper.readTree(response.getBody()).path("serverId").asText();
+    private String register(String name, String endpoint) {
+        return McpTestSupport.register(mcpServerManager, mcpToolCatalog, name, endpoint,
+                "test-tenant");
     }
 
     private ResponseEntity<String> listTools(String query) {
         return restClient.get()
                 .uri("/v1/mcp/tools" + (query == null ? "" : query))
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .retrieve().toEntity(String.class);
     }
 
     private ResponseEntity<String> refresh() {
         return restClient.post()
                 .uri("/v1/mcp/tools/refresh")
-                .header("Authorization", "Bearer " + MASTER_KEY)
+                .header("Authorization", "Bearer " + dataKey)
                 .retrieve().toEntity(String.class);
     }
 
-    private void deleteByName(String name) throws Exception {
-        JsonNode servers = objectMapper.readTree(restClient.get()
-                .uri("/v1/mcp/servers")
-                .header("Authorization", "Bearer " + MASTER_KEY)
-                .retrieve().toEntity(String.class).getBody());
-        for (JsonNode node : servers) {
-            if (name.equals(node.path("name").asText())) {
-                restClient.delete().uri("/v1/mcp/servers/" + node.path("serverId").asText())
-                        .header("Authorization", "Bearer " + MASTER_KEY)
-                        .retrieve().toEntity(String.class);
-            }
-        }
+    private void deleteByName(String name) {
+        McpTestSupport.delete(mcpServerManager, name);
+        mcpToolCatalog.invalidate();
     }
 
     private void cleanup(String... names) throws Exception {

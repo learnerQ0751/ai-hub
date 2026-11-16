@@ -1,7 +1,7 @@
 # 设计基线（ai-hub）
 
-- 更新于：2026-11-12
-- 对应状态：第 3 期完成 + 生产化补强（REQ-3.7 Embedding 一等能力 / REQ-3.8 计费与边界补强）
+- 更新于：2026-11-16
+- 对应状态：第 4 期完成；第 5 期数据面/控制面拆分（REQ-5.1）
 - 维护规则：只有架构、运行时链路、跨需求决策发生变化时才更新；需求细节见 `records/`。
 
 ## 1. 系统全景
@@ -32,11 +32,32 @@ ai-hub 是 OpenAI 兼容的 LLM 网关（项目 7 · Agent 与 MCP 集群），�
 | `ai-hub-dal` | MyBatis Mapper + DDL（api_keys / call_logs / mcp_servers / prompt_templates / memories / memory_audit_logs / rag_*） |
 | `ai-hub-integration` | 上游 HTTP + OpenAI 协议适配 + 协议改写；远端 embedding（DashScope OpenAI 兼容）；文档解析（PDFBox / POI / jsoup）；MCP 探活/工具客户端/stdio 进程管理；Prompt 模板渲染与消息解析 |
 | `ai-hub-core` | 纯业务编排：部署选择、协议改写、上游调用、usage 解析；RAG 索引/检索/chunk 校验（不含限流/预算/计价/日志） |
-| `ai-hub-service` | 应用服务：请求解析/校验/业务执行；`service/gateway` 为网关治理公共实现（限流/预算/计价/spend/日志）；Embedding 服务 |
-| `ai-hub-start` | 启动类（根包）+ controller / filter / error / config |
+| `ai-hub-service` | 应用服务：`service.shared`（Key 鉴权、审计、Trace 写入）、`service.admin`（控制面管理）、`service.gateway`（网关治理） |
+| `ai-hub-start` | 公共壳：共享配置、RequestIdFilter、异常处理、Jackson/WebClient/线程池配置；无 Controller、无启动类 |
+| `ai-hub-gateway` | 数据面：聊天/嵌入/模型列表/MCP 调用/Prompt 运行时/RAG 检索生成/记忆 + 虚拟 Key 鉴权与治理链 |
+| `ai-hub-console` | 控制面：Key/模型/MCP 注册/Prompt 管理/RAG 文档接入/Trace/用量/审计 + admin 鉴权；Flyway 唯一执行方 |
 | `ai-hub-tests` | 集成测试 + ArchUnit + JaCoCo 聚合 |
 
-依赖方向：`start → service → core → manager/integration → dal → common`（ArchUnit 强制，禁止反向）。
+依赖方向：`gateway/console → start/service → core → manager/integration → dal → common`（ArchUnit 强制，禁止反向）。
+
+### 2.1 数据面 / 控制面边界（REQ-5.1）
+
+```mermaid
+flowchart LR
+    C["客户端 / Agent"] -->|"虚拟 Key"| G["ai-hub-gateway :18080<br/>数据面"]
+    A["管理台 / 运维"] -->|"admin 凭证（master key）"| N["ai-hub-console :18081<br/>控制面"]
+    G --> DB[("同一 PostgreSQL")]
+    N --> DB
+    N -->|"Flyway 迁移（唯一）"| DB
+    G -.->|"只读配置/Key/目录"| DB
+    N -->|"注册/发布/接入/查询"| DB
+```
+
+- 鉴权物理隔离：gateway 不加载 admin 鉴权；console 不加载虚拟 Key 业务鉴权；两套 Filter 互不兜底。
+- 管理端点路径保持 4.x 契约（`/key/*`、`/v1/prompts`、`/v1/mcp/servers`、`/v1/rag/documents`、`/v1/traces`、`/v1/usage`、`/v1/audit-logs`、`/v1/admin/*`），隔离靠「console 只认 admin 凭证」。
+- 控制面启动先于数据面（Flyway）；停 console 不影响数据面已启动的转发。
+- 例外：`RagDocumentService` 放在 `service.shared`，因为数据面 MCP 运行时工具 `ingest_document` 复用同一实现；HTTP 接入端点仍只在 console。
+- 例外：MCP Server 启动探活加载器归 console（写注册表状态）；数据面按需连接工具。
 
 ## 2.5 数据模型
 

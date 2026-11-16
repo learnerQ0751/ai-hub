@@ -5,7 +5,7 @@ import com.qtua.aihub.common.mcp.McpServerStatus;
 import com.qtua.aihub.common.mcp.TransportType;
 import com.qtua.aihub.manager.mcp.McpServerManager;
 import com.qtua.aihub.manager.model.McpServerBO;
-import com.qtua.aihub.service.mcp.McpServerStartupLoader;
+import com.qtua.aihub.service.admin.McpServerStartupLoader;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

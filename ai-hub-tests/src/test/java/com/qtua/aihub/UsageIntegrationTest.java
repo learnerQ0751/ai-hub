@@ -1,5 +1,7 @@
 package com.qtua.aihub;
 
+import com.qtua.aihub.console.ConsoleApplication;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.common.util.KeyHasher;
@@ -29,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * REQ-4.3 端到端验收：用量按租户/项目/模型/Key/天聚合，与逐条日志可复算；
  * 虚拟 Key 不能横向查看其他租户；CSV 导出同口径。
  */
-@SpringBootTest(classes = AiHubApplication.class,
+@SpringBootTest(classes = ConsoleApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 class UsageIntegrationTest {
@@ -88,18 +90,19 @@ class UsageIntegrationTest {
         assertThat(usage.path("trend")).hasSize(2);
         assertThat(usage.path("unpriced_models").toString()).contains("upstream-chat");
 
-        JsonNode keyScoped = objectMapper.readTree(restClient.get()
+        // 用量查询归控制面：虚拟 Key 一律 403，admin 凭证按 tenant 过滤。
+        ResponseEntity<String> virtualDenied = restClient.get()
                 .uri("/v1/usage?from=" + yesterday + "&to=" + today)
                 .header("Authorization", "Bearer " + keyA)
-                .retrieve().toEntity(String.class).getBody());
-        assertThat(keyScoped.path("totals").path("requests").asLong()).isEqualTo(2L);
-        assertThat(keyScoped.path("tenant_id").asText()).isEqualTo(tenantA);
-
-        ResponseEntity<String> crossTenant = restClient.get()
-                .uri("/v1/usage?tenant_id=" + tenantB)
-                .header("Authorization", "Bearer " + keyA)
                 .retrieve().toEntity(String.class);
-        assertThat(crossTenant.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(virtualDenied.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+
+        JsonNode tenantScoped = objectMapper.readTree(restClient.get()
+                .uri("/v1/usage?tenant_id=" + tenantA + "&from=" + yesterday + "&to=" + today)
+                .header("Authorization", "Bearer " + MASTER_KEY)
+                .retrieve().toEntity(String.class).getBody());
+        assertThat(tenantScoped.path("totals").path("requests").asLong()).isEqualTo(2L);
+        assertThat(tenantScoped.path("tenant_id").asText()).isEqualTo(tenantA);
 
         ResponseEntity<String> csv = restClient.get()
                 .uri("/v1/usage/export?tenant_id=" + tenantA + "&from=" + yesterday
