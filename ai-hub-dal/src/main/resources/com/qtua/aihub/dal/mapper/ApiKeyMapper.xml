@@ -50,6 +50,22 @@
         WHERE key_hash = #{keyHash,jdbcType=VARCHAR}
     </update>
 
+    <select id="selectPage" resultMap="ApiKeyResultMap">
+        SELECT id, key_hash, CAST(models AS VARCHAR) AS models, spend, max_budget,
+               budget_duration, rpm_limit, tpm_limit, expires_at, blocked,
+               CAST(metadata AS VARCHAR) AS metadata, created_at, tenant_id, project_id
+        FROM api_keys
+        WHERE 1 = 1
+        <if test="tenantId != null and tenantId != ''">
+            AND tenant_id = #{tenantId,jdbcType=VARCHAR}
+        </if>
+        <if test="projectId != null and projectId != ''">
+            AND project_id = #{projectId,jdbcType=VARCHAR}
+        </if>
+        ORDER BY id DESC
+        LIMIT #{limit,jdbcType=INTEGER} OFFSET #{offset,jdbcType=INTEGER}
+    </select>
+
     <update id="addSpend">
         UPDATE api_keys
         SET spend = spend + #{amount,jdbcType=NUMERIC}

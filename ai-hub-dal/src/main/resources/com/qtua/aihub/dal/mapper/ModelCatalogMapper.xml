@@ -34,17 +34,32 @@
         <result column="upstream_model" property="upstreamModel" jdbcType="VARCHAR"/>
         <result column="weight" property="weight" jdbcType="INTEGER"/>
         <result column="priority" property="priority" jdbcType="INTEGER"/>
+        <result column="deployment_status" property="deploymentStatus" jdbcType="VARCHAR"/>
+        <result column="deployment_key" property="deploymentKey" jdbcType="VARCHAR"/>
     </resultMap>
 
     <select id="selectCatalogRows" resultMap="CatalogRowResultMap">
         SELECT a.alias, a.tenant_id, CAST(a.fallbacks AS VARCHAR) AS fallbacks,
                d.api_base, d.api_key_cipher, d.upstream_model,
-               ad.weight, ad.priority
+               ad.weight, ad.priority, d.status AS deployment_status,
+               d.deployment_key
         FROM model_aliases a
         JOIN model_alias_deployments ad ON ad.alias_id = a.id
         JOIN model_deployments d ON d.id = ad.deployment_id
         WHERE a.status = 'ACTIVE' AND d.status = 'ACTIVE'
         ORDER BY a.alias ASC, ad.priority ASC, d.id ASC
+    </select>
+
+    <select id="selectRowsByAlias" resultMap="CatalogRowResultMap">
+        SELECT a.alias, a.tenant_id, CAST(a.fallbacks AS VARCHAR) AS fallbacks,
+               d.api_base, d.api_key_cipher, d.upstream_model,
+               ad.weight, ad.priority, d.status AS deployment_status,
+               d.deployment_key
+        FROM model_aliases a
+        JOIN model_alias_deployments ad ON ad.alias_id = a.id
+        JOIN model_deployments d ON d.id = ad.deployment_id
+        WHERE a.alias = #{alias,jdbcType=VARCHAR}
+        ORDER BY ad.priority ASC, d.id ASC
     </select>
 
     <select id="selectAliasNames" resultType="java.lang.String">
@@ -60,6 +75,13 @@
                status, created_at, updated_at
         FROM model_aliases
         WHERE alias = #{alias,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectAllAliases" resultMap="AliasResultMap">
+        SELECT id, alias, tenant_id, description, CAST(fallbacks AS VARCHAR) AS fallbacks,
+               status, created_at, updated_at
+        FROM model_aliases
+        ORDER BY alias ASC
     </select>
 
     <insert id="insertAlias" parameterType="com.qtua.aihub.dal.model.ModelAliasDO"

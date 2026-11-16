@@ -3,6 +3,7 @@ package com.qtua.aihub.manager;
 import com.qtua.aihub.dal.mapper.ApiKeyMapper;
 import com.qtua.aihub.dal.mapper.CallLogMapper;
 import com.qtua.aihub.dal.model.CallLogDO;
+import com.qtua.aihub.common.metering.TokenUsage;
 import com.qtua.aihub.manager.model.CallLogBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,48 @@ public class CallLogManager {
             // 执行器饱和：退回调用线程，宁可多花一点时间也不能丢审计数据。
             insert(callLog);
         }
+    }
+
+    /**
+     * 管理端日志分页查询。
+     *
+     * @param tenantId  租户
+     * @param projectId 项目
+     * @param model     模型别名
+     * @param keyId     Key 哈希
+     * @param status    HTTP 状态
+     * @param from      起始时间
+     * @param to        结束时间
+     * @param limit     每页条数
+     * @param offset    偏移
+     * @return 日志列表
+     */
+    public java.util.List<CallLogBO> findPage(String tenantId, String projectId, String model,
+                                              String keyId, Integer status,
+                                              java.time.Instant from, java.time.Instant to,
+                                              int limit, int offset) {
+        return callLogMapper.selectPage(tenantId, projectId, model, keyId, status, from, to,
+                        limit, offset).stream()
+                .map(this::toBO)
+                .toList();
+    }
+
+    /**
+     * DO → BO。
+     *
+     * @param dataObject 数据对象
+     * @return 业务对象
+     */
+    private CallLogBO toBO(CallLogDO dataObject) {
+        TokenUsage usage = new TokenUsage(dataObject.getPromptTokens(),
+                dataObject.getCompletionTokens(), dataObject.getTotalTokens());
+        return new CallLogBO(dataObject.getRequestId(), dataObject.getKeyId(),
+                dataObject.getModelAlias(), dataObject.getDeploymentModel(), usage,
+                dataObject.getCost(), dataObject.getLatencyMs(), dataObject.getStatus(),
+                dataObject.getErrorType(), dataObject.getTenantId(), dataObject.getCreatedAt(),
+                dataObject.getServedAlias(), dataObject.getRetryCount(),
+                dataObject.isFallbackUsed(), dataObject.getCallType(),
+                dataObject.getTargetName(), dataObject.getProjectId());
     }
 
     /**

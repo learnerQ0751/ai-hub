@@ -32,6 +32,14 @@ public interface ModelCatalogMapper {
     List<String> selectAliasNames();
 
     /**
+     * 按别名查询全部部署（含停用，管理端用）。
+     *
+     * @param alias 别名
+     * @return 目录行
+     */
+    List<ModelCatalogRow> selectRowsByAlias(@Param("alias") String alias);
+
+    /**
      * 别名数量（启动种子判断）。
      *
      * @return 数量
@@ -45,6 +53,13 @@ public interface ModelCatalogMapper {
      * @return 别名记录
      */
     Optional<ModelAliasDO> selectByAlias(@Param("alias") String alias);
+
+    /**
+     * 查询全部别名（含停用）。
+     *
+     * @return 别名记录
+     */
+    List<ModelAliasDO> selectAllAliases();
 
     /**
      * 插入别名。

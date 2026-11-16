@@ -87,6 +87,21 @@ public class ApiKeyManager {
         return apiKeyMapper.updateBlocked(keyHash, blocked) > 0;
     }
 
+    /**
+     * 管理端分页查询。
+     *
+     * @param tenantId  租户（可空）
+     * @param projectId 项目（可空）
+     * @param limit     每页条数
+     * @param offset    偏移
+     * @return Key 列表
+     */
+    public List<ApiKeyBO> list(String tenantId, String projectId, int limit, int offset) {
+        return apiKeyMapper.selectPage(tenantId, projectId, limit, offset).stream()
+                .map(this::toBO)
+                .toList();
+    }
+
     private ApiKeyBO toBO(ApiKeyDO dataObject) {
         return new ApiKeyBO(
                 dataObject.getKeyHash(),

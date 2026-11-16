@@ -47,4 +47,28 @@ public interface CallLogMapper {
      */
     List<CallLogDO> selectRecentByKeyId(@Param("keyId") String keyId,
                                         @Param("limit") int limit);
+
+    /**
+     * 管理端日志分页查询。
+     *
+     * @param tenantId  租户（可空）
+     * @param projectId 项目（可空）
+     * @param model     模型别名（可空）
+     * @param keyId     Key 哈希（可空）
+     * @param status    HTTP 状态（可空）
+     * @param from      起始时间（可空）
+     * @param to        结束时间（可空）
+     * @param limit     每页条数
+     * @param offset    偏移
+     * @return 日志列表
+     */
+    List<CallLogDO> selectPage(@Param("tenantId") String tenantId,
+                               @Param("projectId") String projectId,
+                               @Param("model") String model,
+                               @Param("keyId") String keyId,
+                               @Param("status") Integer status,
+                               @Param("from") java.time.Instant from,
+                               @Param("to") java.time.Instant to,
+                               @Param("limit") int limit,
+                               @Param("offset") int offset);
 }

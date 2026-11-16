@@ -51,4 +51,18 @@ public interface ApiKeyMapper {
      * @return 受影响行数
      */
     int addSpend(@Param("keyHash") String keyHash, @Param("amount") BigDecimal amount);
+
+    /**
+     * 管理端分页查询 Key（按租户/项目过滤）。
+     *
+     * @param tenantId  租户（可空）
+     * @param projectId 项目（可空）
+     * @param limit     每页条数
+     * @param offset    偏移
+     * @return Key 列表
+     */
+    java.util.List<ApiKeyDO> selectPage(@Param("tenantId") String tenantId,
+                                        @Param("projectId") String projectId,
+                                        @Param("limit") int limit,
+                                        @Param("offset") int offset);
 }

@@ -61,6 +61,39 @@
         LIMIT 1
     </select>
 
+    <select id="selectPage" resultMap="CallLogResultMap">
+        SELECT id, request_id, key_id, model_alias, deployment_model,
+               prompt_tokens, completion_tokens, total_tokens, cost,
+               latency_ms, status, error_type, tenant_id, created_at,
+               retry_count, fallback_used, served_alias, call_type, target_name,
+               project_id, trace_id
+        FROM call_logs
+        WHERE 1 = 1
+        <if test="tenantId != null and tenantId != ''">
+            AND tenant_id = #{tenantId,jdbcType=VARCHAR}
+        </if>
+        <if test="projectId != null and projectId != ''">
+            AND project_id = #{projectId,jdbcType=VARCHAR}
+        </if>
+        <if test="model != null and model != ''">
+            AND model_alias = #{model,jdbcType=VARCHAR}
+        </if>
+        <if test="keyId != null and keyId != ''">
+            AND key_id = #{keyId,jdbcType=VARCHAR}
+        </if>
+        <if test="status != null">
+            AND status = #{status,jdbcType=INTEGER}
+        </if>
+        <if test="from != null">
+            AND created_at &gt;= #{from,jdbcType=TIMESTAMP}
+        </if>
+        <if test="to != null">
+            AND created_at &lt;= #{to,jdbcType=TIMESTAMP}
+        </if>
+        ORDER BY id DESC
+        LIMIT #{limit,jdbcType=INTEGER} OFFSET #{offset,jdbcType=INTEGER}
+    </select>
+
     <select id="countByKeyId" resultType="int">
         SELECT COUNT(*)
         FROM call_logs

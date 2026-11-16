@@ -6,9 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.common.catalog.ModelDeployment;
 import com.qtua.aihub.common.crypto.SecretCipher;
 import com.qtua.aihub.dal.mapper.ModelCatalogMapper;
+import com.qtua.aihub.dal.model.ModelAliasDO;
 import com.qtua.aihub.dal.model.ModelCatalogRow;
+import com.qtua.aihub.dal.model.ModelDeploymentDO;
+import com.qtua.aihub.manager.model.ModelAliasAdminBO;
+import com.qtua.aihub.manager.model.ModelDeploymentAdminBO;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -125,6 +130,151 @@ public class ModelCatalogManager {
         } catch (JsonProcessingException ex) {
             throw new IllegalStateException("Failed to serialize fallbacks", ex);
         }
+    }
+
+    /**
+     * 管理端别名列表（含部署状态，不含凭证）。
+     *
+     * @return 别名列表
+     */
+    public List<ModelAliasAdminBO> listAliasesAdmin() {
+        return catalogMapper.selectAllAliases().stream().map(this::toAdminBO).toList();
+    }
+
+    /**
+     * 管理端单个别名。
+     *
+     * @param alias 别名
+     * @return 别名视图；不存在为 null
+     */
+    public ModelAliasAdminBO findAliasAdmin(String alias) {
+        return catalogMapper.selectByAlias(alias).map(this::toAdminBO).orElse(null);
+    }
+
+    /**
+     * 新增别名。
+     *
+     * @param alias       别名
+     * @param tenantId    租户
+     * @param description 描述
+     * @param fallbacks   降级链
+     * @param status      状态
+     * @return 别名视图
+     */
+    public ModelAliasAdminBO createAlias(String alias, String tenantId, String description,
+                                         List<String> fallbacks, String status) {
+        ModelAliasDO aliasDO = new ModelAliasDO();
+        aliasDO.setAlias(alias);
+        aliasDO.setTenantId(tenantId);
+        aliasDO.setDescription(description);
+        aliasDO.setFallbacks(writeFallbacks(fallbacks));
+        aliasDO.setStatus(status);
+        java.time.Instant now = java.time.Instant.now();
+        aliasDO.setCreatedAt(now);
+        aliasDO.setUpdatedAt(now);
+        catalogMapper.insertAlias(aliasDO);
+        return findAliasAdmin(alias);
+    }
+
+    /**
+     * 更新别名描述/降级链/状态。
+     *
+     * @param alias       别名
+     * @param tenantId    租户
+     * @param description 描述
+     * @param fallbacks   降级链
+     * @param status      状态
+     * @return 别名视图
+     */
+    public ModelAliasAdminBO updateAlias(String alias, String tenantId, String description,
+                                         List<String> fallbacks, String status) {
+        ModelAliasDO aliasDO = catalogMapper.selectByAlias(alias).orElse(null);
+        if (ObjectUtils.isEmpty(aliasDO)) {
+            return null;
+        }
+        aliasDO.setTenantId(tenantId);
+        aliasDO.setDescription(description);
+        aliasDO.setFallbacks(writeFallbacks(fallbacks));
+        aliasDO.setStatus(status);
+        aliasDO.setUpdatedAt(java.time.Instant.now());
+        catalogMapper.updateAlias(aliasDO);
+        return findAliasAdmin(alias);
+    }
+
+    /**
+     * 删除别名及关联（部署实例保留）。
+     *
+     * @param alias 别名
+     * @return 是否删除
+     */
+    public boolean deleteAlias(String alias) {
+        ModelAliasDO aliasDO = catalogMapper.selectByAlias(alias).orElse(null);
+        if (ObjectUtils.isEmpty(aliasDO)) {
+            return false;
+        }
+        catalogMapper.deleteAliasDeployments(aliasDO.getId());
+        catalogMapper.deleteAlias(alias);
+        return true;
+    }
+
+    /**
+     * 新增/更新部署实例并关联别名。
+     *
+     * @param alias         别名
+     * @param deploymentKey 部署键
+     * @param apiBase       上游地址
+     * @param apiKeyPlain   上游 Key 明文（入库加密）
+     * @param upstreamModel 上游模型
+     * @param weight        权重
+     * @param priority      优先级
+     * @param status        状态
+     * @return 别名视图；别名不存在为 null
+     */
+    public ModelAliasAdminBO upsertDeployment(String alias, String deploymentKey, String apiBase,
+                                              String apiKeyPlain, String upstreamModel,
+                                              int weight, int priority, String status) {
+        ModelAliasDO aliasDO = catalogMapper.selectByAlias(alias).orElse(null);
+        if (ObjectUtils.isEmpty(aliasDO)) {
+            return null;
+        }
+        java.time.Instant now = java.time.Instant.now();
+        ModelDeploymentDO deploymentDO = catalogMapper.selectDeploymentByKey(deploymentKey)
+                .orElseGet(() -> {
+                    ModelDeploymentDO created = new ModelDeploymentDO();
+                    created.setDeploymentKey(deploymentKey);
+                    created.setCreatedAt(now);
+                    return created;
+                });
+        deploymentDO.setApiBase(apiBase);
+        if (StringUtils.hasText(apiKeyPlain)) {
+            deploymentDO.setApiKeyCipher(secretCipher.encrypt(apiKeyPlain));
+        }
+        deploymentDO.setUpstreamModel(upstreamModel);
+        deploymentDO.setStatus(status);
+        deploymentDO.setUpdatedAt(now);
+        if (ObjectUtils.isEmpty(deploymentDO.getId())) {
+            catalogMapper.insertDeployment(deploymentDO);
+        } else {
+            catalogMapper.updateDeployment(deploymentDO);
+        }
+        if (catalogMapper.updateAliasDeployment(aliasDO.getId(), deploymentDO.getId(), weight,
+                priority) == 0) {
+            catalogMapper.insertAliasDeployment(aliasDO.getId(), deploymentDO.getId(), weight,
+                    priority);
+        }
+        return findAliasAdmin(alias);
+    }
+
+    private ModelAliasAdminBO toAdminBO(ModelAliasDO aliasDO) {
+        List<ModelDeploymentAdminBO> deployments = catalogMapper
+                .selectRowsByAlias(aliasDO.getAlias()).stream()
+                .map(row -> new ModelDeploymentAdminBO(row.getDeploymentKey(), row.getApiBase(),
+                        row.getUpstreamModel(), row.getWeight(), row.getPriority(),
+                        row.getDeploymentStatus()))
+                .toList();
+        return new ModelAliasAdminBO(aliasDO.getAlias(), aliasDO.getTenantId(),
+                aliasDO.getDescription(), readFallbacks(aliasDO.getFallbacks()),
+                aliasDO.getStatus(), deployments);
     }
 
     public ModelCatalogMapper mapper() {

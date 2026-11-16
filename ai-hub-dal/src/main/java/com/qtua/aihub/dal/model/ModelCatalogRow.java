@@ -13,6 +13,8 @@ public class ModelCatalogRow {
     private String upstreamModel;
     private int weight;
     private int priority;
+    private String deploymentStatus;
+    private String deploymentKey;
 
     public String getAlias() {
         return alias;
@@ -76,5 +78,21 @@ public class ModelCatalogRow {
 
     public void setPriority(int priority) {
         this.priority = priority;
+    }
+
+    public String getDeploymentStatus() {
+        return deploymentStatus;
+    }
+
+    public void setDeploymentStatus(String deploymentStatus) {
+        this.deploymentStatus = deploymentStatus;
+    }
+
+    public String getDeploymentKey() {
+        return deploymentKey;
+    }
+
+    public void setDeploymentKey(String deploymentKey) {
+        this.deploymentKey = deploymentKey;
     }
 }
