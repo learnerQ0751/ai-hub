@@ -4,7 +4,7 @@
 - 状态：已完成（待主人验收）
 - 关联规格：`13-项目7-第4期-治理收尾.md` REQ-4.2
 - 依赖需求：REQ-1.5、REQ-2.3、REQ-3.4、REQ-4.1
-- 提交：4f08a79
+- 提交：674031f
 
 ## 1. 是什么
 
@@ -110,7 +110,7 @@ regression:
 
 - 2026-11-16：V11、RequestId 双头、TraceRecorder 异步/采样、5 个分段记录点、Trace 查询 API；
   新增 `TraceIntegrationTest`（RAG 全分段 + 跨租户 404）与 `McpCallServiceTraceTest`。
-- 提交：4f08a79。
+- 提交：674031f。
 
 ## 7. 复盘
 
