@@ -215,6 +215,21 @@ public class RagDocumentCore {
     }
 
     /**
+     * 按租户/项目/文档偏移分页查询切片（§7.1 文档切片列表）。
+     *
+     * @param tenantId  租户 ID
+     * @param projectId 项目 ID
+     * @param docId     文档 ID
+     * @param limit     每页条数
+     * @param offset    偏移
+     * @return 切片列表（按 chunk_index 升序）
+     */
+    public List<RagChunkBO> listChunks(String tenantId, String projectId, String docId,
+                                       int limit, int offset) {
+        return chunkManager.listPageByDocIdInTenant(tenantId, projectId, docId, limit, offset);
+    }
+
+    /**
      * 删除文档并级联切片（及向量）。
      *
      * @param docId 文档 ID

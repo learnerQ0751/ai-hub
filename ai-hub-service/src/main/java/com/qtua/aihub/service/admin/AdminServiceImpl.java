@@ -10,6 +10,8 @@ import com.qtua.aihub.api.model.res.AdminKeyResDTO;
 import com.qtua.aihub.api.model.res.AdminLogPageResDTO;
 import com.qtua.aihub.api.model.res.AdminLogResDTO;
 import com.qtua.aihub.api.model.res.AdminModelResDTO;
+import com.qtua.aihub.api.model.res.AdminProjectPageResDTO;
+import com.qtua.aihub.api.model.res.AdminProjectResDTO;
 import com.qtua.aihub.common.audit.AuditRecorder;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.pricing.ModelPrice;
@@ -21,7 +23,9 @@ import com.qtua.aihub.manager.model.ApiKeyBO;
 import com.qtua.aihub.manager.model.CallLogBO;
 import com.qtua.aihub.manager.model.ModelAliasAdminBO;
 import com.qtua.aihub.manager.model.ModelDeploymentAdminBO;
+import com.qtua.aihub.manager.model.ProjectBO;
 import com.qtua.aihub.manager.tenant.ProjectAuthorizationManager;
+import com.qtua.aihub.manager.tenant.ProjectManager;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -57,6 +61,7 @@ public class AdminServiceImpl implements AdminService {
     private final CallLogManager callLogManager;
     private final ModelCatalogManager catalogManager;
     private final ProjectAuthorizationManager authorizationManager;
+    private final ProjectManager projectManager;
     private final AuditRecorder auditRecorder;
     private final PricingCatalog pricingCatalog;
 
@@ -67,17 +72,20 @@ public class AdminServiceImpl implements AdminService {
      * @param callLogManager       日志门面
      * @param catalogManager       模型目录门面
      * @param authorizationManager 项目授权门面
+     * @param projectManager       项目门面
      * @param auditRecorder        审计端口
      * @param pricingCatalog       模型价格目录
      */
     public AdminServiceImpl(ApiKeyManager apiKeyManager, CallLogManager callLogManager,
                             ModelCatalogManager catalogManager,
                             ProjectAuthorizationManager authorizationManager,
+                            ProjectManager projectManager,
                             AuditRecorder auditRecorder, PricingCatalog pricingCatalog) {
         this.apiKeyManager = apiKeyManager;
         this.callLogManager = callLogManager;
         this.catalogManager = catalogManager;
         this.authorizationManager = authorizationManager;
+        this.projectManager = projectManager;
         this.auditRecorder = auditRecorder;
         this.pricingCatalog = pricingCatalog;
     }
@@ -92,6 +100,27 @@ public class AdminServiceImpl implements AdminService {
         List<AdminKeyResDTO> items = fetched.stream().limit(pageSize)
                 .map(this::toKeyDTO).toList();
         return new AdminKeyPageResDTO(items, items.size(), fetched.size() > pageSize);
+    }
+
+    @Override
+    public AdminKeyResDTO getKey(String keyHash) {
+        if (!StringUtils.hasText(keyHash)) {
+            throw ChatCompletionException.invalidRequest("key_hash 不能为空", "key_hash");
+        }
+        return apiKeyManager.findByKeyHash(keyHash.trim()).map(this::toKeyDTO)
+                .orElseThrow(ChatCompletionException::apiKeyNotFound);
+    }
+
+    @Override
+    public AdminProjectPageResDTO listProjects(String tenantId, String status, int limit,
+                                               int offset) {
+        int pageSize = resolveLimit(limit);
+        int pageOffset = Math.max(0, offset);
+        List<ProjectBO> fetched = projectManager.list(trim(tenantId),
+                normalizeProjectStatus(status), pageSize + 1, pageOffset);
+        List<AdminProjectResDTO> items = fetched.stream().limit(pageSize)
+                .map(this::toProjectDTO).toList();
+        return new AdminProjectPageResDTO(items, items.size(), fetched.size() > pageSize);
     }
 
     @Override
@@ -400,6 +429,11 @@ public class AdminServiceImpl implements AdminService {
                 iso(key.getCreatedAt()));
     }
 
+    private AdminProjectResDTO toProjectDTO(ProjectBO project) {
+        return new AdminProjectResDTO(project.tenantId(), project.projectId(), project.name(),
+                project.status(), iso(project.createdAt()));
+    }
+
     private AdminModelResDTO toModelDTO(ModelAliasAdminBO model) {
         List<AdminDeploymentResDTO> deployments = model.deployments().stream()
                 .map(this::toDeploymentDTO)
@@ -423,6 +457,18 @@ public class AdminServiceImpl implements AdminService {
                 && !"expired".equals(normalized)) {
             throw ChatCompletionException.invalidRequest(
                     "status 必须为 active、blocked 或 expired", "status");
+        }
+        return normalized;
+    }
+
+    private String normalizeProjectStatus(String status) {
+        if (!StringUtils.hasText(status)) {
+            return null;
+        }
+        String normalized = status.trim().toUpperCase();
+        if (!STATUS_ACTIVE.equals(normalized) && !STATUS_DISABLED.equals(normalized)) {
+            throw ChatCompletionException.invalidRequest(
+                    "status 必须为 ACTIVE 或 DISABLED", "status");
         }
         return normalized;
     }

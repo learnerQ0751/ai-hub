@@ -37,4 +37,50 @@
         WHERE trace_id = #{traceId,jdbcType=VARCHAR}
         ORDER BY id ASC
     </select>
+
+    <resultMap id="TraceSummaryResultMap" type="com.qtua.aihub.dal.model.TraceSummaryDO">
+        <result column="trace_id" property="traceId" jdbcType="VARCHAR"/>
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="project_id" property="projectId" jdbcType="VARCHAR"/>
+        <result column="key_id" property="keyId" jdbcType="VARCHAR"/>
+        <result column="started_at" property="startedAt" jdbcType="TIMESTAMP"/>
+        <result column="finished_at" property="finishedAt" jdbcType="TIMESTAMP"/>
+        <result column="event_count" property="eventCount" jdbcType="INTEGER"/>
+        <result column="status" property="status" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <select id="selectTracePage" resultMap="TraceSummaryResultMap">
+        SELECT trace_id,
+               MIN(tenant_id) AS tenant_id,
+               MIN(project_id) AS project_id,
+               MIN(key_id) AS key_id,
+               MIN(created_at) AS started_at,
+               MAX(created_at) AS finished_at,
+               COUNT(1) AS event_count,
+               MAX(status) AS status
+        FROM trace_events
+        <where>
+            <if test="tenantId != null">
+                tenant_id = #{tenantId,jdbcType=VARCHAR}
+            </if>
+            <if test="projectId != null">
+                AND project_id = #{projectId,jdbcType=VARCHAR}
+            </if>
+            <if test="keyId != null">
+                AND key_id = #{keyId,jdbcType=VARCHAR}
+            </if>
+            <if test="from != null">
+                AND created_at &gt;= #{from,jdbcType=TIMESTAMP}
+            </if>
+            <if test="to != null">
+                AND created_at &lt;= #{to,jdbcType=TIMESTAMP}
+            </if>
+        </where>
+        GROUP BY trace_id
+        <if test="status != null">
+            HAVING MAX(status) = #{status,jdbcType=INTEGER}
+        </if>
+        ORDER BY MIN(created_at) DESC, trace_id ASC
+        LIMIT #{limit,jdbcType=INTEGER} OFFSET #{offset,jdbcType=INTEGER}
+    </select>
 </mapper>

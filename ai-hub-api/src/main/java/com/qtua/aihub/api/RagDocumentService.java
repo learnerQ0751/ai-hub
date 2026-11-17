@@ -1,5 +1,6 @@
 package com.qtua.aihub.api;
 
+import com.qtua.aihub.api.model.res.RagChunkPageResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentDeleteResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentListResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentResDTO;
@@ -31,6 +32,17 @@ public interface RagDocumentService {
      * @return 文档列表
      */
     RagDocumentListResDTO list(String projectId, Integer limit);
+
+    /**
+     * 按文档分页查询切片（§7.1）。
+     *
+     * @param docId     文档 ID
+     * @param projectId 项目 ID（必填）
+     * @param limit     每页条数
+     * @param offset    偏移
+     * @return 切片分页；文档不存在或不属于该项目 404
+     */
+    RagChunkPageResDTO listChunks(String docId, String projectId, int limit, int offset);
 
     /**
      * 重建文档索引（先删旧向量，再按当前模型向量化）。

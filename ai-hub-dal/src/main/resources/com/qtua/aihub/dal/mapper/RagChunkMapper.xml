@@ -58,6 +58,18 @@
         LIMIT #{limit,jdbcType=INTEGER}
     </select>
 
+    <select id="selectPageByDocIdInTenant" resultMap="RagChunkResultMap">
+        SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
+               index_status, embedding_model, embedding_dimension, error_message, created_at,
+               tenant_id
+        FROM rag_chunks
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND project_id = #{projectId,jdbcType=VARCHAR}
+          AND doc_id = #{docId,jdbcType=VARCHAR}
+        ORDER BY chunk_index ASC
+        LIMIT #{limit,jdbcType=INTEGER} OFFSET #{offset,jdbcType=INTEGER}
+    </select>
+
     <select id="selectByChunkIds" resultMap="RagChunkResultMap">
         SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
                index_status, embedding_model, embedding_dimension, error_message, created_at,

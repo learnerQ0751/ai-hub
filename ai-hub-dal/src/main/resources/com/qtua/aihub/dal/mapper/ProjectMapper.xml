@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.ProjectMapper">
+
+    <resultMap id="ProjectResultMap" type="com.qtua.aihub.dal.model.ProjectDO">
+        <result column="tenant_id" property="tenantId" jdbcType="VARCHAR"/>
+        <result column="project_id" property="projectId" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="created_at" property="createdAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="selectPage" resultMap="ProjectResultMap">
+        SELECT src.tenant_id,
+               src.project_id,
+               COALESCE(p.name, src.project_id) AS name,
+               COALESCE(p.status, 'ACTIVE') AS status,
+               MIN(src.created_at) AS created_at
+        FROM (
+            SELECT tenant_id, project_id, created_at
+            FROM api_keys
+            WHERE tenant_id IS NOT NULL AND project_id IS NOT NULL
+            UNION ALL
+            SELECT tenant_id, project_id, created_at
+            FROM rag_documents
+            UNION ALL
+            SELECT tenant_id, project_id, created_at
+            FROM projects
+        ) src
+        LEFT JOIN projects p
+               ON p.tenant_id = src.tenant_id AND p.project_id = src.project_id
+        <where>
+            <if test="tenantId != null">
+                src.tenant_id = #{tenantId,jdbcType=VARCHAR}
+            </if>
+            <if test="status != null">
+                AND COALESCE(p.status, 'ACTIVE') = #{status,jdbcType=VARCHAR}
+            </if>
+        </where>
+        GROUP BY src.tenant_id, src.project_id, p.name, p.status
+        ORDER BY src.tenant_id ASC, src.project_id ASC
+        LIMIT #{limit,jdbcType=INTEGER} OFFSET #{offset,jdbcType=INTEGER}
+    </select>
+</mapper>

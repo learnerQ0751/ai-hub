@@ -2,6 +2,8 @@ package com.qtua.aihub.service.shared;
 
 import com.qtua.aihub.api.RagDocumentService;
 import com.qtua.aihub.common.audit.AuditRecorder;
+import com.qtua.aihub.api.model.res.RagChunkPageResDTO;
+import com.qtua.aihub.api.model.res.RagChunkResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentDeleteResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentListResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentResDTO;
@@ -14,6 +16,7 @@ import com.qtua.aihub.core.rag.RagDeleteResult;
 import com.qtua.aihub.core.rag.RagDocumentCore;
 import com.qtua.aihub.core.rag.RagIngestResult;
 import com.qtua.aihub.integration.rag.DocumentParseException;
+import com.qtua.aihub.manager.model.RagChunkBO;
 import com.qtua.aihub.manager.model.RagDocumentBO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,6 +161,31 @@ public class RagDocumentServiceImpl implements RagDocumentService {
     }
 
     /**
+     * 按文档分页查询切片（§7.1）。
+     *
+     * @param docId     文档 ID
+     * @param projectId 项目 ID
+     * @param limit     每页条数
+     * @param offset    偏移
+     * @return 切片分页
+     */
+    @Override
+    public RagChunkPageResDTO listChunks(String docId, String projectId, int limit, int offset) {
+        TenantScope scope = tenantScopeGuard.resolveProject(projectId);
+        String normalizedProject = requireProject(scope.projectId());
+        String normalizedDocId = requireDocId(docId);
+        documentCore.find(scope.tenantId(), normalizedDocId, normalizedProject)
+                .orElseThrow(() -> ChatCompletionException.ragDocumentNotFound(docId));
+        int pageSize = resolveLimit(limit);
+        int pageOffset = Math.max(0, offset);
+        List<RagChunkBO> fetched = documentCore.listChunks(scope.tenantId(), normalizedProject,
+                normalizedDocId, pageSize + 1, pageOffset);
+        List<RagChunkResDTO> items = fetched.stream().limit(pageSize)
+                .map(this::toChunkResDTO).toList();
+        return new RagChunkPageResDTO(items, items.size(), fetched.size() > pageSize);
+    }
+
+    /**
      * 重建文档索引。
      *
      * @param docId     文档 ID
@@ -205,6 +233,13 @@ public class RagDocumentServiceImpl implements RagDocumentService {
                 docId, normalizedProject, result.chunksDeleted(), result.vectorsDeleted());
         return new RagDocumentDeleteResDTO(result.deleted(), result.chunksDeleted(),
                 result.vectorsDeleted());
+    }
+
+    private RagChunkResDTO toChunkResDTO(RagChunkBO chunk) {
+        return new RagChunkResDTO(chunk.chunkId(), chunk.docId(), chunk.projectId(),
+                chunk.chunkIndex(), chunk.content(), chunk.charCount(), chunk.source(),
+                chunk.indexStatus(),
+                ObjectUtils.isEmpty(chunk.createdAt()) ? null : chunk.createdAt().toString());
     }
 
     private String requireProject(String projectId) {

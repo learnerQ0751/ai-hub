@@ -1,6 +1,7 @@
 # ai-hub 接口路径表（前端对接用）
 
-> 版本：REQ-5.1~5.4，**契约冻结 2026-11-17**；同日增补控制台会话端点与字段级修订（additive）。
+> 版本：REQ-5.1~5.4，**契约冻结 2026-11-17**；同日增补控制台会话端点与字段级修订（additive），
+> 并补齐 §7.1 四个端点缺口（项目列表 / 文档切片列表 / 单 Key 详情 / Trace 列表，2026-11-17）。
 > 数据面与控制面拆为两个应用，管理台只连 console。
 > 契约与 4.4 保持一致：管理端点路径不迁移，隔离手段是「console 只认 admin 凭证」。
 
@@ -102,6 +103,7 @@
 | GET | `/key/info?key=` |
 | POST | `/key/block`、`/key/unblock` |
 | GET | `/v1/admin/keys?tenant_id=` |
+| GET | `/v1/admin/keys/{keyHash}` |
 | POST | `/v1/admin/keys/{keyHash}/block`、`/unblock` |
 
 `GET /v1/admin/keys` 返回字段（2026-11-17 补齐）：
@@ -109,6 +111,9 @@
 `tpm_limit`、`metadata`、`blocked`、`tenant_id`、`project_id`、`expires_at`、`created_at`。
 缺数据返回 `null` 或空集合，不报错。筛选：`status=active|blocked|expired`、
 `model=<别名>`（白名单包含该别名）。`POST /key/generate` 新增可选 `alias`（≤128 字符）。
+
+`GET /v1/admin/keys/{keyHash}`（§7.1，2026-11-17）返回单个 Key，字段与列表项完全一致；
+不存在返回 404 `not_found_error`。
 
 ### 4.2 模型与日志
 
@@ -149,16 +154,29 @@
 | 方法 | 路径 |
 |---|---|
 | GET/POST | `/v1/rag/documents`（POST multipart：`file` + `project_id`） |
+| GET | `/v1/rag/documents/{docId}/chunks` |
 | DELETE | `/v1/rag/documents/{docId}` |
 | POST | `/v1/rag/documents/{docId}/reindex` |
+
+`GET /v1/rag/documents/{docId}/chunks`（§7.1，2026-11-17）必填 `project_id`，可选
+`limit`（默认 50，上限 200）、`offset`（默认 0）；按 `chunk_index` 升序返回
+`{"items":[{"chunk_id","doc_id","project_id","chunk_index","content","char_count",
+"source","index_status","created_at"}],"count","has_more"}`。
+文档不存在或不属于该项目返回 404。
 
 ### 4.6 查询
 
 | 方法 | 路径 |
 |---|---|
+| GET | `/v1/traces` |
 | GET | `/v1/traces/{traceId}` |
 | GET | `/v1/usage`、`/v1/usage/export` |
 | GET | `/v1/audit-logs` |
+
+`GET /v1/traces`（§7.1，2026-11-17）按 `trace_id` 聚合并按首个事件时间倒序分页，返回
+`{"items":[{"trace_id","tenant_id","project_id","key_id","started_at","finished_at",
+"event_count","status"}],"count","has_more"}`；`status` 为分段最大状态码。
+筛选参数见 §4.7。
 
 ### 4.7 分页与筛选参数（已冻结，2026-11-17）
 
@@ -171,6 +189,9 @@
 | `GET /v1/prompts` | 可选 `tenant_id` |
 | `GET /v1/admin/models` | 可选 `tenant_id`、`status`（ACTIVE/DISABLED） |
 | `GET /v1/rag/documents` | 必填 `project_id`；可选 `limit` |
+| `GET /v1/rag/documents/{docId}/chunks` | 必填 `project_id`；`limit`（默认 50）、`offset`（默认 0） |
+| `GET /v1/traces` | 可选 `tenant_id`、`project_id`、`key_id`、`status`、`from`、`to`；`limit`（默认 50）、`offset`（默认 0） |
+| `GET /v1/admin/projects` | 可选 `tenant_id`、`status`（ACTIVE/DISABLED）；`limit`（默认 50）、`offset`（默认 0） |
 | `GET /v1/mcp/tools`（gateway） | 可选 `server_id`、`tenant_id` |
 
 参数名与默认值已冻结；新增筛选参数属 additive 变更，须登记后实施。
@@ -194,6 +215,24 @@
 - 密码哈希生成：`scripts/hash-console-password.ps1 -Password '<明文>'`。
 - 会话令牌只存 SHA-256 摘要（`admin_sessions`），失败计数落库（`admin_login_attempts`），
   多实例共享、重启不丢失。
+
+### 4.9 项目列表（2026-11-17 实现）
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| GET | `/v1/admin/projects` | 租户下的项目分页；可选 `tenant_id`、`status`、`limit`、`offset` |
+
+```json
+{
+  "items": [{"tenant_id": "default", "project_id": "default", "name": "默认项目",
+             "status": "ACTIVE", "created_at": "2026-11-17T08:00:00Z"}],
+  "count": 1, "has_more": false
+}
+```
+
+- 数据来源为 `projects` 表与 `api_keys`、`rag_documents` 中出现过的租户+项目对的并集：
+  未登记进项目表的项目也会出现，`name` 回落为 `project_id`，`status` 回落为 `ACTIVE`。
+- 按 `tenant_id`、`project_id` 升序；`status` 只接受 `ACTIVE` / `DISABLED`，其他值 400。
 
 ## 5. 幂等请求头（REQ-5.2，可选，已冻结）
 
@@ -238,17 +277,17 @@ Idempotency-Key: <1-128 位字母/数字/._:->
 
 > 本节保留登记信息与实现状态；已实现条目同时写入 §4，未实现条目仍不构成生效契约。
 
-### 7.1 端点缺口（登记）
+### 7.1 端点缺口（已补齐，2026-11-17）
 
-| 缺口 | 用途 | 拟定归属 | 状态 |
-|---|---|---|---|
-| 项目列表 | 管理台选择租户下的项目 | console | 未实现 |
-| 文档切片列表 | 按 `doc_id` 分页查看切片 | console | 未实现 |
-| 单 Key 查询 | 按 `key_hash` 查询 Key 详情 | console | 未实现 |
-| Trace 列表 | 按租户/时间分页列出 trace | console | 未实现 |
-| 控制台会话端点 | 登录 / 会话探测 / 退出 | console | 已实现（2026-11-17），见 §4.8 |
+| 缺口 | 路径 | 用途 | 归属 | 状态 |
+|---|---|---|---|---|
+| 项目列表 | `GET /v1/admin/projects` | 管理台选择租户下的项目 | console | 已实现，见 §4.9 |
+| 文档切片列表 | `GET /v1/rag/documents/{docId}/chunks` | 按 `doc_id` 分页查看切片 | console | 已实现，见 §4.5 |
+| 单 Key 查询 | `GET /v1/admin/keys/{keyHash}` | 按 `key_hash` 查询 Key 详情 | console | 已实现，见 §4.1 |
+| Trace 列表 | `GET /v1/traces` | 按租户/时间分页列出 trace | console | 已实现，见 §4.6 |
+| 控制台会话端点 | `/v1/admin/session` | 登录 / 会话探测 / 退出 | console | 已实现（2026-11-17），见 §4.8 |
 
-除会话端点外，其余端点仍未实现（当前访问返回 404），路径与字段待实现时冻结。
+四个端点均为 additive 新增，不改动既有路径、字段与鉴权；实现之日起纳入冻结范围。
 
 ### 7.2 字段级修订（已实现，2026-11-17）
 

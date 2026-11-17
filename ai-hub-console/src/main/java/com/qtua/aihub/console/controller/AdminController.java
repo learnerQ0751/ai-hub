@@ -8,6 +8,7 @@ import com.qtua.aihub.api.model.res.AdminKeyPageResDTO;
 import com.qtua.aihub.api.model.res.AdminKeyResDTO;
 import com.qtua.aihub.api.model.res.AdminLogPageResDTO;
 import com.qtua.aihub.api.model.res.AdminModelResDTO;
+import com.qtua.aihub.api.model.res.AdminProjectPageResDTO;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -60,6 +61,35 @@ public class AdminController {
             @RequestParam(name = "limit", defaultValue = "50") int limit,
             @RequestParam(name = "offset", defaultValue = "0") int offset) {
         return adminService.listKeys(tenantId, projectId, status, model, limit, offset);
+    }
+
+    /**
+     * 按 key_hash 查询单个 Key（§7.1）。
+     *
+     * @param keyHash Key 哈希
+     * @return Key 视图；不存在 404
+     */
+    @GetMapping(path = "/v1/admin/keys/{keyHash}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AdminKeyResDTO getKey(@PathVariable("keyHash") String keyHash) {
+        return adminService.getKey(keyHash);
+    }
+
+    /**
+     * 项目列表（§7.1）。
+     *
+     * @param tenantId 租户过滤
+     * @param status   状态过滤 ACTIVE/DISABLED
+     * @param limit    每页条数
+     * @param offset   偏移
+     * @return 分页
+     */
+    @GetMapping(path = "/v1/admin/projects", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AdminProjectPageResDTO listProjects(
+            @RequestParam(name = "tenant_id", required = false) String tenantId,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "limit", defaultValue = "50") int limit,
+            @RequestParam(name = "offset", defaultValue = "0") int offset) {
+        return adminService.listProjects(tenantId, status, limit, offset);
     }
 
     /**

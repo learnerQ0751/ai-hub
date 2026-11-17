@@ -71,6 +71,23 @@ public class RagChunkManager {
     }
 
     /**
+     * 按租户/项目/文档偏移分页查询切片（§7.1 文档切片列表）。
+     *
+     * @param tenantId  租户
+     * @param projectId 项目
+     * @param docId     文档 ID
+     * @param limit     每页条数
+     * @param offset    偏移
+     * @return 切片列表（按 chunk_index 升序）
+     */
+    public List<RagChunkBO> listPageByDocIdInTenant(String tenantId, String projectId,
+                                                    String docId, int limit, int offset) {
+        return chunkMapper.selectPageByDocIdInTenant(tenantId, projectId, docId,
+                        Math.max(1, limit), Math.max(0, offset)).stream()
+                .map(this::toBO).toList();
+    }
+
+    /**
      * 按切片 ID 批量查询（检索补齐正文）。
      *
      * @param chunkIds 切片 ID 列表

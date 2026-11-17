@@ -7,6 +7,7 @@ import com.qtua.aihub.api.model.res.AdminKeyPageResDTO;
 import com.qtua.aihub.api.model.res.AdminKeyResDTO;
 import com.qtua.aihub.api.model.res.AdminLogPageResDTO;
 import com.qtua.aihub.api.model.res.AdminModelResDTO;
+import com.qtua.aihub.api.model.res.AdminProjectPageResDTO;
 
 import java.util.List;
 
@@ -31,6 +32,25 @@ public interface AdminService {
      */
     AdminKeyPageResDTO listKeys(String tenantId, String projectId, String status, String model,
                                 int limit, int offset);
+
+    /**
+     * 按 key_hash 查询单个 Key。
+     *
+     * @param keyHash Key 哈希
+     * @return Key 视图；不存在 404
+     */
+    AdminKeyResDTO getKey(String keyHash);
+
+    /**
+     * 项目分页列表（合并项目表与 Key/文档中出现过的租户+项目对）。
+     *
+     * @param tenantId 租户过滤（可空）
+     * @param status   状态过滤 ACTIVE/DISABLED（可空）
+     * @param limit    每页条数
+     * @param offset   偏移
+     * @return 分页
+     */
+    AdminProjectPageResDTO listProjects(String tenantId, String status, int limit, int offset);
 
     /**
      * 封禁/解封 Key（按哈希）。

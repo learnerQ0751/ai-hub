@@ -1,6 +1,7 @@
 package com.qtua.aihub.console.controller;
 
 import com.qtua.aihub.api.RagDocumentService;
+import com.qtua.aihub.api.model.res.RagChunkPageResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentDeleteResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentListResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentResDTO;
@@ -73,6 +74,26 @@ public class RagDocumentController {
                                       @RequestParam(value = "limit", required = false)
                                       Integer limit) {
         return ragDocumentService.list(projectId, limit);
+    }
+
+    /**
+     * 按文档分页查询切片（§7.1）。
+     *
+     * @param docId     文档 ID
+     * @param projectId 项目 ID（必填）
+     * @param limit     每页条数
+     * @param offset    偏移
+     * @return 切片分页
+     */
+    @GetMapping(path = "/v1/rag/documents/{docId}/chunks",
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public RagChunkPageResDTO listChunks(@PathVariable("docId") String docId,
+                                         @RequestParam("project_id") String projectId,
+                                         @RequestParam(name = "limit", defaultValue = "50")
+                                         int limit,
+                                         @RequestParam(name = "offset", defaultValue = "0")
+                                         int offset) {
+        return ragDocumentService.listChunks(docId, projectId, limit, offset);
     }
 
     /**

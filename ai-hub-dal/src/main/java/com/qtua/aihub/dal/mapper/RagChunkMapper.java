@@ -42,6 +42,22 @@ public interface RagChunkMapper {
                                        @Param("limit") int limit);
 
     /**
+     * 按租户/项目/文档偏移分页查询切片（§7.1 文档切片列表）。
+     *
+     * @param tenantId  租户
+     * @param projectId 项目
+     * @param docId     文档 ID
+     * @param limit     每页条数
+     * @param offset    偏移
+     * @return 切片列表（按 chunk_index 升序）
+     */
+    List<RagChunkDO> selectPageByDocIdInTenant(@Param("tenantId") String tenantId,
+                                               @Param("projectId") String projectId,
+                                               @Param("docId") String docId,
+                                               @Param("limit") int limit,
+                                               @Param("offset") int offset);
+
+    /**
      * 按切片 ID 批量查询（检索补齐正文）；调用方负责控制每批数量。
      *
      * @param chunkIds 切片 ID 列表（非空）
