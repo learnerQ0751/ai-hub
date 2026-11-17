@@ -1,0 +1,88 @@
+frontend/README.md
+  h_db524743a0da6f 3,9,21-22,35-38,99-115,123-125
+frontend/app/.env.example
+  h_db524743a0da6f 1-8
+frontend/app/scripts/capture-pages.mjs
+  h_db524743a0da6f 1-434
+frontend/app/src/api/endpoints.test.ts
+  h_db524743a0da6f 37-42
+frontend/app/src/api/endpoints.ts
+  h_db524743a0da6f 8-13,36-37,42,57,60-62,65-66,69-75
+frontend/app/src/api/http.ts
+  h_db524743a0da6f 34-35
+frontend/app/src/api/session.ts
+  h_db524743a0da6f 9-10,14-17,25-26,39-48
+frontend/app/src/features/keys/api.test.ts
+  h_db524743a0da6f 1-2,4-7,9,11-13,16-20,22-38,41-53,55-58,60-62,64-66
+frontend/app/src/features/keys/api.ts
+  h_db524743a0da6f 9-10,12
+frontend/app/src/features/keys/types.ts
+  h_db524743a0da6f 12,14-16,18-19,21-23,37-39,105-108,113-114
+frontend/app/src/features/mcp/api.ts
+  h_db524743a0da6f 1-72
+frontend/app/src/features/mcp/types.ts
+  h_db524743a0da6f 17-18
+frontend/app/src/features/models/api.ts
+  h_db524743a0da6f 1,9-10,12,14-22,35
+frontend/app/src/features/models/types.ts
+  h_db524743a0da6f 22,26-30,75,78-79
+frontend/app/src/features/playground/api.ts
+  h_db524743a0da6f 1-118
+frontend/app/src/features/projects/api.ts
+  h_db524743a0da6f 1-7
+frontend/app/src/features/projects/types.ts
+  h_db524743a0da6f 1-20
+frontend/app/src/features/rag/api.ts
+  h_db524743a0da6f 1-43
+frontend/app/src/features/rag/types.ts
+  h_db524743a0da6f 1-118
+frontend/app/src/features/shared/format.ts
+  h_db524743a0da6f 6,17-18,24-25
+frontend/app/src/features/traces/api.ts
+  h_db524743a0da6f 1-11
+frontend/app/src/features/traces/types.ts
+  h_db524743a0da6f 1-42
+frontend/app/src/features/usage/api.ts
+  h_db524743a0da6f 1-13
+frontend/app/src/features/usage/types.ts
+  h_db524743a0da6f 1-56
+frontend/app/src/layouts/AppShell.tsx
+  h_db524743a0da6f 26-39
+frontend/app/src/pages/keys/KeysPage.tsx
+  h_db524743a0da6f 111-112,115-123,125,164,178,269,290,308-311,320-323,332-335,433-434,436-439,513-516,518-520,546
+frontend/app/src/pages/login/LoginPage.tsx
+  h_db524743a0da6f 2,114-116
+frontend/app/src/pages/logs/LogsPage.tsx
+  h_db524743a0da6f 12-13,80,105-111,233-244,476-484,573-649
+frontend/app/src/pages/mcp/McpServersPage.tsx
+  h_db524743a0da6f 8-9,132,144,196,269,285,315,431,543-544
+frontend/app/src/pages/models/ModelsPage.tsx
+  h_db524743a0da6f 81-82,84,224,245,265
+frontend/app/src/pages/overview/OverviewPage.tsx
+  h_db524743a0da6f 1-29,32-160,162-351
+frontend/app/src/pages/playground/PlaygroundPage.tsx
+  h_db524743a0da6f 1-36,39-475,477-560
+frontend/app/src/pages/rag/RagPage.tsx
+  h_db524743a0da6f 1-58,61-261,263-506
+frontend/app/src/pages/system/SystemPage.tsx
+  h_db524743a0da6f 1-35,38-100,102-299
+frontend/app/src/pages/usage/UsagePage.tsx
+  h_db524743a0da6f 1-29,32-190,192-406
+frontend/app/vite.config.ts
+  h_db524743a0da6f 8-10,30-35
+frontend/docs/demo-rag-doc.md
+  h_db524743a0da6f 1-9
+frontend/docs/screens/verify-summary.json
+  h_db524743a0da6f 1-153
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cea2c454bcbc1a8345dfe31a46be8d2136005838",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
