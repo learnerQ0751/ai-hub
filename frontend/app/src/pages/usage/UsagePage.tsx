@@ -223,7 +223,6 @@ export default function UsagePage() {
       <div className="console-toolbar">
         <DatePicker.RangePicker
           key={pickerKey}
-          showTime
           allowClear
           className="console-range"
           placeholder={['起始时间', '结束时间']}

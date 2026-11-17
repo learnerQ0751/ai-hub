@@ -49,6 +49,9 @@ const transportOptions: { value: McpTransport; label: string }[] = [
   { value: 'stdio', label: 'stdio' },
 ];
 
+/** 后端注册契约只支持 http / stdio；sse 仅用于过滤历史数据。 */
+const registerTransportOptions = transportOptions.filter((option) => option.value !== 'sse');
+
 const mockModeOptions: { value: McpMockMode; label: string }[] = [
   { value: 'ok', label: '正常' },
   { value: 'loading', label: '加载中' },
@@ -574,7 +577,7 @@ export default function McpServersPage({
           </Form.Item>
 
           <Form.Item label="传输" name="transport" rules={[{ required: true }]}>
-            <Select options={transportOptions} />
+            <Select options={registerTransportOptions} />
           </Form.Item>
 
           <Form.Item
