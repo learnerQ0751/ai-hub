@@ -3,7 +3,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat('zh-CN', {
   timeStyle: 'medium',
 });
 
-export function formatDateTime(value?: string): string {
+export function formatDateTime(value?: string | null): string {
   if (!value) {
     return '—';
   }
@@ -14,15 +14,15 @@ export function formatDateTime(value?: string): string {
   return dateTimeFormatter.format(date);
 }
 
-export function formatNumber(value?: number): string {
-  if (value === undefined) {
+export function formatNumber(value?: number | null): string {
+  if (value === undefined || value === null) {
     return '—';
   }
   return new Intl.NumberFormat('zh-CN').format(value);
 }
 
-export function formatAmount(value?: number): string {
-  if (value === undefined) {
+export function formatAmount(value?: number | null): string {
+  if (value === undefined || value === null) {
     return '—';
   }
   return value.toFixed(2);

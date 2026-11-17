@@ -6,10 +6,10 @@ import type { MockMode } from '@/features/shared/mock';
 import { delay, pending } from '@/features/shared/mock';
 
 /**
- * 后端 §7.2 字段（alias、rpm_limit、tpm_limit、metadata、budget_duration）尚未实现，
- * 暂时由 fixtures 顶替数据源；置为 false 即走真实 console 接口，页面与类型不用改。
+ * §7.2 字段已由后端补齐（2026-11-17），数据源走真实 console 接口。
+ * mock 只保留四态演示（loading / empty / error），不再作为默认数据源。
  */
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 let store: AdminKey[] = ADMIN_KEYS.map((key) => ({ ...key, models: [...key.models] }));
 

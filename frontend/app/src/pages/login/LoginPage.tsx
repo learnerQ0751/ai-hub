@@ -1,4 +1,5 @@
 import { ApiError } from '@/api/http';
+import { USE_MOCK_SESSION } from '@/api/session';
 import { useAuth } from '@/stores/auth';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Form, Input, Spin, Typography } from 'antd';
@@ -110,7 +111,9 @@ export default function LoginPage() {
         </Form>
 
         <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-          mock 演示账号：admin / admin123。前端不保存凭证；真实环境由后端下发 httpOnly 会话 cookie。
+          {USE_MOCK_SESSION
+            ? '开发环境演示账号：admin / admin123。前端不保存凭证。'
+            : '前端不保存凭证；登录成功后由后端下发 httpOnly 会话 cookie。'}
         </Typography.Text>
       </Card>
     </div>

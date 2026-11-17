@@ -23,8 +23,20 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 const { Header, Sider, Content } = Layout;
 
-/** 已接真实 console 接口的页面；其余仍为 mock/占位。 */
-const REAL_DATA_KEYS = ['/prompts', '/logs', '/audit'];
+/** 第五期全部页面已接真实 console 接口。 */
+const REAL_DATA_KEYS = [
+  '/overview',
+  '/keys',
+  '/models',
+  '/mcp-servers',
+  '/prompts',
+  '/rag',
+  '/logs',
+  '/usage',
+  '/audit',
+  '/playground',
+  '/system',
+];
 
 const navItems: MenuProps['items'] = [
   { key: '/overview', icon: <DashboardOutlined />, label: '概览' },

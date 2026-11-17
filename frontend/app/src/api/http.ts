@@ -31,7 +31,8 @@ export function handleApiError(error: unknown): void {
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
-  if (init?.body && !headers.has('Content-Type')) {
+  // FormData 由浏览器自动生成 multipart 边界，手动设置 Content-Type 会破坏上传。
+  if (init?.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 

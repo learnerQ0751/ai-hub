@@ -1,42 +1,68 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { resetKeysMockStore, fetchKeys, setKeyBlocked } from './api';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fetchKeys, setKeyBlocked } from './api';
 
-describe('keys mock data source', () => {
-  beforeEach(() => {
-    resetKeysMockStore();
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+describe('keys api', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
-  it('returns the paginated admin key shape', async () => {
-    const page = await fetchKeys('ok', { limit: 3, offset: 0 });
-    expect(page.items).toHaveLength(3);
-    expect(page.count).toBe(3);
-    expect(page.has_more).toBe(true);
-    expect(page.items[0]).toHaveProperty('key_hash');
-    expect(page.items[0]).toHaveProperty('models');
+  it('requests the paginated key list with server filters', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ items: [], count: 0, has_more: false }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchKeys('ok', {
+      tenant_id: 'platform',
+      status: 'active',
+      model: 'qwen-plus',
+      limit: 20,
+      offset: 40,
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain('/v1/admin/keys?');
+    expect(url).toContain('tenant_id=platform');
+    expect(url).toContain('status=active');
+    expect(url).toContain('model=qwen-plus');
+    expect(url).toContain('limit=20');
+    expect(url).toContain('offset=40');
+    expect(init.method).toBe('GET');
+    expect(init.credentials).toBe('include');
   });
 
-  it('filters by tenant on the data source', async () => {
-    const page = await fetchKeys('ok', { tenant_id: 'platform' });
-    expect(page.items.map((key) => key.alias)).toEqual(['研发-沙箱', '向量化任务']);
+  it('posts block and unblock to the frozen paths', async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        jsonResponse({
+          key_hash: 'abc',
+          models: [],
+          spend: 0,
+          blocked: true,
+          created_at: '2026-11-17T10:00:00Z',
+        }),
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const key = await setKeyBlocked('abc', true);
+    expect(key.blocked).toBe(true);
+    expect(fetchMock.mock.calls[0][0]).toContain('/v1/admin/keys/abc/block');
+    expect((fetchMock.mock.calls[0][1] as RequestInit).method).toBe('POST');
+
+    await setKeyBlocked('abc', false);
+    expect(fetchMock.mock.calls[1][0]).toContain('/v1/admin/keys/abc/unblock');
   });
 
-  it('returns empty and error states', async () => {
+  it('keeps the loading/empty/error demo states', async () => {
     await expect(fetchKeys('empty')).resolves.toEqual({ items: [], count: 0, has_more: false });
-    await expect(fetchKeys('error')).rejects.toThrow('mock 故障');
-  });
-
-  it('blocks and unblocks a key in the mock store', async () => {
-    const before = await fetchKeys('ok');
-    const target = before.items.find((key) => !key.blocked);
-    expect(target).toBeDefined();
-
-    const blocked = await setKeyBlocked(target!.key_hash, true);
-    expect(blocked.blocked).toBe(true);
-
-    const after = await fetchKeys('ok');
-    expect(after.items.find((key) => key.key_hash === target!.key_hash)?.blocked).toBe(true);
-
-    const unblocked = await setKeyBlocked(target!.key_hash, false);
-    expect(unblocked.blocked).toBe(false);
+    await expect(fetchKeys('error')).rejects.toThrow('无法连接控制台服务');
   });
 });

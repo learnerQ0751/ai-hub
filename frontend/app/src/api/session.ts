@@ -6,14 +6,15 @@ import { ApiError, request } from '@/api/http';
  * 真实形态：登录成功后由后端下发 httpOnly + Secure + SameSite=Lax 的会话 cookie；
  * 前端只通过 /v1/admin/session 探测「已登录 / 未登录」，凭证本体永远不在 JS 可见范围内。
  *
- * 契约未冻结，先走 mock：mock 会话存在模块内存里，模拟服务端 cookie 会话；
- * 不写 localStorage / sessionStorage，也不保存任何 token。
- * 代价：mock 下刷新页面会回到未登录，真实 cookie 会保持。
+ * mock 只在开发环境作为默认（Board 截图与本地预览用），生产构建一律走真实会话；
+ * 需要强制真实时可设 VITE_USE_MOCK_SESSION=false。
  */
 export interface SessionUser {
   username: string;
-  displayName: string;
-  role: 'admin';
+  /** 后端会话端点返回的过期时间（ISO-8601）。 */
+  expires_at?: string;
+  displayName?: string;
+  role?: 'admin';
 }
 
 export interface SessionProbe {
@@ -21,7 +22,8 @@ export interface SessionProbe {
   user?: SessionUser;
 }
 
-const USE_MOCK_SESSION = import.meta.env.VITE_USE_MOCK_SESSION !== 'false';
+export const USE_MOCK_SESSION =
+  import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_SESSION !== 'false';
 
 const DEMO_USERNAME = 'admin';
 const DEMO_PASSWORD = 'admin123';
@@ -34,7 +36,16 @@ const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 
 export async function probeSession(): Promise<SessionProbe> {
   if (!USE_MOCK_SESSION) {
-    return request<SessionProbe>(endpoints.session.probe);
+    try {
+      // 真实端点未登录返回 401；登录时直接返回 {"username","expires_at"}。
+      const user = await request<SessionUser>(endpoints.session.probe);
+      return { authenticated: true, user };
+    } catch (cause) {
+      if (cause instanceof ApiError && (cause.status === 401 || cause.status === 403)) {
+        return { authenticated: false };
+      }
+      throw cause;
+    }
   }
   await delay(300);
   return mockServerSession

@@ -1,12 +1,12 @@
 # ai-hub 前端资产地图
 
-> **当前阶段：P0 已冻结；P1 L2 已定稿（2026-11-17）；P2 进行中（3 页接真接口）**
+> **当前阶段：P0 已冻结；P1 L2 已定稿（2026-11-17）；P2 完成（11 页全部接真接口）；P3 待部署**
 > 更新：2026-11-17 ｜ 工作根：`E:\repos\pro\ai-hub\frontend\`
 > 本文件是前端资产的**唯一入口**，30 秒内定位任何设计/原型/源码/截图/基线。
 
 ## 0. 一句话现状
 
-技术选型已冻结（A：React + TS + Vite + Ant Design + TanStack Query + ECharts）；首版范围已定 11 个路由页全覆盖；视觉方向已定 **D1 冷静工程台 · 纯净版**；`app/` 可 dev / build，登录已按 **httpOnly cookie 会话语义**改造。MCP Servers、虚拟 Key、模型与部署三页已出稿；**Prompt 模板、调用日志、审计日志三页已接真实 console 接口**（查询参数 + 服务端分页），其余 5 页仍是结构占位。
+技术选型已冻结（A：React + TS + Vite + Ant Design + TanStack Query + ECharts）；首版范围已定 11 个路由页全覆盖；视觉方向已定 **D1 冷静工程台 · 纯净版**；`app/` 可 dev / build，登录按 **httpOnly cookie 会话语义**实现（生产构建走真实会话，开发环境默认 mock 会话便于本地预览）。**11 个路由页已全部接真实 console 接口**，每页有 loading / empty / error 三态；截图见 `docs/screens/`，验证脚本 `app/scripts/capture-pages.mjs`。
 
 ## 1. 现在到哪一步
 
@@ -18,8 +18,8 @@
 | P1 · L2 方向对决 | `board/`、`board/screens/` | **已定稿（2026-11-17 主人确认）** | MCP Servers 样板页：1440/768/375 × 正常/加载/空/错误；375 筛选器保持一行；Board 路由 `/board` |
 | P1 · L3 单页精修 | `design/ui-review/` | **未创建** | 主人验收 L2 后逐轮截图归档 |
 | P1 · L4 量产走查 | `design/DESIGN-BASELINE.md` | **未创建** | L3 结束后冻结 |
-| P2 工程实现 | `app/` | **进行中** | 可 dev / build；登录 cookie 语义；MCP / Key / 模型为 mock；**Prompt / 调用日志 / 审计接真实接口**；其余 5 页占位 |
-| P3 部署上线 | — | **未开始** | 前后端一体，Nginx 同源反代 |
+| P2 工程实现 | `app/` | **完成（2026-11-17）** | 11 页全部接真实接口；`npm run verify` 通过；截图 `docs/screens/` |
+| P3 部署上线 | — | **待部署（小运）** | 前后端一体，Nginx 同源反代；接口基址见 §4.2 |
 
 ## 2. 30 秒导航
 
@@ -32,8 +32,10 @@
 | Design Board 怎么用、当前 L2 轮次 | `board/README.md` |
 | L2 三档三态截图 | `board/screens/`（`mcp-<视口>-<状态>.png` + `board-overview.png`） |
 | 登录/会话与接口路径集中表 | `app/src/api/`（`session.ts`、`endpoints.ts`、`http.ts`） |
-| 接真接口的三页 | `app/src/features/{prompts,logs,audit}/` + `app/src/pages/{prompts,logs,audit}/` |
-| 本地联调代理（仅 dev） | `app/vite.config.ts`：`CONSOLE_PROXY_TARGET`、`CONSOLE_PROXY_MASTER_KEY`（不提交密钥、不进生产构建） |
+| 已接真接口的页面 | `app/src/features/*/api.ts` + `app/src/pages/*/`（11 页全覆盖） |
+| 页面截图与验证结果 | `docs/screens/`、`app/scripts/capture-pages.mjs` |
+| 本地联调代理（仅 dev） | `app/vite.config.ts`：`CONSOLE_PROXY_TARGET`、`CONSOLE_PROXY_MASTER_KEY`、`GATEWAY_PROXY_TARGET`（不提交密钥、不进生产构建） |
+| 构建产物与接口基址 | `app/.env.example`、`app/`（`npm run build` → `dist/`） |
 | 原型怎么隔离、怎么演进成生产代码 | `prototypes/README.md` |
 | 生产前端（还不存在） | `app/`（P2 创建） |
 
@@ -94,6 +96,23 @@ frontend/
 | 参考稿/设计稿还原 | `qi-replica-requirements` |
 | 2+ 个独立任务并行 | `superpowers:dispatching-parallel-agents` |
 
+## 4.2 构建与部署（P3 交接给小运）
+
+`cd frontend/app && npm ci && npm run build`，产物在 `frontend/app/dist/`，纯静态，可直接托管。
+
+| 环境变量 | 作用 | 不设时的行为 |
+|---|---|---|
+| `VITE_API_BASE_URL` | console（控制面）基址，例如 `https://aihub.example.com` | 空 = 同源，`/v1/**` 由反代转发到 console |
+| `VITE_GATEWAY_BASE_URL` | gateway（数据面）基址，用于 Playground 与系统页健康检查 | 空 = 同源；系统页不再单独探测 gateway，Playground 走同源 `/v1` |
+| `VITE_USE_MOCK_SESSION` | 仅 dev 生效；生产构建永远走真实 cookie 会话 | — |
+
+部署注意：
+
+1. SPA 需要 history fallback：所有非静态路径回 `index.html`。
+2. `/v1/admin/**`、`/v1/usage*`、`/v1/audit-logs`、`/v1/mcp/**`、`/v1/prompts*`、`/v1/rag/documents*`、`/v1/traces*` → console；`/v1/chat/**`、`/v1/rag/search`、`/v1/rag/answer`、`/v1/embeddings`、`/v1/models` → gateway。
+3. 登录会话 cookie 由后端下发，路径当前为 `/v1/admin`；跨到其他 console 路径的会话授权仍在后端待修（见 §5 第 8 条）。
+4. 本机联调方式：`CONSOLE_PROXY_TARGET` 指 console、`CONSOLE_PROXY_MASTER_KEY` 仅本机注入、`GATEWAY_PROXY_TARGET` 指 gateway；这些只作用于 dev server，不进入生产构建。
+
 ## 5. 下一步（有顺序）
 
 1. ~~主人拍板 `STACK.md`~~（已完成，2026-11-17 冻结）。
@@ -101,8 +120,9 @@ frontend/
 3. ~~选定视觉方向~~（已完成：D1 冷静工程台 · 纯净版）。
 4. ~~出 MCP Servers 样板页 1440/768/375 三档三态~~（已完成并定稿 2026-11-17）。
 5. L3 单页精修 → 冻结 `DESIGN-BASELINE.md` → L4 套用其余页面。
-6. P2 业务实现（接口契约以 `docs/API-PATHS.md` 为准）：已完成 Prompt / 调用日志 / 审计三页；Key 与模型的 mock 数据源待后端字段就绪后切换（`USE_MOCK=false`）。
-7. P3 部署；登录与会话端点已由后端补齐（契约 §4.8）。
+6. ~~P2 业务实现~~（已完成，2026-11-17）：11 页全部接真接口，Key/模型字段按 §7.2 展示。
+7. P3 部署（小运）：`npm run build` 产物可直接静态托管；接口基址用环境变量注入，见 §4.2。
+8. 待后端修复后复测：审计列表分页（limit≥4 挂死/500）、会话 cookie 覆盖范围（当前仅 `/v1/admin`）、gateway 上游模型连通性。
 
 ## 6. 资产约定
 

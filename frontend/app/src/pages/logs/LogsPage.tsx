@@ -9,6 +9,8 @@ import {
 } from '@/features/logs/types';
 import type { AdminLog } from '@/features/logs/types';
 import { formatDateTime } from '@/features/shared/format';
+import { fetchTrace } from '@/features/traces/api';
+import type { TraceDetail } from '@/features/traces/types';
 import type { MockMode } from '@/features/shared/mock';
 import { useIsNarrow } from '@/hooks/useIsNarrow';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
@@ -75,6 +77,7 @@ export default function LogsPage({ initialDemoMode }: LogsPageProps) {
   const [pageSize, setPageSize] = useState(20);
   const [pickerKey, setPickerKey] = useState(0);
   const [detail, setDetail] = useState<AdminLog | null>(null);
+  const [traceId, setTraceId] = useState<string | null>(null);
 
   const logsQuery = useQuery({
     queryKey: ['logs', 'list', range.from, range.to, model, status, keyId, page, pageSize],
@@ -97,6 +100,13 @@ export default function LogsPage({ initialDemoMode }: LogsPageProps) {
     queryFn: fetchKeyAliasOptions,
     retry: false,
     staleTime: 60_000,
+  });
+
+  const traceQuery = useQuery({
+    queryKey: ['trace', traceId],
+    queryFn: () => fetchTrace(traceId!),
+    enabled: Boolean(traceId),
+    retry: false,
   });
 
   const keyOptions = useMemo(() => keysQuery.data ?? [], [keysQuery.data]);
@@ -220,9 +230,18 @@ export default function LogsPage({ initialDemoMode }: LogsPageProps) {
       width: 88,
       fixed: 'right',
       render: (_value, record) => (
-        <Button size="small" onClick={() => setDetail(record)}>
-          详情
-        </Button>
+        <div style={{ display: 'flex', gap: 4 }}>
+          <Button size="small" onClick={() => setDetail(record)}>
+            详情
+          </Button>
+          <Button
+            size="small"
+            disabled={!record.trace_id}
+            onClick={() => setTraceId(record.trace_id ?? null)}
+          >
+            链路
+          </Button>
+        </div>
       ),
     },
   ];
@@ -454,6 +473,15 @@ export default function LogsPage({ initialDemoMode }: LogsPageProps) {
         open={Boolean(detail)}
         onClose={() => setDetail(null)}
         width={isNarrow ? '100%' : 560}
+        extra={
+          <Button
+            size="small"
+            disabled={!detail?.trace_id}
+            onClick={() => setTraceId(detail?.trace_id ?? null)}
+          >
+            查看链路
+          </Button>
+        }
       >
         {detail ? (
           <Descriptions
@@ -540,6 +568,83 @@ export default function LogsPage({ initialDemoMode }: LogsPageProps) {
               },
             ]}
           />
+        ) : null}
+      </Drawer>
+
+      <Drawer
+        title={traceId ? `链路 · ${traceId}` : '链路'}
+        open={Boolean(traceId)}
+        onClose={() => setTraceId(null)}
+        width={isNarrow ? '100%' : 880}
+      >
+        {traceQuery.isPending ? (
+          <Skeleton active paragraph={{ rows: 6 }} />
+        ) : traceQuery.isError ? (
+          <div className="console-error-panel" role="alert">
+            <div className="console-error-head">
+              <strong>加载链路失败</strong>
+            </div>
+            <p className="console-error-desc">
+              {traceQuery.error instanceof Error ? traceQuery.error.message : '未知错误'}
+            </p>
+          </div>
+        ) : traceQuery.data ? (
+          <>
+            <p className="muted" style={{ fontSize: 12 }}>
+              共 {traceQuery.data.count} 个分段事件，按时间顺序排列。
+            </p>
+            <Table<TraceDetail['events'][number]>
+              rowKey={(record) => `${record.segment}-${record.name}-${record.created_at}`}
+              size="small"
+              pagination={false}
+              scroll={{ x: 760 }}
+              dataSource={traceQuery.data.events}
+              columns={[
+                {
+                  title: '分段',
+                  dataIndex: 'segment',
+                  width: 92,
+                  render: (value: string) => <Tag>{value}</Tag>,
+                },
+                {
+                  title: '名称',
+                  dataIndex: 'name',
+                  width: 168,
+                  render: (value: string) => <span className="mono">{value}</span>,
+                },
+                {
+                  title: '状态',
+                  dataIndex: 'status',
+                  width: 72,
+                  render: (value: number) => <span className="num">{value}</span>,
+                },
+                {
+                  title: '耗时',
+                  dataIndex: 'latency_ms',
+                  width: 88,
+                  align: 'right',
+                  render: (value: number) => <span className="num">{value} ms</span>,
+                },
+                {
+                  title: '时间',
+                  dataIndex: 'created_at',
+                  width: 160,
+                  render: (value: string) => (
+                    <span className="num muted">{formatDateTime(value)}</span>
+                  ),
+                },
+                {
+                  title: '摘要',
+                  dataIndex: 'payload',
+                  render: (value: Record<string, unknown>) => (
+                    <span className="mono muted" style={{ wordBreak: 'break-all' }}>
+                      {value && Object.keys(value).length ? JSON.stringify(value) : '—'}
+                    </span>
+                  ),
+                },
+              ]}
+            />
+          </>
         ) : null}
       </Drawer>
     </>

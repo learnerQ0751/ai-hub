@@ -108,11 +108,21 @@ export default function KeysPage({
   const [model, setModel] = useState<string | undefined>();
   const [mockMode, setMockMode] = useState<MockMode>(initialMockMode);
   const [detail, setDetail] = useState<AdminKey | null>(null);
+  const pageSize = 20;
+  const [page, setPage] = useState(1);
 
   const keysQuery = useQuery({
-    queryKey: ['keys', 'list', mockMode],
-    queryFn: () => fetchKeys(mockMode),
+    queryKey: ['keys', 'list', mockMode, tenant, status, model, page],
+    queryFn: () =>
+      fetchKeys(mockMode, {
+        tenant_id: tenant,
+        status: status?.toLowerCase() as 'active' | 'blocked' | 'expired' | undefined,
+        model,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+      }),
     retry: false,
+    placeholderData: (previous) => previous,
   });
 
   const blockMutation = useMutation({
@@ -151,6 +161,7 @@ export default function KeysPage({
     setTenant(undefined);
     setStatus(undefined);
     setModel(undefined);
+    setPage(1);
   };
 
   const isBlocking = (keyHash: string) =>
@@ -164,9 +175,7 @@ export default function KeysPage({
       <Popconfirm
         title={record.blocked ? '解封这个 Key？' : '封禁这个 Key？'}
         description={
-          record.blocked
-            ? '解封后该 Key 可立即恢复调用（mock）。'
-            : '封禁后该 Key 的调用会立即失败（mock）。'
+          record.blocked ? '解封后该 Key 可立即恢复调用。' : '封禁后该 Key 的调用会立即失败。'
         }
         okText={record.blocked ? '解封' : '封禁'}
         cancelText="取消"
@@ -257,7 +266,7 @@ export default function KeysPage({
       <PageHeader
         title="虚拟 Key"
         section="访问控制"
-        description="租户与项目下的调用凭证、模型白名单、限流与预算；数据为 mock，字段按契约 §7.2 预留。"
+        description="租户与项目下的调用凭证、模型白名单、限流与预算；数据来自 console /v1/admin/keys，筛选与分页由服务端执行。"
         extra={
           <Button icon={<ReloadOutlined />} onClick={() => void keysQuery.refetch()}>
             刷新
@@ -278,7 +287,7 @@ export default function KeysPage({
         <span className="console-stat-item">
           已过期 <b className="console-stat-value">{statValue(expiredCount)}</b>
         </span>
-        <span className="console-stat-note">列表口径 · mock</span>
+        <span className="console-stat-note">本页口径 · 真实接口</span>
       </div>
 
       <div className="console-toolbar">
@@ -296,7 +305,10 @@ export default function KeysPage({
           popupMatchSelectWidth={false}
           placeholder="租户"
           value={tenant}
-          onChange={setTenant}
+          onChange={(value) => {
+            setPage(1);
+            setTenant(value);
+          }}
           options={tenants.map((value) => ({ value, label: value }))}
         />
         <Select
@@ -305,7 +317,10 @@ export default function KeysPage({
           popupMatchSelectWidth={false}
           placeholder="状态"
           value={status}
-          onChange={setStatus}
+          onChange={(value) => {
+            setPage(1);
+            setStatus(value);
+          }}
           options={statusOptions}
         />
         <Select
@@ -314,7 +329,10 @@ export default function KeysPage({
           popupMatchSelectWidth={false}
           placeholder="模型"
           value={model}
-          onChange={setModel}
+          onChange={(value) => {
+            setPage(1);
+            setModel(value);
+          }}
           options={models.map((value) => ({ value, label: value }))}
         />
         {hideMockControl ? null : (
@@ -412,9 +430,13 @@ export default function KeysPage({
             dataSource={filteredKeys}
             scroll={{ x: 1240 }}
             pagination={{
-              pageSize: 8,
+              current: page,
+              pageSize,
               showSizeChanger: false,
-              showTotal: (total) => `共 ${total} 个 Key`,
+              total:
+                (page - 1) * pageSize + keys.length + (keysQuery.data?.has_more ? pageSize : 0),
+              onChange: setPage,
+              showTotal: () => (keysQuery.data?.has_more ? '还有下一页' : '已到末页'),
             }}
           />
         </div>
@@ -488,9 +510,14 @@ export default function KeysPage({
                   label: '限流',
                   children: (
                     <span className="num">
-                      RPM {detail.rpm_limit === undefined ? '不限' : formatNumber(detail.rpm_limit)}{' '}
+                      RPM{' '}
+                      {detail.rpm_limit === undefined || detail.rpm_limit === null
+                        ? '不限'
+                        : formatNumber(detail.rpm_limit)}{' '}
                       · TPM{' '}
-                      {detail.tpm_limit === undefined ? '不限' : formatNumber(detail.tpm_limit)}
+                      {detail.tpm_limit === undefined || detail.tpm_limit === null
+                        ? '不限'
+                        : formatNumber(detail.tpm_limit)}
                     </span>
                   ),
                 },
@@ -516,7 +543,7 @@ export default function KeysPage({
                     <div className="mono">
                       {Object.entries(detail.metadata).map(([key, value]) => (
                         <div key={key}>
-                          {key}: {value}
+                          {key}: {String(value)}
                         </div>
                       ))}
                     </div>

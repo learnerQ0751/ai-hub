@@ -9,18 +9,18 @@ export type KeyStatus = 'ACTIVE' | 'BLOCKED' | 'EXPIRED';
  */
 export interface AdminKey {
   key_hash: string;
-  alias?: string;
+  alias?: string | null;
   models: string[];
-  metadata?: Record<string, string>;
-  rpm_limit?: number;
-  tpm_limit?: number;
+  metadata?: Record<string, unknown> | null;
+  rpm_limit?: number | null;
+  tpm_limit?: number | null;
   spend: number;
-  max_budget?: number;
-  budget_duration?: string;
+  max_budget?: number | null;
+  budget_duration?: string | null;
   blocked: boolean;
-  tenant_id?: string;
-  project_id?: string;
-  expires_at?: string;
+  tenant_id?: string | null;
+  project_id?: string | null;
+  expires_at?: string | null;
   created_at: string;
 }
 
@@ -34,6 +34,9 @@ export interface AdminKeyPage {
 export interface KeyListQuery {
   tenant_id?: string;
   project_id?: string;
+  /** §4.7 冻结值：active / blocked / expired。 */
+  status?: 'active' | 'blocked' | 'expired';
+  model?: string;
   limit?: number;
   offset?: number;
 }
@@ -99,13 +102,16 @@ export function filterKeys(keys: AdminKey[], filters: KeyFilters): AdminKey[] {
 }
 
 export function formatLimits(key: AdminKey): string {
-  const rpm = key.rpm_limit === undefined ? '不限' : formatNumber(key.rpm_limit);
-  const tpm = key.tpm_limit === undefined ? '不限' : formatNumber(key.tpm_limit);
+  const rpm =
+    key.rpm_limit === undefined || key.rpm_limit === null ? '不限' : formatNumber(key.rpm_limit);
+  const tpm =
+    key.tpm_limit === undefined || key.tpm_limit === null ? '不限' : formatNumber(key.tpm_limit);
   return `RPM ${rpm} · TPM ${tpm}`;
 }
 
 export function formatBudget(key: AdminKey): string {
-  const budget = key.max_budget === undefined ? '不限' : formatAmount(key.max_budget);
+  const budget =
+    key.max_budget === undefined || key.max_budget === null ? '不限' : formatAmount(key.max_budget);
   const cycle = key.budget_duration ? ` / ${key.budget_duration}` : '';
   return `${formatAmount(key.spend)} / ${budget}${cycle}`;
 }

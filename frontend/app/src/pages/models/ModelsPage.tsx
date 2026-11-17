@@ -78,9 +78,10 @@ export default function ModelsPage({
   const [detail, setDetail] = useState<AdminModel | null>(null);
 
   const modelsQuery = useQuery({
-    queryKey: ['models', 'list', mockMode],
-    queryFn: () => fetchModels(mockMode),
+    queryKey: ['models', 'list', mockMode, tenant, status],
+    queryFn: () => fetchModels(mockMode, { tenant_id: tenant, status }),
     retry: false,
+    placeholderData: (previous) => previous,
   });
 
   const models = useMemo(() => modelsQuery.data ?? [], [modelsQuery.data]);
@@ -220,7 +221,7 @@ export default function ModelsPage({
       <PageHeader
         title="模型与部署"
         section="访问控制"
-        description="对外模型别名、fallback 顺序与上游部署实例；数据为 mock，字段按契约 §7.2 预留。"
+        description="对外模型别名、描述、价格、fallback 顺序与上游部署实例；数据来自 console /v1/admin/models。"
         extra={
           <Button icon={<ReloadOutlined />} onClick={() => void modelsQuery.refetch()}>
             刷新
@@ -241,7 +242,7 @@ export default function ModelsPage({
         <span className="console-stat-item">
           部署实例 <b className="console-stat-value">{statValue(deploymentCount)}</b>
         </span>
-        <span className="console-stat-note">列表口径 · mock</span>
+        <span className="console-stat-note">当前筛选口径 · 真实接口</span>
       </div>
 
       <div className="console-toolbar">
@@ -261,6 +262,7 @@ export default function ModelsPage({
           value={tenant}
           onChange={setTenant}
           options={tenants.map((value) => ({ value, label: value }))}
+          notFoundContent="当前列表没有其他租户"
         />
         <Select
           allowClear

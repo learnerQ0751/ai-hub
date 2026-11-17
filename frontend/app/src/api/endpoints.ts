@@ -5,6 +5,12 @@
  */
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '';
 
+/**
+ * 数据面（gateway）基址。同源反代时留空即可；
+ * Playground 的对话/检索调试直接打 gateway，控制台接口不走这里。
+ */
+export const GATEWAY_BASE_URL = import.meta.env.VITE_GATEWAY_BASE_URL ?? '';
+
 /** 拼接查询参数；值为 undefined 的参数会被丢弃。 */
 export function withQuery(
   path: string,
@@ -27,11 +33,13 @@ export const endpoints = {
     logout: '/v1/admin/session',
   },
   projects: {
-    /** 列表端点未实现（API-PATHS §7.1），当前只有新增授权。 */
+    /** §7.1 已实现：项目列表（tenant_id、limit、offset）。 */
+    list: '/v1/admin/projects',
     authorize: '/v1/admin/project-authorizations',
   },
   keys: {
     list: '/v1/admin/keys',
+    detail: (keyHash: string) => `/v1/admin/keys/${encodeURIComponent(keyHash)}`,
     block: (keyHash: string) => `/v1/admin/keys/${encodeURIComponent(keyHash)}/block`,
     unblock: (keyHash: string) => `/v1/admin/keys/${encodeURIComponent(keyHash)}/unblock`,
   },
@@ -46,12 +54,24 @@ export const endpoints = {
   rag: {
     /** GET/POST 同一路径；GET 必填 project_id，可选 limit（§4.7）。 */
     documents: '/v1/rag/documents',
+    chunks: (docId: string) => `/v1/rag/documents/${encodeURIComponent(docId)}/chunks`,
     remove: (docId: string) => `/v1/rag/documents/${encodeURIComponent(docId)}`,
     reindex: (docId: string) => `/v1/rag/documents/${encodeURIComponent(docId)}/reindex`,
+    /** 数据面（gateway）：检索与问答调试。 */
+    search: '/v1/rag/search',
+    answer: '/v1/rag/answer',
   },
   traces: {
-    /** 列表端点未实现（API-PATHS §7.1），只有按 ID 查询。 */
+    /** §7.1 已实现：trace 列表与按 ID 查询。 */
+    list: '/v1/traces',
     detail: (traceId: string) => `/v1/traces/${encodeURIComponent(traceId)}`,
+  },
+  usage: {
+    query: '/v1/usage',
+    export: '/v1/usage/export',
+  },
+  health: {
+    console: '/actuator/health',
   },
   mcpServers: {
     list: '/v1/mcp/servers',

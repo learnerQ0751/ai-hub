@@ -34,10 +34,12 @@ describe('endpoints', () => {
     expect(endpoints.audit.list).toBe('/v1/audit-logs');
   });
 
-  it('does not expose unimplemented list endpoints', () => {
-    expect('list' in endpoints.traces).toBe(false);
-    expect('chunks' in endpoints.rag).toBe(false);
-    expect('list' in endpoints.projects).toBe(false);
+  it('exposes the §7.1 endpoints implemented on 2026-11-17', () => {
+    expect(endpoints.traces.list).toBe('/v1/traces');
+    expect(endpoints.rag.chunks('doc-1')).toBe('/v1/rag/documents/doc-1/chunks');
+    expect(endpoints.projects.list).toBe('/v1/admin/projects');
+    expect(endpoints.keys.detail('abc')).toBe('/v1/admin/keys/abc');
+    expect(endpoints.usage.query).toBe('/v1/usage');
   });
 
   it('encodes path segments and builds queries without empty values', () => {

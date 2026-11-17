@@ -19,15 +19,15 @@ export interface AdminDeployment {
  */
 export interface AdminModel {
   alias: string;
-  tenant_id?: string;
+  tenant_id?: string | null;
   status: ModelStatus;
   fallbacks: string[];
   deployments: AdminDeployment[];
-  description?: string;
-  input_price_per_million?: number;
-  output_price_per_million?: number;
-  created_at?: string;
-  updated_at?: string;
+  description?: string | null;
+  input_price_per_million?: number | null;
+  output_price_per_million?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface ModelFilters {
@@ -72,10 +72,11 @@ export function filterModels(models: AdminModel[], filters: ModelFilters): Admin
 export function formatPrice(model: AdminModel): string {
   const input = model.input_price_per_million;
   const output = model.output_price_per_million;
-  if (input === undefined && output === undefined) {
+  if ((input === undefined || input === null) && (output === undefined || output === null)) {
     return '未配置';
   }
-  const part = (value?: number) => (value === undefined ? '—' : value.toFixed(2));
+  const part = (value?: number | null) =>
+    value === undefined || value === null ? '—' : value.toFixed(2);
   return `入 ${part(input)} / 出 ${part(output)}`;
 }
 

@@ -5,8 +5,8 @@ import {
   registerMcpServer,
   removeMcpServer,
   reprobeMcpServer,
-} from '@/features/mcp/mock';
-import type { McpMockMode, RegisterMcpServerInput } from '@/features/mcp/mock';
+} from '@/features/mcp/api';
+import type { McpMockMode, RegisterMcpServerInput } from '@/features/mcp/api';
 import {
   filterMcpServers,
   formatDateTime,
@@ -129,7 +129,7 @@ export default function McpServersPage({
   const registerMutation = useMutation({
     mutationFn: registerMcpServer,
     onSuccess: (server) => {
-      message.success('已注册 MCP Server（mock）');
+      message.success('已注册 MCP Server');
       setRegisterOpen(false);
       form.resetFields();
       setDetail(server);
@@ -141,7 +141,7 @@ export default function McpServersPage({
   const removeMutation = useMutation({
     mutationFn: removeMcpServer,
     onSuccess: (_data, serverId) => {
-      message.success('已注销 MCP Server（mock）');
+      message.success('已注销 MCP Server');
       if (detail?.serverId === serverId) {
         setDetail(null);
       }
@@ -193,7 +193,7 @@ export default function McpServersPage({
       </Button>
       <Popconfirm
         title="注销这个 MCP Server？"
-        description="注销后工具目录会移除它（mock）。"
+        description="注销后该 Server 会从注册表移除，工具目录随之更新。"
         okText="注销"
         cancelText="取消"
         onConfirm={() => removeMutation.mutate(record.serverId)}
@@ -266,7 +266,7 @@ export default function McpServersPage({
       dataIndex: 'toolCount',
       width: 72,
       align: 'right',
-      render: (value: number) => <span className="num">{value}</span>,
+      render: (value?: number) => <span className="num">{value ?? '—'}</span>,
     },
     {
       title: '操作',
@@ -282,7 +282,7 @@ export default function McpServersPage({
       <PageHeader
         title="MCP Servers"
         section="能力目录"
-        description="注册、探活与工具发现。数据为 mock；接口路径集中在 api 目录，契约冻结后整体替换。"
+        description="注册、探活与工具发现；数据来自 console /v1/mcp/servers 与 /v1/mcp/runtime/stats。"
         extra={
           <Space wrap>
             <Button
@@ -312,7 +312,7 @@ export default function McpServersPage({
         <span className="mcp-runtime-item">
           进行中工具调用 <b className="mcp-runtime-value">{statValue(stats?.inFlightToolCalls)}</b>
         </span>
-        <span className="mcp-runtime-note">运行时计数 · mock</span>
+        <span className="mcp-runtime-note">运行时计数 · 真实接口</span>
       </div>
 
       <div className="mcp-toolbar">
@@ -428,7 +428,7 @@ export default function McpServersPage({
                 </div>
                 <div>
                   <dt>工具数</dt>
-                  <dd className="num">{server.toolCount}</dd>
+                  <dd className="num">{server.toolCount ?? '—'}</dd>
                 </div>
               </dl>
               {server.lastError ? <div className="mcp-card-error">{server.lastError}</div> : null}
@@ -540,7 +540,8 @@ export default function McpServersPage({
               工具与运行时
             </Typography.Title>
             <Typography.Paragraph type="secondary" style={{ marginBottom: 8 }}>
-              已发现 {detail.toolCount} 个工具。完整工具目录在「MCP Servers → 工具目录」中查看。
+              工具数由探活结果给出：{detail.toolCount ?? '本次接口未返回'}；完整工具目录可通过
+              gateway /v1/mcp/tools 查询。
             </Typography.Paragraph>
             <div className="muted" style={{ fontSize: 12 }}>
               运行时：活跃 stdio 进程{' '}

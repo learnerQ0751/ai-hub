@@ -1,4 +1,4 @@
-import { endpoints } from '@/api/endpoints';
+import { endpoints, withQuery } from '@/api/endpoints';
 import { request } from '@/api/http';
 import { ADMIN_MODELS } from '@/features/models/fixtures';
 import type { AdminModel } from '@/features/models/types';
@@ -6,12 +6,20 @@ import type { MockMode } from '@/features/shared/mock';
 import { delay, pending } from '@/features/shared/mock';
 
 /**
- * 后端 §7.2 字段（description、价格、更新时间、筛选参数）尚未实现，
- * 暂时由 fixtures 顶替数据源；置为 false 即走真实 console 接口，页面与类型不用改。
+ * §7.2 字段（description、价格、更新时间、筛选参数）已由后端补齐（2026-11-17），
+ * 数据源走真实 console 接口；mock 只保留四态演示。
  */
-const USE_MOCK = true;
+const USE_MOCK = false;
 
-export async function fetchModels(mode: MockMode = 'ok'): Promise<AdminModel[]> {
+export interface ModelListQuery {
+  tenant_id?: string;
+  status?: 'ACTIVE' | 'DISABLED';
+}
+
+export async function fetchModels(
+  mode: MockMode = 'ok',
+  query: ModelListQuery = {},
+): Promise<AdminModel[]> {
   if (mode === 'loading') {
     return pending<AdminModel[]>();
   }
@@ -24,7 +32,7 @@ export async function fetchModels(mode: MockMode = 'ok'): Promise<AdminModel[]> 
     return [];
   }
   if (!USE_MOCK) {
-    return request<AdminModel[]>(endpoints.models.list, { method: 'GET' });
+    return request<AdminModel[]>(withQuery(endpoints.models.list, { ...query }), { method: 'GET' });
   }
   await delay();
   return ADMIN_MODELS.map((model) => ({

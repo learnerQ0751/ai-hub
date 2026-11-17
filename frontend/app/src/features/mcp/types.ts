@@ -14,7 +14,8 @@ export interface McpServer {
   description?: string;
   lastError?: string;
   createdAt: string;
-  toolCount: number;
+  /** 契约未返回工具数时界面显示占位。 */
+  toolCount?: number;
 }
 
 export interface McpRuntimeStats {
