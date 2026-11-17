@@ -94,11 +94,13 @@ public class AdminServiceImpl implements AdminService {
         }
         ApiKeyBO key = apiKeyManager.findByKeyHash(keyHash.trim())
                 .orElseThrow(ChatCompletionException::apiKeyNotFound);
-        apiKeyManager.updateBlocked(key.getKeyHash(), blocked);
-        auditRecorder.record(ObjectUtils.isEmpty(key.getTenantId()) ? "default"
-                        : key.getTenantId(), blocked ? "KEY_BLOCK" : "KEY_UNBLOCK",
-                key.getKeyHash(), java.util.Map.of("blocked", !blocked),
-                java.util.Map.of("blocked", blocked));
+        boolean changed = apiKeyManager.updateBlocked(key.getKeyHash(), blocked);
+        if (changed) {
+            auditRecorder.record(ObjectUtils.isEmpty(key.getTenantId()) ? "default"
+                            : key.getTenantId(), blocked ? "KEY_BLOCK" : "KEY_UNBLOCK",
+                    key.getKeyHash(), java.util.Map.of("blocked", !blocked),
+                    java.util.Map.of("blocked", blocked));
+        }
         return toKeyDTO(apiKeyManager.findByKeyHash(key.getKeyHash()).orElse(key));
     }
 
@@ -119,28 +121,45 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public AdminModelResDTO createModel(AliasUpsertReqDTO reqDTO) {
         String alias = requireAlias(reqDTO.alias());
-        if (!ObjectUtils.isEmpty(catalogManager.findAliasAdmin(alias))) {
-            throw ChatCompletionException.invalidRequest(
-                    "模型别名 '" + alias + "' 已存在，请使用更新接口", "alias");
+        // 先整体校验部署，再写库：失败重试不留下半写状态。
+        List<ValidatedDeployment> deployments = validateDeployments(alias,
+                reqDTO.deployments());
+        ModelAliasAdminBO existing = catalogManager.findAliasAdmin(alias);
+        if (!ObjectUtils.isEmpty(existing)) {
+            if (!sameAlias(existing, reqDTO, deployments)) {
+                throw ChatCompletionException.invalidRequest(
+                        "模型别名 '" + alias + "' 已存在且配置不同，请使用更新接口", "alias");
+            }
+            // 幂等重放：补齐上次可能未完成的部署写入。
+            applyDeployments(alias, deployments, existing);
+            return getModel(alias);
         }
-        catalogManager.createAlias(alias, trim(reqDTO.tenantId()), reqDTO.description(),
-                reqDTO.fallbacks(), resolveStatus(reqDTO.status()));
-        auditRecorder.record(tenantOf(reqDTO.tenantId()), "ALIAS_CREATE", alias,
-                java.util.Map.of(), java.util.Map.of("alias", alias));
-        saveDeployments(alias, reqDTO.deployments());
+        boolean created = catalogManager.createAlias(alias, trim(reqDTO.tenantId()),
+                reqDTO.description(), reqDTO.fallbacks(), resolveStatus(reqDTO.status()));
+        if (created) {
+            auditRecorder.record(tenantOf(reqDTO.tenantId()), "ALIAS_CREATE", alias,
+                    java.util.Map.of(), java.util.Map.of("alias", alias));
+        }
+        applyDeployments(alias, deployments, catalogManager.findAliasAdmin(alias));
         return getModel(alias);
     }
 
     @Override
     public AdminModelResDTO updateModel(String alias, AliasUpsertReqDTO reqDTO) {
-        ModelAliasAdminBO updated = catalogManager.updateAlias(alias, trim(reqDTO.tenantId()),
-                reqDTO.description(), reqDTO.fallbacks(), resolveStatus(reqDTO.status()));
-        if (ObjectUtils.isEmpty(updated)) {
+        ModelAliasAdminBO existing = catalogManager.findAliasAdmin(alias);
+        if (ObjectUtils.isEmpty(existing)) {
             throw ChatCompletionException.modelAliasNotFound(alias);
         }
-        auditRecorder.record(tenantOf(reqDTO.tenantId()), "ALIAS_UPDATE", alias,
-                java.util.Map.of(), java.util.Map.of("alias", alias));
-        saveDeployments(alias, reqDTO.deployments());
+        List<ValidatedDeployment> deployments = validateDeployments(alias,
+                reqDTO.deployments());
+        boolean changed = !sameAlias(existing, reqDTO, deployments);
+        ModelAliasAdminBO updated = catalogManager.updateAlias(alias, trim(reqDTO.tenantId()),
+                reqDTO.description(), reqDTO.fallbacks(), resolveStatus(reqDTO.status()));
+        if (changed) {
+            auditRecorder.record(tenantOf(reqDTO.tenantId()), "ALIAS_UPDATE", alias,
+                    java.util.Map.of(), java.util.Map.of("alias", alias));
+        }
+        applyDeployments(alias, deployments, updated);
         return getModel(alias);
     }
 
@@ -155,13 +174,20 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public AdminModelResDTO upsertDeployment(String alias, DeploymentUpsertReqDTO reqDTO) {
-        if (ObjectUtils.isEmpty(catalogManager.findAliasAdmin(alias))) {
+        ModelAliasAdminBO existing = catalogManager.findAliasAdmin(alias);
+        if (ObjectUtils.isEmpty(existing)) {
             throw ChatCompletionException.modelAliasNotFound(alias);
         }
-        saveDeployment(alias, reqDTO, 0);
-        auditRecorder.record("default", "ALIAS_DEPLOYMENT_UPSERT", alias, java.util.Map.of(),
-                java.util.Map.of("alias", alias,
-                        "deploymentKey", String.valueOf(reqDTO.deploymentKey())));
+        ValidatedDeployment deployment = validateDeployment(alias, reqDTO, 0);
+        boolean changed = !sameDeployment(existing, deployment);
+        catalogManager.upsertDeployment(alias, deployment.deploymentKey(), deployment.apiBase(),
+                deployment.apiKey(), deployment.upstreamModel(), deployment.weight(),
+                deployment.priority(), deployment.status());
+        if (changed) {
+            auditRecorder.record("default", "ALIAS_DEPLOYMENT_UPSERT", alias,
+                    java.util.Map.of(), java.util.Map.of("alias", alias,
+                            "deploymentKey", deployment.deploymentKey()));
+        }
         return getModel(alias);
     }
 
@@ -195,26 +221,32 @@ public class AdminServiceImpl implements AdminService {
             throw ChatCompletionException.invalidRequest(
                     "resource_type 必须为 MEMORY/KNOWLEDGE/ALL", "resource_type");
         }
-        authorizationManager.authorize(tenantId, source, target, resourceType);
-        auditRecorder.record(tenantId, "PROJECT_AUTHORIZE", source + "->" + target,
-                java.util.Map.of(), java.util.Map.of("source", source, "target", target,
-                        "resourceType", resourceType));
+        boolean created = authorizationManager.authorize(tenantId, source, target, resourceType);
+        if (created) {
+            auditRecorder.record(tenantId, "PROJECT_AUTHORIZE", source + "->" + target,
+                    java.util.Map.of(), java.util.Map.of("source", source, "target", target,
+                            "resourceType", resourceType));
+        }
     }
 
     private String tenantOf(String tenantId) {
         return StringUtils.hasText(tenantId) ? tenantId.trim() : "default";
     }
 
-    private void saveDeployments(String alias, List<DeploymentUpsertReqDTO> deployments) {
+    private List<ValidatedDeployment> validateDeployments(String alias,
+                                                          List<DeploymentUpsertReqDTO> deployments) {
         if (CollectionUtils.isEmpty(deployments)) {
-            return;
+            return List.of();
         }
+        List<ValidatedDeployment> validated = new java.util.ArrayList<>(deployments.size());
         for (int index = 0; index < deployments.size(); index++) {
-            saveDeployment(alias, deployments.get(index), index);
+            validated.add(validateDeployment(alias, deployments.get(index), index));
         }
+        return validated;
     }
 
-    private void saveDeployment(String alias, DeploymentUpsertReqDTO reqDTO, int index) {
+    private ValidatedDeployment validateDeployment(String alias, DeploymentUpsertReqDTO reqDTO,
+                                                   int index) {
         String apiBase = requireText(reqDTO.apiBase(), "api_base");
         String upstreamModel = requireText(reqDTO.upstreamModel(), "upstream_model");
         String deploymentKey = StringUtils.hasText(reqDTO.deploymentKey())
@@ -228,8 +260,66 @@ public class AdminServiceImpl implements AdminService {
                 ? 1 : reqDTO.weight();
         int priority = Objects.isNull(reqDTO.priority()) || reqDTO.priority() < 0
                 ? 0 : reqDTO.priority();
-        catalogManager.upsertDeployment(alias, deploymentKey, apiBase, reqDTO.apiKey(),
-                upstreamModel, weight, priority, resolveStatus(reqDTO.status()));
+        return new ValidatedDeployment(deploymentKey, apiBase, reqDTO.apiKey(), upstreamModel,
+                weight, priority, resolveStatus(reqDTO.status()));
+    }
+
+    private void applyDeployments(String alias, List<ValidatedDeployment> deployments,
+                                  ModelAliasAdminBO current) {
+        for (ValidatedDeployment deployment : deployments) {
+            catalogManager.upsertDeployment(alias, deployment.deploymentKey(),
+                    deployment.apiBase(), deployment.apiKey(), deployment.upstreamModel(),
+                    deployment.weight(), deployment.priority(), deployment.status());
+        }
+    }
+
+    private boolean sameAlias(ModelAliasAdminBO existing, AliasUpsertReqDTO reqDTO,
+                              List<ValidatedDeployment> deployments) {
+        if (!Objects.equals(existing.tenantId(), trim(reqDTO.tenantId()))
+                || !Objects.equals(existing.description(), reqDTO.description())
+                || !Objects.equals(existing.status(), resolveStatus(reqDTO.status()))
+                || !Objects.equals(normalizeList(existing.fallbacks()),
+                normalizeList(reqDTO.fallbacks()))) {
+            return false;
+        }
+        for (ValidatedDeployment deployment : deployments) {
+            if (!sameDeployment(existing, deployment)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean sameDeployment(ModelAliasAdminBO existing, ValidatedDeployment deployment) {
+        return existing.deployments().stream()
+                .filter(item -> deployment.deploymentKey().equals(item.deploymentKey()))
+                .findFirst()
+                .map(item -> Objects.equals(item.apiBase(), deployment.apiBase())
+                        && Objects.equals(item.upstreamModel(), deployment.upstreamModel())
+                        && item.weight() == deployment.weight()
+                        && item.priority() == deployment.priority()
+                        && Objects.equals(item.status(), deployment.status()))
+                .orElse(false);
+    }
+
+    private List<String> normalizeList(List<String> values) {
+        return CollectionUtils.isEmpty(values) ? List.of() : values;
+    }
+
+    /**
+     * 校验后的部署写入参数。
+     *
+     * @param deploymentKey 部署键
+     * @param apiBase       上游地址
+     * @param apiKey        上游 Key 明文（写库前加密）
+     * @param upstreamModel 上游模型
+     * @param weight        权重
+     * @param priority      优先级
+     * @param status        状态
+     */
+    private record ValidatedDeployment(String deploymentKey, String apiBase, String apiKey,
+                                       String upstreamModel, int weight, int priority,
+                                       String status) {
     }
 
     private String resolveStatus(String status) {

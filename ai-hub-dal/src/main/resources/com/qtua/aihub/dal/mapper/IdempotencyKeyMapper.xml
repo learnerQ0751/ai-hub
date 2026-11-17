@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.IdempotencyKeyMapper">
+
+    <insert id="insert">
+        INSERT INTO idempotency_keys (idempotency_key, request_hash, created_at, updated_at)
+        VALUES (#{key,jdbcType=VARCHAR}, #{requestHash,jdbcType=VARCHAR},
+                CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    </insert>
+
+    <resultMap id="IdempotencyKeyMap" type="com.qtua.aihub.dal.model.IdempotencyKeyDO">
+        <result column="idempotency_key" property="idempotencyKey"/>
+        <result column="request_hash" property="requestHash"/>
+        <result column="response_status" property="responseStatus"/>
+        <result column="response_content_type" property="responseContentType"/>
+        <result column="response_body" property="responseBody"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectByKey" resultMap="IdempotencyKeyMap">
+        SELECT idempotency_key, request_hash, response_status, response_content_type,
+               response_body, created_at, updated_at
+        FROM idempotency_keys
+        WHERE idempotency_key = #{key,jdbcType=VARCHAR}
+    </select>
+
+    <update id="updateResponse">
+        UPDATE idempotency_keys
+        SET response_status = #{status,jdbcType=INTEGER},
+            response_content_type = #{contentType,jdbcType=VARCHAR},
+            response_body = #{body,jdbcType=VARCHAR},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE idempotency_key = #{key,jdbcType=VARCHAR}
+    </update>
+
+    <delete id="deleteByKey">
+        DELETE FROM idempotency_keys WHERE idempotency_key = #{key,jdbcType=VARCHAR}
+    </delete>
+</mapper>

@@ -11,6 +11,7 @@ import com.qtua.aihub.dal.model.ModelCatalogRow;
 import com.qtua.aihub.dal.model.ModelDeploymentDO;
 import com.qtua.aihub.manager.model.ModelAliasAdminBO;
 import com.qtua.aihub.manager.model.ModelDeploymentAdminBO;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -159,10 +160,10 @@ public class ModelCatalogManager {
      * @param description 描述
      * @param fallbacks   降级链
      * @param status      状态
-     * @return 别名视图
+     * @return true 表示本次插入成功；false 表示已存在
      */
-    public ModelAliasAdminBO createAlias(String alias, String tenantId, String description,
-                                         List<String> fallbacks, String status) {
+    public boolean createAlias(String alias, String tenantId, String description,
+                               List<String> fallbacks, String status) {
         ModelAliasDO aliasDO = new ModelAliasDO();
         aliasDO.setAlias(alias);
         aliasDO.setTenantId(tenantId);
@@ -172,8 +173,13 @@ public class ModelCatalogManager {
         java.time.Instant now = java.time.Instant.now();
         aliasDO.setCreatedAt(now);
         aliasDO.setUpdatedAt(now);
-        catalogMapper.insertAlias(aliasDO);
-        return findAliasAdmin(alias);
+        try {
+            catalogMapper.insertAlias(aliasDO);
+            return true;
+        } catch (DuplicateKeyException ex) {
+            // 并发生成同一别名：唯一约束兜底，视为已存在。
+            return false;
+        }
     }
 
     /**
@@ -253,14 +259,28 @@ public class ModelCatalogManager {
         deploymentDO.setStatus(status);
         deploymentDO.setUpdatedAt(now);
         if (ObjectUtils.isEmpty(deploymentDO.getId())) {
-            catalogMapper.insertDeployment(deploymentDO);
+            try {
+                catalogMapper.insertDeployment(deploymentDO);
+            } catch (DuplicateKeyException ex) {
+                // 并发插入同一 deployment_key：唯一约束兜底，转为更新。
+                ModelDeploymentDO existing = catalogMapper.selectDeploymentByKey(deploymentKey)
+                        .orElseThrow(() -> ex);
+                deploymentDO.setId(existing.getId());
+                catalogMapper.updateDeployment(deploymentDO);
+            }
         } else {
             catalogMapper.updateDeployment(deploymentDO);
         }
         if (catalogMapper.updateAliasDeployment(aliasDO.getId(), deploymentDO.getId(), weight,
                 priority) == 0) {
-            catalogMapper.insertAliasDeployment(aliasDO.getId(), deploymentDO.getId(), weight,
-                    priority);
+            try {
+                catalogMapper.insertAliasDeployment(aliasDO.getId(), deploymentDO.getId(), weight,
+                        priority);
+            } catch (DuplicateKeyException ex) {
+                // 并发建立关联：主键兜底，转为更新权重/优先级。
+                catalogMapper.updateAliasDeployment(aliasDO.getId(), deploymentDO.getId(), weight,
+                        priority);
+            }
         }
         return findAliasAdmin(alias);
     }

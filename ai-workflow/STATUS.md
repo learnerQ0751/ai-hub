@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-16 20:49
+**最后更新**：2026-11-17 11:05
 
 ## 需求进度
 
@@ -42,6 +42,7 @@
 | REQ-4.4 | 管理端（模型/Key/Prompt/MCP/日志） | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-4.1、REQ-4.3、REQ-4.5（审计在 4.5 接入） | f333e7d |
 | REQ-4.5 | 审计日志 + 项目总验收 | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（12/14） | REQ-4.1~4.4 | a5954a9 |
 | REQ-5.1 | 数据面 / 控制面拆分 | 已完成（待主人验收） | breaking | 待验收（2026-11-16，实现与自检完成）（6/6） | REQ-4.1 ~ REQ-4.5 | a3882e5 |
+| REQ-5.2 | 控制面幂等与拆分配置收口 | 已完成（待主人验收） | additive | 待验收（2026-11-17，实现与自检完成）（6/6） | REQ-5.1 | 待回填（feature/phase5-split） |
 
 ## 接口清单（来自 Controller）
 
@@ -119,6 +120,7 @@
 | audit_logs | 审计：tenant_id / actor（master 或 Key 哈希）/ action / target / before_state（JSONB 脱敏）/ after_state / trace_id / created_at；只追加，PG 触发器拒绝 UPDATE/DELETE | 弱关联 trace_events（trace_id）与 api_keys/prompt_templates/mcp_servers（target） | active | REQ-3.5, REQ-4.5, REQ-4.5 | ✓ |
 | v_usage_daily | 用量/成本实时聚合视图：usage_date / tenant_id / project_id / model_alias / key_id / requests / prompt_tokens / completion_tokens / total_tokens / cost | 直接从 call_logs 聚合；与逐条日志同口径 | active | REQ-4.3 | — |
 | trace_events | 全链路分段事件：trace_id（=request_id）/ tenant_id / project_id / key_id / segment（gateway/model/rag/mcp/answer）/ name / status / latency_ms / payload（JSONB 摘要）/ created_at | 弱关联 call_logs（trace_id）；按 trace_id 聚合成一次请求轨迹 | active | REQ-4.2 | ✓ |
+| idempotency_keys | 控制面幂等键：idempotency_key（唯一）/ request_hash（SHA-256(method+path+body)）/ response_status / response_content_type / response_body / created_at / updated_at | 独立表；同键同请求重放首次响应，重启不失效 | active | REQ-5.2 | ✓ |
 
 ### 网关与鉴权
 
@@ -175,6 +177,7 @@
 | GET /v1/traces/{traceId} | REQ-4.2 |
 | GET /v1/usage | REQ-4.3 |
 | GET /v1/usage/export | REQ-4.3 |
+| idempotency_keys | REQ-5.2 |
 | mcp_servers | REQ-2.1 |
 | memories | REQ-3.5 |
 | memory_audit_logs | REQ-3.5 |
@@ -225,7 +228,7 @@
 
 ## 测试
 
-- 468 个 @Test / 84 个测试类
+- 479 个 @Test / 85 个测试类
 
 ## 下一步
 
@@ -244,6 +247,7 @@
 - 验收 REQ-4.4 管理端（模型/Key/Prompt/MCP/日志） → 打开 `acceptance/REQ-4.4.md`
 - 验收 REQ-4.5 审计日志 + 项目总验收 → 打开 `acceptance/REQ-4.5.md`
 - 验收 REQ-5.1 数据面 / 控制面拆分 → 打开 `acceptance/REQ-5.1.md`
+- 验收 REQ-5.2 控制面幂等与拆分配置收口 → 打开 `acceptance/REQ-5.2.md`
 
 <!-- STATUS:GENERATED:END -->
 

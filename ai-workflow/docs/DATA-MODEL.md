@@ -25,6 +25,7 @@
 | audit_logs | 审计：tenant_id / actor（master 或 Key 哈希）/ action / target / before_state（JSONB 脱敏）/ after_state / trace_id / created_at；只追加，PG 触发器拒绝 UPDATE/DELETE | 弱关联 trace_events（trace_id）与 api_keys/prompt_templates/mcp_servers（target） | active | REQ-4.5 |
 | v_usage_daily | 用量/成本实时聚合视图：usage_date / tenant_id / project_id / model_alias / key_id / requests / prompt_tokens / completion_tokens / total_tokens / cost | 直接从 call_logs 聚合；与逐条日志同口径 | active | REQ-4.3 |
 | trace_events | 全链路分段事件：trace_id（=request_id）/ tenant_id / project_id / key_id / segment（gateway/model/rag/mcp/answer）/ name / status / latency_ms / payload（JSONB 摘要）/ created_at | 弱关联 call_logs（trace_id）；按 trace_id 聚合成一次请求轨迹 | active | REQ-4.2 |
+| idempotency_keys | 控制面幂等键：idempotency_key（唯一）/ request_hash（SHA-256(method+path+body)）/ response_status / response_content_type / response_body / created_at / updated_at | 独立表；同键同请求重放首次响应，重启不失效 | active | REQ-5.2 |
 
 ### 网关与鉴权
 

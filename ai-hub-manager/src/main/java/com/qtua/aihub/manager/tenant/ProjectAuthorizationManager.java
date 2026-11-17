@@ -2,6 +2,7 @@ package com.qtua.aihub.manager.tenant;
 
 import com.qtua.aihub.common.tenant.ProjectAuthorizationPort;
 import com.qtua.aihub.dal.mapper.ProjectAuthorizationMapper;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -45,8 +46,14 @@ public class ProjectAuthorizationManager implements ProjectAuthorizationPort {
      * @param targetProjectId 目标项目
      * @param resourceType    资源类型
      */
-    public void authorize(String tenantId, String sourceProjectId, String targetProjectId,
-                          String resourceType) {
-        authorizationMapper.insert(tenantId, sourceProjectId, targetProjectId, resourceType);
+    public boolean authorize(String tenantId, String sourceProjectId, String targetProjectId,
+                             String resourceType) {
+        try {
+            return authorizationMapper.insert(tenantId, sourceProjectId, targetProjectId,
+                    resourceType) > 0;
+        } catch (DuplicateKeyException ex) {
+            // 并发生成同一授权：唯一约束兜底，视为已存在。
+            return false;
+        }
     }
 }

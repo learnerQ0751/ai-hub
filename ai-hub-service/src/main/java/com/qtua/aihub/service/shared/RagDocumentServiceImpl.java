@@ -1,6 +1,7 @@
 package com.qtua.aihub.service.shared;
 
 import com.qtua.aihub.api.RagDocumentService;
+import com.qtua.aihub.common.audit.AuditRecorder;
 import com.qtua.aihub.api.model.res.RagDocumentDeleteResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentListResDTO;
 import com.qtua.aihub.api.model.res.RagDocumentResDTO;
@@ -52,6 +53,7 @@ public class RagDocumentServiceImpl implements RagDocumentService {
     private final EmbeddingModel embeddingModel;
     private final RagProperties properties;
     private final TenantScopeGuard tenantScopeGuard;
+    private final AuditRecorder auditRecorder;
 
     /**
      * 兼容构造器（单元测试）：使用无上下文的作用域守卫。
@@ -62,7 +64,7 @@ public class RagDocumentServiceImpl implements RagDocumentService {
      */
     public RagDocumentServiceImpl(RagDocumentCore documentCore, EmbeddingModel embeddingModel,
                                   RagProperties properties) {
-        this(documentCore, embeddingModel, properties, new TenantScopeGuard());
+        this(documentCore, embeddingModel, properties, new TenantScopeGuard(), AuditRecorder.NOOP);
     }
 
     /**
@@ -73,13 +75,29 @@ public class RagDocumentServiceImpl implements RagDocumentService {
      * @param properties       RAG 配置
      * @param tenantScopeGuard 租户作用域守卫
      */
-    @org.springframework.beans.factory.annotation.Autowired
     public RagDocumentServiceImpl(RagDocumentCore documentCore, EmbeddingModel embeddingModel,
                                   RagProperties properties, TenantScopeGuard tenantScopeGuard) {
+        this(documentCore, embeddingModel, properties, tenantScopeGuard, AuditRecorder.NOOP);
+    }
+
+    /**
+     * 构造服务（含审计）。
+     *
+     * @param documentCore     文档编排
+     * @param embeddingModel   当前向量模型
+     * @param properties       RAG 配置
+     * @param tenantScopeGuard 租户作用域守卫
+     * @param auditRecorder    审计端口
+     */
+    @org.springframework.beans.factory.annotation.Autowired
+    public RagDocumentServiceImpl(RagDocumentCore documentCore, EmbeddingModel embeddingModel,
+                                  RagProperties properties, TenantScopeGuard tenantScopeGuard,
+                                  AuditRecorder auditRecorder) {
         this.documentCore = documentCore;
         this.embeddingModel = embeddingModel;
         this.properties = properties;
         this.tenantScopeGuard = tenantScopeGuard;
+        this.auditRecorder = auditRecorder;
     }
 
     /**
@@ -104,6 +122,11 @@ public class RagDocumentServiceImpl implements RagDocumentService {
                     properties.getDedup().isOverride());
             RagDocumentBO document = documentCore.find(scope.tenantId(), result.document().docId(),
                     normalizedProject).orElse(result.document());
+            if (!result.duplicated()) {
+                auditRecorder.record(scope.tenantId(), "RAG_INGEST", document.docId(),
+                        java.util.Map.of(), java.util.Map.of("projectId", normalizedProject,
+                                "source", source, "chunkCount", document.chunkCount()));
+            }
             LOG.info("rag ingest completed: docId={}, projectId={}, source={}, size={}, "
                             + "chunks={}, duplicated={}",
                     document.docId(), normalizedProject, source, bytes.length,
@@ -150,6 +173,9 @@ public class RagDocumentServiceImpl implements RagDocumentService {
                 .orElseThrow(() -> ChatCompletionException.ragDocumentNotFound(docId));
         RagDocumentBO document = documentCore.reindex(scope.tenantId(), normalizedDocId)
                 .orElseThrow(() -> ChatCompletionException.ragDocumentNotFound(docId));
+        auditRecorder.record(scope.tenantId(), "RAG_REINDEX", document.docId(),
+                java.util.Map.of(), java.util.Map.of("projectId", normalizedProject,
+                        "status", document.indexStatus()));
         LOG.info("rag reindex completed: docId={}, projectId={}, status={}",
                 document.docId(), normalizedProject, document.indexStatus());
         return toResDTO(document, false);
@@ -172,6 +198,8 @@ public class RagDocumentServiceImpl implements RagDocumentService {
         documentCore.find(scope.tenantId(), docId.trim(), normalizedProject)
                 .orElseThrow(() -> ChatCompletionException.ragDocumentNotFound(docId));
         RagDeleteResult result = documentCore.delete(docId.trim());
+        auditRecorder.record(scope.tenantId(), "RAG_DELETE", docId.trim(),
+                java.util.Map.of("source", "knowledge"), java.util.Map.of());
         LOG.info("rag document removed: docId={}, projectId={}, chunksDeleted={}, "
                         + "vectorsDeleted={}",
                 docId, normalizedProject, result.chunksDeleted(), result.vectorsDeleted());

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
-    <!-- 启动类无业务逻辑，跳过检查 -->
+    <!-- 鍚姩绫绘棤涓氬姟閫昏緫锛岃烦杩囨鏌?-->
     <Match>
         <Class name="com.qtua.aihub.AiHubApplication"/>
     </Match>
-    <!-- 配置绑定 Bean 需要暴露可变 Map/List 供 Spring Binder 使用 -->
+    <!-- 閰嶇疆缁戝畾 Bean 闇€瑕佹毚闇插彲鍙?Map/List 渚?Spring Binder 浣跨敤 -->
     <Match>
         <Class name="com.qtua.aihub.common.config.GatewayProperties"/>
     </Match>
@@ -17,7 +17,7 @@
     <Match>
         <Class name="com.qtua.aihub.common.config.PricingProperties$Price"/>
     </Match>
-    <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露 -->
+    <!-- Spring 鏋勯€犲櫒娉ㄥ叆鐨勫璞＄敱瀹瑰櫒绠＄悊鐢熷懡鍛ㄦ湡锛屼笉灞炰簬鐪熷疄鏆撮湶 -->
     <Match>
         <Class name="com.qtua.aihub.gateway.filter.AuthFilter"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
@@ -46,7 +46,7 @@
         <Class name="com.qtua.aihub.manager.ApiKeyManager"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- 响应 DTO：before/after 已在紧凑构造器中 unmodifiableMap -->
+    <!-- 鍝嶅簲 DTO锛歜efore/after 宸插湪绱у噾鏋勯€犲櫒涓?unmodifiableMap -->
     <Match>
         <Class name="com.qtua.aihub.api.model.res.AuditLogResDTO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
@@ -55,7 +55,7 @@
         <Class name="com.qtua.aihub.api.model.res.AuditLogResDTO"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- 响应 DTO：payload 已在紧凑构造器中 unmodifiableMap -->
+    <!-- 鍝嶅簲 DTO锛歱ayload 宸插湪绱у噾鏋勯€犲櫒涓?unmodifiableMap -->
     <Match>
         <Class name="com.qtua.aihub.api.model.res.TraceEventResDTO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
@@ -64,7 +64,7 @@
         <Class name="com.qtua.aihub.api.model.res.TraceEventResDTO"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- Trace 摘要：构造器已 unmodifiableMap，SpotBugs 无法推断 -->
+    <!-- Trace 鎽樿锛氭瀯閫犲櫒宸?unmodifiableMap锛孲potBugs 鏃犳硶鎺ㄦ柇 -->
     <Match>
         <Class name="com.qtua.aihub.common.trace.TraceEvent"/>
         <Bug pattern="EI_EXPOSE_REP"/>
@@ -173,17 +173,17 @@
         <Class name="com.qtua.aihub.start.config.MasterKeyStartupValidator"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- metadata 允许 null 值，构造器中已用 unmodifiableMap 包装 -->
+    <!-- metadata 鍏佽 null 鍊硷紝鏋勯€犲櫒涓凡鐢?unmodifiableMap 鍖呰 -->
     <Match>
         <Class name="com.qtua.aihub.manager.model.ApiKeyBO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
     </Match>
-    <!-- 响应 DTO：List 已在紧凑构造器中 List.copyOf 防御性拷贝 -->
+    <!-- 鍝嶅簲 DTO锛歀ist 宸插湪绱у噾鏋勯€犲櫒涓?List.copyOf 闃插尽鎬ф嫹璐?-->
     <Match>
         <Class name="com.qtua.aihub.api.model.res.ModelListResDTO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
     </Match>
-    <!-- 流式结果：AtomicReference 是单次请求的流上下文，故意暴露给 Controller 读取 usage -->
+    <!-- 娴佸紡缁撴灉锛欰tomicReference 鏄崟娆¤姹傜殑娴佷笂涓嬫枃锛屾晠鎰忔毚闇茬粰 Controller 璇诲彇 usage -->
     <Match>
         <Class name="com.qtua.aihub.api.model.res.ChatCompletionStreamResDTO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
@@ -200,11 +200,11 @@
         <Class name="com.qtua.aihub.manager.model.ChatCompletionStreamResultBO"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- 响应 DTO：args 在紧凑构造器中已 List.copyOf，SpotBugs 无法推断不可变性 -->
+    <!-- 鍝嶅簲 DTO锛歛rgs 鍦ㄧ揣鍑戞瀯閫犲櫒涓凡 List.copyOf锛孲potBugs 鏃犳硶鎺ㄦ柇涓嶅彲鍙樻€?-->
     <Match>
         <Class name="com.qtua.aihub.api.model.res.McpServerResDTO"/>
     </Match>
-    <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露（第 2 期新增类） -->
+    <!-- Spring 鏋勯€犲櫒娉ㄥ叆鐨勫璞＄敱瀹瑰櫒绠＄悊鐢熷懡鍛ㄦ湡锛屼笉灞炰簬鐪熷疄鏆撮湶锛堢 2 鏈熸柊澧炵被锛?-->
     <Match>
         <Class name="com.qtua.aihub.manager.mcp.McpServerManager"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
@@ -289,7 +289,7 @@
         <Class name="com.qtua.aihub.console.controller.McpServerController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- 记忆服务（REQ-3.5）：record 的 Map/List 已在紧凑构造器中防御性拷贝，SpotBugs 无法推断 -->
+    <!-- 璁板繂鏈嶅姟锛圧EQ-3.5锛夛細record 鐨?Map/List 宸插湪绱у噾鏋勯€犲櫒涓槻寰℃€ф嫹璐濓紝SpotBugs 鏃犳硶鎺ㄦ柇 -->
     <Match>
         <Class name="com.qtua.aihub.common.memory.MemoryEntry"/>
         <Bug pattern="EI_EXPOSE_REP"/>
@@ -318,7 +318,7 @@
         <Class name="com.qtua.aihub.api.model.res.MemoryRecallResDTO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
     </Match>
-    <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露（记忆服务） -->
+    <!-- Spring 鏋勯€犲櫒娉ㄥ叆鐨勫璞＄敱瀹瑰櫒绠＄悊鐢熷懡鍛ㄦ湡锛屼笉灞炰簬鐪熷疄鏆撮湶锛堣蹇嗘湇鍔★級 -->
     <Match>
         <Class name="com.qtua.aihub.manager.memory.MemoryManager"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
@@ -331,7 +331,7 @@
         <Class name="com.qtua.aihub.gateway.controller.MemoryController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- RAG（REQ-3.1/3.2）：配置绑定 Bean 需要可变嵌套对象供 Spring Binder 使用 -->
+    <!-- RAG锛圧EQ-3.1/3.2锛夛細閰嶇疆缁戝畾 Bean 闇€瑕佸彲鍙樺祵濂楀璞′緵 Spring Binder 浣跨敤 -->
     <Match>
         <Class name="com.qtua.aihub.common.config.RagProperties"/>
     </Match>
@@ -362,7 +362,7 @@
     <Match>
         <Class name="com.qtua.aihub.common.config.RagProperties$ModelSettings"/>
     </Match>
-    <!-- REQ-3.7：embedding 向量结果/配置/远端实现 -->
+    <!-- REQ-3.7锛歟mbedding 鍚戦噺缁撴灉/閰嶇疆/杩滅瀹炵幇 -->
     <Match>
         <Class name="com.qtua.aihub.common.rag.EmbeddingResult"/>
         <Bug pattern="EI_EXPOSE_REP"/>
@@ -411,7 +411,7 @@
         <Class name="com.qtua.aihub.gateway.controller.EmbeddingController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- RAG record 的数组/List 已在紧凑构造器或访问器中防御性复制，SpotBugs 无法推断 -->
+    <!-- RAG record 鐨勬暟缁?List 宸插湪绱у噾鏋勯€犲櫒鎴栬闂櫒涓槻寰℃€у鍒讹紝SpotBugs 鏃犳硶鎺ㄦ柇 -->
     <Match>
         <Class name="com.qtua.aihub.manager.model.RagDocumentBO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
@@ -440,7 +440,7 @@
         <Class name="com.qtua.aihub.api.model.res.RagDocumentListResDTO"/>
         <Bug pattern="EI_EXPOSE_REP"/>
     </Match>
-    <!-- RAG 检索（REQ-3.3）：record 的 List 在紧凑构造器/工厂中已做防御性复制或来自 JSON 绑定 -->
+    <!-- RAG 妫€绱紙REQ-3.3锛夛細record 鐨?List 鍦ㄧ揣鍑戞瀯閫犲櫒/宸ュ巶涓凡鍋氶槻寰℃€у鍒舵垨鏉ヨ嚜 JSON 缁戝畾 -->
     <Match>
         <Class name="com.qtua.aihub.common.rag.RagSearchFilter"/>
         <Bug pattern="EI_EXPOSE_REP"/>
@@ -477,7 +477,7 @@
         <Class name="com.qtua.aihub.gateway.controller.RagSearchController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- RAG 生成（REQ-3.4）：record 的 List 已防御性复制；Spring 注入对象由容器管理 -->
+    <!-- RAG 鐢熸垚锛圧EQ-3.4锛夛細record 鐨?List 宸查槻寰℃€у鍒讹紱Spring 娉ㄥ叆瀵硅薄鐢卞鍣ㄧ鐞?-->
     <Match>
         <Class name="com.qtua.aihub.core.rag.RagAnswerPrompt"/>
         <Bug pattern="EI_EXPOSE_REP"/>
@@ -494,7 +494,7 @@
         <Class name="com.qtua.aihub.gateway.controller.RagAnswerController"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露（RAG） -->
+    <!-- Spring 鏋勯€犲櫒娉ㄥ叆鐨勫璞＄敱瀹瑰櫒绠＄悊鐢熷懡鍛ㄦ湡锛屼笉灞炰簬鐪熷疄鏆撮湶锛圧AG锛?-->
     <Match>
         <Class name="com.qtua.aihub.manager.rag.RagDocumentManager"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
@@ -531,7 +531,7 @@
         <Class name="com.qtua.aihub.integration.rag.LangChain4jEmbeddingModel"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- embedding 模型构造时校验维度/配置，非法配置应在启动期快速失败 -->
+    <!-- embedding 妯″瀷鏋勯€犳椂鏍￠獙缁村害/閰嶇疆锛岄潪娉曢厤缃簲鍦ㄥ惎鍔ㄦ湡蹇€熷け璐?-->
     <Match>
         <Class name="com.qtua.aihub.integration.rag.LangChain4jEmbeddingModel"/>
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
@@ -540,12 +540,12 @@
         <Class name="com.qtua.aihub.integration.rag.DeterministicEmbeddingModel"/>
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
     </Match>
-    <!-- REQ-3.6：Spring 构造器注入的对象由容器管理生命周期，不属于真实暴露 -->
+    <!-- REQ-3.6锛歋pring 鏋勯€犲櫒娉ㄥ叆鐨勫璞＄敱瀹瑰櫒绠＄悊鐢熷懡鍛ㄦ湡锛屼笉灞炰簬鐪熷疄鏆撮湶 -->
     <Match>
         <Class name="com.qtua.aihub.gateway.mcp.McpRagMemoryTools"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- REQ-3.9：解析配置为 Spring Binder 可变对象；门面只保存不可变 Map/record -->
+    <!-- REQ-3.9锛氳В鏋愰厤缃负 Spring Binder 鍙彉瀵硅薄锛涢棬闈㈠彧淇濆瓨涓嶅彲鍙?Map/record -->
     <Match>
         <Class name="com.qtua.aihub.common.config.RagProperties$Parse"/>
     </Match>
@@ -556,14 +556,23 @@
         <Class name="com.qtua.aihub.integration.rag.DocumentTextExtractor"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-    <!-- 启动期校验解析器扩展名重复，非法配置应快速失败 -->
+    <!-- 鍚姩鏈熸牎楠岃В鏋愬櫒鎵╁睍鍚嶉噸澶嶏紝闈炴硶閰嶇疆搴斿揩閫熷け璐?-->
     <Match>
         <Class name="com.qtua.aihub.integration.rag.DocumentTextExtractor"/>
         <Bug pattern="CT_CONSTRUCTOR_THROW"/>
     </Match>
-    <!-- REQ-5.1：控制面鉴权过滤器为 Spring 构造器注入 -->
+    <!-- REQ-5.1锛氭帶鍒堕潰閴存潈杩囨护鍣ㄤ负 Spring 鏋勯€犲櫒娉ㄥ叆 -->
     <Match>
         <Class name="com.qtua.aihub.console.filter.AdminAuthFilter"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
-</FindBugsFilter>
+    <!-- REQ-5.2：幂等键门面与过滤器为 Spring 构造器注入 -->
+    <Match>
+        <Class name="com.qtua.aihub.manager.idempotency.IdempotencyKeyManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.console.filter.IdempotencyFilter"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match></FindBugsFilter>
+

@@ -58,6 +58,8 @@ flowchart LR
 - 控制面启动先于数据面（Flyway）；停 console 不影响数据面已启动的转发。
 - 例外：`RagDocumentService` 放在 `service.shared`，因为数据面 MCP 运行时工具 `ingest_document` 复用同一实现；HTTP 接入端点仍只在 console。
 - 例外：MCP Server 启动探活加载器归 console（写注册表状态）；数据面按需连接工具。
+- 控制面写入幂等（REQ-5.2）：状态型写入用条件更新 + 唯一约束收敛；创建类/凭证轮换可用
+  `Idempotency-Key`，记录落 `idempotency_keys`，同键同请求重放首次响应；审计仅在状态变化时写。
 
 ## 2.5 数据模型
 

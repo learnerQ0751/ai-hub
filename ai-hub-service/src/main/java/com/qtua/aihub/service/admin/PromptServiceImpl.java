@@ -15,8 +15,10 @@ import com.qtua.aihub.manager.model.PromptTemplateBO;
 import com.qtua.aihub.manager.prompt.PromptManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import java.time.Instant;
@@ -95,15 +97,35 @@ public class PromptServiceImpl implements PromptService {
         String name = validateName(reqDTO.name());
         String tenantId = tenantScopeGuard.resolveTenant(reqDTO.tenantId());
         validateContentAndVariables(reqDTO.content(), reqDTO.variables());
-        if (!promptManager.findVersions(tenantId, name).isEmpty()) {
+        List<PromptTemplateBO> versions = promptManager.findVersions(tenantId, name);
+        if (!versions.isEmpty()) {
+            PromptTemplateBO first = promptManager.findByVersion(tenantId, name, 1)
+                    .orElse(versions.get(versions.size() - 1));
+            if (sameContent(first, reqDTO.content(), reqDTO.variables())) {
+                // 幂等重放：同名同内容直接返回既有版本。
+                return toResDTO(first);
+            }
             throw ChatCompletionException.invalidRequest(
-                    "Prompt '" + name + "' 已存在，请使用追加版本接口", "name");
+                    "Prompt '" + name + "' 已存在且内容不同，请使用追加版本接口", "name");
         }
         PromptTemplateBO prompt = new PromptTemplateBO(name,
                 promptManager.nextVersion(tenantId, name),
                 reqDTO.content(), reqDTO.variables(), PromptStatus.DRAFT.name(),
                 tenantId, reqDTO.createdBy(), Instant.now());
-        promptManager.save(prompt);
+        try {
+            promptManager.save(prompt);
+        } catch (DuplicateKeyException ex) {
+            // 并发创建同名同版本：唯一约束兜底，读回后按幂等重放处理。
+            PromptTemplateBO raced = promptManager.findByVersion(tenantId, name,
+                    prompt.version()).orElseThrow(() -> ex);
+            if (sameContent(raced, reqDTO.content(), reqDTO.variables())) {
+                return toResDTO(raced);
+            }
+            throw ChatCompletionException.invalidRequest(
+                    "Prompt '" + name + "' 已被并发创建且内容不同", "name");
+        }
+        auditRecorder.record(tenantId, "PROMPT_CREATE", name, java.util.Map.of(),
+                java.util.Map.of("name", name, "version", prompt.version()));
         LOG.info("prompt created: name={}, version={}", name, prompt.version());
         return toResDTO(prompt);
     }
@@ -128,7 +150,22 @@ public class PromptServiceImpl implements PromptService {
                 promptManager.nextVersion(tenantId, name),
                 reqDTO.content(), reqDTO.variables(), PromptStatus.DRAFT.name(),
                 latest.tenantId(), latest.createdBy(), Instant.now());
-        promptManager.save(prompt);
+        for (int attempt = 0; ; attempt++) {
+            try {
+                promptManager.save(prompt);
+                break;
+            } catch (DuplicateKeyException ex) {
+                if (attempt >= 2) {
+                    throw ex;
+                }
+                // 并发追加版本：重新计算版本号后重试。
+                prompt = new PromptTemplateBO(name, promptManager.nextVersion(tenantId, name),
+                        reqDTO.content(), reqDTO.variables(), PromptStatus.DRAFT.name(),
+                        latest.tenantId(), latest.createdBy(), Instant.now());
+            }
+        }
+        auditRecorder.record(tenantId, "PROMPT_VERSION_CREATE", name, java.util.Map.of(),
+                java.util.Map.of("name", name, "version", prompt.version()));
         LOG.info("prompt version created: name={}, version={}", name, prompt.version());
         return toResDTO(prompt);
     }
@@ -200,6 +237,11 @@ public class PromptServiceImpl implements PromptService {
         }
         PromptTemplateBO target = promptManager.findByVersion(tenantId, name, version)
                 .orElseThrow(() -> ChatCompletionException.promptVersionNotFound(name, version));
+        PromptTemplateBO published = promptManager.findPublished(tenantId, name).orElse(null);
+        if (!Objects.isNull(published) && published.version() == version) {
+            // 幂等重放：目标版本已是当前发布版本，不重复归档/审计。
+            return toResDTO(published);
+        }
         promptManager.archivePublished(tenantId, name);
         promptManager.publishVersion(tenantId, name, version);
         auditRecorder.record(tenantId, "PROMPT_PUBLISH", name, java.util.Map.of(),
@@ -208,6 +250,13 @@ public class PromptServiceImpl implements PromptService {
         return toResDTO(new PromptTemplateBO(target.name(), target.version(), target.content(),
                 target.variables(), PromptStatus.PUBLISHED.name(), target.tenantId(),
                 target.createdBy(), target.createdAt()));
+    }
+
+    private boolean sameContent(PromptTemplateBO existing, String content,
+                                List<String> variables) {
+        return existing.content().equals(content)
+                && existing.variables().equals(
+                ObjectUtils.isEmpty(variables) ? List.of() : variables);
     }
 
     private String validateName(String name) {

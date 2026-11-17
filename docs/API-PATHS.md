@@ -91,7 +91,22 @@
 | GET | `/v1/usage`、`/v1/usage/export` |
 | GET | `/v1/audit-logs` |
 
-## 5. 错误体
+## 5. 幂等请求头（REQ-5.2，可选）
+
+控制面 JSON 写请求（POST/PUT/DELETE）可携带：
+
+```
+Idempotency-Key: <1-128 位字母/数字/._:->
+```
+
+- 同键 + 同请求体：返回首次响应，响应头 `X-Idempotent-Replay: true`，不重复执行。
+- 同键 + 不同请求体：`409`，`type=idempotency_error`。
+- 同键的上一个请求仍在处理：`409`，稍后重试。
+- 业务失败（非 2xx）会释放该键，允许修正后重试。
+- 记录落库（重启不失效）；multipart 上传（RAG 文档）不走该机制，按内容哈希天然去重。
+- 未携带该头的旧客户端行为不变；路径与鉴权方式均未改变。
+
+## 6. 错误体
 
 两应用统一返回 OpenAI 兼容错误体：
 
@@ -108,3 +123,5 @@
 | 403 | `key_model_access_denied` | 虚拟 Key 无权使用该模型 |
 | 403 | `tenant_access_denied` | 请求租户/项目超出 Key 绑定 |
 | 404 | `not_found` | 当前应用未提供该路径（跨面访问） |
+| 409 | `idempotency_error` | 幂等键冲突或同键请求仍在处理 |
+| 409 | `conflict_error` | 同名资源已存在且配置不同（如 MCP Server） |

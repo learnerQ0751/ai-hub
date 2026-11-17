@@ -110,9 +110,14 @@ public class McpServerServiceImpl implements McpServerService {
         String command = validateCommand(transport, reqDTO.command());
 
         String tenantId = tenantScopeGuard.resolveTenant(reqDTO.tenantId());
-        if (mcpServerManager.findByName(name)
-                .filter(existing -> tenantId.equals(existing.tenantId()))
-                .isPresent()) {
+        McpServerBO existing = mcpServerManager.findByName(name)
+                .filter(item -> tenantId.equals(item.tenantId())).orElse(null);
+        if (!ObjectUtils.isEmpty(existing)) {
+            if (sameServer(existing, transport, endpoint, command, reqDTO.args(),
+                    reqDTO.description())) {
+                // 幂等重放：完全相同的注册直接返回既有记录，不重复审计/探活。
+                return toResDTO(existing);
+            }
             throw ChatCompletionException.mcpServerConflict(name);
         }
 
@@ -132,7 +137,13 @@ public class McpServerServiceImpl implements McpServerService {
         try {
             mcpServerManager.save(server);
         } catch (DuplicateKeyException ex) {
-            // 并发注册同名：DB 唯一约束兜底。
+            // 并发注册同名：唯一约束兜底；完全相同的请求按幂等重放处理。
+            McpServerBO raced = mcpServerManager.findByName(name)
+                    .filter(item -> tenantId.equals(item.tenantId())).orElse(null);
+            if (!ObjectUtils.isEmpty(raced) && sameServer(raced, transport, endpoint, command,
+                    reqDTO.args(), reqDTO.description())) {
+                return toResDTO(raced);
+            }
             throw ChatCompletionException.mcpServerConflict(name);
         }
         auditRecorder.record(tenantId, "MCP_REGISTER", name, java.util.Map.of(),
@@ -178,6 +189,16 @@ public class McpServerServiceImpl implements McpServerService {
                         server.transport().value()), java.util.Map.of());
         LOG.info("mcp server removed: name={}, serverId={}", server.name(), server.serverId());
         mcpToolCatalog.invalidate();
+    }
+
+    private boolean sameServer(McpServerBO existing, TransportType transport, String endpoint,
+                               String command, java.util.List<String> args, String description) {
+        return existing.transport() == transport
+                && ObjectUtils.nullSafeEquals(existing.endpoint(), endpoint)
+                && ObjectUtils.nullSafeEquals(existing.command(), command)
+                && ObjectUtils.nullSafeEquals(existing.args(),
+                ObjectUtils.isEmpty(args) ? java.util.List.of() : args)
+                && ObjectUtils.nullSafeEquals(existing.description(), description);
     }
 
     /**

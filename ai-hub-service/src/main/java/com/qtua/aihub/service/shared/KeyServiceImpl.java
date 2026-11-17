@@ -214,12 +214,16 @@ public class KeyServiceImpl implements KeyService {
 
     private KeyBlockResDTO updateBlocked(String plainKey, boolean blocked) {
         ApiKeyBO apiKey = requireKey(plainKey);
-        apiKeyManager.updateBlocked(apiKey.getKeyHash(), blocked);
-        auditRecorder.record(ObjectUtils.isEmpty(apiKey.getTenantId()) ? "default"
-                        : apiKey.getTenantId(), blocked ? "KEY_BLOCK" : "KEY_UNBLOCK",
-                apiKey.getKeyHash(), java.util.Map.of("blocked", !blocked),
-                java.util.Map.of("blocked", blocked));
-        LOG.info("virtual key hash={} blocked={}", apiKey.getKeyHash(), blocked);
+        // 条件更新：状态未变化时不重复写审计（幂等重放）。
+        boolean changed = apiKeyManager.updateBlocked(apiKey.getKeyHash(), blocked);
+        if (changed) {
+            auditRecorder.record(ObjectUtils.isEmpty(apiKey.getTenantId()) ? "default"
+                            : apiKey.getTenantId(), blocked ? "KEY_BLOCK" : "KEY_UNBLOCK",
+                    apiKey.getKeyHash(), java.util.Map.of("blocked", !blocked),
+                    java.util.Map.of("blocked", blocked));
+        }
+        LOG.info("virtual key hash={} blocked={} changed={}", apiKey.getKeyHash(), blocked,
+                changed);
         return new KeyBlockResDTO(mask(plainKey), blocked);
     }
 

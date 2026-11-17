@@ -48,6 +48,7 @@
         UPDATE api_keys
         SET blocked = #{blocked,jdbcType=BOOLEAN}
         WHERE key_hash = #{keyHash,jdbcType=VARCHAR}
+          AND blocked &lt;&gt; #{blocked,jdbcType=BOOLEAN}
     </update>
 
     <select id="selectPage" resultMap="ApiKeyResultMap">

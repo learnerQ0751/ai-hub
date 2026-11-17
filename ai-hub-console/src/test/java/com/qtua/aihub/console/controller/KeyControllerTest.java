@@ -56,6 +56,9 @@ class KeyControllerTest {
     @MockitoBean
     private GatewayGovernanceService gatewayGovernanceService;
 
+    @MockitoBean
+    private com.qtua.aihub.manager.idempotency.IdempotencyKeyManager idempotencyKeyManager;
+
     @BeforeEach
     void setUp() {
         when(gatewayProperties.getMasterKey()).thenReturn(MASTER_KEY);

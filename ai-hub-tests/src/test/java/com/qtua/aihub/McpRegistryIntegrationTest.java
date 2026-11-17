@@ -107,12 +107,19 @@ class McpRegistryIntegrationTest {
     }
 
     @Test
-    void duplicate_name_returns_409_and_double_underscore_rejected() {
-        register(Map.of("name", "dup_server", "transport", "http",
+    void duplicate_name_is_idempotent_and_double_underscore_rejected() throws Exception {
+        ResponseEntity<String> first = register(Map.of("name", "dup_server", "transport", "http",
                 "endpoint", HTTP_MCP.url("/mcp").toString()));
         ResponseEntity<String> dup = register(Map.of("name", "dup_server", "transport", "http",
                 "endpoint", HTTP_MCP.url("/mcp").toString()));
-        assertThat(dup.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        // REQ-5.2：完全相同的重复注册按幂等重放处理。
+        assertThat(dup.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(dup.getBody()).contains(objectMapper.readTree(first.getBody())
+                .path("serverId").asText());
+
+        ResponseEntity<String> conflict = register(Map.of("name", "dup_server", "transport",
+                "http", "endpoint", HTTP_MCP.url("/mcp/other").toString()));
+        assertThat(conflict.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
 
         ResponseEntity<String> badName = register(Map.of("name", "bad__name", "transport", "http",
                 "endpoint", HTTP_MCP.url("/mcp").toString()));
