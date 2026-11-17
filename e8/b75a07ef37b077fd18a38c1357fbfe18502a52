@@ -1,0 +1,20 @@
+ai-workflow/DESIGN.md
+  h_db524743a0da6f 404
+ai-workflow/records/REQ-5.3.md
+  h_db524743a0da6f 99,134
+ai-workflow/records/REQ-5.4.md
+  h_db524743a0da6f 91
+docs/API-PATHS.md
+  h_db524743a0da6f 3,6-34,59,83-92,149-163,177,179,199-201,203-204,206,216,218-227,229,232
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e8b75a07ef37b077fd18a38c1357fbfe18502a52",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
