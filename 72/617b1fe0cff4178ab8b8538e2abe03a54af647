@@ -1,0 +1,21 @@
+ai-workflow/STATUS.md
+  s_8b33dbee17e429::t_47f86a441f8484 6,45
+ai-workflow/records/REQ-5.2.md
+  s_8b33dbee17e429::t_df76df79203db9 1,7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "72617b1fe0cff4178ab8b8538e2abe03a54af647",
+  "prompts": {},
+  "sessions": {
+    "s_8b33dbee17e429": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b688c2d0-38ee-4c46-a9dd-804e9a35773d",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
