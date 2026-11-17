@@ -1,0 +1,19 @@
+scripts/qa-start.ps1
+  s_0c9981482ac934::t_3f9172d4675cc4 48-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b3ae57e3779332503acebf4611e8e4799961aaec",
+  "prompts": {},
+  "sessions": {
+    "s_0c9981482ac934": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1f71a89a-3f1d-43e1-8b6b-652d854a5622",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
