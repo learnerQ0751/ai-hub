@@ -18,7 +18,7 @@ const delay = (ms = 450) => new Promise<void>((resolve) => setTimeout(resolve, m
 
 const pending = <T>(): Promise<T> => new Promise<T>(() => {});
 
-/** GET /v1/mcp/servers：注册表全量列表（§4.3）。 */
+/** GET /v1/admin/mcp/servers：注册表全量列表（§4.3）。 */
 export async function fetchMcpServers(mode: McpMockMode = 'ok'): Promise<McpServer[]> {
   if (mode === 'loading') {
     return pending<McpServer[]>();

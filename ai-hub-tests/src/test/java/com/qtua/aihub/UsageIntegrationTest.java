@@ -79,7 +79,7 @@ class UsageIntegrationTest {
         insert(hashB, tenantB, project, "chat", today, 100, 200, new BigDecimal("1.00"));
 
         JsonNode usage = objectMapper.readTree(restClient.get()
-                .uri("/v1/usage?tenant_id=" + tenantA + "&from=" + yesterday + "&to=" + today)
+                .uri("/v1/admin/usage?tenant_id=" + tenantA + "&from=" + yesterday + "&to=" + today)
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .retrieve().toEntity(String.class).getBody());
 
@@ -92,20 +92,20 @@ class UsageIntegrationTest {
 
         // 用量查询归控制面：虚拟 Key 一律 403，admin 凭证按 tenant 过滤。
         ResponseEntity<String> virtualDenied = restClient.get()
-                .uri("/v1/usage?from=" + yesterday + "&to=" + today)
+                .uri("/v1/admin/usage?from=" + yesterday + "&to=" + today)
                 .header("Authorization", "Bearer " + keyA)
                 .retrieve().toEntity(String.class);
         assertThat(virtualDenied.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
 
         JsonNode tenantScoped = objectMapper.readTree(restClient.get()
-                .uri("/v1/usage?tenant_id=" + tenantA + "&from=" + yesterday + "&to=" + today)
+                .uri("/v1/admin/usage?tenant_id=" + tenantA + "&from=" + yesterday + "&to=" + today)
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .retrieve().toEntity(String.class).getBody());
         assertThat(tenantScoped.path("totals").path("requests").asLong()).isEqualTo(2L);
         assertThat(tenantScoped.path("tenant_id").asText()).isEqualTo(tenantA);
 
         ResponseEntity<String> csv = restClient.get()
-                .uri("/v1/usage/export?tenant_id=" + tenantA + "&from=" + yesterday
+                .uri("/v1/admin/usage/export?tenant_id=" + tenantA + "&from=" + yesterday
                         + "&to=" + today)
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .retrieve().toEntity(String.class);

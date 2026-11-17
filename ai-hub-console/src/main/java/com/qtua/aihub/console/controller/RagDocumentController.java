@@ -46,7 +46,7 @@ public class RagDocumentController {
      * @param projectId 项目 ID
      * @return 201（新建）或 200（命中重复）
      */
-    @PostMapping(path = "/v1/rag/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
+    @PostMapping(path = "/v1/admin/rag/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RagDocumentResDTO> upload(@RequestParam("file") MultipartFile file,
                                                     @RequestParam("project_id") String projectId) {
@@ -69,7 +69,7 @@ public class RagDocumentController {
      * @param limit     返回条数（可选）
      * @return 文档列表
      */
-    @GetMapping(path = "/v1/rag/documents", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/v1/admin/rag/documents", produces = MediaType.APPLICATION_JSON_VALUE)
     public RagDocumentListResDTO list(@RequestParam("project_id") String projectId,
                                       @RequestParam(value = "limit", required = false)
                                       Integer limit) {
@@ -85,7 +85,7 @@ public class RagDocumentController {
      * @param offset    偏移
      * @return 切片分页
      */
-    @GetMapping(path = "/v1/rag/documents/{docId}/chunks",
+    @GetMapping(path = "/v1/admin/rag/documents/{docId}/chunks",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public RagChunkPageResDTO listChunks(@PathVariable("docId") String docId,
                                          @RequestParam("project_id") String projectId,
@@ -103,7 +103,7 @@ public class RagDocumentController {
      * @param projectId 项目 ID
      * @return 索引后的文档
      */
-    @PostMapping(path = "/v1/rag/documents/{docId}/reindex",
+    @PostMapping(path = "/v1/admin/rag/documents/{docId}/reindex",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public RagDocumentResDTO reindex(@PathVariable("docId") String docId,
                                      @RequestParam("project_id") String projectId) {
@@ -117,7 +117,7 @@ public class RagDocumentController {
      * @param projectId 项目 ID
      * @return 删除结果
      */
-    @DeleteMapping(path = "/v1/rag/documents/{docId}",
+    @DeleteMapping(path = "/v1/admin/rag/documents/{docId}",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public RagDocumentDeleteResDTO remove(@PathVariable("docId") String docId,
                                           @RequestParam("project_id") String projectId) {

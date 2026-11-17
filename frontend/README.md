@@ -109,8 +109,8 @@ frontend/
 部署注意：
 
 1. SPA 需要 history fallback：所有非静态路径回 `index.html`。
-2. `/v1/admin/**`、`/v1/usage*`、`/v1/audit-logs`、`/v1/mcp/**`、`/v1/prompts*`、`/v1/rag/documents*`、`/v1/traces*` → console；`/v1/chat/**`、`/v1/rag/search`、`/v1/rag/answer`、`/v1/embeddings`、`/v1/models` → gateway。
-3. 登录会话 cookie 由后端下发，路径当前为 `/v1/admin`；跨到其他 console 路径的会话授权仍在后端待修（见 §5 第 8 条）。
+2. `/v1/admin/**` → console；`/v1/chat/**`、`/v1/rag/search`、`/v1/rag/answer`、`/v1/embeddings`、`/v1/models`、`/v1/mcp/tools*`、`/mcp` → gateway。控制面管理端点已全部收口到 `/v1/admin/**`（2026-11-17），与会话 cookie 的 Path 对齐。
+3. 登录会话 cookie 由后端下发，路径为 `/v1/admin`；管理台所有请求都在该前缀下，cookie 可正常携带。
 4. 本机联调方式：`CONSOLE_PROXY_TARGET` 指 console、`CONSOLE_PROXY_MASTER_KEY` 仅本机注入、`GATEWAY_PROXY_TARGET` 指 gateway；这些只作用于 dev server，不进入生产构建。
 
 ## 5. 下一步（有顺序）
@@ -122,7 +122,7 @@ frontend/
 5. L3 单页精修 → 冻结 `DESIGN-BASELINE.md` → L4 套用其余页面。
 6. ~~P2 业务实现~~（已完成，2026-11-17）：11 页全部接真接口，Key/模型字段按 §7.2 展示。
 7. P3 部署（小运）：`npm run build` 产物可直接静态托管；接口基址用环境变量注入，见 §4.2。
-8. 待后端修复后复测：审计列表分页（limit≥4 挂死/500）、会话 cookie 覆盖范围（当前仅 `/v1/admin`）、gateway 上游模型连通性。
+8. 待后端修复后复测：审计列表分页（limit≥4 挂死/500）、gateway 上游模型连通性。会话 cookie 覆盖范围已由后端收口 `/v1/admin/**` 解决（2026-11-17）。
 
 ## 6. 资产约定
 

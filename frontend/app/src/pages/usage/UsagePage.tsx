@@ -193,7 +193,7 @@ export default function UsagePage() {
       <PageHeader
         title="用量与成本"
         section="可观测"
-        description="按日聚合的请求、Token 与成本；数据来自 console /v1/usage，筛选条件与 CSV 导出使用同一套参数。"
+        description="按日聚合的请求、Token 与成本；数据来自 console /v1/admin/usage，筛选条件与 CSV 导出使用同一套参数。"
         extra={
           <Button icon={<ReloadOutlined />} onClick={() => void usageQuery.refetch()}>
             刷新

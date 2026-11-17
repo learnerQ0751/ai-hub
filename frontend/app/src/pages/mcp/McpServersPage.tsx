@@ -285,7 +285,7 @@ export default function McpServersPage({
       <PageHeader
         title="MCP Servers"
         section="能力目录"
-        description="注册、探活与工具发现；数据来自 console /v1/mcp/servers 与 /v1/mcp/runtime/stats。"
+        description="注册、探活与工具发现；数据来自 console /v1/admin/mcp/servers 与 /v1/admin/mcp/runtime/stats。"
         extra={
           <Space wrap>
             <Button

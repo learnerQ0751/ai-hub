@@ -90,7 +90,7 @@ class McpRegistryIntegrationTest {
                 "description", "stdio mock"));
         assertThat(stdio.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-        ResponseEntity<String> list = get("/v1/mcp/servers");
+        ResponseEntity<String> list = get("/v1/admin/mcp/servers");
         assertThat(list.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(list.getBody())
                 .contains("mock_http", "mock_stdio", "ACTIVE");
@@ -133,11 +133,11 @@ class McpRegistryIntegrationTest {
                 "endpoint", HTTP_MCP.url("/mcp").toString()));
         String serverId = objectMapper.readTree(created.getBody()).path("serverId").asText();
 
-        ResponseEntity<String> deleted = delete("/v1/mcp/servers/" + serverId);
+        ResponseEntity<String> deleted = delete("/v1/admin/mcp/servers/" + serverId);
         assertThat(deleted.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-        assertThat(get("/v1/mcp/servers").getBody()).doesNotContain("to_delete");
+        assertThat(get("/v1/admin/mcp/servers").getBody()).doesNotContain("to_delete");
 
-        ResponseEntity<String> missing = delete("/v1/mcp/servers/" + serverId);
+        ResponseEntity<String> missing = delete("/v1/admin/mcp/servers/" + serverId);
         assertThat(missing.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
@@ -148,7 +148,7 @@ class McpRegistryIntegrationTest {
         String serverId = findServerIdByName("dead_reprobe");
 
         ResponseEntity<String> reprobe = restClient.post()
-                .uri("/v1/mcp/servers/{id}/reprobe", serverId)
+                .uri("/v1/admin/mcp/servers/{id}/reprobe", serverId)
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .retrieve()
                 .toEntity(String.class);
@@ -178,7 +178,7 @@ class McpRegistryIntegrationTest {
         String virtualKey = objectMapper.readTree(generated.getBody()).path("key").asText();
 
         ResponseEntity<String> list = restClient.get()
-                .uri("/v1/mcp/servers")
+                .uri("/v1/admin/mcp/servers")
                 .header("Authorization", "Bearer " + virtualKey)
                 .retrieve()
                 .toEntity(String.class);
@@ -188,7 +188,7 @@ class McpRegistryIntegrationTest {
 
     @Test
     void runtime_stats_endpoint_returns_counters() {
-        ResponseEntity<String> response = get("/v1/mcp/runtime/stats");
+        ResponseEntity<String> response = get("/v1/admin/mcp/runtime/stats");
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).contains("activeStdioProcesses",
                 "inFlightProbeHttp", "inFlightToolCalls");
@@ -196,7 +196,7 @@ class McpRegistryIntegrationTest {
 
     private ResponseEntity<String> register(Map<String, Object> body) {
         return restClient.post()
-                .uri("/v1/mcp/servers")
+                .uri("/v1/admin/mcp/servers")
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
@@ -218,7 +218,7 @@ class McpRegistryIntegrationTest {
 
     private String findServerIdByName(String name) throws Exception {
         com.fasterxml.jackson.databind.JsonNode list =
-                objectMapper.readTree(get("/v1/mcp/servers").getBody());
+                objectMapper.readTree(get("/v1/admin/mcp/servers").getBody());
         for (com.fasterxml.jackson.databind.JsonNode node : list) {
             if (name.equals(node.path("name").asText())) {
                 return node.path("serverId").asText();

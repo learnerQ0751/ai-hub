@@ -264,7 +264,7 @@ export default function RagPage() {
       <PageHeader
         title="RAG 知识库"
         section="能力目录"
-        description="按项目接入文档、查看切片、重建索引；数据来自 console /v1/rag/documents。检索与问答调试在 Playground。"
+        description="按项目接入文档、查看切片、重建索引；数据来自 console /v1/admin/rag/documents。检索与问答调试在 Playground。"
         extra={
           <Space wrap>
             <Button

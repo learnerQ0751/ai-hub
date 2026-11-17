@@ -3,7 +3,9 @@
 > 版本：REQ-5.1~5.4，**契约冻结 2026-11-17**；同日增补控制台会话端点与字段级修订（additive），
 > 并补齐 §7.1 四个端点缺口（项目列表 / 文档切片列表 / 单 Key 详情 / Trace 列表，2026-11-17）。
 > 数据面与控制面拆为两个应用，管理台只连 console。
-> 契约与 4.4 保持一致：管理端点路径不迁移，隔离手段是「console 只认 admin 凭证」。
+> 2026-11-17 修订（Q 拍板）：浏览器使用的控制面管理端点统一收口到 `/v1/admin/**`，
+> 与会话 cookie 的 `Path=/v1/admin` 对齐；隔离手段仍是「console 只认 admin 凭证」，
+> 数据面 runtime 路径（如 `/v1/prompts/{name}/render|chat`）不动。
 
 ## 0. 契约冻结声明（2026-11-17）
 
@@ -32,6 +34,7 @@
 1. 任何契约变更必须先新立需求（REQ-x.y），走影响面门禁与验收标准冻结；不得在实现中单方面修改本表。
 2. additive 变更（新增字段/端点）：须在需求记录与本文同步登记，并保持旧客户端行为不变。
 3. 破坏性变更（改路径、改字段语义或类型、改鉴权、改错误码、改分页/筛选口径）：必须给出迁移方案与前端对齐窗口，并在本文升版本号。
+   - 2026-11-17 执行过一次：控制面管理端点迁入 `/v1/admin/**`（旧路径下线，前后端同批切换）。
 4. 标注「未实现」的条目在实现并验证前不构成已生效契约，客户端不得依赖其返回。
 
 ## 1. 应用与端口
@@ -46,9 +49,12 @@
 ## 2. 网关路由切分（反向代理必须按精确路径转发）
 
 - `/v1/rag/search`、`/v1/rag/answer` → **gateway**
-- `/v1/rag/documents*` → **console**
 - 其余 `/v1/chat/**`、`/v1/embeddings`、`/v1/models`、`/v1/mcp/tools*`、`/mcp`、`/v1/prompts/{name}/render|chat`、`/v1/memory/*` → **gateway**
-- `/key/*`、`/v1/admin/*`、`/v1/mcp/servers*`、`/v1/mcp/runtime/*`、`/v1/traces/*`、`/v1/usage*` → **console**
+- `/key/*`、`/v1/admin/**` → **console**
+
+控制面（浏览器管理台）的管理端点全部在 `/v1/admin/**` 下（2026-11-17 收口）：
+与会话 cookie 的 `Path=/v1/admin` 对齐，cookie 才能带到每个控制面请求。
+`/key/*` 是 master key 直连的兼容 API，不由浏览器使用。
 
 ## 3. 数据面（gateway :18080，虚拟 Key）
 
@@ -133,10 +139,10 @@
 
 | 方法 | 路径 |
 |---|---|
-| GET/POST | `/v1/mcp/servers` |
-| DELETE | `/v1/mcp/servers/{serverId}` |
-| POST | `/v1/mcp/servers/{serverId}/reprobe` |
-| GET | `/v1/mcp/runtime/stats` |
+| GET/POST | `/v1/admin/mcp/servers` |
+| DELETE | `/v1/admin/mcp/servers/{serverId}` |
+| POST | `/v1/admin/mcp/servers/{serverId}/reprobe` |
+| GET | `/v1/admin/mcp/runtime/stats` |
 
 ### 4.4 Prompt 模板
 
@@ -158,12 +164,12 @@
 
 | 方法 | 路径 |
 |---|---|
-| GET/POST | `/v1/rag/documents`（POST multipart：`file` + `project_id`） |
-| GET | `/v1/rag/documents/{docId}/chunks` |
-| DELETE | `/v1/rag/documents/{docId}` |
-| POST | `/v1/rag/documents/{docId}/reindex` |
+| GET/POST | `/v1/admin/rag/documents`（POST multipart：`file` + `project_id`） |
+| GET | `/v1/admin/rag/documents/{docId}/chunks` |
+| DELETE | `/v1/admin/rag/documents/{docId}` |
+| POST | `/v1/admin/rag/documents/{docId}/reindex` |
 
-`GET /v1/rag/documents/{docId}/chunks`（§7.1，2026-11-17）必填 `project_id`，可选
+`GET /v1/admin/rag/documents/{docId}/chunks`（§7.1，2026-11-17）必填 `project_id`，可选
 `limit`（默认 50，上限 200）、`offset`（默认 0）；按 `chunk_index` 升序返回
 `{"items":[{"chunk_id","doc_id","project_id","chunk_index","content","char_count",
 "source","index_status","created_at"}],"count","has_more"}`。
@@ -173,14 +179,15 @@
 
 | 方法 | 路径 |
 |---|---|
-| GET | `/v1/traces` |
-| GET | `/v1/traces/{traceId}` |
-| GET | `/v1/usage`、`/v1/usage/export` |
+| GET | `/v1/admin/traces` |
+| GET | `/v1/admin/traces/{traceId}` |
+| GET | `/v1/admin/usage`、`/v1/admin/usage/export` |
 | GET | `/v1/admin/audit-logs` |
 
-审计查询随管理面统一在 `/v1/admin` 下（2026-11-17），旧路径 `/v1/audit-logs` 已下线。
+查询类端点随管理面统一在 `/v1/admin` 下（2026-11-17），旧路径 `/v1/traces*`、`/v1/usage*`、
+`/v1/audit-logs` 已下线。
 
-`GET /v1/traces`（§7.1，2026-11-17）按 `trace_id` 聚合并按首个事件时间倒序分页，返回
+`GET /v1/admin/traces`（§7.1，2026-11-17）按 `trace_id` 聚合并按首个事件时间倒序分页，返回
 `{"items":[{"trace_id","tenant_id","project_id","key_id","started_at","finished_at",
 "event_count","status"}],"count","has_more"}`；`status` 为分段最大状态码。
 筛选参数见 §4.7。
@@ -191,13 +198,13 @@
 |---|---|
 | `GET /v1/admin/keys` | 可选 `tenant_id`、`project_id`、`status`（active/blocked/expired）、`model`；`limit`（默认 50）、`offset`（默认 0） |
 | `GET /v1/admin/logs` | 可选 `tenant_id`、`project_id`、`model`、`key_id`、`status`、`from`、`to`；`limit`（默认 50）、`offset`（默认 0） |
-| `GET /v1/usage`、`/v1/usage/export` | 可选 `from`、`to`、`tenant_id`、`project_id`、`model`、`key_id` |
+| `GET /v1/admin/usage`、`/v1/admin/usage/export` | 可选 `from`、`to`、`tenant_id`、`project_id`、`model`、`key_id` |
 | `GET /v1/admin/audit-logs` | 可选 `tenant_id`、`action`、`target`、`from`、`to`；`limit`（默认 50）、`offset`（默认 0） |
 | `GET /v1/admin/prompts` | 可选 `tenant_id` |
 | `GET /v1/admin/models` | 可选 `tenant_id`、`status`（ACTIVE/DISABLED） |
-| `GET /v1/rag/documents` | 必填 `project_id`；可选 `limit` |
-| `GET /v1/rag/documents/{docId}/chunks` | 必填 `project_id`；`limit`（默认 50）、`offset`（默认 0） |
-| `GET /v1/traces` | 可选 `tenant_id`、`project_id`、`key_id`、`status`、`from`、`to`；`limit`（默认 50）、`offset`（默认 0） |
+| `GET /v1/admin/rag/documents` | 必填 `project_id`；可选 `limit` |
+| `GET /v1/admin/rag/documents/{docId}/chunks` | 必填 `project_id`；`limit`（默认 50）、`offset`（默认 0） |
+| `GET /v1/admin/traces` | 可选 `tenant_id`、`project_id`、`key_id`、`status`、`from`、`to`；`limit`（默认 50）、`offset`（默认 0） |
 | `GET /v1/admin/projects` | 可选 `tenant_id`、`status`（ACTIVE/DISABLED）；`limit`（默认 50）、`offset`（默认 0） |
 | `GET /v1/mcp/tools`（gateway） | 可选 `server_id`、`tenant_id` |
 
@@ -289,9 +296,9 @@ Idempotency-Key: <1-128 位字母/数字/._:->
 | 缺口 | 路径 | 用途 | 归属 | 状态 |
 |---|---|---|---|---|
 | 项目列表 | `GET /v1/admin/projects` | 管理台选择租户下的项目 | console | 已实现，见 §4.9 |
-| 文档切片列表 | `GET /v1/rag/documents/{docId}/chunks` | 按 `doc_id` 分页查看切片 | console | 已实现，见 §4.5 |
+| 文档切片列表 | `GET /v1/admin/rag/documents/{docId}/chunks` | 按 `doc_id` 分页查看切片 | console | 已实现，见 §4.5 |
 | 单 Key 查询 | `GET /v1/admin/keys/{keyHash}` | 按 `key_hash` 查询 Key 详情 | console | 已实现，见 §4.1 |
-| Trace 列表 | `GET /v1/traces` | 按租户/时间分页列出 trace | console | 已实现，见 §4.6 |
+| Trace 列表 | `GET /v1/admin/traces` | 按租户/时间分页列出 trace | console | 已实现，见 §4.6 |
 | 控制台会话端点 | `/v1/admin/session` | 登录 / 会话探测 / 退出 | console | 已实现（2026-11-17），见 §4.8 |
 
 四个端点均为 additive 新增，不改动既有路径、字段与鉴权；实现之日起纳入冻结范围。

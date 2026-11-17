@@ -14,7 +14,7 @@ export interface TraceDetail {
   events: TraceEvent[];
 }
 
-/** GET /v1/traces 的列表行（§7.1 已实现）。 */
+/** GET /v1/admin/traces 的列表行（§7.1 已实现）。 */
 export interface TraceSummary {
   trace_id: string;
   tenant_id?: string | null;

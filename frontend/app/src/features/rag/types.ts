@@ -24,7 +24,7 @@ export interface RagDocumentList {
   count: number;
 }
 
-/** GET /v1/rag/documents/{docId}/chunks 的切片行。 */
+/** GET /v1/admin/rag/documents/{docId}/chunks 的切片行。 */
 export interface RagChunk {
   chunk_id: string;
   doc_id: string;

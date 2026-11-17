@@ -46,7 +46,7 @@ public class McpServerController {
      * @param reqDTO 注册参数
      * @return 201 与注册结果
      */
-    @PostMapping(path = "/v1/mcp/servers",
+    @PostMapping(path = "/v1/admin/mcp/servers",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<McpServerResDTO> register(@RequestBody McpServerRegisterReqDTO reqDTO) {
@@ -58,7 +58,7 @@ public class McpServerController {
      *
      * @return 服务器列表
      */
-    @GetMapping(path = "/v1/mcp/servers", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/v1/admin/mcp/servers", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<McpServerResDTO> list() {
         return mcpServerService.list();
     }
@@ -69,7 +69,7 @@ public class McpServerController {
      * @param serverId 对外服务器 ID
      * @return 204
      */
-    @DeleteMapping(path = "/v1/mcp/servers/{serverId}")
+    @DeleteMapping(path = "/v1/admin/mcp/servers/{serverId}")
     public ResponseEntity<Void> remove(@PathVariable("serverId") String serverId) {
         mcpServerService.remove(serverId);
         return ResponseEntity.noContent().build();
@@ -80,7 +80,7 @@ public class McpServerController {
      *
      * @return 活跃子进程/进行中请求计数
      */
-    @GetMapping(path = "/v1/mcp/runtime/stats", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/v1/admin/mcp/runtime/stats", produces = MediaType.APPLICATION_JSON_VALUE)
     public McpRuntimeStatsResDTO runtimeStats() {
         return mcpRuntimeStatsService.stats();
     }
@@ -91,7 +91,7 @@ public class McpServerController {
      * @param serverId 对外服务器 ID
      * @return 探活后的最新视图
      */
-    @PostMapping(path = "/v1/mcp/servers/{serverId}/reprobe",
+    @PostMapping(path = "/v1/admin/mcp/servers/{serverId}/reprobe",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public McpServerResDTO reprobe(@PathVariable("serverId") String serverId) {
         return mcpServerService.reprobe(serverId);

@@ -53,32 +53,32 @@ export const endpoints = {
   },
   rag: {
     /** GET/POST 同一路径；GET 必填 project_id，可选 limit（§4.7）。 */
-    documents: '/v1/rag/documents',
-    chunks: (docId: string) => `/v1/rag/documents/${encodeURIComponent(docId)}/chunks`,
-    remove: (docId: string) => `/v1/rag/documents/${encodeURIComponent(docId)}`,
-    reindex: (docId: string) => `/v1/rag/documents/${encodeURIComponent(docId)}/reindex`,
+    documents: '/v1/admin/rag/documents',
+    chunks: (docId: string) => `/v1/admin/rag/documents/${encodeURIComponent(docId)}/chunks`,
+    remove: (docId: string) => `/v1/admin/rag/documents/${encodeURIComponent(docId)}`,
+    reindex: (docId: string) => `/v1/admin/rag/documents/${encodeURIComponent(docId)}/reindex`,
     /** 数据面（gateway）：检索与问答调试。 */
     search: '/v1/rag/search',
     answer: '/v1/rag/answer',
   },
   traces: {
     /** §7.1 已实现：trace 列表与按 ID 查询。 */
-    list: '/v1/traces',
-    detail: (traceId: string) => `/v1/traces/${encodeURIComponent(traceId)}`,
+    list: '/v1/admin/traces',
+    detail: (traceId: string) => `/v1/admin/traces/${encodeURIComponent(traceId)}`,
   },
   usage: {
-    query: '/v1/usage',
-    export: '/v1/usage/export',
+    query: '/v1/admin/usage',
+    export: '/v1/admin/usage/export',
   },
   health: {
     console: '/actuator/health',
   },
   mcpServers: {
-    list: '/v1/mcp/servers',
-    create: '/v1/mcp/servers',
-    remove: (serverId: string) => `/v1/mcp/servers/${encodeURIComponent(serverId)}`,
-    reprobe: (serverId: string) => `/v1/mcp/servers/${encodeURIComponent(serverId)}/reprobe`,
-    runtimeStats: '/v1/mcp/runtime/stats',
+    list: '/v1/admin/mcp/servers',
+    create: '/v1/admin/mcp/servers',
+    remove: (serverId: string) => `/v1/admin/mcp/servers/${encodeURIComponent(serverId)}`,
+    reprobe: (serverId: string) => `/v1/admin/mcp/servers/${encodeURIComponent(serverId)}/reprobe`,
+    runtimeStats: '/v1/admin/mcp/runtime/stats',
   },
   prompts: {
     /** §4.4：列表只返回每个模板的最新发布版本；tenant_id 可选。 */

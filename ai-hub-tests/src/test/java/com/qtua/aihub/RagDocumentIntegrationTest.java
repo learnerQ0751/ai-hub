@@ -244,7 +244,7 @@ class RagDocumentIntegrationTest {
         });
         parts.add("project_id", projectId);
         return restClient.post()
-                .uri("/v1/rag/documents")
+                .uri("/v1/admin/rag/documents")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .headers(headers -> headers.setBearerAuth(MASTER_KEY))
                 .body(parts)
@@ -254,7 +254,7 @@ class RagDocumentIntegrationTest {
 
     private ResponseEntity<String> list(String projectId) {
         return restClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/v1/rag/documents")
+                .uri(uriBuilder -> uriBuilder.path("/v1/admin/rag/documents")
                         .queryParam("project_id", projectId).build())
                 .headers(headers -> headers.setBearerAuth(MASTER_KEY))
                 .retrieve()
@@ -263,7 +263,7 @@ class RagDocumentIntegrationTest {
 
     private ResponseEntity<String> delete(String docId, String projectId) {
         return restClient.delete()
-                .uri(uriBuilder -> uriBuilder.path("/v1/rag/documents/{docId}")
+                .uri(uriBuilder -> uriBuilder.path("/v1/admin/rag/documents/{docId}")
                         .queryParam("project_id", projectId).build(docId))
                 .headers(headers -> headers.setBearerAuth(MASTER_KEY))
                 .retrieve()

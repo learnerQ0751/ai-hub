@@ -14,13 +14,13 @@ describe('endpoints', () => {
   });
 
   it('uses the frozen paths for MCP, RAG, traces and projects', () => {
-    expect(endpoints.mcpServers.list).toBe('/v1/mcp/servers');
-    expect(endpoints.mcpServers.remove('srv-1')).toBe('/v1/mcp/servers/srv-1');
-    expect(endpoints.mcpServers.reprobe('srv-1')).toBe('/v1/mcp/servers/srv-1/reprobe');
-    expect(endpoints.mcpServers.runtimeStats).toBe('/v1/mcp/runtime/stats');
-    expect(endpoints.rag.documents).toBe('/v1/rag/documents');
-    expect(endpoints.rag.reindex('doc-1')).toBe('/v1/rag/documents/doc-1/reindex');
-    expect(endpoints.traces.detail('t-1')).toBe('/v1/traces/t-1');
+    expect(endpoints.mcpServers.list).toBe('/v1/admin/mcp/servers');
+    expect(endpoints.mcpServers.remove('srv-1')).toBe('/v1/admin/mcp/servers/srv-1');
+    expect(endpoints.mcpServers.reprobe('srv-1')).toBe('/v1/admin/mcp/servers/srv-1/reprobe');
+    expect(endpoints.mcpServers.runtimeStats).toBe('/v1/admin/mcp/runtime/stats');
+    expect(endpoints.rag.documents).toBe('/v1/admin/rag/documents');
+    expect(endpoints.rag.reindex('doc-1')).toBe('/v1/admin/rag/documents/doc-1/reindex');
+    expect(endpoints.traces.detail('t-1')).toBe('/v1/admin/traces/t-1');
     expect(endpoints.projects.authorize).toBe('/v1/admin/project-authorizations');
   });
 
@@ -35,17 +35,17 @@ describe('endpoints', () => {
   });
 
   it('exposes the §7.1 endpoints implemented on 2026-11-17', () => {
-    expect(endpoints.traces.list).toBe('/v1/traces');
-    expect(endpoints.rag.chunks('doc-1')).toBe('/v1/rag/documents/doc-1/chunks');
+    expect(endpoints.traces.list).toBe('/v1/admin/traces');
+    expect(endpoints.rag.chunks('doc-1')).toBe('/v1/admin/rag/documents/doc-1/chunks');
     expect(endpoints.projects.list).toBe('/v1/admin/projects');
     expect(endpoints.keys.detail('abc')).toBe('/v1/admin/keys/abc');
-    expect(endpoints.usage.query).toBe('/v1/usage');
+    expect(endpoints.usage.query).toBe('/v1/admin/usage');
   });
 
   it('encodes path segments and builds queries without empty values', () => {
     expect(endpoints.models.detail('a/b')).toBe('/v1/admin/models/a%2Fb');
-    expect(withQuery('/v1/rag/documents', { project_id: 'kb', limit: 20 })).toBe(
-      '/v1/rag/documents?project_id=kb&limit=20',
+    expect(withQuery('/v1/admin/rag/documents', { project_id: 'kb', limit: 20 })).toBe(
+      '/v1/admin/rag/documents?project_id=kb&limit=20',
     );
     expect(withQuery('/v1/admin/keys', { tenant_id: undefined })).toBe('/v1/admin/keys');
   });

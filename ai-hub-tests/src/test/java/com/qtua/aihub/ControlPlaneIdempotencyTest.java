@@ -180,15 +180,15 @@ class ControlPlaneIdempotencyTest {
         String body = "{\"name\":\"" + name + "\",\"transport\":\"http\","
                 + "\"endpoint\":\"http://localhost:1/mcp\"}";
 
-        ResponseEntity<String> first = post("/v1/mcp/servers", body);
-        ResponseEntity<String> second = post("/v1/mcp/servers", body);
+        ResponseEntity<String> first = post("/v1/admin/mcp/servers", body);
+        ResponseEntity<String> second = post("/v1/admin/mcp/servers", body);
         assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(readJson(second).path("serverId").asText())
                 .isEqualTo(readJson(first).path("serverId").asText());
         assertThat(auditCount("default", "MCP_REGISTER", name)).isEqualTo(1);
 
-        ResponseEntity<String> different = post("/v1/mcp/servers",
+        ResponseEntity<String> different = post("/v1/admin/mcp/servers",
                 "{\"name\":\"" + name + "\",\"transport\":\"http\","
                         + "\"endpoint\":\"http://localhost:2/mcp\"}");
         assertThat(different.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
@@ -230,7 +230,7 @@ class ControlPlaneIdempotencyTest {
         assertThat(second.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(readJson(second).path("doc_id").asText())
                 .isEqualTo(readJson(first).path("doc_id").asText());
-        assertThat(readJson(get("/v1/rag/documents?project_id=" + project)).path("documents"))
+        assertThat(readJson(get("/v1/admin/rag/documents?project_id=" + project)).path("documents"))
                 .hasSize(1);
         assertThat(auditCount("default", "RAG_INGEST",
                 readJson(first).path("doc_id").asText())).isEqualTo(1);
@@ -304,7 +304,7 @@ class ControlPlaneIdempotencyTest {
         });
         parts.add("project_id", projectId);
         return restClient.post()
-                .uri("/v1/rag/documents")
+                .uri("/v1/admin/rag/documents")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .header("Authorization", "Bearer " + ADMIN_KEY)
                 .body(parts)

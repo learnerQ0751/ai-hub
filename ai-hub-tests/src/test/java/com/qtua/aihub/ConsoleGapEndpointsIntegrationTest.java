@@ -143,7 +143,7 @@ class ConsoleGapEndpointsIntegrationTest {
         String docId = uploaded.path("doc_id").asText();
         assertThat(docId).isNotBlank();
 
-        ResponseEntity<String> firstPage = get("/v1/rag/documents/" + docId
+        ResponseEntity<String> firstPage = get("/v1/admin/rag/documents/" + docId
                 + "/chunks?project_id=" + project + "&limit=1", MASTER_KEY);
         assertThat(firstPage.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode first = readJson(firstPage);
@@ -160,21 +160,21 @@ class ConsoleGapEndpointsIntegrationTest {
         assertThat(chunk.path("index_status").asText()).isNotBlank();
         assertThat(chunk.path("created_at").asText()).isNotBlank();
 
-        ResponseEntity<String> secondPage = get("/v1/rag/documents/" + docId
+        ResponseEntity<String> secondPage = get("/v1/admin/rag/documents/" + docId
                 + "/chunks?project_id=" + project + "&limit=1&offset=1", MASTER_KEY);
         JsonNode second = readJson(secondPage);
         assertThat(second.path("items").get(0).path("chunk_index").asInt()).isEqualTo(1);
         assertThat(second.path("has_more").asBoolean()).isFalse();
 
-        ResponseEntity<String> missingProject = get("/v1/rag/documents/" + docId + "/chunks",
+        ResponseEntity<String> missingProject = get("/v1/admin/rag/documents/" + docId + "/chunks",
                 MASTER_KEY);
         assertThat(missingProject.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
-        ResponseEntity<String> unknownDoc = get("/v1/rag/documents/doc-missing-" + suffix
+        ResponseEntity<String> unknownDoc = get("/v1/admin/rag/documents/doc-missing-" + suffix
                 + "/chunks?project_id=" + project, MASTER_KEY);
         assertThat(unknownDoc.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 
-        ResponseEntity<String> wrongProject = get("/v1/rag/documents/" + docId
+        ResponseEntity<String> wrongProject = get("/v1/admin/rag/documents/" + docId
                 + "/chunks?project_id=other-" + suffix, MASTER_KEY);
         assertThat(wrongProject.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
@@ -193,7 +193,7 @@ class ConsoleGapEndpointsIntegrationTest {
         append(traceOk, tenant, project, keyHash, "model", 200, base.plusMillis(120));
         append(traceError, tenant, project, keyHash, "gateway", 500, base.plusSeconds(30));
 
-        ResponseEntity<String> listed = get("/v1/traces?tenant_id=" + tenant, MASTER_KEY);
+        ResponseEntity<String> listed = get("/v1/admin/traces?tenant_id=" + tenant, MASTER_KEY);
         assertThat(listed.getStatusCode()).isEqualTo(HttpStatus.OK);
         JsonNode body = readJson(listed);
         assertThat(body.path("count").asInt()).isEqualTo(2);
@@ -210,20 +210,20 @@ class ConsoleGapEndpointsIntegrationTest {
         assertThat(older.path("started_at").asText()).isNotBlank();
         assertThat(older.path("finished_at").asText()).isNotBlank();
 
-        JsonNode onlyFailed = readJson(get("/v1/traces?tenant_id=" + tenant
+        JsonNode onlyFailed = readJson(get("/v1/admin/traces?tenant_id=" + tenant
                 + "&status=500", MASTER_KEY));
         assertThat(onlyFailed.path("count").asInt()).isEqualTo(1);
         assertThat(onlyFailed.path("items").get(0).path("trace_id").asText()).isEqualTo(traceError);
 
-        JsonNode paged = readJson(get("/v1/traces?tenant_id=" + tenant + "&limit=1", MASTER_KEY));
+        JsonNode paged = readJson(get("/v1/admin/traces?tenant_id=" + tenant + "&limit=1", MASTER_KEY));
         assertThat(paged.path("count").asInt()).isEqualTo(1);
         assertThat(paged.path("has_more").asBoolean()).isTrue();
 
-        JsonNode otherTenant = readJson(get("/v1/traces?tenant_id=tenant-other-" + suffix,
+        JsonNode otherTenant = readJson(get("/v1/admin/traces?tenant_id=tenant-other-" + suffix,
                 MASTER_KEY));
         assertThat(otherTenant.path("count").asInt()).isZero();
 
-        ResponseEntity<String> invalidFrom = get("/v1/traces?tenant_id=" + tenant
+        ResponseEntity<String> invalidFrom = get("/v1/admin/traces?tenant_id=" + tenant
                 + "&from=not-a-time", MASTER_KEY);
         assertThat(invalidFrom.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
@@ -256,7 +256,7 @@ class ConsoleGapEndpointsIntegrationTest {
             }
         });
         parts.add("project_id", projectId);
-        return restClient.post().uri("/v1/rag/documents")
+        return restClient.post().uri("/v1/admin/rag/documents")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .body(parts)

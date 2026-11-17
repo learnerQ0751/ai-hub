@@ -54,7 +54,10 @@ flowchart LR
 ```
 
 - 鉴权物理隔离：gateway 不加载 admin 鉴权；console 不加载虚拟 Key 业务鉴权；两套 Filter 互不兜底。
-- 管理端点路径保持 4.x 契约（`/key/*`、`/v1/prompts`、`/v1/mcp/servers`、`/v1/rag/documents`、`/v1/traces`、`/v1/usage`、`/v1/audit-logs`、`/v1/admin/*`），隔离靠「console 只认 admin 凭证」。
+- 管理端点路径（2026-11-17 修订，Q 拍板）：浏览器使用的控制面端点统一在 `/v1/admin/**`
+  （keys/models/logs/projects/prompts/mcp/rag documents/traces/usage/audit-logs/session），
+  与会话 cookie 的 `Path=/v1/admin` 对齐；`/key/*` 保留为 master key 直连 API。
+  隔离仍靠「console 只认 admin 凭证」，cookie Path 不放宽。
 - 控制面启动先于数据面（Flyway）；停 console 不影响数据面已启动的转发。
 - 例外：`RagDocumentService` 放在 `service.shared`，因为数据面 MCP 运行时工具 `ingest_document` 复用同一实现；HTTP 接入端点仍只在 console。
 - 例外：MCP Server 启动探活加载器归 console（写注册表状态）；数据面按需连接工具。

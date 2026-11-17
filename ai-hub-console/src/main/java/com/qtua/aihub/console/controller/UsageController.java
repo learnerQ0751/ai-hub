@@ -41,7 +41,7 @@ public class UsageController {
      * @param keyId      Key 哈希
      * @return 用量结果
      */
-    @GetMapping(path = "/v1/usage", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/v1/admin/usage", produces = MediaType.APPLICATION_JSON_VALUE)
     public UsageResDTO query(
             @RequestParam(name = "from", required = false) String from,
             @RequestParam(name = "to", required = false) String to,
@@ -63,7 +63,7 @@ public class UsageController {
      * @param keyId      Key 哈希
      * @return CSV 文本
      */
-    @GetMapping(path = "/v1/usage/export")
+    @GetMapping(path = "/v1/admin/usage/export")
     public ResponseEntity<String> export(
             @RequestParam(name = "from", required = false) String from,
             @RequestParam(name = "to", required = false) String to,

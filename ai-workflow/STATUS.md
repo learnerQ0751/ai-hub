@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-17 18:38
+**最后更新**：2026-11-17 20:31
 
 ## 需求进度
 
@@ -58,11 +58,17 @@
 | GET | /key/info | KeyController#info | REQ-1.3, REQ-1.5 |
 | POST | /key/unblock | KeyController#unblock | REQ-1.3 |
 | GET | /models | ModelController#listModels | REQ-1.2 |
+| GET | /v1/admin/audit-logs | AuditLogController#query | — |
 | GET | /v1/admin/keys | AdminController#listKeys | — |
 | GET | /v1/admin/keys/{keyHash} | AdminController#getKey | — |
 | POST | /v1/admin/keys/{keyHash}/block | AdminController#block | — |
 | POST | /v1/admin/keys/{keyHash}/unblock | AdminController#unblock | — |
 | GET | /v1/admin/logs | AdminController#listLogs | — |
+| GET | /v1/admin/mcp/runtime/stats | McpServerController#runtimeStats | — |
+| GET | /v1/admin/mcp/servers | McpServerController#list | — |
+| POST | /v1/admin/mcp/servers | McpServerController#register | — |
+| DELETE | /v1/admin/mcp/servers/{serverId} | McpServerController#remove | — |
+| POST | /v1/admin/mcp/servers/{serverId}/reprobe | McpServerController#reprobe | — |
 | GET | /v1/admin/models | AdminController#listModels | — |
 | POST | /v1/admin/models | AdminController#createModel | — |
 | DELETE | /v1/admin/models/{alias} | AdminController#deleteModel | — |
@@ -71,17 +77,26 @@
 | POST | /v1/admin/models/{alias}/deployments | AdminController#upsertDeployment | — |
 | POST | /v1/admin/project-authorizations | AdminController#authorize | — |
 | GET | /v1/admin/projects | AdminController#listProjects | — |
+| GET | /v1/admin/prompts | PromptController#list | — |
+| POST | /v1/admin/prompts | PromptController#create | — |
+| GET | /v1/admin/prompts/{name} | PromptController#get | — |
+| POST | /v1/admin/prompts/{name}/publish | PromptController#publish | — |
+| GET | /v1/admin/prompts/{name}/versions | PromptController#versions | — |
+| POST | /v1/admin/prompts/{name}/versions | PromptController#createVersion | — |
+| GET | /v1/admin/rag/documents | RagDocumentController#list | — |
+| POST | /v1/admin/rag/documents | RagDocumentController#upload | — |
+| DELETE | /v1/admin/rag/documents/{docId} | RagDocumentController#remove | — |
+| GET | /v1/admin/rag/documents/{docId}/chunks | RagDocumentController#listChunks | — |
+| POST | /v1/admin/rag/documents/{docId}/reindex | RagDocumentController#reindex | — |
 | DELETE | /v1/admin/session | ConsoleSessionController#logout | — |
 | GET | /v1/admin/session | ConsoleSessionController#current | — |
 | POST | /v1/admin/session | ConsoleSessionController#login | — |
-| GET | /v1/audit-logs | AuditLogController#query | REQ-4.5 |
+| GET | /v1/admin/traces | TraceController#list | — |
+| GET | /v1/admin/traces/{traceId} | TraceController#get | — |
+| GET | /v1/admin/usage | UsageController#query | — |
+| GET | /v1/admin/usage/export | UsageController#export | — |
 | POST | /v1/chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3, REQ-2.8 |
 | POST | /v1/embeddings | EmbeddingController#embed | REQ-3.7 |
-| GET | /v1/mcp/runtime/stats | McpServerController#runtimeStats | REQ-2.10 |
-| GET | /v1/mcp/servers | McpServerController#list | REQ-2.1 |
-| POST | /v1/mcp/servers | McpServerController#register | REQ-2.1 |
-| DELETE | /v1/mcp/servers/{serverId} | McpServerController#remove | REQ-2.1 |
-| POST | /v1/mcp/servers/{serverId}/reprobe | McpServerController#reprobe | REQ-2.1 |
 | GET | /v1/mcp/tools | McpToolController#list | REQ-2.2, REQ-2.3 |
 | POST | /v1/mcp/tools/{toolName}:call | McpCallController#call | REQ-2.3 |
 | POST | /v1/mcp/tools/refresh | McpToolController#refresh | REQ-2.2 |
@@ -89,25 +104,10 @@
 | POST | /v1/memory/recall | MemoryController#recall | REQ-3.5 |
 | POST | /v1/memory/save | MemoryController#save | REQ-3.5 |
 | GET | /v1/models | ModelController#listModels | REQ-1.2 |
-| GET | /v1/prompts | PromptController#list | REQ-2.4, REQ-2.5 |
-| POST | /v1/prompts | PromptController#create | REQ-2.4, REQ-2.5 |
-| GET | /v1/prompts/{name} | PromptController#get | REQ-2.4, REQ-2.5 |
 | POST | /v1/prompts/{name}/chat | PromptRuntimeController#chat | REQ-2.5 |
-| POST | /v1/prompts/{name}/publish | PromptController#publish | REQ-2.4 |
 | POST | /v1/prompts/{name}/render | PromptRuntimeController#render | REQ-2.5 |
-| GET | /v1/prompts/{name}/versions | PromptController#versions | REQ-2.4 |
-| POST | /v1/prompts/{name}/versions | PromptController#createVersion | REQ-2.4 |
 | POST | /v1/rag/answer | RagAnswerController#answer | REQ-3.4 |
-| GET | /v1/rag/documents | RagDocumentController#list | REQ-3.1, REQ-3.2 |
-| POST | /v1/rag/documents | RagDocumentController#upload | REQ-3.1, REQ-3.2 |
-| DELETE | /v1/rag/documents/{docId} | RagDocumentController#remove | REQ-3.1, REQ-3.2 |
-| GET | /v1/rag/documents/{docId}/chunks | RagDocumentController#listChunks | — |
-| POST | /v1/rag/documents/{docId}/reindex | RagDocumentController#reindex | REQ-3.2 |
 | POST | /v1/rag/search | RagSearchController#search | REQ-3.3 |
-| GET | /v1/traces | TraceController#list | REQ-4.2 |
-| GET | /v1/traces/{traceId} | TraceController#get | REQ-4.2 |
-| GET | /v1/usage | UsageController#query | REQ-4.3 |
-| GET | /v1/usage/export | UsageController#export | REQ-4.3 |
 
 ## 数据表速查（语义来自 docs/DATA-MODEL.md，DDL 校验）
 
@@ -240,7 +240,7 @@
 
 ## 测试
 
-- 513 个 @Test / 92 个测试类
+- 516 个 @Test / 92 个测试类
 
 ## 下一步
 

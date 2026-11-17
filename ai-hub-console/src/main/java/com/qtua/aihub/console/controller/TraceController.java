@@ -41,7 +41,7 @@ public class TraceController {
      * @param offset    偏移
      * @return 分页
      */
-    @GetMapping(path = "/v1/traces", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/v1/admin/traces", produces = MediaType.APPLICATION_JSON_VALUE)
     public TraceListResDTO list(
             @RequestParam(name = "tenant_id", required = false) String tenantId,
             @RequestParam(name = "project_id", required = false) String projectId,
@@ -61,7 +61,7 @@ public class TraceController {
      * @param traceId 追踪 ID（响应头 X-Trace-Id）
      * @return 分段事件
      */
-    @GetMapping(path = "/v1/traces/{traceId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/v1/admin/traces/{traceId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public TraceResDTO get(@PathVariable("traceId") String traceId) {
         return traceService.getTrace(traceId);
     }

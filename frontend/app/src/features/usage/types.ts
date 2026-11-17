@@ -1,4 +1,4 @@
-/** GET /v1/usage 响应，字段与后端 UsageResDTO 一致（REQ-4.3）。 */
+/** GET /v1/admin/usage 响应，字段与后端 UsageResDTO 一致（REQ-4.3）。 */
 export interface UsageTotals {
   requests: number;
   prompt_tokens: number;

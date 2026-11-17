@@ -2,14 +2,14 @@ import { endpoints, withQuery } from '@/api/endpoints';
 import { request } from '@/api/http';
 import type { RagChunkPage, RagDocument, RagDocumentList } from '@/features/rag/types';
 
-/** GET /v1/rag/documents：project_id 必填，limit 可选（§4.7）。 */
+/** GET /v1/admin/rag/documents：project_id 必填，limit 可选（§4.7）。 */
 export async function fetchRagDocuments(projectId: string): Promise<RagDocumentList> {
   return request<RagDocumentList>(withQuery(endpoints.rag.documents, { project_id: projectId }), {
     method: 'GET',
   });
 }
 
-/** POST /v1/rag/documents：multipart 上传，命中重复返回 200。 */
+/** POST /v1/admin/rag/documents：multipart 上传，命中重复返回 200。 */
 export async function uploadRagDocument(file: File, projectId: string): Promise<RagDocument> {
   const form = new FormData();
   form.append('file', file);
