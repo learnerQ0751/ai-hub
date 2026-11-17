@@ -13,6 +13,8 @@
 | API 基线冒烟（健康/鉴权隔离/Key 生命周期/只读端点） | `scripts/qa-smoke.ps1` | 17/17 通过（2026-11-17） |
 | 浏览器 E2E | `frontend/e2e`（Playwright，本机 Chrome channel） | 链路用例 1 条通过；应用用例 2 条因基线缺文件挂起 |
 | 截图 | `frontend/e2e/artifacts/`（每次运行生成） | 已有 infra-landing.png |
+| 5.2/5.3/5.4 专项实测（含 hybrid-off 对照） | `scripts/qa-phase5-52-54.ps1` | 24/24 通过（2026-11-17 17:52）；附集成测试 19/19 |
+| 凭据注入 | `qa-start.ps1` 从用户级环境变量补齐 `DASHSCOPE_API_KEY` / `DEEPSEEK_API_KEY` | 自检：有 + 长度，不打值 |
 
 ## 1. 全局必过项
 
@@ -82,10 +84,10 @@
 
 | 编号 | 功能点 | 怎么测 | 依赖 / 缺口 | 实测 |
 |---|---|---|---|---|
-| H-01 | 上传文档成功、列表出现、可删除 | multipart POST `/v1/rag/documents`（file+project_id）→ GET 列表含 doc → DELETE → 消失 | 需 **DASHSCOPE_API_KEY**（embedding）；pgvector 已就绪 | 缺凭据 |
-| H-02 | 检索返回 match_type/vector_score/keyword_score/rrf_score | POST `/v1/rag/search` 断言四字段存在且类型正确；both/vector/keyword 三类命中各造一例 | 同上 | 缺凭据 |
-| H-03 | 关闭 hybrid 回到三期行为 | 请求 hybrid=false，断言 rrf_score=null、字段行为符合冻结契约；回归跑 `mvn -Pquality verify` 的 RAG 集成测试 | 集成测试可先行（H2+memory vector） | 待跑 |
-| H-04 | answer 引用编号与内容对应，邻居不进 citations | 造同文档多切片种子，POST `/v1/rag/answer` 断言 citations 只含原命中 chunk_id、上下文含邻居标记 | DASHSCOPE_API_KEY + chat 上游 key（或本地 mock 上游） | 缺凭据 |
+| H-01 | 上传文档成功、列表出现、可删除 | multipart POST `/v1/rag/documents`（file+project_id）→ GET 列表含 doc → DELETE → 消失 | DASHSCOPE 用户级变量已注入；pgvector 就绪 | 通过（2026-11-17，上传 2 篇 201、列表 2 条、删除 200） |
+| H-02 | 检索返回 match_type/vector_score/keyword_score/rrf_score | POST `/v1/rag/search` 断言四字段存在且类型正确；both/vector/keyword 三类命中各造一例 | 同上 | 通过（24 项专项，见 §2.11） |
+| H-03 | 关闭 hybrid 回到三期行为 | 独立 gateway 实例 `--gateway.rag.search.hybrid-enabled=false`，断言 rrf_score=null；回归跑集成测试 | 18082 临时实例；集成测试 `RagHybridDisabledIntegrationTest` | 通过（rrf 全 null，match_type=vector；集成 2/2） |
+| H-04 | answer 引用编号与内容对应，邻居不进 citations | 造同文档多切片种子，POST `/v1/rag/answer` 断言 citations 只含原命中 chunk_id、上下文含邻居标记 | DEEPSEEK 用户级变量已注入（chat-default 实测 200） | 通过（live + 集成 8/8，见 §2.11） |
 
 ### 2.8 日志 / 审计 / 用量
 
@@ -100,9 +102,9 @@
 
 | 编号 | 功能点 | 怎么测 | 依赖 / 缺口 | 实测 |
 |---|---|---|---|---|
-| J-01 | 选模型发消息流式返回 | UI 输入后断言 SSE 增量渲染；网络断言 `/v1/chat/completions` stream=true | **DEEPSEEK_API_KEY**（或本地 mock 上游） | 缺凭据 |
-| J-02 | 上游失败显示可读错误不卡死 | 用错误模型名/断网制造失败，断言错误态文案与可重试 | 页面接线 | 缺凭据 |
-| J-03 | 多轮上下文保持 | 两轮追问，断言第二次请求 messages 含首轮内容 | 页面接线 + 上游 key | 缺凭据 |
+| J-01 | 选模型发消息流式返回 | UI 输入后断言 SSE 增量渲染；网络断言 `/v1/chat/completions` stream=true | DEEPSEEK 用户级变量已注入；页面未实现 | 上游可用 / UI 阻塞 |
+| J-02 | 上游失败显示可读错误不卡死 | 用错误模型名/断网制造失败，断言错误态文案与可重试 | 页面接线 | 上游可用 / UI 阻塞 |
+| J-03 | 多轮上下文保持 | 两轮追问，断言第二次请求 messages 含首轮内容 | 页面接线 + 上游可用 | 上游可用 / UI 阻塞 |
 
 ### 2.10 系统 / 健康检查
 
@@ -111,12 +113,33 @@
 | K-01 | 两应用健康状态正确 | `GET /actuator/health` 200/UP 双端断言 | 无 | 通过 |
 | K-02 | DB/Redis 不可用时降级提示不白屏 | 用错误 DB_URL / REDIS_PORT 在独立端口起实例（不破坏现有环境），访问页面断言降级文案 | 需页面实现；独立实例端口 18082 起 | 阻塞（页面占位） |
 
+### 2.11 第五期专项：5.2 幂等 / 5.3 混合检索 / 5.4 切片顺序
+
+> 实测：2026-11-17 17:52，脚本 `scripts/qa-phase5-52-54.ps1`，**24 项断言 24 通过**；
+> 附属集成测试 **19 条全过**（RagSearch 9 + RagHybridDisabled 2 + RagAnswer 8）。
+> 测试数据：临时项目 `qa-rag-<epoch>`、2 篇文档（潮汐 4 段 / 储能 3 段），跑完已删除文档。
+
+| 编号 | 子需求 | 断言 | 实测结果 |
+|---|---|---|---|
+| P-52-01 | 5.2 | 同幂等键 + 同请求体：返回首次响应，`X-Idempotent-Replay: true` | 通过（status=200，replay=true，响应体完全一致） |
+| P-52-02 | 5.2 | 同幂等键 + 不同请求体：409 `idempotency_error` | 通过 |
+| P-52-03 | 5.2 | 业务失败（400）后释放幂等键，可修正重试 | 通过（400 → 同键重试 200） |
+| P-52-04 | 5.2 | 记录落库、重启不失效 | **未验证**（本轮未重启后再放同键） |
+| P-53-01 | 5.3 | `/v1/rag/search` 命中含 `match_type/vector_score/keyword_score/rrf_score` 四字段 | 通过（fields 齐全） |
+| P-53-02 | 5.3 | 混合检索产生 RRF 融合分，字面路参与 | 通过（2 命中：`both` v=0.743 k=0.75 rrf=0.0328；`vector` v=0.458 rrf=0.0161） |
+| P-53-03 | 5.3 | 关闭 hybrid 回到三期行为 | 通过（18082 实例：2 命中全为 `vector`，rrf=null；向量分与开启时一致） |
+| P-53-04 | 5.3 | 混合检索集成回归 | 通过（RagSearchIntegrationTest 9/9、RagHybridDisabledIntegrationTest 2/2） |
+| P-54-01 | 5.4 | `/v1/rag/answer` 返回 200，`citations` 只含原命中 chunk_id | 通过（2 条引用均在检索 `results` 内；邻居未混入） |
+| P-54-02 | 5.4 | 引用编号从 1 连续，与答案 `[n]` 对应 | 通过（index=1,2；答案含 `[1]`） |
+| P-54-03 | 5.4 | 同文档引用按切片序号升序 | 通过（`-0000` 在 `-0001` 前） |
+| P-54-04 | 5.4 | 同文档多命中在上下文中按 chunk_index 升序、邻居标记「（上下文）」且不进 citations | 通过（集成 `RagAnswerIntegrationTest#answer_restores_document_order_and_marks_neighbors_as_context`，8/8 全过） |
+
 ## 3. 需种子数据 / 凭据清单
 
 | 项 | 用途 | 归属 |
 |---|---|---|
-| DASHSCOPE_API_KEY | RAG 文档接入与检索（embedding） | 环境变量，勿入库 |
-| DEEPSEEK_API_KEY（或本地 mock 上游） | chat / answer / Playground 真实调用 | 环境变量 |
+| DASHSCOPE_API_KEY | RAG 文档接入与检索（embedding） | **已解决**：用户级环境变量，启动脚本自动继承（自检 有 len=115） |
+| DEEPSEEK_API_KEY | chat / answer / Playground 真实调用 | **已解决**：用户级环境变量，启动脚本自动继承（自检 有 len=35）；chat-default 实测 200 |
 | 可控 MCP server（127.0.0.1:8001） | MCP 注册/重探活 UP/DOWN 切换 | 本地脚本 |
 | 55 条 Key 的 qa 租户 | Key 分页不重不漏 | 脚本生成并清理 |
 | 同文档 3+ 切片、双租户各一份 | RAG 引用/邻居/租户隔离 | 脚本生成 |
@@ -136,4 +159,5 @@
 2. 除 MCP 页外，其余页面均为占位组件；MCP 页数据走 mock。
 3. §7.2 字段（Key alias/rpm/tpm/预算周期、模型 description/价格/更新时间）未实现，C-01/D-01/C-02 无法验收。
 4. §7.1 端点（控制台会话、项目列表、切片列表、单 Key 详情、Trace 列表）未实现，A-01~A-05 无法验收。
-5. 上游凭据与可控 MCP 种子服务缺失，RAG/Playground/日志造数受限。
+5. 可控 MCP 种子服务缺失（127.0.0.1:8001），MCP 重探活 UP/DOWN 用例仍阻塞；上游凭据已于 2026-11-17 解决。
+6. 5.2 幂等「记录落库、重启不失效」未验证（P-52-04），需在下次重启窗口补测。

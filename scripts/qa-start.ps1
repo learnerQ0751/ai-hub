@@ -45,6 +45,18 @@ function Wait-Health([string]$Url, [int]$Seconds = 120) {
 $env:GATEWAY_MASTER_KEY = $MasterKey
 $env:GATEWAY_SECRET_KEY = $SecretKey
 
+# 凭据从用户级环境变量补齐：引擎进程可能早于变量设置启动，子进程环境里会缺。
+foreach ($name in 'DASHSCOPE_API_KEY', 'DEEPSEEK_API_KEY') {
+    if (-not [Environment]::GetEnvironmentVariable($name, 'Process')) {
+        $value = [Environment]::GetEnvironmentVariable($name, 'User')
+        if (-not $value) { $value = [Environment]::GetEnvironmentVariable($name, 'Machine') }
+        if ($value) { [Environment]::SetEnvironmentVariable($name, $value, 'Process') }
+    }
+    $current = [Environment]::GetEnvironmentVariable($name, 'Process')
+    if ($current) { Write-Host "$name 自检：有 (len=$($current.Length))" }
+    else { Write-Host "$name 自检：无" }
+}
+
 if (-not (Test-Ours $ConsolePort)) {
     $p = Start-Process java -ArgumentList '-jar', "$Root\ai-hub-console\target\ai-hub-console-0.0.1-SNAPSHOT-exec.jar" `
         -WorkingDirectory $Root -RedirectStandardOutput "$logDir\console.out.log" `
