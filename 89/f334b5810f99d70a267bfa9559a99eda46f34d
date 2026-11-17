@@ -1,0 +1,169 @@
+frontend/design/L1-页面地图.md
+  s_0b21f4571628b4::t_30d5de4794a242 1-361
+frontend/README.md
+  s_09ab81f3a7658e::t_e91c03b5f26a75 1-87
+frontend/STACK.md
+  s_4b889c7f1b007b::t_3131ba3d3fc4ae 1-145
+frontend/app/.gitignore
+  s_5d236f85132ccd::t_3d25ff4749a5b0 1-24
+frontend/app/.prettierignore
+  s_4b889c7f1b007b::t_1f25902f8c0bcc 1-4
+frontend/app/.prettierrc.json
+  s_4b889c7f1b007b::t_20c0ab861faebb 1-7
+frontend/app/README.md
+  s_95aaebf77cebf8::t_0bc3a7b2da5d6a 1-26
+frontend/app/eslint.config.js
+  s_4b889c7f1b007b::t_69b6bd3930cb14 1-32
+frontend/app/package.json
+  s_4b889c7f1b007b::t_080ee9fc73331c 1-46
+frontend/app/public/favicon.svg
+  s_5d236f85132ccd::t_07dca13c7382d0 1
+frontend/app/public/icons.svg
+  s_5d236f85132ccd::t_3ec656837c137d 1-24
+frontend/app/src/App.tsx
+  s_4b889c7f1b007b::t_a8f2a00dcbf4e1 1-5
+frontend/app/src/api/endpoints.ts
+  s_95aaebf77cebf8::t_37812ee1a5ca1f 1-34
+frontend/app/src/api/http.test.ts
+  s_95aaebf77cebf8::t_a9019516a72efb 1-53
+frontend/app/src/api/http.ts
+  s_95aaebf77cebf8::t_f7943ae91a3d92 1-64
+frontend/app/src/api/queryClient.ts
+  s_95aaebf77cebf8::t_1ed7b51179014e 1-21
+frontend/app/src/api/session.test.ts
+  s_95aaebf77cebf8::t_1cb8f071a34ce9 1-47
+frontend/app/src/api/session.ts
+  s_95aaebf77cebf8::t_956715b57476c3 1-79
+frontend/app/src/components/Chart.tsx
+  s_4b889c7f1b007b::t_56d557b698a267 1-58
+frontend/app/src/components/PageHeader.tsx
+  s_4b889c7f1b007b::t_a7a5d2eb3bae20 1-26
+frontend/app/src/components/PagePlaceholder.tsx
+  s_4b889c7f1b007b::t_ad38695ab39ec8 1-22
+frontend/app/src/components/RequireAuth.tsx
+  s_95aaebf77cebf8::t_c6c17658380a8a 1-22
+frontend/app/src/features/mcp/fixtures.ts
+  s_4b889c7f1b007b::t_d974b054efc2b0 1-89
+frontend/app/src/features/mcp/mock.ts
+  s_95aaebf77cebf8::t_867baf8e1b7705 1-94
+frontend/app/src/features/mcp/types.test.ts
+  s_4b889c7f1b007b::t_f9a6ca431e8253 1-22
+frontend/app/src/features/mcp/types.ts
+  s_4b889c7f1b007b::t_39017790c575a7 1-97
+frontend/app/src/hooks/useIsNarrow.ts
+  s_95aaebf77cebf8::t_538bdbc93946f2 1-20
+frontend/app/src/layouts/AppShell.tsx
+  s_95aaebf77cebf8::t_a8b42ab324a696 1-182
+frontend/app/src/main.tsx
+  s_4b889c7f1b007b::t_10d8c48e0c11d3 1-27
+frontend/app/src/pages/audit/AuditPage.tsx
+  s_4b889c7f1b007b::t_898811eca0ba6c 1-11
+frontend/app/src/pages/board/BoardPage.tsx
+  s_09ab81f3a7658e::t_0bcfeb41c32737 1-110
+frontend/app/src/pages/board/McpPreviewPage.tsx
+  s_95aaebf77cebf8::t_fce54a03195345 1-14
+frontend/app/src/pages/keys/KeysPage.tsx
+  s_4b889c7f1b007b::t_4f4e150620de8d 1-11
+frontend/app/src/pages/login/LoginPage.tsx
+  s_95aaebf77cebf8::t_425e2b7af4391e 1-118
+frontend/app/src/pages/mcp/McpServersPage.tsx
+  s_09ab81f3a7658e::t_b52898a1d71fdb 1-625
+frontend/app/src/pages/models/ModelsPage.tsx
+  s_4b889c7f1b007b::t_4a05e3662638d9 1-11
+frontend/app/src/pages/overview/OverviewPage.tsx
+  s_4b889c7f1b007b::t_f475d71a632d99 1-11
+frontend/app/src/pages/playground/PlaygroundPage.tsx
+  s_4b889c7f1b007b::t_d01f297db0e55e 1-11
+frontend/app/src/pages/prompts/PromptsPage.tsx
+  s_4b889c7f1b007b::t_9e1b761fb93bad 1-11
+frontend/app/src/pages/rag/RagPage.tsx
+  s_4b889c7f1b007b::t_ca5297ab05974b 1-11
+frontend/app/src/pages/system/SystemPage.tsx
+  s_4b889c7f1b007b::t_6128eeda5edeeb 1-11
+frontend/app/src/pages/usage/UsagePage.tsx
+  s_4b889c7f1b007b::t_da5a07dda60521 1-11
+frontend/app/src/router/index.tsx
+  s_95aaebf77cebf8::t_a5cfa370808548 1-63
+frontend/app/src/router/routes.test.tsx
+  s_95aaebf77cebf8::t_aab812b1d2b8fc 1-105
+frontend/app/src/stores/AuthProvider.tsx
+  s_95aaebf77cebf8::t_ecb591a6ef0c6f 1-79
+frontend/app/src/stores/auth.test.tsx
+  s_95aaebf77cebf8::t_ffc2a3b2af4bd6 1-46
+frontend/app/src/stores/auth.ts
+  s_95aaebf77cebf8::t_f1cd61966f59c5 1-25
+frontend/app/src/styles/global.css
+  s_95aaebf77cebf8::t_871ad76dc88b83 1-518
+frontend/app/src/styles/theme.ts
+  s_4b889c7f1b007b::t_9daa982a451cc8 1-82
+frontend/app/src/test/setup.ts
+  s_95aaebf77cebf8::t_55135c7da00abf 1-31
+frontend/app/tsconfig.app.json
+  s_4b889c7f1b007b::t_7e2dc8540b7522 1-31
+frontend/app/tsconfig.json
+  s_5d236f85132ccd::t_00fe8f020495a7 1-4
+frontend/app/tsconfig.node.json
+  s_4b889c7f1b007b::t_7d43659c2074a1 1-23
+frontend/app/vite.config.ts
+  s_4b889c7f1b007b::t_94e37367c5417c 1-17
+frontend/app/vitest.config.ts
+  s_4b889c7f1b007b::t_6cfa3976e630d8 1-15
+frontend/board/README.md
+  s_09ab81f3a7658e::t_749f5dfb6d188a 1-46
+frontend/design/L0-视觉方向卡.md
+  s_95aaebf77cebf8::t_d8d592db06cc8f 1-215
+frontend/design/style-profiles/litellm/README.md
+  s_5d236f85132ccd::t_8232e2047dd364 1-40
+frontend/design/style-profiles/litellm/profile.json
+  s_5d236f85132ccd::t_9afe9f349aa591 1-133
+frontend/prototypes/README.md
+  s_4b889c7f1b007b::t_b42c589337c408 1-35
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "89f334b5810f99d70a267bfa9559a99eda46f34d",
+  "prompts": {},
+  "sessions": {
+    "s_09ab81f3a7658e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a71e7e9b-5549-4f57-a650-8857866250d6",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_0b21f4571628b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38ac2ffa-138d-4580-be67-bf463080b97c",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_4b889c7f1b007b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "85a99906-9835-4ec3-b70a-2a7aa7509f72",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_5d236f85132ccd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b31a4e85-3046-42e5-8fc2-05d2917bd6ce",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_95aaebf77cebf8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2e527153-6844-4de4-bdac-662e4256cb17",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
