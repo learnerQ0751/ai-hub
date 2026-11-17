@@ -1,0 +1,79 @@
+ai-hub-api/src/main/java/com/qtua/aihub/api/AdminService.java
+  s_a1b18b339e37c2::t_6747555a90cb96 10,36-54
+ai-hub-api/src/main/java/com/qtua/aihub/api/RagDocumentService.java
+  s_a1b18b339e37c2::t_77f61be4c9df7a 3,36-46
+ai-hub-api/src/main/java/com/qtua/aihub/api/TraceService.java
+  s_a1b18b339e37c2::t_15cb1a313b2f79 3,18-33
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminProjectPageResDTO.java
+  s_a1b18b339e37c2::t_ebe1b6f7dc8594 1-24
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminProjectResDTO.java
+  s_a1b18b339e37c2::t_9704856619a284 1-18
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagChunkPageResDTO.java
+  s_a1b18b339e37c2::t_0bfe308a694264 1-24
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagChunkResDTO.java
+  s_a1b18b339e37c2::t_1f557b15299287 1-27
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/TraceListResDTO.java
+  s_a1b18b339e37c2::t_599c9a6f8f502c 1-24
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/TraceSummaryResDTO.java
+  s_a1b18b339e37c2::t_cc9c8d371570db 1-25
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/AdminController.java
+  s_a1b18b339e37c2::t_0d86ac3207c9b8 11,66-94
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/RagDocumentController.java
+  s_a1b18b339e37c2::t_50dac52c41eb77 4,79-98
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/TraceController.java
+  s_a1b18b339e37c2::t_723b44503215b0 4,9,31-57
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagDocumentCore.java
+  s_a1b18b339e37c2::t_8c55de77f02334 217-231
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/ProjectMapper.java
+  s_a1b18b339e37c2::t_6341fe4c0850a6 1-31
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/RagChunkMapper.java
+  s_a1b18b339e37c2::t_8de461d96e9c64 44-59
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/TraceEventMapper.java
+  s_a1b18b339e37c2::t_21504bc178b7de 4,8,31-52
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/ProjectDO.java
+  s_a1b18b339e37c2::t_ec552f64de615b 1-55
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/TraceSummaryDO.java
+  s_a1b18b339e37c2::t_356bbd05d55125 1-84
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/ProjectMapper.xml
+  s_a1b18b339e37c2::t_55bb323c71a5b7 1-45
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/RagChunkMapper.xml
+  s_a1b18b339e37c2::t_47cb7a751100cf 61-72
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/TraceEventMapper.xml
+  s_a1b18b339e37c2::t_2663b9ba9c1dff 40-85
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ProjectBO.java
+  s_a1b18b339e37c2::t_e262cf512637c7 1-16
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/TraceSummaryBO.java
+  s_a1b18b339e37c2::t_54fb7eda9debce 1-19
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/rag/RagChunkManager.java
+  s_a1b18b339e37c2::t_1971ddfbda8577 73-89
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/tenant/ProjectManager.java
+  s_a1b18b339e37c2::t_7bc676a142b441 1-47
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/trace/TraceEventManager.java
+  s_a1b18b339e37c2::t_583740231bf83c 9,11,16,75-101
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/AdminServiceImpl.java
+  s_a1b18b339e37c2::t_635f694e37e8fc 13-14,26,28,64,75,82,88,105-125,432-436,464-475
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/TraceServiceImpl.java
+  s_a1b18b339e37c2::t_f814fe934118f7 5,7,12,18-19,32-34,67-136
+ai-hub-service/src/main/java/com/qtua/aihub/service/shared/RagDocumentServiceImpl.java
+  s_a1b18b339e37c2::t_87e274674b64f9 5-6,19,163-187,238-244
+ai-hub-tests/src/test/java/com/qtua/aihub/ConsoleGapEndpointsIntegrationTest.java
+  s_a1b18b339e37c2::t_453af3b1d717e6 1-283
+docs/API-PATHS.md
+  s_a1b18b339e37c2::t_77470b081efd64 3-4,106,115-117,157,161-166,171,176-180,192-194,219-236,280,282-288,290
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ae6a5a469e514b564c46ce7b5db8ff16dacd6860",
+  "prompts": {},
+  "sessions": {
+    "s_a1b18b339e37c2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0620d364-18d8-4355-9742-753d20dc1ea5",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
