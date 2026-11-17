@@ -125,3 +125,17 @@ Idempotency-Key: <1-128 位字母/数字/._:->
 | 404 | `not_found` | 当前应用未提供该路径（跨面访问） |
 | 409 | `idempotency_error` | 幂等键冲突或同键请求仍在处理 |
 | 409 | `conflict_error` | 同名资源已存在且配置不同（如 MCP Server） |
+
+## 7. 待补端点清单（先记录，5.4 后随契约一次性冻结）
+
+> 契约待 5.4 完成后一次性冻结；以下缺口本期不动手，仅登记给管理台与后续需求。
+
+| 缺口 | 用途 | 拟定归属 |
+|---|---|---|
+| 项目列表 | 管理台选择租户下的项目 | console |
+| 文档切片列表 | 按 `doc_id` 分页查看切片 | console |
+| 单 Key 查询 | 按 `key_hash` 查询 Key 详情 | console |
+| Trace 列表 | 按租户/时间分页列出 trace | console |
+
+控制面会话方向（5.3/5.4 参考）：管理员账号 + httpOnly 短期会话 cookie（SameSite=Lax），
+不使用 token 方案；master key 保持配置常量，不引入数据库化或有效期。
