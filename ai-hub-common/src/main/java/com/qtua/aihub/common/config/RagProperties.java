@@ -35,6 +35,11 @@ public class RagProperties {
     private static final int DEFAULT_MAX_QUERY_CHARS = 2000;
     private static final double DEFAULT_RERANK_LEXICAL_WEIGHT = 0.3d;
     private static final int DEFAULT_MAX_FILTER_DOC_IDS = 100;
+    private static final boolean DEFAULT_HYBRID_ENABLED = true;
+    private static final int DEFAULT_RRF_K = 60;
+    private static final double DEFAULT_RRF_VECTOR_WEIGHT = 1.0d;
+    private static final double DEFAULT_RRF_KEYWORD_WEIGHT = 1.0d;
+    private static final int DEFAULT_KEYWORD_MAX_TERMS = 16;
     private static final int DEFAULT_ANSWER_TOP_K = 4;
     private static final int DEFAULT_MAX_INPUTS = 2048;
     private static final int DEFAULT_MAX_CONTEXT_CHARS = 6000;
@@ -564,6 +569,16 @@ public class RagProperties {
         private double rerankLexicalWeight = DEFAULT_RERANK_LEXICAL_WEIGHT;
         /** 元数据过滤允许的文档 ID 上限。 */
         private int maxFilterDocIds = DEFAULT_MAX_FILTER_DOC_IDS;
+        /** 混合检索总开关（REQ-5.3）：向量 + 字面 RRF 融合；关闭时回到三期行为。 */
+        private boolean hybridEnabled = DEFAULT_HYBRID_ENABLED;
+        /** RRF 平滑常数 k。 */
+        private int rrfK = DEFAULT_RRF_K;
+        /** RRF 向量路权重。 */
+        private double rrfVectorWeight = DEFAULT_RRF_VECTOR_WEIGHT;
+        /** RRF 字面路权重。 */
+        private double rrfKeywordWeight = DEFAULT_RRF_KEYWORD_WEIGHT;
+        /** 字面召回使用的查询词项上限。 */
+        private int keywordMaxTerms = DEFAULT_KEYWORD_MAX_TERMS;
 
         public int getDefaultTopK() {
             return defaultTopK;
@@ -635,6 +650,46 @@ public class RagProperties {
 
         public void setMaxFilterDocIds(int maxFilterDocIds) {
             this.maxFilterDocIds = maxFilterDocIds;
+        }
+
+        public boolean isHybridEnabled() {
+            return hybridEnabled;
+        }
+
+        public void setHybridEnabled(boolean hybridEnabled) {
+            this.hybridEnabled = hybridEnabled;
+        }
+
+        public int getRrfK() {
+            return rrfK;
+        }
+
+        public void setRrfK(int rrfK) {
+            this.rrfK = rrfK;
+        }
+
+        public double getRrfVectorWeight() {
+            return rrfVectorWeight;
+        }
+
+        public void setRrfVectorWeight(double rrfVectorWeight) {
+            this.rrfVectorWeight = rrfVectorWeight;
+        }
+
+        public double getRrfKeywordWeight() {
+            return rrfKeywordWeight;
+        }
+
+        public void setRrfKeywordWeight(double rrfKeywordWeight) {
+            this.rrfKeywordWeight = rrfKeywordWeight;
+        }
+
+        public int getKeywordMaxTerms() {
+            return keywordMaxTerms;
+        }
+
+        public void setKeywordMaxTerms(int keywordMaxTerms) {
+            this.keywordMaxTerms = keywordMaxTerms;
         }
     }
 

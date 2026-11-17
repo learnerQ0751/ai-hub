@@ -36,6 +36,23 @@
 | POST | `/v1/rag/answer` | 检索 + 生成回答 |
 | POST | `/v1/memory/save`、`/recall`、`/clear` | 记忆写入/召回/删除 |
 
+### 3.1 `/v1/rag/search` 命中字段（REQ-5.3，additive）
+
+```json
+{
+  "chunk_id": "...", "doc_id": "...", "source": "a.md", "chunk_index": 0,
+  "content": "...",
+  "score": 0.83,             // 向量相似度；仅字面命中为 0
+  "rerank_score": null,      // 仅关闭混合检索且启用规则重排时非空
+  "match_type": "both",      // vector / keyword / both
+  "vector_score": 0.83,      // 向量路原始分；未命中为 null
+  "keyword_score": 0.5,      // 字面路覆盖率；未命中为 null
+  "rrf_score": 0.032        // 融合排序分；关闭混合检索为 null
+}
+```
+
+路径与鉴权不变；契约待 5.4 后冻结。
+
 ## 4. 控制面（console :18081，admin 凭证）
 
 ### 4.1 Key

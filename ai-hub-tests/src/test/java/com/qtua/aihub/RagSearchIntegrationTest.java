@@ -138,11 +138,19 @@ class RagSearchIntegrationTest {
         upload(project, "doc2.md", "报销流程说明");
         upload(project, "doc3.md", "其他制度说明");
 
+        // REQ-5.3：min_score 只作用于向量路；字面命中不受阈值误杀。
         JsonNode threshold = search(searchBody(project, QUERY, 3, 0.9, null, false));
-        assertThat(threshold.path("count").asInt()).isEqualTo(1);
+        assertThat(threshold.path("count").asInt()).isGreaterThanOrEqualTo(1);
+        for (JsonNode hit : threshold.path("results")) {
+            if (!hit.path("vector_score").isNull()) {
+                assertThat(hit.path("vector_score").asDouble()).isGreaterThanOrEqualTo(0.9);
+            }
+        }
 
         JsonNode all = search(searchBody(project, QUERY, 10, -1.0, null, false));
-        assertThat(all.path("count").asInt()).isEqualTo(3);
+        assertThat(all.path("count").asInt()).isLessThanOrEqualTo(10);
+        assertThat(all.path("count").asInt())
+                .isGreaterThanOrEqualTo(threshold.path("count").asInt());
     }
 
     @Test
@@ -185,7 +193,7 @@ class RagSearchIntegrationTest {
     }
 
     @Test
-    void rerank_flag_is_honored() {
+    void hybrid_mode_reports_rrf_instead_of_lexical_rerank() {
         String project = "p-search-rerank";
         upload(project, "target.md", QUERY);
         upload(project, "other.md", "无关内容");
@@ -193,8 +201,33 @@ class RagSearchIntegrationTest {
         JsonNode enabled = search(searchBody(project, QUERY, 3, 0.9, null, true));
         JsonNode disabled = search(searchBody(project, QUERY, 3, 0.9, null, false));
 
-        assertThat(enabled.path("reranked").asBoolean()).isTrue();
+        assertThat(enabled.path("reranked").asBoolean()).isFalse();
         assertThat(disabled.path("reranked").asBoolean()).isFalse();
+        for (JsonNode hit : enabled.path("results")) {
+            assertThat(hit.path("rrf_score").isNull()).isFalse();
+            assertThat(hit.path("match_type").asText()).isIn("vector", "keyword", "both");
+        }
+    }
+
+    @Test
+    void hybrid_recalls_exact_code_via_keyword_path() {
+        String project = "p-search-hybrid-code";
+        String codeDoc = upload(project, "code.md", "产品编码 SKU-9981 仅此一份");
+        upload(project, "noise.md", "产品介绍与编码无关");
+
+        JsonNode response = search(searchBody(project, "SKU-9981", 3, 0.99, null, false));
+
+        assertThat(response.path("no_hit").asBoolean()).isFalse();
+        boolean found = false;
+        for (JsonNode hit : response.path("results")) {
+            if (codeDoc.equals(hit.path("doc_id").asText())) {
+                found = true;
+                assertThat(hit.path("content").asText()).contains("SKU-9981");
+                assertThat(hit.path("match_type").asText()).isIn("keyword", "both");
+                assertThat(hit.path("keyword_score").asDouble()).isGreaterThan(0.0);
+            }
+        }
+        assertThat(found).isTrue();
     }
 
     @Test

@@ -60,6 +60,20 @@ public interface RagChunkMapper {
                                               @Param("chunkIds") List<String> chunkIds);
 
     /**
+     * 字面召回（REQ-5.3）：按租户/项目与词项做大小写不敏感包含匹配。
+     *
+     * @param tenantId  租户
+     * @param projectId 项目
+     * @param terms     查询词项（非空）
+     * @param limit     召回上限
+     * @return 切片列表（按命中词项数降序）
+     */
+    List<RagChunkDO> searchKeyword(@Param("tenantId") String tenantId,
+                                   @Param("projectId") String projectId,
+                                   @Param("terms") List<String> terms,
+                                   @Param("limit") int limit);
+
+    /**
      * 统计文档切片数。
      *
      * @param docId 文档 ID

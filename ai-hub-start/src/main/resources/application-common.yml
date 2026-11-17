@@ -155,6 +155,13 @@ gateway:
       rerank-enabled: true
       rerank-lexical-weight: 0.3
       max-filter-doc-ids: 100
+      # REQ-5.3 混合检索：向量 + 字面 RRF 融合；关闭时回到三期行为
+      hybrid-enabled: true
+      rrf-k: 60
+      rrf-vector-weight: 1.0
+      rrf-keyword-weight: 1.0
+      # 字面召回最多使用的查询词项数（中文 bigram/英文词）
+      keyword-max-terms: 16
     answer:
       default-top-k: 4
       # 放入 prompt 的资料部分最大字符数

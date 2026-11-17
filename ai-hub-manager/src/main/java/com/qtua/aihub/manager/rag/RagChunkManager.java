@@ -99,6 +99,24 @@ public class RagChunkManager {
     }
 
     /**
+     * 字面召回（REQ-5.3）。
+     *
+     * @param tenantId  租户
+     * @param projectId 项目
+     * @param terms     查询词项
+     * @param limit     召回上限
+     * @return 切片列表（按命中词项数降序）
+     */
+    public List<RagChunkBO> searchKeyword(String tenantId, String projectId, List<String> terms,
+                                          int limit) {
+        if (ObjectUtils.isEmpty(terms)) {
+            return List.of();
+        }
+        return chunkMapper.searchKeyword(tenantId, projectId, terms, Math.max(1, limit)).stream()
+                .map(this::toBO).toList();
+    }
+
+    /**
      * 统计文档切片数。
      *
      * @param docId 文档 ID

@@ -48,6 +48,8 @@ class RagRetrievalCoreTest {
         vectorStore = mock(VectorStore.class);
         chunkManager = mock(RagChunkManager.class);
         properties = new RagProperties();
+        // 本类覆盖三期行为；混合检索由 RagHybridRetrievalTest 覆盖。
+        properties.getSearch().setHybridEnabled(false);
         properties.getSearch().setRerankLexicalWeight(0.5);
         lenient().when(embeddingModel.modelId()).thenReturn(MODEL);
         lenient().when(embeddingModel.dimension()).thenReturn(2);

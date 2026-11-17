@@ -90,7 +90,14 @@ public class RagLexicalReranker {
         return scored;
     }
 
-    private double coverage(Set<String> terms, String content) {
+    /**
+     * 计算词项覆盖率（供字面召回打分复用）。
+     *
+     * @param terms   词项集合
+     * @param content 切片正文
+     * @return 命中词项占比（0~1）
+     */
+    public double coverage(Set<String> terms, String content) {
         String normalized = content.toLowerCase(Locale.ROOT);
         long hit = terms.stream().filter(normalized::contains).count();
         return (double) hit / (double) terms.size();

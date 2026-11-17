@@ -390,6 +390,19 @@ sequenceDiagram
   请求只能关闭；无 query 词项时保持原序并标记 `reranked=false`。
 - 无命中：HTTP 200 + 空数组 + `no_hit=true`；检索日志只记 query、chunk_id/score、候选数与耗时，不记正文。
 
+**REQ-5.3 混合检索（默认开启）**：
+
+- 两路召回：向量路沿用上述 pgvector；字面路按 `tenant_id + project_id` 下推，
+  用 `LOWER(content) LIKE '%' || LOWER(term) || '%'`（ILIKE 等价、H2 兼容）匹配查询词项
+  （中文 bigram / 英文词，最多 `keyword-max-terms` 个），按命中词项数排序。
+- 融合：RRF `w_v/(k+rank_v) + w_k/(k+rank_k)`，`k`、两路权重可配（默认 60 / 1.0 / 1.0）；
+  同一 `chunk_id` 去重后按融合分排序。
+- 可解释字段：`match_type`（vector/keyword/both）+ `vector_score`、`keyword_score`、`rrf_score`。
+- `min_score` 只作用于向量路，字面命中不因阈值被误杀；元数据过滤两路一致。
+- 降级：任一路异常时另一路单独返回；两路都失败才报错。
+- 开关 `hybrid-enabled=false` 时完全回到三期路径（向量 + 规则重排，`reranked=true`）。
+- 对外契约：`/v1/rag/search` 命中新增上述四个字段（additive），路径与鉴权不变；契约待 5.4 后冻结。
+
 ### 3.15 RAG 生成与引用溯源（REQ-3.4）
 
 ```mermaid

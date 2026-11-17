@@ -81,6 +81,23 @@
         </foreach>
     </select>
 
+    <select id="searchKeyword" resultMap="RagChunkResultMap">
+        SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
+               index_status, embedding_model, embedding_dimension, error_message, created_at,
+               tenant_id,
+               (<foreach collection="terms" item="term" separator=" + ">
+                   CASE WHEN LOWER(content) LIKE '%' || LOWER(#{term}) || '%' THEN 1 ELSE 0 END
+               </foreach>) AS keyword_hits
+        FROM rag_chunks
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND project_id = #{projectId,jdbcType=VARCHAR}
+          AND (<foreach collection="terms" item="term" separator=" OR ">
+                   LOWER(content) LIKE '%' || LOWER(#{term}) || '%'
+               </foreach>)
+        ORDER BY keyword_hits DESC, chunk_index ASC
+        LIMIT #{limit,jdbcType=INTEGER}
+    </select>
+
     <select id="countByDocId" resultType="int">
         SELECT COUNT(1)
         FROM rag_chunks

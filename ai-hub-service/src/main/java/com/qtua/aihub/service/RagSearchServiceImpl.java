@@ -243,6 +243,10 @@ public class RagSearchServiceImpl implements RagSearchService {
             payload.put("noHit", hits.isEmpty());
             payload.put("chunkIds", hits.stream().limit(TRACE_MAX_ITEMS).map(RagSearchHitResDTO::chunkId).toList());
             payload.put("scores", hits.stream().limit(TRACE_MAX_ITEMS).map(RagSearchHitResDTO::score).toList());
+            payload.put("matchTypes", hits.stream().limit(TRACE_MAX_ITEMS)
+                    .map(RagSearchHitResDTO::matchType).toList());
+            payload.put("rrfScores", hits.stream().limit(TRACE_MAX_ITEMS)
+                    .map(RagSearchHitResDTO::rrfScore).toList());
             payload.put("embeddingTokens", result.embeddingTokens());
             traceRecorder.record(new TraceEvent(
                     traceId(), scope.tenantId(), scope.projectId(), keyHash(), "rag",
@@ -265,7 +269,8 @@ public class RagSearchServiceImpl implements RagSearchService {
 
     private RagSearchHitResDTO toHit(RagRetrievedChunk chunk) {
         return new RagSearchHitResDTO(chunk.chunkId(), chunk.docId(), chunk.source(),
-                chunk.chunkIndex(), chunk.content(), chunk.score(), chunk.rerankScore());
+                chunk.chunkIndex(), chunk.content(), chunk.score(), chunk.rerankScore(),
+                chunk.matchType(), chunk.vectorScore(), chunk.keywordScore(), chunk.rrfScore());
     }
 
     private String truncateQuery(String query) {
