@@ -126,9 +126,10 @@ Checkstyle + SpotBugs（每模块）+ ArchUnit（层依赖/无环）+ JaCoCo 聚
 
 ## 外部文档源（可选）
 
-- 需求文档根：`E:\KnowledgeBase\30-Work\求职\任务工作区\2026-10-16_Java AI 应用开发学习主线`
-- 需求索引：`03-项目7实战-分期需求总览.md`
-- 说明：换设备只改本节；无外部文档源时留空，工作流自动走「口述需求」模式
+- 需求文档根（知识库 2.0 活目录）：`E:\AIWorkbench\workbench\tasks\2026-11-16_ai-hub第五期规划`
+- 第 5 期需求卡：`outputs\20-项目7-第5期-优化与拆分.md`；拆分设计：`outputs\15-网关治理解耦设计.md`
+- 已定事项/排期：`decisions.md`；任务卡：`task.md`
+- 说明：`E:\KnowledgeBase` 是知识库 1.0 冻结副本（只读，不再迭代），新需求不再引用；换设备只改本节
 
 ## 记录
 
