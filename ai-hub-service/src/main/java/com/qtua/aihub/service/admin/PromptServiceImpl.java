@@ -173,19 +173,20 @@ public class PromptServiceImpl implements PromptService {
     /**
      * 查询模板。
      *
-     * @param name    模板名
-     * @param version 版本（null 表示最新发布版）
+     * @param name     模板名
+     * @param version  版本（null 表示最新发布版）
+     * @param tenantId 租户（可空，为空取当前作用域）
      * @return 版本视图
      */
     @Override
-    public PromptResDTO get(String name, Integer version) {
-        String tenantId = tenantScopeGuard.resolveTenant(null);
+    public PromptResDTO get(String name, Integer version, String tenantId) {
+        String effectiveTenant = tenantScopeGuard.resolveTenant(tenantId);
         if (Objects.nonNull(version)) {
-            return promptManager.findByVersion(tenantId, name, version)
+            return promptManager.findByVersion(effectiveTenant, name, version)
                     .map(this::toResDTO)
                     .orElseThrow(() -> ChatCompletionException.promptVersionNotFound(name, version));
         }
-        return promptManager.findPublished(tenantId, name)
+        return promptManager.findPublished(effectiveTenant, name)
                 .map(this::toResDTO)
                 .orElseThrow(() -> ChatCompletionException.promptNotFound(name));
     }
@@ -193,13 +194,14 @@ public class PromptServiceImpl implements PromptService {
     /**
      * 版本历史。
      *
-     * @param name 模板名
+     * @param name     模板名
+     * @param tenantId 租户（可空，为空取当前作用域）
      * @return 版本列表
      */
     @Override
-    public PromptVersionListResDTO versions(String name) {
-        String tenantId = tenantScopeGuard.resolveTenant(null);
-        List<PromptTemplateBO> versions = promptManager.findVersions(tenantId, name);
+    public PromptVersionListResDTO versions(String name, String tenantId) {
+        String effectiveTenant = tenantScopeGuard.resolveTenant(tenantId);
+        List<PromptTemplateBO> versions = promptManager.findVersions(effectiveTenant, name);
         if (versions.isEmpty()) {
             throw ChatCompletionException.promptNotFound(name);
         }
@@ -224,27 +226,29 @@ public class PromptServiceImpl implements PromptService {
     /**
      * 发布指定版本（发布旧版本即回滚）。
      *
-     * @param name    模板名
-     * @param version 目标版本
+     * @param name     模板名
+     * @param version  目标版本
+     * @param tenantId 租户（可空，为空取当前作用域）
      * @return 发布后的版本
      */
     @Override
     @Transactional
-    public PromptResDTO publish(String name, int version) {
-        String tenantId = tenantScopeGuard.resolveTenant(null);
-        if (!promptManager.lockByName(tenantId, name)) {
+    public PromptResDTO publish(String name, int version, String tenantId) {
+        String effectiveTenant = tenantScopeGuard.resolveTenant(tenantId);
+        if (!promptManager.lockByName(effectiveTenant, name)) {
             throw ChatCompletionException.promptNotFound(name);
         }
-        PromptTemplateBO target = promptManager.findByVersion(tenantId, name, version)
+        PromptTemplateBO target = promptManager.findByVersion(effectiveTenant, name, version)
                 .orElseThrow(() -> ChatCompletionException.promptVersionNotFound(name, version));
-        PromptTemplateBO published = promptManager.findPublished(tenantId, name).orElse(null);
+        PromptTemplateBO published = promptManager.findPublished(effectiveTenant, name)
+                .orElse(null);
         if (!Objects.isNull(published) && published.version() == version) {
             // 幂等重放：目标版本已是当前发布版本，不重复归档/审计。
             return toResDTO(published);
         }
-        promptManager.archivePublished(tenantId, name);
-        promptManager.publishVersion(tenantId, name, version);
-        auditRecorder.record(tenantId, "PROMPT_PUBLISH", name, java.util.Map.of(),
+        promptManager.archivePublished(effectiveTenant, name);
+        promptManager.publishVersion(effectiveTenant, name, version);
+        auditRecorder.record(effectiveTenant, "PROMPT_PUBLISH", name, java.util.Map.of(),
                 java.util.Map.of("name", name, "version", version));
         LOG.info("prompt published: name={}, version={}", name, version);
         return toResDTO(new PromptTemplateBO(target.name(), target.version(), target.content(),

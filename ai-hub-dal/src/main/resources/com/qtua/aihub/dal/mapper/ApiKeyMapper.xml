@@ -6,6 +6,7 @@
     <resultMap id="ApiKeyResultMap" type="com.qtua.aihub.dal.model.ApiKeyDO">
         <id column="id" property="id" jdbcType="BIGINT"/>
         <result column="key_hash" property="keyHash" jdbcType="VARCHAR"/>
+        <result column="alias" property="alias" jdbcType="VARCHAR"/>
         <result column="models" property="models" jdbcType="VARCHAR"/>
         <result column="spend" property="spend" jdbcType="NUMERIC"/>
         <result column="max_budget" property="maxBudget" jdbcType="NUMERIC"/>
@@ -23,10 +24,11 @@
     <insert id="insert" parameterType="com.qtua.aihub.dal.model.ApiKeyDO"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO api_keys
-            (key_hash, models, spend, max_budget, budget_duration, rpm_limit, tpm_limit,
+            (key_hash, alias, models, spend, max_budget, budget_duration, rpm_limit, tpm_limit,
              expires_at, blocked, metadata, created_at, tenant_id, project_id)
         VALUES
-            (#{keyHash,jdbcType=VARCHAR}, CAST(#{models,jdbcType=VARCHAR} AS JSONB),
+            (#{keyHash,jdbcType=VARCHAR}, #{alias,jdbcType=VARCHAR},
+             CAST(#{models,jdbcType=VARCHAR} AS JSONB),
              #{spend,jdbcType=NUMERIC}, #{maxBudget,jdbcType=NUMERIC},
              #{budgetDuration,jdbcType=VARCHAR},
              #{rpmLimit,jdbcType=INTEGER}, #{tpmLimit,jdbcType=INTEGER},
@@ -37,7 +39,7 @@
     </insert>
 
     <select id="selectByKeyHash" resultMap="ApiKeyResultMap">
-        SELECT id, key_hash, CAST(models AS VARCHAR) AS models, spend, max_budget,
+        SELECT id, key_hash, alias, CAST(models AS VARCHAR) AS models, spend, max_budget,
                budget_duration, rpm_limit, tpm_limit, expires_at, blocked,
                CAST(metadata AS VARCHAR) AS metadata, created_at, tenant_id, project_id
         FROM api_keys
@@ -52,7 +54,7 @@
     </update>
 
     <select id="selectPage" resultMap="ApiKeyResultMap">
-        SELECT id, key_hash, CAST(models AS VARCHAR) AS models, spend, max_budget,
+        SELECT id, key_hash, alias, CAST(models AS VARCHAR) AS models, spend, max_budget,
                budget_duration, rpm_limit, tpm_limit, expires_at, blocked,
                CAST(metadata AS VARCHAR) AS metadata, created_at, tenant_id, project_id
         FROM api_keys
@@ -62,6 +64,21 @@
         </if>
         <if test="projectId != null and projectId != ''">
             AND project_id = #{projectId,jdbcType=VARCHAR}
+        </if>
+        <if test="status == 'active'">
+            AND blocked = FALSE
+            AND (expires_at IS NULL OR expires_at &gt; #{now,jdbcType=TIMESTAMP})
+        </if>
+        <if test="status == 'blocked'">
+            AND blocked = TRUE
+        </if>
+        <if test="status == 'expired'">
+            AND blocked = FALSE
+            AND expires_at IS NOT NULL
+            AND expires_at &lt;= #{now,jdbcType=TIMESTAMP}
+        </if>
+        <if test="model != null and model != ''">
+            AND CAST(models AS VARCHAR) LIKE CONCAT('%"', #{model,jdbcType=VARCHAR}, '"%')
         </if>
         ORDER BY id DESC
         LIMIT #{limit,jdbcType=INTEGER} OFFSET #{offset,jdbcType=INTEGER}

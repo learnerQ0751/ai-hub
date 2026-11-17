@@ -294,7 +294,8 @@ public class ModelCatalogManager {
                 .toList();
         return new ModelAliasAdminBO(aliasDO.getAlias(), aliasDO.getTenantId(),
                 aliasDO.getDescription(), readFallbacks(aliasDO.getFallbacks()),
-                aliasDO.getStatus(), deployments);
+                aliasDO.getStatus(), aliasDO.getCreatedAt(), aliasDO.getUpdatedAt(),
+                deployments);
     }
 
     public ModelCatalogMapper mapper() {

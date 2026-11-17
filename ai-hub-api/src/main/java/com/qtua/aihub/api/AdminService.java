@@ -23,11 +23,14 @@ public interface AdminService {
      *
      * @param tenantId  租户（可空）
      * @param projectId 项目（可空）
+     * @param status    状态：active / blocked / expired（可空）
+     * @param model     模型白名单包含的别名（可空）
      * @param limit     每页条数
      * @param offset    偏移
      * @return 分页
      */
-    AdminKeyPageResDTO listKeys(String tenantId, String projectId, int limit, int offset);
+    AdminKeyPageResDTO listKeys(String tenantId, String projectId, String status, String model,
+                                int limit, int offset);
 
     /**
      * 封禁/解封 Key（按哈希）。
@@ -41,9 +44,11 @@ public interface AdminService {
     /**
      * 模型别名列表（含部署状态）。
      *
+     * @param tenantId 租户过滤（可空）
+     * @param status   状态过滤 ACTIVE/DISABLED（可空）
      * @return 别名列表
      */
-    List<AdminModelResDTO> listModels();
+    List<AdminModelResDTO> listModels(String tenantId, String status);
 
     /**
      * 查询单个别名。

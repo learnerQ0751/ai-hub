@@ -53,16 +53,22 @@ public interface ApiKeyMapper {
     int addSpend(@Param("keyHash") String keyHash, @Param("amount") BigDecimal amount);
 
     /**
-     * 管理端分页查询 Key（按租户/项目过滤）。
+     * 管理端分页查询 Key（按租户/项目/状态/模型过滤）。
      *
      * @param tenantId  租户（可空）
      * @param projectId 项目（可空）
+     * @param status    状态：active / blocked / expired（可空）
+     * @param model     模型白名单包含的别名（可空）
+     * @param now       当前时间（状态判定用）
      * @param limit     每页条数
      * @param offset    偏移
      * @return Key 列表
      */
     java.util.List<ApiKeyDO> selectPage(@Param("tenantId") String tenantId,
                                         @Param("projectId") String projectId,
+                                        @Param("status") String status,
+                                        @Param("model") String model,
+                                        @Param("now") java.time.Instant now,
                                         @Param("limit") int limit,
                                         @Param("offset") int offset);
 }

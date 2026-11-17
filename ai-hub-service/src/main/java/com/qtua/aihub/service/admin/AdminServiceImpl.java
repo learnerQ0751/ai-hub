@@ -12,6 +12,8 @@ import com.qtua.aihub.api.model.res.AdminLogResDTO;
 import com.qtua.aihub.api.model.res.AdminModelResDTO;
 import com.qtua.aihub.common.audit.AuditRecorder;
 import com.qtua.aihub.common.exception.ChatCompletionException;
+import com.qtua.aihub.common.pricing.ModelPrice;
+import com.qtua.aihub.common.pricing.PricingCatalog;
 import com.qtua.aihub.manager.ApiKeyManager;
 import com.qtua.aihub.manager.CallLogManager;
 import com.qtua.aihub.manager.catalog.ModelCatalogManager;
@@ -56,32 +58,37 @@ public class AdminServiceImpl implements AdminService {
     private final ModelCatalogManager catalogManager;
     private final ProjectAuthorizationManager authorizationManager;
     private final AuditRecorder auditRecorder;
+    private final PricingCatalog pricingCatalog;
 
     /**
      * 构造服务。
      *
-     * @param apiKeyManager          Key 门面
-     * @param callLogManager         日志门面
-     * @param catalogManager         模型目录门面
-     * @param authorizationManager   项目授权门面
+     * @param apiKeyManager        Key 门面
+     * @param callLogManager       日志门面
+     * @param catalogManager       模型目录门面
+     * @param authorizationManager 项目授权门面
+     * @param auditRecorder        审计端口
+     * @param pricingCatalog       模型价格目录
      */
     public AdminServiceImpl(ApiKeyManager apiKeyManager, CallLogManager callLogManager,
                             ModelCatalogManager catalogManager,
                             ProjectAuthorizationManager authorizationManager,
-                            AuditRecorder auditRecorder) {
+                            AuditRecorder auditRecorder, PricingCatalog pricingCatalog) {
         this.apiKeyManager = apiKeyManager;
         this.callLogManager = callLogManager;
         this.catalogManager = catalogManager;
         this.authorizationManager = authorizationManager;
         this.auditRecorder = auditRecorder;
+        this.pricingCatalog = pricingCatalog;
     }
 
     @Override
-    public AdminKeyPageResDTO listKeys(String tenantId, String projectId, int limit, int offset) {
+    public AdminKeyPageResDTO listKeys(String tenantId, String projectId, String status,
+                                       String model, int limit, int offset) {
         int pageSize = resolveLimit(limit);
         int pageOffset = Math.max(0, offset);
         List<ApiKeyBO> fetched = apiKeyManager.list(trim(tenantId), trim(projectId),
-                pageSize + 1, pageOffset);
+                normalizeKeyStatus(status), trim(model), Instant.now(), pageSize + 1, pageOffset);
         List<AdminKeyResDTO> items = fetched.stream().limit(pageSize)
                 .map(this::toKeyDTO).toList();
         return new AdminKeyPageResDTO(items, items.size(), fetched.size() > pageSize);
@@ -105,8 +112,16 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<AdminModelResDTO> listModels() {
-        return catalogManager.listAliasesAdmin().stream().map(this::toModelDTO).toList();
+    public List<AdminModelResDTO> listModels(String tenantId, String status) {
+        String tenantFilter = trim(tenantId);
+        String statusFilter = normalizeModelStatus(status);
+        return catalogManager.listAliasesAdmin().stream()
+                .filter(model -> Objects.isNull(tenantFilter)
+                        || tenantFilter.equals(model.tenantId()))
+                .filter(model -> Objects.isNull(statusFilter)
+                        || statusFilter.equals(model.status()))
+                .map(this::toModelDTO)
+                .toList();
     }
 
     @Override
@@ -378,17 +393,50 @@ public class AdminServiceImpl implements AdminService {
     }
 
     private AdminKeyResDTO toKeyDTO(ApiKeyBO key) {
-        return new AdminKeyResDTO(key.getKeyHash(), key.getModels(), key.getSpend(),
-                key.getMaxBudget(), key.isBlocked(), key.getTenantId(), key.getProjectId(),
-                iso(key.getExpiresAt()), iso(key.getCreatedAt()));
+        return new AdminKeyResDTO(key.getKeyHash(), key.getAlias(), key.getModels(),
+                key.getSpend(), key.getMaxBudget(), key.getBudgetDuration(),
+                key.getRpmLimit(), key.getTpmLimit(), key.getMetadata(), key.isBlocked(),
+                key.getTenantId(), key.getProjectId(), iso(key.getExpiresAt()),
+                iso(key.getCreatedAt()));
     }
 
     private AdminModelResDTO toModelDTO(ModelAliasAdminBO model) {
         List<AdminDeploymentResDTO> deployments = model.deployments().stream()
                 .map(this::toDeploymentDTO)
                 .toList();
-        return new AdminModelResDTO(model.alias(), model.tenantId(), model.status(),
-                model.fallbacks(), deployments);
+        ModelPrice price = model.deployments().isEmpty()
+                ? null : pricingCatalog.findPrice(model.deployments().get(0).upstreamModel())
+                .orElse(null);
+        return new AdminModelResDTO(model.alias(), model.tenantId(), model.description(),
+                model.status(), model.fallbacks(),
+                Objects.isNull(price) ? null : price.inputPerMillion(),
+                Objects.isNull(price) ? null : price.outputPerMillion(),
+                iso(model.createdAt()), iso(model.updatedAt()), deployments);
+    }
+
+    private String normalizeKeyStatus(String status) {
+        if (!StringUtils.hasText(status)) {
+            return null;
+        }
+        String normalized = status.trim().toLowerCase();
+        if (!"active".equals(normalized) && !"blocked".equals(normalized)
+                && !"expired".equals(normalized)) {
+            throw ChatCompletionException.invalidRequest(
+                    "status 必须为 active、blocked 或 expired", "status");
+        }
+        return normalized;
+    }
+
+    private String normalizeModelStatus(String status) {
+        if (!StringUtils.hasText(status)) {
+            return null;
+        }
+        String normalized = status.trim().toUpperCase();
+        if (!STATUS_ACTIVE.equals(normalized) && !STATUS_DISABLED.equals(normalized)) {
+            throw ChatCompletionException.invalidRequest(
+                    "status 必须为 ACTIVE 或 DISABLED", "status");
+        }
+        return normalized;
     }
 
     private AdminDeploymentResDTO toDeploymentDTO(ModelDeploymentAdminBO deployment) {

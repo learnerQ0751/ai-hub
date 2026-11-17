@@ -33,19 +33,21 @@ public interface PromptService {
     /**
      * 查询模板。
      *
-     * @param name    模板名
-     * @param version 版本（null 表示最新发布版）
+     * @param name     模板名
+     * @param version  版本（null 表示最新发布版）
+     * @param tenantId 租户（可空，为空取当前作用域）
      * @return 版本视图
      */
-    PromptResDTO get(String name, Integer version);
+    PromptResDTO get(String name, Integer version, String tenantId);
 
     /**
      * 版本历史。
      *
-     * @param name 模板名
+     * @param name     模板名
+     * @param tenantId 租户（可空，为空取当前作用域）
      * @return 版本列表
      */
-    PromptVersionListResDTO versions(String name);
+    PromptVersionListResDTO versions(String name, String tenantId);
 
     /**
      * 模板列表（每个模板的最新发布版本）。
@@ -58,9 +60,10 @@ public interface PromptService {
     /**
      * 发布指定版本（发布旧版本即回滚）。
      *
-     * @param name    模板名
-     * @param version 目标版本
+     * @param name     模板名
+     * @param version  目标版本
+     * @param tenantId 租户（可空，为空取当前作用域）
      * @return 发布后的版本
      */
-    PromptResDTO publish(String name, int version);
+    PromptResDTO publish(String name, int version, String tenantId);
 }

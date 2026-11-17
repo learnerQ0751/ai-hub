@@ -45,6 +45,8 @@ public class AdminController {
      *
      * @param tenantId  租户
      * @param projectId 项目
+     * @param status    状态：active / blocked / expired
+     * @param model     模型白名单包含的别名
      * @param limit     每页条数
      * @param offset    偏移
      * @return 分页
@@ -53,9 +55,11 @@ public class AdminController {
     public AdminKeyPageResDTO listKeys(
             @RequestParam(name = "tenant_id", required = false) String tenantId,
             @RequestParam(name = "project_id", required = false) String projectId,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "model", required = false) String model,
             @RequestParam(name = "limit", defaultValue = "50") int limit,
             @RequestParam(name = "offset", defaultValue = "0") int offset) {
-        return adminService.listKeys(tenantId, projectId, limit, offset);
+        return adminService.listKeys(tenantId, projectId, status, model, limit, offset);
     }
 
     /**
@@ -85,11 +89,15 @@ public class AdminController {
     /**
      * 模型别名与部署状态。
      *
+     * @param tenantId 租户过滤
+     * @param status   状态过滤 ACTIVE/DISABLED
      * @return 别名列表
      */
     @GetMapping(path = "/v1/admin/models", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<AdminModelResDTO> listModels() {
-        return adminService.listModels();
+    public List<AdminModelResDTO> listModels(
+            @RequestParam(name = "tenant_id", required = false) String tenantId,
+            @RequestParam(name = "status", required = false) String status) {
+        return adminService.listModels(tenantId, status);
     }
 
     /**

@@ -78,40 +78,47 @@ public class PromptController {
     /**
      * 查询模板（默认最新发布版）。
      *
-     * @param name    模板名
-     * @param version 指定版本（可选）
+     * @param name     模板名
+     * @param version  指定版本（可选）
+     * @param tenantId 租户（可选）
      * @return 版本视图
      */
     @GetMapping(path = "/v1/prompts/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     public PromptResDTO get(@PathVariable("name") String name,
-                            @RequestParam(name = "version", required = false) Integer version) {
-        return promptService.get(name, version);
+                            @RequestParam(name = "version", required = false) Integer version,
+                            @RequestParam(name = "tenant_id", required = false) String tenantId) {
+        return promptService.get(name, version, tenantId);
     }
 
     /**
      * 版本历史。
      *
-     * @param name 模板名
+     * @param name     模板名
+     * @param tenantId 租户（可选）
      * @return 版本列表
      */
     @GetMapping(path = "/v1/prompts/{name}/versions",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public PromptVersionListResDTO versions(@PathVariable("name") String name) {
-        return promptService.versions(name);
+    public PromptVersionListResDTO versions(@PathVariable("name") String name,
+                                            @RequestParam(name = "tenant_id", required = false)
+                                            String tenantId) {
+        return promptService.versions(name, tenantId);
     }
 
     /**
      * 发布指定版本（发布旧版本即回滚）。
      *
-     * @param name   模板名
-     * @param reqDTO 发布参数
+     * @param name     模板名
+     * @param tenantId 租户（可选）
+     * @param reqDTO   发布参数
      * @return 发布后的版本
      */
     @PostMapping(path = "/v1/prompts/{name}/publish",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public PromptResDTO publish(@PathVariable("name") String name,
+                                @RequestParam(name = "tenant_id", required = false) String tenantId,
                                 @RequestBody PromptPublishReqDTO reqDTO) {
-        return promptService.publish(name, reqDTO.version());
+        return promptService.publish(name, reqDTO.version(), tenantId);
     }
 }

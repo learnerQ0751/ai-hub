@@ -16,6 +16,7 @@ import java.util.Objects;
 public class ApiKeyBO {
 
     private final String keyHash;
+    private final String alias;
     private final List<String> models;
     private final BigDecimal spend;
     private final BigDecimal maxBudget;
@@ -48,7 +49,7 @@ public class ApiKeyBO {
                     String budgetDuration, Integer rpmLimit, Integer tpmLimit,
                     Instant expiresAt, boolean blocked,
                     Map<String, Object> metadata, Instant createdAt) {
-        this(keyHash, models, spend, maxBudget, budgetDuration, rpmLimit, tpmLimit,
+        this(keyHash, null, models, spend, maxBudget, budgetDuration, rpmLimit, tpmLimit,
                 expiresAt, blocked, metadata, createdAt, null, null);
     }
 
@@ -74,7 +75,35 @@ public class ApiKeyBO {
                     Instant expiresAt, boolean blocked,
                     Map<String, Object> metadata, Instant createdAt,
                     String tenantId, String projectId) {
+        this(keyHash, null, models, spend, maxBudget, budgetDuration, rpmLimit, tpmLimit,
+                expiresAt, blocked, metadata, createdAt, tenantId, projectId);
+    }
+
+    /**
+     * 构造业务对象（含别名与租户绑定）。
+     *
+     * @param keyHash        SHA-256 摘要
+     * @param alias          管理台别名
+     * @param models         模型白名单
+     * @param spend          已消费金额
+     * @param maxBudget      预算上限
+     * @param budgetDuration 预算周期
+     * @param rpmLimit       每分钟请求上限
+     * @param tpmLimit       每分钟 Token 上限
+     * @param expiresAt      过期时间
+     * @param blocked        是否封禁
+     * @param metadata       元信息
+     * @param createdAt      创建时间
+     * @param tenantId       绑定租户
+     * @param projectId      绑定项目
+     */
+    public ApiKeyBO(String keyHash, String alias, List<String> models, BigDecimal spend,
+                    BigDecimal maxBudget, String budgetDuration, Integer rpmLimit,
+                    Integer tpmLimit, Instant expiresAt, boolean blocked,
+                    Map<String, Object> metadata, Instant createdAt,
+                    String tenantId, String projectId) {
         this.keyHash = keyHash;
+        this.alias = alias;
         this.models = Objects.isNull(models) ? List.of() : List.copyOf(models);
         this.spend = spend;
         this.maxBudget = maxBudget;
@@ -93,6 +122,10 @@ public class ApiKeyBO {
 
     public String getKeyHash() {
         return keyHash;
+    }
+
+    public String getAlias() {
+        return alias;
     }
 
     public List<String> getModels() {

@@ -14,6 +14,8 @@ public class ApiKeyDO {
     private Long id;
     /** SHA-256 十六进制摘要，唯一；不允许保存明文。 */
     private String keyHash;
+    /** 管理台展示用别名；可为空。 */
+    private String alias;
     /** 模型白名单 JSON 数组，如 ["chat"]。 */
     private String models;
     /** 已消费金额；本期只读，1.5 起累加。 */
@@ -47,6 +49,14 @@ public class ApiKeyDO {
 
     public void setKeyHash(String keyHash) {
         this.keyHash = keyHash;
+    }
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias;
     }
 
     public String getModels() {

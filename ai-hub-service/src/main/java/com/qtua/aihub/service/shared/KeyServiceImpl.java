@@ -50,6 +50,7 @@ public class KeyServiceImpl implements KeyService {
     private static final String BUDGET_DURATION_MONTHLY = "monthly";
     private static final int MAX_TENANT_LENGTH = 64;
     private static final int MAX_PROJECT_LENGTH = 64;
+    private static final int MAX_ALIAS_LENGTH = 128;
 
     private final ApiKeyManager apiKeyManager;
     private final AuditRecorder auditRecorder;
@@ -92,7 +93,8 @@ public class KeyServiceImpl implements KeyService {
                 "tenant_id", MAX_TENANT_LENGTH);
         String projectId = normalizeScope(reqDTO.projectId(), TenantScopeGuard.DEFAULT_PROJECT,
                 "project_id", MAX_PROJECT_LENGTH);
-        ApiKeyBO apiKey = new ApiKeyBO(keyHash, reqDTO.models(), BigDecimal.ZERO,
+        String alias = normalizeAlias(reqDTO.alias());
+        ApiKeyBO apiKey = new ApiKeyBO(keyHash, alias, reqDTO.models(), BigDecimal.ZERO,
                 reqDTO.maxBudget(), budgetDuration, reqDTO.rpmLimit(), reqDTO.tpmLimit(),
                 expiresAt, false, reqDTO.metadata(), createdAt, tenantId, projectId);
         apiKeyManager.save(apiKey);
@@ -105,7 +107,25 @@ public class KeyServiceImpl implements KeyService {
                         "models", reqDTO.models(), "maxBudget", String.valueOf(reqDTO.maxBudget())));
         return new KeyGenerateResDTO(plainKey, reqDTO.models(), BigDecimal.ZERO, reqDTO.metadata(),
                 toIso(expiresAt), reqDTO.maxBudget(), budgetDuration,
-                reqDTO.rpmLimit(), reqDTO.tpmLimit(), false, tenantId, projectId);
+                reqDTO.rpmLimit(), reqDTO.tpmLimit(), false, tenantId, projectId, alias);
+    }
+
+    /**
+     * 校验并归一化管理台别名。
+     *
+     * @param alias 原始别名
+     * @return 去空白后的别名；空值返回 null
+     */
+    private String normalizeAlias(String alias) {
+        if (!StringUtils.hasText(alias)) {
+            return null;
+        }
+        String trimmed = alias.trim();
+        if (trimmed.length() > MAX_ALIAS_LENGTH) {
+            throw ChatCompletionException.invalidRequest(
+                    "alias 长度不能超过 " + MAX_ALIAS_LENGTH, "alias");
+        }
+        return trimmed;
     }
 
     /**

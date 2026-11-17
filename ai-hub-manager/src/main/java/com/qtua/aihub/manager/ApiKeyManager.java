@@ -51,6 +51,7 @@ public class ApiKeyManager {
     public void save(ApiKeyBO apiKey) {
         ApiKeyDO dataObject = new ApiKeyDO();
         dataObject.setKeyHash(apiKey.getKeyHash());
+        dataObject.setAlias(apiKey.getAlias());
         dataObject.setModels(writeJson(apiKey.getModels()));
         dataObject.setSpend(apiKey.getSpend());
         dataObject.setMaxBudget(apiKey.getMaxBudget());
@@ -92,12 +93,17 @@ public class ApiKeyManager {
      *
      * @param tenantId  租户（可空）
      * @param projectId 项目（可空）
+     * @param status    状态：active / blocked / expired（可空）
+     * @param model     模型白名单包含的别名（可空）
+     * @param now       当前时间（状态判定用）
      * @param limit     每页条数
      * @param offset    偏移
      * @return Key 列表
      */
-    public List<ApiKeyBO> list(String tenantId, String projectId, int limit, int offset) {
-        return apiKeyMapper.selectPage(tenantId, projectId, limit, offset).stream()
+    public List<ApiKeyBO> list(String tenantId, String projectId, String status, String model,
+                               java.time.Instant now, int limit, int offset) {
+        return apiKeyMapper.selectPage(tenantId, projectId, status, model, now, limit, offset)
+                .stream()
                 .map(this::toBO)
                 .toList();
     }
@@ -105,6 +111,7 @@ public class ApiKeyManager {
     private ApiKeyBO toBO(ApiKeyDO dataObject) {
         return new ApiKeyBO(
                 dataObject.getKeyHash(),
+                dataObject.getAlias(),
                 readModels(dataObject.getModels()),
                 dataObject.getSpend(),
                 dataObject.getMaxBudget(),

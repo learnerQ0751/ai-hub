@@ -21,6 +21,7 @@ import java.util.Objects;
  * @param budgetDuration 预算周期：daily/monthly；为空表示不启用周期预算
  * @param rpmLimit       每分钟请求上限
  * @param tpmLimit       每分钟 Token 上限
+ * @param alias          管理台展示用别名（可选）
  */
 public record KeyGenerateReqDTO(
         List<String> models,
@@ -31,7 +32,8 @@ public record KeyGenerateReqDTO(
         @JsonProperty("rpm_limit") Integer rpmLimit,
         @JsonProperty("tpm_limit") Integer tpmLimit,
         @JsonProperty("tenant_id") String tenantId,
-        @JsonProperty("project_id") String projectId) {
+        @JsonProperty("project_id") String projectId,
+        String alias) {
 
     /**
      * 防御性复制集合，避免调用方修改内部状态。
@@ -49,6 +51,16 @@ public record KeyGenerateReqDTO(
                              BigDecimal maxBudget, String budgetDuration, Integer rpmLimit,
                              Integer tpmLimit) {
         this(models, duration, metadata, maxBudget, budgetDuration, rpmLimit, tpmLimit,
-                null, null);
+                null, null, null);
+    }
+
+    /**
+     * 兼容构造器：未指定别名。
+     */
+    public KeyGenerateReqDTO(List<String> models, String duration, Map<String, Object> metadata,
+                             BigDecimal maxBudget, String budgetDuration, Integer rpmLimit,
+                             Integer tpmLimit, String tenantId, String projectId) {
+        this(models, duration, metadata, maxBudget, budgetDuration, rpmLimit, tpmLimit,
+                tenantId, projectId, null);
     }
 }

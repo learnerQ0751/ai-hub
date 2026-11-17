@@ -58,6 +58,8 @@ class AdminIntegrationTest {
     @DynamicPropertySource
     static void properties(DynamicPropertyRegistry registry) {
         registry.add("gateway.master-key", () -> MASTER_KEY);
+        registry.add("gateway.pricing.models.m1.input-per-million", () -> "1.5");
+        registry.add("gateway.pricing.models.m1.output-per-million", () -> "2.5");
     }
 
     @Test
@@ -141,6 +143,72 @@ class AdminIntegrationTest {
     }
 
     @Test
+    void key_list_exposes_management_fields_and_filters() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String tenant = "tenant-fields-" + suffix;
+        String project = "project-fields-" + suffix;
+        String alias = "alias-" + suffix;
+        String plainKey = generateKeyWithFields(tenant, project, alias);
+        String hash = KeyHasher.sha256Hex(plainKey);
+
+        ResponseEntity<String> active = get("/v1/admin/keys?tenant_id=" + tenant
+                + "&status=active&model=chat");
+        assertThat(active.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(active.getBody()).contains(hash).contains("\"alias\":\"" + alias + "\"")
+                .contains("\"metadata\":{\"team\":\"console\"}")
+                .contains("\"rpm_limit\":10").contains("\"tpm_limit\":1000")
+                .contains("\"max_budget\":12.5").contains("\"budget_duration\":\"monthly\"");
+
+        ResponseEntity<String> otherModel = get("/v1/admin/keys?tenant_id=" + tenant
+                + "&model=other-model");
+        assertThat(otherModel.getBody()).contains("\"items\":[]");
+
+        post("/v1/admin/keys/" + hash + "/block", "{}");
+        ResponseEntity<String> blocked = get("/v1/admin/keys?tenant_id=" + tenant
+                + "&status=blocked");
+        assertThat(blocked.getBody()).contains(hash);
+        ResponseEntity<String> noActive = get("/v1/admin/keys?tenant_id=" + tenant
+                + "&status=active");
+        assertThat(noActive.getBody()).contains("\"items\":[]");
+
+        ResponseEntity<String> invalid = get("/v1/admin/keys?status=unknown");
+        assertThat(invalid.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void model_list_exposes_description_price_and_updated_at_with_filters() {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        String tenant = "tenant-model-" + suffix;
+        String alias = "model-fields-" + suffix;
+
+        ResponseEntity<String> created = post("/v1/admin/models",
+                "{\"alias\":\"" + alias + "\",\"tenant_id\":\"" + tenant + "\","
+                        + "\"description\":\"管理台模型目录\",\"fallbacks\":[],\"deployments\":["
+                        + "{\"deployment_key\":\"" + alias + "#0\","
+                        + "\"api_base\":\"http://localhost:1\","
+                        + "\"api_key\":\"upstream-secret\","
+                        + "\"upstream_model\":\"m1\",\"weight\":1,\"priority\":0}]}");
+        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<String> models = get("/v1/admin/models?tenant_id=" + tenant
+                + "&status=ACTIVE");
+        assertThat(models.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(models.getBody()).contains(alias).contains("管理台模型目录")
+                .contains("\"input_price_per_million\":1.5")
+                .contains("\"output_price_per_million\":2.5")
+                .contains("\"updated_at\":")
+                .doesNotContain("upstream-secret");
+
+        ResponseEntity<String> disabled = get("/v1/admin/models?tenant_id=" + tenant
+                + "&status=DISABLED");
+        assertThat(disabled.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(disabled.getBody()).doesNotContain(alias);
+
+        ResponseEntity<String> invalid = get("/v1/admin/models?status=NOPE");
+        assertThat(invalid.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     void admin_logs_are_filterable() {
         ResponseEntity<String> response = get("/v1/admin/logs?limit=5");
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -167,6 +235,22 @@ class AdminIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve().toEntity(String.class);
+    }
+
+    private String generateKeyWithFields(String tenantId, String projectId, String alias)
+            throws Exception {
+        ResponseEntity<String> response = restClient.post().uri("/key/generate")
+                .header("Authorization", "Bearer " + MASTER_KEY)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("{\"alias\":\"" + alias + "\",\"models\":[\"chat\"],"
+                        + "\"metadata\":{\"team\":\"console\"},"
+                        + "\"max_budget\":12.5,\"budget_duration\":\"monthly\","
+                        + "\"rpm_limit\":10,\"tpm_limit\":1000,"
+                        + "\"tenant_id\":\"" + tenantId + "\",\"project_id\":\"" + projectId
+                        + "\"}")
+                .retrieve().toEntity(String.class);
+        JsonNode node = objectMapper.readTree(response.getBody());
+        return node.path("key").asText();
     }
 
     private String generateKey(String tenantId, String projectId) throws Exception {

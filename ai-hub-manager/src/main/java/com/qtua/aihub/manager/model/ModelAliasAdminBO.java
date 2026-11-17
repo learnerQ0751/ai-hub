@@ -1,5 +1,6 @@
 package com.qtua.aihub.manager.model;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -11,10 +12,13 @@ import java.util.Objects;
  * @param description 描述
  * @param fallbacks   降级链
  * @param status      状态
+ * @param createdAt   创建时间
+ * @param updatedAt   更新时间
  * @param deployments 部署实例
  */
 public record ModelAliasAdminBO(String alias, String tenantId, String description,
                                 List<String> fallbacks, String status,
+                                Instant createdAt, Instant updatedAt,
                                 List<ModelDeploymentAdminBO> deployments) {
 
     /**

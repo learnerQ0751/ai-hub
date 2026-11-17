@@ -1,11 +1,13 @@
 package com.qtua.aihub.console.controller;
 
+import com.qtua.aihub.api.ConsoleSessionService;
 import com.qtua.aihub.api.KeyService;
 import com.qtua.aihub.api.model.auth.KeyAuthDTO;
 import com.qtua.aihub.api.model.req.KeyGenerateReqDTO;
 import com.qtua.aihub.api.model.res.KeyBlockResDTO;
 import com.qtua.aihub.api.model.res.KeyGenerateResDTO;
 import com.qtua.aihub.api.model.res.KeyInfoResDTO;
+import com.qtua.aihub.common.config.ConsoleSessionProperties;
 import com.qtua.aihub.common.config.GatewayProperties;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.service.gateway.GatewayGovernanceService;
@@ -52,6 +54,12 @@ class KeyControllerTest {
 
     @MockitoBean
     private GatewayProperties gatewayProperties;
+
+    @MockitoBean
+    private ConsoleSessionService consoleSessionService;
+
+    @MockitoBean
+    private ConsoleSessionProperties consoleSessionProperties;
 
     @MockitoBean
     private GatewayGovernanceService gatewayGovernanceService;

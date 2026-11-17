@@ -26,6 +26,7 @@ import java.util.Objects;
  * @param blocked        是否封禁
  * @param tenantId       绑定租户（REQ-4.1）
  * @param projectId      绑定项目（REQ-4.1）
+ * @param alias          管理台别名
  */
 public record KeyGenerateResDTO(
         String key,
@@ -39,7 +40,8 @@ public record KeyGenerateResDTO(
         @JsonProperty("tpm_limit") Integer tpmLimit,
         boolean blocked,
         @JsonProperty("tenant_id") String tenantId,
-        @JsonProperty("project_id") String projectId) {
+        @JsonProperty("project_id") String projectId,
+        String alias) {
 
     /**
      * 兼容构造器：未绑定租户（旧调用/测试）。
@@ -49,7 +51,18 @@ public record KeyGenerateResDTO(
                              String budgetDuration, Integer rpmLimit, Integer tpmLimit,
                              boolean blocked) {
         this(key, models, spend, metadata, expires, maxBudget, budgetDuration, rpmLimit,
-                tpmLimit, blocked, null, null);
+                tpmLimit, blocked, null, null, null);
+    }
+
+    /**
+     * 兼容构造器：已绑定租户、未指定别名。
+     */
+    public KeyGenerateResDTO(String key, List<String> models, BigDecimal spend,
+                             Map<String, Object> metadata, String expires, BigDecimal maxBudget,
+                             String budgetDuration, Integer rpmLimit, Integer tpmLimit,
+                             boolean blocked, String tenantId, String projectId) {
+        this(key, models, spend, metadata, expires, maxBudget, budgetDuration, rpmLimit,
+                tpmLimit, blocked, tenantId, projectId, null);
     }
 
     /**
