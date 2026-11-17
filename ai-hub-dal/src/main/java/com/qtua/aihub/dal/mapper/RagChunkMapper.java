@@ -74,6 +74,22 @@ public interface RagChunkMapper {
                                    @Param("limit") int limit);
 
     /**
+     * 按文档与序号区间查询切片（REQ-5.4 邻接扩展，租户/项目下推）。
+     *
+     * @param tenantId  租户
+     * @param projectId 项目
+     * @param docId     文档 ID
+     * @param fromIndex 起始序号（含）
+     * @param toIndex   结束序号（含）
+     * @return 切片列表（按 chunk_index 升序）
+     */
+    List<RagChunkDO> selectByDocIdIndexRange(@Param("tenantId") String tenantId,
+                                             @Param("projectId") String projectId,
+                                             @Param("docId") String docId,
+                                             @Param("fromIndex") int fromIndex,
+                                             @Param("toIndex") int toIndex);
+
+    /**
      * 统计文档切片数。
      *
      * @param docId 文档 ID

@@ -98,6 +98,18 @@
         LIMIT #{limit,jdbcType=INTEGER}
     </select>
 
+    <select id="selectByDocIdIndexRange" resultMap="RagChunkResultMap">
+        SELECT id, chunk_id, doc_id, project_id, chunk_index, content, char_count, source,
+               index_status, embedding_model, embedding_dimension, error_message, created_at,
+               tenant_id
+        FROM rag_chunks
+        WHERE tenant_id = #{tenantId,jdbcType=VARCHAR}
+          AND project_id = #{projectId,jdbcType=VARCHAR}
+          AND doc_id = #{docId,jdbcType=VARCHAR}
+          AND chunk_index BETWEEN #{fromIndex,jdbcType=INTEGER} AND #{toIndex,jdbcType=INTEGER}
+        ORDER BY chunk_index ASC
+    </select>
+
     <select id="countByDocId" resultType="int">
         SELECT COUNT(1)
         FROM rag_chunks

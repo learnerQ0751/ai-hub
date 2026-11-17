@@ -20,10 +20,13 @@ import com.qtua.aihub.api.model.res.RagUsageResDTO;
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.tenant.TenantIdentity;
+import com.qtua.aihub.common.tenant.TenantScopeGuard;
 import com.qtua.aihub.common.trace.TraceEvent;
 import com.qtua.aihub.common.trace.TraceRecorder;
 import com.qtua.aihub.common.metering.TokenUsage;
 import com.qtua.aihub.core.rag.RagAnswerPrompt;
+import com.qtua.aihub.core.rag.RagContextAssembler;
+import com.qtua.aihub.core.rag.RagContextSegment;
 import com.qtua.aihub.core.rag.RagPromptBuilder;
 import com.qtua.aihub.core.rag.RagRetrievedChunk;
 import org.slf4j.Logger;
@@ -72,47 +75,53 @@ public class RagAnswerServiceImpl implements RagAnswerService {
     private final RagSearchService searchService;
     private final ChatCompletionService chatService;
     private final RagPromptBuilder promptBuilder;
+    private final RagContextAssembler contextAssembler;
     private final ObjectMapper objectMapper;
     private final RagProperties properties;
     private final TraceRecorder traceRecorder;
 
     /**
-     * 构造服务。
+     * 构造服务（单元测试：无 Trace）。
      *
-     * @param searchService 检索服务（复用 REQ-3.3）
-     * @param chatService   内部聊天补全服务
-     * @param promptBuilder prompt 构造器
-     * @param objectMapper  JSON 构造/解析器
-     * @param properties    RAG 配置
+     * @param searchService    检索服务（复用 REQ-3.3）
+     * @param chatService      内部聊天补全服务
+     * @param promptBuilder    prompt 构造器
+     * @param contextAssembler 上下文拼装器
+     * @param objectMapper     JSON 构造/解析器
+     * @param properties       RAG 配置
      */
     public RagAnswerServiceImpl(RagSearchService searchService,
                                 ChatCompletionService chatService,
                                 RagPromptBuilder promptBuilder,
+                                RagContextAssembler contextAssembler,
                                 ObjectMapper objectMapper,
                                 RagProperties properties) {
-        this(searchService, chatService, promptBuilder, objectMapper, properties,
-                TraceRecorder.NOOP);
+        this(searchService, chatService, promptBuilder, contextAssembler, objectMapper,
+                properties, TraceRecorder.NOOP);
     }
 
     /**
      * 构造服务（含 Trace）。
      *
-     * @param searchService 检索服务
-     * @param chatService   内部聊天补全服务
-     * @param promptBuilder prompt 构造器
-     * @param objectMapper  JSON 构造/解析器
-     * @param properties    RAG 配置
-     * @param traceRecorder Trace 记录端口
+     * @param searchService    检索服务
+     * @param chatService      内部聊天补全服务
+     * @param promptBuilder    prompt 构造器
+     * @param contextAssembler 上下文拼装器
+     * @param objectMapper     JSON 构造/解析器
+     * @param properties       RAG 配置
+     * @param traceRecorder    Trace 记录端口
      */
     @org.springframework.beans.factory.annotation.Autowired
     public RagAnswerServiceImpl(RagSearchService searchService,
                                 ChatCompletionService chatService,
                                 RagPromptBuilder promptBuilder,
+                                RagContextAssembler contextAssembler,
                                 ObjectMapper objectMapper,
                                 RagProperties properties, TraceRecorder traceRecorder) {
         this.searchService = searchService;
         this.chatService = chatService;
         this.promptBuilder = promptBuilder;
+        this.contextAssembler = contextAssembler;
         this.objectMapper = objectMapper;
         this.properties = properties;
         this.traceRecorder = traceRecorder;
@@ -147,7 +156,9 @@ public class RagAnswerServiceImpl implements RagAnswerService {
             return fallbackResponse(query, search, model);
         }
         boolean freeAnswer = search.noHit() && freeAllowed;
-        RagAnswerPrompt prompt = promptBuilder.build(query, toChunks(search),
+        List<RagContextSegment> segments = contextAssembler.assemble(toChunks(search),
+                currentTenantId(), search.projectId(), properties.getAnswer().getNeighborWindow());
+        RagAnswerPrompt prompt = promptBuilder.buildFromSegments(query, segments,
                 properties.getAnswer().getMaxContextChars(), freeAnswer);
         LOG.info("rag answer prompt: model={}, citations={}, promptChars={}, promptHash={}, "
                         + "freeAnswer={}",
@@ -207,6 +218,20 @@ public class RagAnswerServiceImpl implements RagAnswerService {
         } catch (RuntimeException ex) {
             // Trace 失败不影响回答。
         }
+    }
+
+    /**
+     * 当前租户：与检索的租户口径一致（虚拟 Key 用绑定租户，无身份/管理员用默认租户）。
+     *
+     * @return 租户 ID
+     */
+    private String currentTenantId() {
+        TenantIdentity identity = com.qtua.aihub.common.tenant.TenantContextHolder.current();
+        if (ObjectUtils.isEmpty(identity) || identity.master()
+                || !StringUtils.hasText(identity.tenantId())) {
+            return TenantScopeGuard.DEFAULT_TENANT;
+        }
+        return identity.tenantId();
     }
 
     private String requireModel(String model) {

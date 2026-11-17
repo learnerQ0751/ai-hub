@@ -166,6 +166,8 @@ gateway:
       default-top-k: 4
       # 放入 prompt 的资料部分最大字符数
       max-context-chars: 6000
+      # REQ-5.4 邻接扩展：命中切片前后各取 n 条上下文；0 关闭
+      neighbor-window: 1
       # 无召回时默认不调模型；开启后仍需请求显式 allow_free_answer=true
       allow-free-answer: false
       fallback-message: "未在知识库中检索到相关资料，无法回答该问题。"

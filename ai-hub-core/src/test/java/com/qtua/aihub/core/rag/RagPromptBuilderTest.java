@@ -68,9 +68,42 @@ class RagPromptBuilderTest {
         assertThat(prompt.userPrompt()).contains("问题：问题");
     }
 
+    @Test
+    void renders_context_neighbors_without_citations_in_document_order() {
+        RagAnswerPrompt prompt = builder.buildFromSegments("问题", List.of(
+                segment("d1-0", "d1", 0, "上文片段", false),
+                segment("d1-1", "d1", 1, "命中片段", true),
+                segment("d2-5", "d2", 5, "另一文档命中", true)), 1000, false);
+
+        assertThat(prompt.userPrompt()).contains("（上下文）来源：a.md")
+                .contains("上文片段")
+                .contains("[1]（来源：a.md）")
+                .contains("[2]（来源：a.md）");
+        assertThat(prompt.userPrompt().indexOf("上文片段"))
+                .isLessThan(prompt.userPrompt().indexOf("[1]"));
+        assertThat(prompt.citations()).extracting(RagAnswerCitation::chunkId)
+                .containsExactly("d1-1", "d2-5");
+    }
+
+    @Test
+    void budget_prioritizes_citations_over_neighbors() {
+        RagAnswerPrompt prompt = builder.buildFromSegments("问题", List.of(
+                segment("d1-0", "d1", 0, "邻居".repeat(40), false),
+                segment("d1-1", "d1", 1, "命中", true)), 60, false);
+
+        assertThat(prompt.citations()).extracting(RagAnswerCitation::chunkId)
+                .containsExactly("d1-1");
+        assertThat(prompt.userPrompt()).doesNotContain("邻居邻居");
+    }
+
     private RagRetrievedChunk chunk(String chunkId, String docId, String source, String content,
                                     double score, Double rerankScore) {
         return new RagRetrievedChunk(chunkId, docId, "p1", source, 0, content, score,
                 rerankScore);
+    }
+
+    private RagContextSegment segment(String chunkId, String docId, int chunkIndex,
+                                      String content, boolean citation) {
+        return new RagContextSegment(chunkId, docId, "a.md", chunkIndex, content, 0.5d, citation);
     }
 }

@@ -574,5 +574,10 @@
     <Match>
         <Class name="com.qtua.aihub.console.filter.IdempotencyFilter"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
-    </Match></FindBugsFilter>
+    </Match>    <!-- REQ-5.4: context assembler is a Spring constructor-injected component -->
+    <Match>
+        <Class name="com.qtua.aihub.core.rag.RagContextAssembler"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+</FindBugsFilter>
 

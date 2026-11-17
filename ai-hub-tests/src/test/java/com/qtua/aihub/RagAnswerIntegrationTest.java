@@ -141,6 +141,41 @@ class RagAnswerIntegrationTest {
     }
 
     @Test
+    void answer_restores_document_order_and_marks_neighbors_as_context() throws Exception {
+        String project = "p-answer-order";
+        String docId = upload(project, "制度.md",
+                "年假" + "甲".repeat(60) + "\n\n" + "报销" + "乙".repeat(60));
+
+        // 查询同时命中两段：字面路按覆盖率先返回第二段，回答侧应还原为第一段在前。
+        UPSTREAM.enqueue(mockResponse(ANSWER));
+        JsonNode response = answer(answerBody(project, "年假 报销", "chat", 3, 0.99, null, false));
+
+        JsonNode citations = response.path("citations");
+        assertThat(citations.size()).isEqualTo(2);
+        assertThat(citations.get(0).path("chunk_id").asText()).isEqualTo(docId + "-0000");
+        assertThat(citations.get(1).path("chunk_id").asText()).isEqualTo(docId + "-0001");
+        RecordedRequest first = UPSTREAM.takeRequest(2, TimeUnit.SECONDS);
+        assertThat(first).isNotNull();
+        String firstPrompt = objectMapper.readTree(first.getBody().readUtf8())
+                .path("messages").get(1).path("content").asText();
+        assertThat(firstPrompt.indexOf("年假")).isLessThan(firstPrompt.indexOf("报销"));
+
+        // 只命中第一段：第二段作为上下文补齐，不进入 citations。
+        UPSTREAM.enqueue(mockResponse(ANSWER));
+        JsonNode neighbor = answer(answerBody(project, "年假", "chat", 3, 0.99, null, false));
+
+        assertThat(neighbor.path("citations").size()).isEqualTo(1);
+        assertThat(neighbor.path("citations").get(0).path("chunk_id").asText())
+                .isEqualTo(docId + "-0000");
+        RecordedRequest second = UPSTREAM.takeRequest(2, TimeUnit.SECONDS);
+        assertThat(second).isNotNull();
+        String secondPrompt = objectMapper.readTree(second.getBody().readUtf8())
+                .path("messages").get(1).path("content").asText();
+        assertThat(secondPrompt).contains("（上下文）").contains("报销");
+        assertThat(secondPrompt.indexOf("年假")).isLessThan(secondPrompt.indexOf("（上下文）"));
+    }
+
+    @Test
     void no_hit_returns_fallback_without_calling_model() {
         int before = UPSTREAM.getRequestCount();
 

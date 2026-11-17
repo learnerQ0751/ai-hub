@@ -15,7 +15,9 @@ import com.qtua.aihub.api.model.res.RagSearchResDTO;
 import com.qtua.aihub.common.config.RagProperties;
 import com.qtua.aihub.common.exception.ChatCompletionException;
 import com.qtua.aihub.common.metering.TokenUsage;
+import com.qtua.aihub.core.rag.RagContextAssembler;
 import com.qtua.aihub.core.rag.RagPromptBuilder;
+import com.qtua.aihub.manager.rag.RagChunkManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -51,8 +53,9 @@ class RagAnswerServiceTest {
         searchService = mock(RagSearchService.class);
         chatService = mock(ChatCompletionService.class);
         properties = new RagProperties();
+        RagChunkManager chunkManager = mock(RagChunkManager.class);
         service = new RagAnswerServiceImpl(searchService, chatService, new RagPromptBuilder(),
-                objectMapper, properties);
+                new RagContextAssembler(chunkManager), objectMapper, properties);
     }
 
     @Test
@@ -89,6 +92,26 @@ class RagAnswerServiceTest {
         assertThat(response.usage().promptTokens()).isEqualTo(10);
         assertThat(response.usage().completionTokens()).isEqualTo(5);
         assertThat(response.usage().totalTokens()).isEqualTo(15);
+    }
+
+    @Test
+    void answer_restores_document_order_for_same_document_hits() {
+        when(searchService.search(any())).thenReturn(searchResult(List.of(
+                hit("d1-1", "d1", "手册.md", 1, "第二段", 0.9),
+                hit("d1-0", "d1", "手册.md", 0, "第一段", 0.8))));
+        when(chatService.chat(any())).thenReturn(chatResponse("答案 [1]", 3, 2));
+
+        RagAnswerResDTO response = service.answer(request(null, null), AUTH, REQUEST_ID);
+
+        ArgumentCaptor<ChatCompletionReqDTO> chat = ArgumentCaptor.forClass(
+                ChatCompletionReqDTO.class);
+        verify(chatService).chat(chat.capture());
+        String prompt = readJson(chat.getValue().getRawBody()).path("messages").get(1)
+                .path("content").asText();
+        assertThat(prompt.indexOf("第一段")).isLessThan(prompt.indexOf("第二段"));
+        assertThat(prompt.indexOf("[1]（来源：手册.md）")).isLessThan(prompt.indexOf("第一段"));
+        assertThat(response.citations()).extracting(citation -> citation.chunkId())
+                .containsExactly("d1-0", "d1-1");
     }
 
     @Test

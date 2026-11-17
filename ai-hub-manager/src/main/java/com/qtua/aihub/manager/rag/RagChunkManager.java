@@ -99,6 +99,25 @@ public class RagChunkManager {
     }
 
     /**
+     * 按文档与序号区间查询切片（REQ-5.4 邻接扩展，租户/项目下推）。
+     *
+     * @param tenantId  租户
+     * @param projectId 项目
+     * @param docId     文档 ID
+     * @param fromIndex 起始序号（含）
+     * @param toIndex   结束序号（含）
+     * @return 切片列表；区间非法或空文档返回空列表
+     */
+    public List<RagChunkBO> listByDocIdIndexRange(String tenantId, String projectId,
+                                                  String docId, int fromIndex, int toIndex) {
+        if (toIndex < fromIndex) {
+            return List.of();
+        }
+        return chunkMapper.selectByDocIdIndexRange(tenantId, projectId, docId,
+                Math.max(0, fromIndex), toIndex).stream().map(this::toBO).toList();
+    }
+
+    /**
      * 字面召回（REQ-5.3）。
      *
      * @param tenantId  租户

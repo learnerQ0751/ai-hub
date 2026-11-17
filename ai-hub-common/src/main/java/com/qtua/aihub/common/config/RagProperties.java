@@ -41,6 +41,7 @@ public class RagProperties {
     private static final double DEFAULT_RRF_KEYWORD_WEIGHT = 1.0d;
     private static final int DEFAULT_KEYWORD_MAX_TERMS = 16;
     private static final int DEFAULT_ANSWER_TOP_K = 4;
+    private static final int DEFAULT_NEIGHBOR_WINDOW = 1;
     private static final int DEFAULT_MAX_INPUTS = 2048;
     private static final int DEFAULT_MAX_CONTEXT_CHARS = 6000;
     private static final int DEFAULT_PARSE_MAX_CHARS = 5_000_000;
@@ -702,6 +703,8 @@ public class RagProperties {
         private int defaultTopK = DEFAULT_ANSWER_TOP_K;
         /** 放入 prompt 的资料部分最大字符数。 */
         private int maxContextChars = DEFAULT_MAX_CONTEXT_CHARS;
+        /** 回答侧邻接扩展条数（前后各 n 条）；0 关闭（REQ-5.4）。 */
+        private int neighborWindow = DEFAULT_NEIGHBOR_WINDOW;
         /** 是否允许无召回时自由回答；默认关闭。 */
         private boolean allowFreeAnswer;
         /** 无召回时的兜底话术。 */
@@ -723,6 +726,14 @@ public class RagProperties {
 
         public void setMaxContextChars(int maxContextChars) {
             this.maxContextChars = maxContextChars;
+        }
+
+        public int getNeighborWindow() {
+            return neighborWindow;
+        }
+
+        public void setNeighborWindow(int neighborWindow) {
+            this.neighborWindow = neighborWindow;
         }
 
         public boolean isAllowFreeAnswer() {
