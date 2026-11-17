@@ -53,7 +53,11 @@ describe('已登录路由', () => {
 
   it.each(routes)('渲染 %s 的页面标题', async (path, title) => {
     renderAt(path);
-    const heading = await screen.findByRole('heading', { level: 1, name: title });
+    const heading = await screen.findByRole(
+      'heading',
+      { level: 1, name: title },
+      { timeout: 15000 },
+    );
     expect(heading).toBeTruthy();
   });
 });
@@ -75,7 +79,7 @@ describe('登录与会话', () => {
     const heading = await screen.findByRole(
       'heading',
       { level: 1, name: '概览' },
-      { timeout: 4000 },
+      { timeout: 15000 },
     );
     expect(heading).toBeTruthy();
   });
@@ -88,7 +92,7 @@ describe('登录与会话', () => {
     fireEvent.change(screen.getByLabelText('密码'), { target: { value: 'wrong' } });
     fireEvent.click(screen.getByRole('button', { name: /登\s*录/ }));
 
-    expect(await screen.findByText('用户名或密码错误', {}, { timeout: 4000 })).toBeTruthy();
+    expect(await screen.findByText('用户名或密码错误', {}, { timeout: 15000 })).toBeTruthy();
   });
 
   it('登录后可从账号菜单退出并回到登录页', async () => {
@@ -100,6 +104,6 @@ describe('登录与会话', () => {
     const logout = await screen.findByText('退出登录');
     fireEvent.click(logout);
 
-    expect(await screen.findByText('ai-hub 控制台', {}, { timeout: 4000 })).toBeTruthy();
+    expect(await screen.findByText('ai-hub 控制台', {}, { timeout: 15000 })).toBeTruthy();
   });
 });

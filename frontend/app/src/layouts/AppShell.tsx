@@ -23,6 +23,9 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
 const { Header, Sider, Content } = Layout;
 
+/** 已接真实 console 接口的页面；其余仍为 mock/占位。 */
+const REAL_DATA_KEYS = ['/prompts', '/logs', '/audit'];
+
 const navItems: MenuProps['items'] = [
   { key: '/overview', icon: <DashboardOutlined />, label: '概览' },
   {
@@ -164,7 +167,9 @@ export function AppShell({ preview = false, activeKey }: AppShellProps) {
             AI 能力中台 · 管理控制台
           </Typography.Text>
           <div style={{ flex: 1 }} />
-          <Tag color="default">MOCK</Tag>
+          <Tag color={REAL_DATA_KEYS.includes(selectedKey) ? 'blue' : 'default'}>
+            {REAL_DATA_KEYS.includes(selectedKey) ? '真实接口' : 'MOCK'}
+          </Tag>
           {preview ? (
             accountButton
           ) : (

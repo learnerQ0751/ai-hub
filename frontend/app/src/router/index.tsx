@@ -20,6 +20,21 @@ const BoardPage = import.meta.env.DEV ? lazy(() => import('@/pages/board/BoardPa
 const McpPreviewPage = import.meta.env.DEV
   ? lazy(() => import('@/pages/board/McpPreviewPage'))
   : null;
+const KeysPreviewPage = import.meta.env.DEV
+  ? lazy(() => import('@/pages/board/KeysPreviewPage'))
+  : null;
+const ModelsPreviewPage = import.meta.env.DEV
+  ? lazy(() => import('@/pages/board/ModelsPreviewPage'))
+  : null;
+const PromptsPreviewPage = import.meta.env.DEV
+  ? lazy(() => import('@/pages/board/PromptsPreviewPage'))
+  : null;
+const LogsPreviewPage = import.meta.env.DEV
+  ? lazy(() => import('@/pages/board/LogsPreviewPage'))
+  : null;
+const AuditPreviewPage = import.meta.env.DEV
+  ? lazy(() => import('@/pages/board/AuditPreviewPage'))
+  : null;
 
 export function AppRouter() {
   return (
@@ -32,11 +47,38 @@ export function AppRouter() {
     >
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        {BoardPage && McpPreviewPage ? (
+        {BoardPage &&
+        McpPreviewPage &&
+        KeysPreviewPage &&
+        ModelsPreviewPage &&
+        PromptsPreviewPage &&
+        LogsPreviewPage &&
+        AuditPreviewPage ? (
           <>
             <Route path="/board" element={<BoardPage />} />
-            <Route path="/board/preview" element={<AppShell preview activeKey="/mcp-servers" />}>
-              <Route path="mcp" element={<McpPreviewPage />} />
+            <Route
+              path="/board/preview/mcp"
+              element={<AppShell preview activeKey="/mcp-servers" />}
+            >
+              <Route index element={<McpPreviewPage />} />
+            </Route>
+            <Route path="/board/preview/keys" element={<AppShell preview activeKey="/keys" />}>
+              <Route index element={<KeysPreviewPage />} />
+            </Route>
+            <Route path="/board/preview/models" element={<AppShell preview activeKey="/models" />}>
+              <Route index element={<ModelsPreviewPage />} />
+            </Route>
+            <Route
+              path="/board/preview/prompts"
+              element={<AppShell preview activeKey="/prompts" />}
+            >
+              <Route index element={<PromptsPreviewPage />} />
+            </Route>
+            <Route path="/board/preview/logs" element={<AppShell preview activeKey="/logs" />}>
+              <Route index element={<LogsPreviewPage />} />
+            </Route>
+            <Route path="/board/preview/audit" element={<AppShell preview activeKey="/audit" />}>
+              <Route index element={<AuditPreviewPage />} />
             </Route>
           </>
         ) : null}

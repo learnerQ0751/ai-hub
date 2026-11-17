@@ -1,0 +1,50 @@
+import { describe, expect, it } from 'vitest';
+import { endpoints, withQuery } from './endpoints';
+
+describe('endpoints', () => {
+  it('matches the frozen console contract for keys and models', () => {
+    expect(endpoints.keys.list).toBe('/v1/admin/keys');
+    expect(endpoints.keys.block('abc')).toBe('/v1/admin/keys/abc/block');
+    expect(endpoints.keys.unblock('abc')).toBe('/v1/admin/keys/abc/unblock');
+    expect(endpoints.models.list).toBe('/v1/admin/models');
+    expect(endpoints.models.detail('qwen-plus')).toBe('/v1/admin/models/qwen-plus');
+    expect(endpoints.models.deployments('qwen-plus')).toBe(
+      '/v1/admin/models/qwen-plus/deployments',
+    );
+  });
+
+  it('uses the frozen paths for MCP, RAG, traces and projects', () => {
+    expect(endpoints.mcpServers.list).toBe('/v1/mcp/servers');
+    expect(endpoints.mcpServers.remove('srv-1')).toBe('/v1/mcp/servers/srv-1');
+    expect(endpoints.mcpServers.reprobe('srv-1')).toBe('/v1/mcp/servers/srv-1/reprobe');
+    expect(endpoints.mcpServers.runtimeStats).toBe('/v1/mcp/runtime/stats');
+    expect(endpoints.rag.documents).toBe('/v1/rag/documents');
+    expect(endpoints.rag.reindex('doc-1')).toBe('/v1/rag/documents/doc-1/reindex');
+    expect(endpoints.traces.detail('t-1')).toBe('/v1/traces/t-1');
+    expect(endpoints.projects.authorize).toBe('/v1/admin/project-authorizations');
+  });
+
+  it('matches the frozen console contract for prompts, logs and audit', () => {
+    expect(endpoints.prompts.list).toBe('/v1/prompts');
+    expect(endpoints.prompts.detail('greeting')).toBe('/v1/prompts/greeting');
+    expect(endpoints.prompts.versions('greeting')).toBe('/v1/prompts/greeting/versions');
+    expect(endpoints.prompts.publish('greeting')).toBe('/v1/prompts/greeting/publish');
+    expect(endpoints.logs.list).toBe('/v1/admin/logs');
+    // 审计契约路径没有 /admin 段（API-PATHS §4.6）。
+    expect(endpoints.audit.list).toBe('/v1/audit-logs');
+  });
+
+  it('does not expose unimplemented list endpoints', () => {
+    expect('list' in endpoints.traces).toBe(false);
+    expect('chunks' in endpoints.rag).toBe(false);
+    expect('list' in endpoints.projects).toBe(false);
+  });
+
+  it('encodes path segments and builds queries without empty values', () => {
+    expect(endpoints.models.detail('a/b')).toBe('/v1/admin/models/a%2Fb');
+    expect(withQuery('/v1/rag/documents', { project_id: 'kb', limit: 20 })).toBe(
+      '/v1/rag/documents?project_id=kb&limit=20',
+    );
+    expect(withQuery('/v1/admin/keys', { tenant_id: undefined })).toBe('/v1/admin/keys');
+  });
+});
