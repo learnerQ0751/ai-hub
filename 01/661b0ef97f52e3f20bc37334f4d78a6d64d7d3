@@ -1,0 +1,20 @@
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  h_db524743a0da6f 337-348
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/AdminServiceImpl.java
+  h_db524743a0da6f 174
+ai-hub-tests/src/test/java/com/qtua/aihub/AdminIntegrationTest.java
+  h_db524743a0da6f 123-141
+ai-hub-tests/src/test/java/com/qtua/aihub/ControlPlaneIdempotencyTest.java
+  h_db524743a0da6f 113-116
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "01661b0ef97f52e3f20bc37334f4d78a6d64d7d3",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
