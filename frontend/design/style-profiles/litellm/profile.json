@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0",
+  "site": "LiteLLM Admin UI",
+  "version_seen": "v1.185.0 (screenshot watermark)",
+  "captured_at": "2026-11-16",
+  "method": "官方文档内嵌的真实界面截图；未访问本地实例，未做 1440/768/375 响应式抓取。颜色/尺寸由截图像素取样与目测得出，非 DOM 计算样式。",
+  "sources": [
+    {
+      "page": "https://docs.litellm.ai/docs/simple_proxy",
+      "screenshots": ["virtual-keys", "mcp-servers", "usage", "logs"],
+      "note": "官方 AI Gateway 总览页的 Admin UI 分栏"
+    },
+    {
+      "page": "https://docs.litellm.ai/docs/proxy/docker_quick_start",
+      "screenshots": ["login", "models-list", "playground", "create-key-modal"],
+      "note": "官方 Docker Quickstart 的操作截图"
+    }
+  ],
+  "not_captured": [
+    "Add Model 表单（官方截图存在，本次未保存）",
+    "Model detail / Edit Settings（官方截图存在，本次未保存）",
+    "Guardrails 页（超出 ai-hub 能力范围）",
+    "1440/768/375 响应式三档（无本地实例，无法实测）"
+  ],
+  "limitations": [
+    "没有可登录的公开实例，无法实测交互与响应式布局",
+    "截图有缩放与压缩，字号、间距、圆角为估算值",
+    "部分语义色（成功/失败徽标）只观察到存在，未取到稳定色值",
+    "创建 Key 表单截图被模糊处理，字段布局不可读",
+    "移动端/平板端表现未知；从固定侧栏判断为桌面优先"
+  ],
+  "layout": {
+    "viewport_observed": [1280, 720],
+    "shell": "fixed left sidebar + top bar + content",
+    "sidebar_width_px_estimated": 240,
+    "topbar_height_px_estimated": 48,
+    "content_padding_px_estimated": 24,
+    "content_max_width": "none (fluid)",
+    "nav_groups": [
+      "AI GATEWAY",
+      "OBSERVABILITY",
+      "ACCESS CONTROL (in older versions)",
+      "DEVELOPER TOOLS (in older versions)"
+    ],
+    "nav_item_height_px_estimated": 32,
+    "table_row_height_px_estimated": 40,
+    "logs_row_height_px_estimated": 30,
+    "responsive": "unknown; desktop-only evidence"
+  },
+  "colors": {
+    "page_background": { "hex": "#f3f4f6", "confidence": "high", "source": "login screenshot corner" },
+    "surface": { "hex": "#ffffff", "confidence": "high", "source": "content region histogram" },
+    "sidebar_background": { "hex": "#ffffff", "confidence": "high", "source": "sidebar region histogram" },
+    "sidebar_active_item": { "hex": "#f3f4f6", "confidence": "high", "source": "active nav pill" },
+    "text_primary": { "hex": "#111827", "confidence": "medium-high", "source": "sampled dark text" },
+    "text_secondary": { "hex": "#60646c", "confidence": "medium", "source": "sampled muted text / tabbar" },
+    "border": { "hex": "#e6e7eb", "confidence": "medium", "source": "sampled header hairline" },
+    "table_header": { "hex": "#fbfbfc", "confidence": "medium", "source": "table header histogram" },
+    "primary_button": { "hex": "#111827", "confidence": "high", "source": "black CTA on keys page" },
+    "brand_blue": { "hex": "#0314be", "confidence": "medium", "source": "logo pixel sample; antialiasing may skew" },
+    "chart_accent": { "hex": "#00b8d8", "confidence": "high", "source": "usage daily-spend bar" },
+    "semantic_success": { "hex": null, "confidence": "low", "source": "green status pills observed; exact bg not sampled" },
+    "semantic_danger": { "hex": null, "confidence": "low", "source": "red status pills observed; exact bg not sampled" },
+    "badge_dark": { "hex": "#111827", "confidence": "medium", "source": "Beta pill, white text" }
+  },
+  "typography": {
+    "family": "sans-serif (Inter-like); exact font not verified",
+    "base_size_px_estimated": 13,
+    "page_title_px_estimated": 24,
+    "section_title_px_estimated": 16,
+    "nav_item_px_estimated": 13,
+    "nav_group_label_px_estimated": 10,
+    "nav_group_label_transform": "uppercase with letter-spacing",
+    "table_text_px_estimated": 12,
+    "monospace_usage": "IDs, keys, request IDs, token numbers",
+    "weights": ["400 body", "500/600 headings", "600 buttons"]
+  },
+  "spacing": {
+    "scale_px": [4, 8, 12, 16, 24, 32],
+    "card_gap_px_estimated": 16,
+    "section_gap_px_estimated": 24,
+    "form_field_gap_px_estimated": 16
+  },
+  "shape": {
+    "button_radius_px_estimated": 6,
+    "input_radius_px_estimated": 6,
+    "card_radius_px_estimated": 8,
+    "modal_radius_px_estimated": 12,
+    "pill_radius": "full",
+    "shadow": "very light / mostly borders"
+  },
+  "components_observed": [
+    "fixed grouped sidebar with icons and collapsed state",
+    "top bar with product breadcrumb, Docs/Blog, theme toggle, avatar",
+    "page header: title + one-line subtitle + primary CTA",
+    "underline tabs for related lists",
+    "filter bar: search input, scope select, columns/filters buttons",
+    "data table: sortable headers, status pills, row actions, pagination",
+    "card grid (MCP servers) with health pills",
+    "KPI tiles row (usage)",
+    "bar chart with sparse axis labels",
+    "modal with blurred backdrop and one-time secret reveal",
+    "live tail + auto refresh controls (logs)",
+    "date range and global scope selectors",
+    "badges for Beta / source / health"
+  ],
+  "patterns": [
+    "one primary CTA per page, top-right or under the title",
+    "row-level status + row-level actions",
+    "one-time secret shown in a blocking modal with copy button",
+    "scope selector (Global / team / user) at the top of data pages",
+    "tabs group related views instead of separate nav entries",
+    "dense logs table with inline status and cost",
+    "empty list still shows footer pagination",
+    "warning banners for environment credentials and pricing gaps"
+  ],
+  "observed_weaknesses": [
+    "badge proliferation (Beta tags in nav and headers)",
+    "flat 13px type hierarchy across page chrome",
+    "low-contrast secondary text in places",
+    "deep saturated logo blue clashes with near-black CTA language",
+    "desktop-only shell; no mobile adaptation evidence",
+    "dense tables without strong visual grouping",
+    "mixed button shapes/weights across pages",
+    "no obvious empty-state illustration or guided onboarding"
+  ],
+  "fit_for_ai_hub": {
+    "information_architecture": "high value: borrow it",
+    "visual_language": "insufficient for a portfolio piece: redesign, do not clone",
+    "density": "good baseline for admin; add a comfortable/compact toggle",
+    "interaction_patterns": "borrow list/detail, one-time secret, live tail, scope selector"
+  }
+}
