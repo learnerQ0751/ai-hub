@@ -1,0 +1,83 @@
+ai-hub-api/src/main/java/com/qtua/aihub/api/ConsoleSessionService.java
+  s_3bd3380625c08b::t_d4d214750d4960 1-44
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/auth/ConsoleSessionAuthDTO.java
+  s_3bd3380625c08b::t_a1decaa024459f 1-15
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/ConsoleLoginReqDTO.java
+  s_3bd3380625c08b::t_c020e7e73fb4d4 1-10
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/ConsoleSessionResDTO.java
+  s_3bd3380625c08b::t_e0bb851cc4fd43 1-13
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/ConsoleSessionProperties.java
+  s_f3c26bd811a2ca::t_5d218befdbcbf5 1-130
+ai-hub-common/src/main/java/com/qtua/aihub/common/crypto/Pbkdf2PasswordHasher.java
+  s_f3c26bd811a2ca::t_95b1cc980ca53d 1-89
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  s_3bd3380625c08b::t_67b41448bafb0b 190-229
+ai-hub-common/src/test/java/com/qtua/aihub/common/crypto/Pbkdf2PasswordHasherTest.java
+  s_3bd3380625c08b::t_f84b27d7c15dd0 1-37
+ai-hub-console/src/main/java/com/qtua/aihub/console/ConsoleComponentScan.java
+  s_3bd3380625c08b::t_4239196ae6053e 22
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/ConsoleSessionController.java
+  s_3bd3380625c08b::t_fea21b6c69eefc 1-117
+ai-hub-console/src/main/java/com/qtua/aihub/console/filter/AdminAuthFilter.java
+  s_3bd3380625c08b::t_d2e9b5c6125407 4,6,13,23,34-35,37,45,49-50,55-58,60-62,65-66,70,77-79,103-107,132-145
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/AdminLoginAttemptMapper.java
+  s_f3c26bd811a2ca::t_43f7bb48612687 1-45
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/AdminSessionMapper.java
+  s_3bd3380625c08b::t_7fd2fc289108bd 1-46
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/AdminLoginAttemptDO.java
+  s_f3c26bd811a2ca::t_ecfe88577e861b 1-46
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/AdminSessionDO.java
+  s_3bd3380625c08b::t_91643a14ee7542 1-57
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/AdminLoginAttemptMapper.xml
+  s_f3c26bd811a2ca::t_e99b039fdefc47 1-37
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/AdminSessionMapper.xml
+  s_3bd3380625c08b::t_f4e712368f95b9 1-34
+ai-hub-dal/src/main/resources/db/admin-session-schema.sql
+  s_f3c26bd811a2ca::t_834ece3990885f 1-16
+ai-hub-dal/src/main/resources/db/migration/V16__admin_sessions.sql
+  s_3bd3380625c08b::t_15131bb5ce3c57 1-26
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/AdminLoginAttemptBO.java
+  s_3bd3380625c08b::t_602873e679eea4 1-13
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/AdminSessionBO.java
+  s_3bd3380625c08b::t_37f31b9fc1fcd4 1-12
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/session/AdminLoginAttemptManager.java
+  s_3bd3380625c08b::t_ba58ee920f1498 1-75
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/session/AdminSessionManager.java
+  s_3bd3380625c08b::t_e4b19d3329458c 1-110
+ai-hub-service/src/main/java/com/qtua/aihub/service/console/ConsoleSessionServiceImpl.java
+  s_3bd3380625c08b::t_8955a7c752a913 1-150
+ai-hub-start/src/main/resources/application-local.yml.example
+  s_3bd3380625c08b::t_59262de811807f 26-37
+ai-hub-tests/src/test/java/com/qtua/aihub/ConsoleSessionIntegrationTest.java
+  s_3bd3380625c08b::t_8c9c2ca6bfb584 1-172
+ai-hub-tests/src/test/resources/application-test.yml
+  s_f3c26bd811a2ca::t_4a8fdac17d9a0c 30
+config/spotbugs-exclude.xml
+  s_3bd3380625c08b::t_8845b4c8f90f69 582-606
+scripts/hash-console-password.ps1
+  s_3bd3380625c08b::t_ec1ba230e407fa 1-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b0b880b0062d57ea6baa02e33da4664595bff0b9",
+  "prompts": {},
+  "sessions": {
+    "s_3bd3380625c08b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a0953591-ae0d-4ef4-96a9-9bf7c8490cf9",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_f3c26bd811a2ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab29280d-303a-462f-ab8b-5791cea187a9",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}

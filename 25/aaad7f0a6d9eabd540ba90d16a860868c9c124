@@ -1,0 +1,71 @@
+ai-hub-api/src/main/java/com/qtua/aihub/api/AdminService.java
+  s_3bd3380625c08b::t_4655a1b6f764d7 26-27,32-33,47-48,51
+ai-hub-api/src/main/java/com/qtua/aihub/api/PromptService.java
+  s_3bd3380625c08b::t_e4b80ac2a9d8a4 36-38,41,46-47,50,63-65,68
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/KeyGenerateReqDTO.java
+  s_3bd3380625c08b::t_a0d882b500aa65 24,35-36,54-64
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminKeyResDTO.java
+  s_3bd3380625c08b::t_67463d74628b30 6-7,9,15-28,30-31,34-37,49-50
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminModelResDTO.java
+  s_3bd3380625c08b::t_333971628b4346 5,12-21,24-30
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/KeyGenerateResDTO.java
+  s_3bd3380625c08b::t_193c301a0cb154 29,43-44,54-65
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/AdminController.java
+  s_3bd3380625c08b::t_5c343e440cfd84 48-49,58-59,62,92-93,97-100
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/PromptController.java
+  s_3bd3380625c08b::t_59c24829cf1b7b 81-83,88-90,96-97,102-105,111-113,120,122
+ai-hub-console/src/test/java/com/qtua/aihub/console/controller/KeyControllerTest.java
+  s_3bd3380625c08b::t_9224ed6d96957b 3,10,58-63
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/ApiKeyMapper.java
+  s_f3c26bd811a2ca::t_febf11bbcda8a3 56,60-62,69-71
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/ApiKeyDO.java
+  s_3bd3380625c08b::t_cd2ad2f6c5f2af 17-18,54-61
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/ApiKeyMapper.xml
+  s_3bd3380625c08b::t_044b33c8f233a0 9,27,30-31,42,57,68-82
+ai-hub-dal/src/main/resources/db/api-keys-schema.sql
+  s_3bd3380625c08b::t_7e897cd0368c0d 6
+ai-hub-dal/src/main/resources/db/migration/V15__api_key_alias.sql
+  s_f3c26bd811a2ca::t_4918050c2cd0be 1-4
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/ApiKeyManager.java
+  s_f3c26bd811a2ca::t_2dbf259deba6c2 54,96-98,103-106,114
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/catalog/ModelCatalogManager.java
+  s_3bd3380625c08b::t_1f1f29d583c796 297-298
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ApiKeyBO.java
+  s_f3c26bd811a2ca::t_6cbcd379a00759 19,52,78-104,106,127-130
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ModelAliasAdminBO.java
+  s_3bd3380625c08b::t_e6cf9c9634081c 3,15-16,21
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/AdminServiceImpl.java
+  s_3bd3380625c08b::t_f3248d04af1f04 15-16,61,66-71,76,82,86-87,91,115-124,396-400,407-439
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/PromptServiceImpl.java
+  s_3bd3380625c08b::t_5322bc51be37c8 176-178,182-183,185,189,197-198,202-204,229-231,236-238,241,243-244,249-251
+ai-hub-service/src/main/java/com/qtua/aihub/service/shared/KeyServiceImpl.java
+  s_3bd3380625c08b::t_0f5764d1ded0f2 53,96-97,110-128
+ai-hub-tests/src/test/java/com/qtua/aihub/AdminIntegrationTest.java
+  s_3bd3380625c08b::t_325e9a10673e66 61-62,145-210,240-255
+ai-hub-tests/src/test/java/com/qtua/aihub/PromptTenantFilterIntegrationTest.java
+  s_3bd3380625c08b::t_53da85c963066a 1-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "25aaad7f0a6d9eabd540ba90d16a860868c9c124",
+  "prompts": {},
+  "sessions": {
+    "s_3bd3380625c08b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a0953591-ae0d-4ef4-96a9-9bf7c8490cf9",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_f3c26bd811a2ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab29280d-303a-462f-ab8b-5791cea187a9",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
