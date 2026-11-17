@@ -171,8 +171,7 @@ public class AdminServiceImpl implements AdminService {
         ModelAliasAdminBO existing = catalogManager.findAliasAdmin(alias);
         if (!ObjectUtils.isEmpty(existing)) {
             if (!sameAlias(existing, reqDTO, deployments)) {
-                throw ChatCompletionException.invalidRequest(
-                        "模型别名 '" + alias + "' 已存在且配置不同，请使用更新接口", "alias");
+                throw ChatCompletionException.modelAliasConflict(alias);
             }
             // 幂等重放：补齐上次可能未完成的部署写入。
             applyDeployments(alias, deployments, existing);

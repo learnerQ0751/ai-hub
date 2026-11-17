@@ -335,6 +335,18 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * 模型别名已存在且配置不同（409）。
+     *
+     * @param alias 别名
+     * @return 业务异常
+     */
+    public static ChatCompletionException modelAliasConflict(String alias) {
+        return new ChatCompletionException(HttpStatus.CONFLICT,
+                "模型别名 '" + alias + "' 已存在且配置不同，请使用更新接口", "conflict_error",
+                "alias", "409", null, false);
+    }
+
+    /**
      * MCP Server 不存在（404）。
      *
      * @param serverId 服务器 ID

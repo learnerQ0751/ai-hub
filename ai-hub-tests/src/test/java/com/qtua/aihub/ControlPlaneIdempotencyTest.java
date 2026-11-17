@@ -110,7 +110,10 @@ class ControlPlaneIdempotencyTest {
 
         ResponseEntity<String> different = post("/v1/admin/models",
                 modelBody(alias, "other", "http://localhost:1", "m1", 1));
-        assertThat(different.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        // 同名不同配置是资源冲突，不是参数错误（D-03）。
+        assertThat(different.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(readJson(different).path("error").path("type").asText())
+                .isEqualTo("conflict_error");
     }
 
     @Test

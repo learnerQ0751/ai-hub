@@ -121,6 +121,25 @@ class AdminIntegrationTest {
     }
 
     @Test
+    void duplicate_model_alias_with_different_config_returns_409() {
+        String alias = "dup-alias-" + UUID.randomUUID().toString().substring(0, 8);
+        String body = "{\"alias\":\"" + alias + "\",\"fallbacks\":[],\"deployments\":["
+                + "{\"deployment_key\":\"" + alias + "#0\","
+                + "\"api_base\":\"http://localhost:1\","
+                + "\"api_key\":\"upstream-secret\","
+                + "\"upstream_model\":\"m1\",\"weight\":1,\"priority\":0}]}";
+
+        assertThat(post("/v1/admin/models", body).getStatusCode()).isEqualTo(HttpStatus.OK);
+        // 同配置重放仍幂等
+        assertThat(post("/v1/admin/models", body).getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ResponseEntity<String> conflict = post("/v1/admin/models",
+                body.replace("\"upstream_model\":\"m1\"", "\"upstream_model\":\"m2\""));
+        assertThat(conflict.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(conflict.getBody()).contains("conflict_error").contains(alias);
+    }
+
+    @Test
     void project_authorization_api_records_cross_project_grant() throws Exception {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         String tenant = "tenant-authz-" + suffix;
