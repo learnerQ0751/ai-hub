@@ -23,3 +23,15 @@ gateway:
       deepseek-reasoner:
         input-per-million: 0.55
         output-per-million: 2.19
+
+# 控制台管理员会话：密码哈希用 scripts/hash-console-password.ps1 生成后填入。
+console:
+  session:
+    enabled: ${CONSOLE_SESSION_ENABLED:false}
+    username: ${CONSOLE_ADMIN_USERNAME:}
+    password-hash: ${CONSOLE_ADMIN_PASSWORD_HASH:}
+    # 本地 http 演示设为 false；HTTPS 部署保持 true
+    cookie-secure: ${CONSOLE_SESSION_COOKIE_SECURE:true}
+    timeout: 2h
+    max-failed-attempts: 5
+    lock-duration: 30s

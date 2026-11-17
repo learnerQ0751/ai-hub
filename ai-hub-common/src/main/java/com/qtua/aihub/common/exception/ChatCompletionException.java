@@ -188,6 +188,46 @@ public class ChatCompletionException extends RuntimeException {
     }
 
     /**
+     * 控制台登录失败（401）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException consoleLoginFailed() {
+        return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
+                "用户名或密码错误。", "auth_error", null, "401", null, false);
+    }
+
+    /**
+     * 控制台会话未启用或未配置账号（401）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException consoleSessionDisabled() {
+        return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
+                "控制台会话登录未启用，请使用 master key。", "auth_error", null, "401", null, false);
+    }
+
+    /**
+     * 控制台登录连续失败被锁定（429）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException consoleLoginLocked() {
+        return new ChatCompletionException(HttpStatus.TOO_MANY_REQUESTS,
+                "登录失败次数过多，请稍后重试。", "rate_limit_error", null, "429", null, false);
+    }
+
+    /**
+     * 控制台会话无效或已过期（401）。
+     *
+     * @return 业务异常
+     */
+    public static ChatCompletionException consoleSessionRequired() {
+        return new ChatCompletionException(HttpStatus.UNAUTHORIZED,
+                "登录状态已失效，请重新登录。", "auth_error", null, "401", null, false);
+    }
+
+    /**
      * 管理面权限不足（403，REQ-4.4）。
      *
      * @return 业务异常

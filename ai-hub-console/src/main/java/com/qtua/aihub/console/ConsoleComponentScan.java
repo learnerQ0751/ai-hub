@@ -19,6 +19,7 @@ import org.springframework.context.annotation.FilterType;
                 "com.qtua.aihub.common",
                 "com.qtua.aihub.service.shared",
                 "com.qtua.aihub.service.admin",
+                "com.qtua.aihub.service.console",
                 "com.qtua.aihub.manager",
                 "com.qtua.aihub.integration.prompt",
                 "com.qtua.aihub.integration.rag",

@@ -27,6 +27,7 @@ spring:
         - classpath:db/usage-schema.sql
         - classpath:db/audit-schema.sql
         - classpath:db/idempotency-schema.sql
+        - classpath:db/admin-session-schema.sql
 
 gateway:
   secret-key: integration-test-secret

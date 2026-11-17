@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qtua.aihub.dal.mapper.AdminLoginAttemptMapper">
+
+    <resultMap id="AdminLoginAttemptResultMap"
+               type="com.qtua.aihub.dal.model.AdminLoginAttemptDO">
+        <id column="username" property="username" jdbcType="VARCHAR"/>
+        <result column="failed_count" property="failedCount" jdbcType="INTEGER"/>
+        <result column="locked_until" property="lockedUntil" jdbcType="TIMESTAMP"/>
+        <result column="updated_at" property="updatedAt" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <select id="selectByUsername" resultMap="AdminLoginAttemptResultMap">
+        SELECT username, failed_count, locked_until, updated_at
+        FROM admin_login_attempts
+        WHERE username = #{username,jdbcType=VARCHAR}
+    </select>
+
+    <insert id="insert" parameterType="com.qtua.aihub.dal.model.AdminLoginAttemptDO">
+        INSERT INTO admin_login_attempts (username, failed_count, locked_until, updated_at)
+        VALUES (#{username,jdbcType=VARCHAR}, #{failedCount,jdbcType=INTEGER},
+                #{lockedUntil,jdbcType=TIMESTAMP}, #{updatedAt,jdbcType=TIMESTAMP})
+    </insert>
+
+    <update id="update" parameterType="com.qtua.aihub.dal.model.AdminLoginAttemptDO">
+        UPDATE admin_login_attempts
+        SET failed_count = #{failedCount,jdbcType=INTEGER},
+            locked_until = #{lockedUntil,jdbcType=TIMESTAMP},
+            updated_at = #{updatedAt,jdbcType=TIMESTAMP}
+        WHERE username = #{username,jdbcType=VARCHAR}
+    </update>
+
+    <delete id="deleteByUsername">
+        DELETE FROM admin_login_attempts WHERE username = #{username,jdbcType=VARCHAR}
+    </delete>
+</mapper>

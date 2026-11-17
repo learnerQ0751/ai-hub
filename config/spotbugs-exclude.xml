@@ -579,5 +579,30 @@
         <Class name="com.qtua.aihub.core.rag.RagContextAssembler"/>
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
+    <!-- 控制台会话：metadata 已在紧凑构造器中 unmodifiableMap；其余为 Spring 构造器注入 -->
+    <Match>
+        <Class name="com.qtua.aihub.api.model.res.AdminKeyResDTO"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.service.console.ConsoleSessionServiceImpl"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.console.controller.ConsoleSessionController"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.session.AdminSessionManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.manager.session.AdminLoginAttemptManager"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+    <Match>
+        <Class name="com.qtua.aihub.common.config.ConsoleSessionProperties"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>
 
