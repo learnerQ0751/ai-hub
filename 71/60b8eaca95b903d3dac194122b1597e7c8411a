@@ -1,0 +1,77 @@
+ai-hub-tests/src/test/java/com/qtua/aihub/McpRegistryIntegrationTest.java
+  s_0b21f4571628b4::t_8c7ea1f6343239 110-111,115-122
+ai-hub-console/src/main/java/com/qtua/aihub/console/filter/IdempotencyFilter.java
+  s_8b33dbee17e429::t_a6156c6e75c83b 1-251
+ai-hub-console/src/test/java/com/qtua/aihub/console/controller/KeyControllerTest.java
+  s_8b33dbee17e429::t_494576a3285b31 59-61
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/IdempotencyKeyMapper.java
+  s_8b33dbee17e429::t_82cfb7e10898ef 1-51
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/IdempotencyKeyDO.java
+  s_8b33dbee17e429::t_a02f7d7705f55b 1-75
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/IdempotencyKeyMapper.xml
+  s_8b33dbee17e429::t_a8dac0d29af8d1 1-41
+ai-hub-dal/src/main/resources/db/idempotency-schema.sql
+  s_8b33dbee17e429::t_4989279cfd6ccc 1-12
+ai-hub-dal/src/main/resources/db/migration/V14__idempotency_keys.sql
+  s_8b33dbee17e429::t_fc2f3d199f8c6f 1-20
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/catalog/ModelCatalogManager.java
+  s_8b33dbee17e429::t_9701be7c4605d9 14,163,165-166,176-182,262-270,276-283
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/idempotency/IdempotencyKeyManager.java
+  s_8b33dbee17e429::t_164b7a1c5127fa 1-90
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/tenant/ProjectAuthorizationManager.java
+  s_8b33dbee17e429::t_08a660818f2061 5,49-57
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/PromptServiceImpl.java
+  s_8b33dbee17e429::t_3cc9ac25afaa1d 18,21,100-107,109,115-128,153-168,240-244,255-261
+ai-hub-service/src/main/java/com/qtua/aihub/service/shared/KeyServiceImpl.java
+  s_8b33dbee17e429::t_46da1020552722 217-226
+ai-hub-tests/src/test/java/com/qtua/aihub/ControlPlaneIdempotencyTest.java
+  s_8b33dbee17e429::t_d3f47b38b2b5c6 1-375
+ai-hub-tests/src/test/resources/application-test.yml
+  s_8b33dbee17e429::t_7f3a1cf773cfb3 1-6,29
+ai-workflow/DESIGN.md
+  s_8b33dbee17e429::t_86bb6b065b2c6b 61-62
+ai-workflow/acceptance/REQ-5.2.md
+  s_8b33dbee17e429::t_24e07358f2dbca 1-84
+ai-workflow/docs/DATA-MODEL.md
+  s_8b33dbee17e429::t_a132300e07bc1a 28
+ai-workflow/records/REQ-5.2.md
+  s_8b33dbee17e429::t_971446bad77dce 1-147
+config/spotbugs-exclude.xml
+  s_8b33dbee17e429::t_f9eaaf5e2d85bf 3,7,20,49,58,67,176,181,186,203,207,292,321,334,365,414,443,480,497,534,543,548,559,564,569-578
+docs/API-PATHS.md
+  s_8b33dbee17e429::t_3f8ea83315ad1e 94-109,126-127
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/ApiKeyMapper.xml
+  s_8b33dbee17e429::t_03d7e1433f00d4 51
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/AdminServiceImpl.java
+  s_8b33dbee17e429::t_05d7ad08910ba8 97-103,124-141,143,149-155,158-160,162,177-178,181-190,224-229,236-237,239,241,243,245,248-249,263-322
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/McpServerServiceImpl.java
+  s_8b33dbee17e429::t_05bf95575de3e3 113-120,140-146,194-203
+ai-hub-service/src/main/java/com/qtua/aihub/service/shared/RagDocumentServiceImpl.java
+  s_8b33dbee17e429::t_750921772b86f2 4,56,67,80-95,100,125-129,176-178,201-202
+ai-workflow/STATUS.md
+  s_8b33dbee17e429::t_3b51c540110ac9 6,45,123,180,231,250
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "7160b8eaca95b903d3dac194122b1597e7c8411a",
+  "prompts": {},
+  "sessions": {
+    "s_0b21f4571628b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38ac2ffa-138d-4580-be67-bf463080b97c",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_8b33dbee17e429": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b688c2d0-38ee-4c46-a9dd-804e9a35773d",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
