@@ -147,12 +147,26 @@ Idempotency-Key: <1-128 位字母/数字/._:->
 
 > 契约待 5.4 完成后一次性冻结；以下缺口本期不动手，仅登记给管理台与后续需求。
 
+### 7.1 端点缺口
+
 | 缺口 | 用途 | 拟定归属 |
 |---|---|---|
 | 项目列表 | 管理台选择租户下的项目 | console |
 | 文档切片列表 | 按 `doc_id` 分页查看切片 | console |
 | 单 Key 查询 | 按 `key_hash` 查询 Key 详情 | console |
 | Trace 列表 | 按租户/时间分页列出 trace | console |
+| 控制台会话端点 | 登录 / 会话探测 / 退出；后端下发 httpOnly + Secure + SameSite=Lax 会话 cookie，前端不接触 token | console |
 
-控制面会话方向（5.3/5.4 参考）：管理员账号 + httpOnly 短期会话 cookie（SameSite=Lax），
-不使用 token 方案；master key 保持配置常量，不引入数据库化或有效期。
+### 7.2 字段级修订（不是新端点）
+
+| 目标接口 | 修订 | 用途 |
+|---|---|---|
+| `GET /v1/admin/keys` | Key 列表补 `alias`、`metadata`、`rpm_limit`、`tpm_limit`、`max_budget`、`budget_duration`；支持按状态与模型筛选 | 管理台 Key 列表免逐条查详情 |
+| `GET /v1/admin/models` | 模型列表补 `description`、价格、更新时间；接收筛选参数 | 模型目录展示与筛选 |
+| `GET /v1/prompts/{name}`、`GET /v1/prompts/{name}/versions`、`POST /v1/prompts/{name}/publish` | 补 `tenant_id`（REQ-5.6） | master 可为指定租户读取/发布 Prompt |
+| `/v1/admin/project-authorizations` 列表 | 维持「后续页面」，不阻塞首版 | 项目授权管理 |
+
+### 7.3 控制台会话方向
+
+管理员账号 + httpOnly 短期会话 cookie（SameSite=Lax），不使用 token 方案；
+master key 保持配置常量，不引入数据库化或有效期。
