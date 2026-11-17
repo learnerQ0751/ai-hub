@@ -1,0 +1,33 @@
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/ConsoleSessionProperties.java
+  s_fe50dea4b382d7::t_44eac4925bd9be 29-37,79-99
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  s_fe50dea4b382d7::t_d3465a38b00e5f 283-297
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/ConsoleSessionController.java
+  s_fe50dea4b382d7::t_314936a5ff183f 26-27,63,95
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/AdminServiceImpl.java
+  s_fe50dea4b382d7::t_7d69c109837c13 174
+ai-hub-tests/src/test/java/com/qtua/aihub/ConsoleGapEndpointsIntegrationTest.java
+  s_fe50dea4b382d7::t_d2192caaa25221 100-117,290-297
+ai-hub-tests/src/test/java/com/qtua/aihub/ConsoleSessionIntegrationTest.java
+  s_fe50dea4b382d7::t_5f954c44454cb5 75,93-100
+ai-hub-tests/src/test/java/com/qtua/aihub/ControlPlaneIdempotencyTest.java
+  s_fe50dea4b382d7::t_7696098ebb3279 113-115
+docs/API-PATHS.md
+  s_fe50dea4b382d7::t_377b2542140a14 5-6,209,211-215,219
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "92b58d2c93d4007475631b06555c6405554430a2",
+  "prompts": {},
+  "sessions": {
+    "s_fe50dea4b382d7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c24e1d36-1e06-4b24-9f6f-8419ec70684a",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
