@@ -160,7 +160,7 @@ export default function AuditPage({ initialDemoMode }: AuditPageProps) {
       <PageHeader
         title="审计日志"
         section="可观测"
-        description="管理动作审计与 before/after 差异；数据来自 console /v1/audit-logs，筛选与分页全部由服务端执行（契约 §4.7）。"
+        description="管理动作审计与 before/after 差异；数据来自 console /v1/admin/audit-logs，筛选与分页全部由服务端执行（契约 §4.7）。"
         extra={
           <Button icon={<ReloadOutlined />} onClick={() => void auditQuery.refetch()}>
             刷新

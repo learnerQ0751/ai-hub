@@ -80,7 +80,7 @@ class AuditLogIntegrationTest {
         assertThat(authorize.getStatusCode()).isEqualTo(HttpStatus.OK);
 
         JsonNode audits = objectMapper.readTree(restClient.get()
-                .uri("/v1/audit-logs?tenant_id=" + tenant + "&limit=20")
+                .uri("/v1/admin/audit-logs?tenant_id=" + tenant + "&limit=20")
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .retrieve().toEntity(String.class).getBody());
         assertThat(audits.path("items")).isNotEmpty();
@@ -99,10 +99,18 @@ class AuditLogIntegrationTest {
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         String key = generateKey("tenant-audit-" + suffix, "project-audit-" + suffix);
 
-        ResponseEntity<String> response = restClient.get().uri("/v1/audit-logs")
+        ResponseEntity<String> response = restClient.get().uri("/v1/admin/audit-logs")
                 .header("Authorization", "Bearer " + key)
                 .retrieve().toEntity(String.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void legacy_audit_path_is_no_longer_served() {
+        ResponseEntity<String> response = restClient.get().uri("/v1/audit-logs")
+                .header("Authorization", "Bearer " + MASTER_KEY)
+                .retrieve().toEntity(String.class);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     private JsonNode findAction(JsonNode audits, String action) {

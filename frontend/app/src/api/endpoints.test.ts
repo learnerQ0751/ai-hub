@@ -25,13 +25,13 @@ describe('endpoints', () => {
   });
 
   it('matches the frozen console contract for prompts, logs and audit', () => {
-    expect(endpoints.prompts.list).toBe('/v1/prompts');
-    expect(endpoints.prompts.detail('greeting')).toBe('/v1/prompts/greeting');
-    expect(endpoints.prompts.versions('greeting')).toBe('/v1/prompts/greeting/versions');
-    expect(endpoints.prompts.publish('greeting')).toBe('/v1/prompts/greeting/publish');
+    expect(endpoints.prompts.list).toBe('/v1/admin/prompts');
+    expect(endpoints.prompts.detail('greeting')).toBe('/v1/admin/prompts/greeting');
+    expect(endpoints.prompts.versions('greeting')).toBe('/v1/admin/prompts/greeting/versions');
+    expect(endpoints.prompts.publish('greeting')).toBe('/v1/admin/prompts/greeting/publish');
     expect(endpoints.logs.list).toBe('/v1/admin/logs');
-    // 审计契约路径没有 /admin 段（API-PATHS §4.6）。
-    expect(endpoints.audit.list).toBe('/v1/audit-logs');
+    // 管理面端点统一在 /v1/admin 下，会话 cookie 才带得到（API-PATHS §4.6）。
+    expect(endpoints.audit.list).toBe('/v1/admin/audit-logs');
   });
 
   it('exposes the §7.1 endpoints implemented on 2026-11-17', () => {

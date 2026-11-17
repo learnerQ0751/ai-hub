@@ -51,7 +51,7 @@ class PromptTenantFilterIntegrationTest {
 
     @Test
     void reads_and_publishes_prompt_for_explicit_tenant() {
-        ResponseEntity<String> created = restClient.post().uri("/v1/prompts")
+        ResponseEntity<String> created = restClient.post().uri("/v1/admin/prompts")
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("name", "tenant_prompt", "content", "User: hi",
@@ -60,7 +60,7 @@ class PromptTenantFilterIntegrationTest {
         assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
         ResponseEntity<String> published = restClient.post()
-                .uri("/v1/prompts/tenant_prompt/publish?tenant_id=" + TENANT)
+                .uri("/v1/admin/prompts/tenant_prompt/publish?tenant_id=" + TENANT)
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("version", 1))
@@ -69,21 +69,21 @@ class PromptTenantFilterIntegrationTest {
         assertThat(published.getBody()).contains(TENANT);
 
         ResponseEntity<String> scoped = restClient.get()
-                .uri("/v1/prompts/tenant_prompt?tenant_id=" + TENANT)
+                .uri("/v1/admin/prompts/tenant_prompt?tenant_id=" + TENANT)
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .retrieve().toEntity(String.class);
         assertThat(scoped.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(scoped.getBody()).contains(TENANT).contains("\"version\":1");
 
         ResponseEntity<String> versions = restClient.get()
-                .uri("/v1/prompts/tenant_prompt/versions?tenant_id=" + TENANT)
+                .uri("/v1/admin/prompts/tenant_prompt/versions?tenant_id=" + TENANT)
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .retrieve().toEntity(String.class);
         assertThat(versions.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(versions.getBody()).contains("\"versions\"");
 
         ResponseEntity<String> defaultTenant = restClient.get()
-                .uri("/v1/prompts/tenant_prompt")
+                .uri("/v1/admin/prompts/tenant_prompt")
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .retrieve().toEntity(String.class);
         assertThat(defaultTenant.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);

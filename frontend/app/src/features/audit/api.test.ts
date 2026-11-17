@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 describe('audit 真实接口', () => {
-  it('使用契约路径 /v1/audit-logs，并带 action/target/from/to/limit/offset', async () => {
+  it('使用契约路径 /v1/admin/audit-logs，并带 action/target/from/to/limit/offset', async () => {
     const page = { items: [], count: 0, has_more: false };
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(page));
     vi.stubGlobal('fetch', fetchMock);
@@ -32,8 +32,9 @@ describe('audit 真实接口', () => {
     parsed.searchParams.forEach((value, key) => {
       query[key] = value;
     });
-    expect(parsed.pathname).toBe('/v1/audit-logs');
-    expect(parsed.pathname.startsWith('/v1/admin/')).toBe(false);
+    expect(parsed.pathname).toBe('/v1/admin/audit-logs');
+    // 会话 cookie 的 Path 是 /v1/admin，管理面端点必须落在这个前缀下。
+    expect(parsed.pathname.startsWith('/v1/admin/')).toBe(true);
     expect(query).toEqual({
       action: 'PROMPT_PUBLISH',
       target: 'greeting',

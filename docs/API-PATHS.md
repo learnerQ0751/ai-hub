@@ -48,7 +48,7 @@
 - `/v1/rag/search`、`/v1/rag/answer` → **gateway**
 - `/v1/rag/documents*` → **console**
 - 其余 `/v1/chat/**`、`/v1/embeddings`、`/v1/models`、`/v1/mcp/tools*`、`/mcp`、`/v1/prompts/{name}/render|chat`、`/v1/memory/*` → **gateway**
-- `/key/*`、`/v1/prompts*`（除 render/chat）、`/v1/mcp/servers*`、`/v1/mcp/runtime/*`、`/v1/traces/*`、`/v1/usage*`、`/v1/audit-logs`、`/v1/admin/*` → **console**
+- `/key/*`、`/v1/admin/*`、`/v1/mcp/servers*`、`/v1/mcp/runtime/*`、`/v1/traces/*`、`/v1/usage*` → **console**
 
 ## 3. 数据面（gateway :18080，虚拟 Key）
 
@@ -142,12 +142,17 @@
 
 | 方法 | 路径 |
 |---|---|
-| GET/POST | `/v1/prompts` |
-| GET | `/v1/prompts/{name}`、`/v1/prompts/{name}/versions` |
-| POST | `/v1/prompts/{name}/versions`、`/v1/prompts/{name}/publish` |
+| GET/POST | `/v1/admin/prompts` |
+| GET | `/v1/admin/prompts/{name}`、`/v1/admin/prompts/{name}/versions` |
+| POST | `/v1/admin/prompts/{name}/versions`、`/v1/admin/prompts/{name}/publish` |
 
-`GET /v1/prompts/{name}`、`GET /v1/prompts/{name}/versions`、`POST /v1/prompts/{name}/publish`
-均接受可选 `tenant_id` 查询参数（master 可为指定租户读取/发布，2026-11-17 补齐）。
+`GET /v1/admin/prompts/{name}`、`GET /v1/admin/prompts/{name}/versions`、
+`POST /v1/admin/prompts/{name}/publish` 均接受可选 `tenant_id` 查询参数
+（master 可为指定租户读取/发布，2026-11-17 补齐）。
+
+管理面统一切到 `/v1/admin` 前缀（2026-11-17）：会话 cookie 的 Path 是 `/v1/admin`，
+旧路径 `/v1/prompts*` 在浏览器带 cookie 时必然 401。运行时数据面
+`/v1/prompts/{name}/render`、`/v1/prompts/{name}/chat`（gateway）保持不变。
 
 ### 4.5 RAG 文档
 
@@ -171,7 +176,9 @@
 | GET | `/v1/traces` |
 | GET | `/v1/traces/{traceId}` |
 | GET | `/v1/usage`、`/v1/usage/export` |
-| GET | `/v1/audit-logs` |
+| GET | `/v1/admin/audit-logs` |
+
+审计查询随管理面统一在 `/v1/admin` 下（2026-11-17），旧路径 `/v1/audit-logs` 已下线。
 
 `GET /v1/traces`（§7.1，2026-11-17）按 `trace_id` 聚合并按首个事件时间倒序分页，返回
 `{"items":[{"trace_id","tenant_id","project_id","key_id","started_at","finished_at",
@@ -185,8 +192,8 @@
 | `GET /v1/admin/keys` | 可选 `tenant_id`、`project_id`、`status`（active/blocked/expired）、`model`；`limit`（默认 50）、`offset`（默认 0） |
 | `GET /v1/admin/logs` | 可选 `tenant_id`、`project_id`、`model`、`key_id`、`status`、`from`、`to`；`limit`（默认 50）、`offset`（默认 0） |
 | `GET /v1/usage`、`/v1/usage/export` | 可选 `from`、`to`、`tenant_id`、`project_id`、`model`、`key_id` |
-| `GET /v1/audit-logs` | 可选 `tenant_id`、`action`、`target`、`from`、`to`；`limit`（默认 50）、`offset`（默认 0） |
-| `GET /v1/prompts` | 可选 `tenant_id` |
+| `GET /v1/admin/audit-logs` | 可选 `tenant_id`、`action`、`target`、`from`、`to`；`limit`（默认 50）、`offset`（默认 0） |
+| `GET /v1/admin/prompts` | 可选 `tenant_id` |
 | `GET /v1/admin/models` | 可选 `tenant_id`、`status`（ACTIVE/DISABLED） |
 | `GET /v1/rag/documents` | 必填 `project_id`；可选 `limit` |
 | `GET /v1/rag/documents/{docId}/chunks` | 必填 `project_id`；`limit`（默认 50）、`offset`（默认 0） |
@@ -295,7 +302,7 @@ Idempotency-Key: <1-128 位字母/数字/._:->
 |---|---|---|---|
 | `GET /v1/admin/keys` | Key 列表补 `alias`、`metadata`、`rpm_limit`、`tpm_limit`、`max_budget`、`budget_duration`；支持按状态（active/blocked/expired）与模型筛选 | 管理台 Key 列表免逐条查详情 | 已实现，见 §4.1 |
 | `GET /v1/admin/models` | 模型列表补 `description`、`input_price_per_million`/`output_price_per_million`、`created_at`/`updated_at`；接收 `tenant_id`、`status` 筛选 | 模型目录展示与筛选 | 已实现，见 §4.2 |
-| `GET /v1/prompts/{name}`、`GET /v1/prompts/{name}/versions`、`POST /v1/prompts/{name}/publish` | 补 `tenant_id` 查询参数 | master 可为指定租户读取/发布 Prompt | 已实现，见 §4.4 |
+| `GET /v1/admin/prompts/{name}`、`GET /v1/admin/prompts/{name}/versions`、`POST /v1/admin/prompts/{name}/publish` | 补 `tenant_id` 查询参数 | master 可为指定租户读取/发布 Prompt | 已实现，见 §4.4 |
 | `/v1/admin/project-authorizations` 列表 | 维持「后续页面」，不阻塞首版 | 项目授权管理 | 未实现 |
 
 ### 7.3 控制台会话（已实现，2026-11-17）

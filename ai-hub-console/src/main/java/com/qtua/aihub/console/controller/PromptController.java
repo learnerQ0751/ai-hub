@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Prompt 模板管理入口（仅 master key；render/chat 数据面在 REQ-2.5 提供）。
+ *
+ * <p>管理面统一挂在 /v1/admin 下：会话 cookie 的 Path 是 /v1/admin，
+ * 旧路径 /v1/prompts* 浏览器带 cookie 请求会 401。</p>
  */
 @RestController
 public class PromptController {
@@ -40,7 +43,7 @@ public class PromptController {
      * @param reqDTO 创建参数
      * @return 201 与创建的版本
      */
-    @PostMapping(path = "/v1/prompts",
+    @PostMapping(path = "/v1/admin/prompts",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PromptResDTO> create(@RequestBody PromptCreateReqDTO reqDTO) {
@@ -54,7 +57,7 @@ public class PromptController {
      * @param reqDTO 版本参数
      * @return 201 与新版本
      */
-    @PostMapping(path = "/v1/prompts/{name}/versions",
+    @PostMapping(path = "/v1/admin/prompts/{name}/versions",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PromptResDTO> createVersion(@PathVariable("name") String name,
@@ -69,7 +72,7 @@ public class PromptController {
      * @param tenantId 租户过滤（可选）
      * @return 模板列表
      */
-    @GetMapping(path = "/v1/prompts", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/v1/admin/prompts", produces = MediaType.APPLICATION_JSON_VALUE)
     public PromptListResDTO list(
             @RequestParam(name = "tenant_id", required = false) String tenantId) {
         return promptService.list(tenantId);
@@ -83,7 +86,7 @@ public class PromptController {
      * @param tenantId 租户（可选）
      * @return 版本视图
      */
-    @GetMapping(path = "/v1/prompts/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/v1/admin/prompts/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
     public PromptResDTO get(@PathVariable("name") String name,
                             @RequestParam(name = "version", required = false) Integer version,
                             @RequestParam(name = "tenant_id", required = false) String tenantId) {
@@ -97,7 +100,7 @@ public class PromptController {
      * @param tenantId 租户（可选）
      * @return 版本列表
      */
-    @GetMapping(path = "/v1/prompts/{name}/versions",
+    @GetMapping(path = "/v1/admin/prompts/{name}/versions",
             produces = MediaType.APPLICATION_JSON_VALUE)
     public PromptVersionListResDTO versions(@PathVariable("name") String name,
                                             @RequestParam(name = "tenant_id", required = false)
@@ -113,7 +116,7 @@ public class PromptController {
      * @param reqDTO   发布参数
      * @return 发布后的版本
      */
-    @PostMapping(path = "/v1/prompts/{name}/publish",
+    @PostMapping(path = "/v1/admin/prompts/{name}/publish",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public PromptResDTO publish(@PathVariable("name") String name,

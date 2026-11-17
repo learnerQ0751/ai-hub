@@ -123,16 +123,24 @@ class PromptManagementIntegrationTest {
         String virtualKey = objectMapper.readTree(generated.getBody()).path("key").asText();
 
         ResponseEntity<String> list = restClient.get()
-                .uri("/v1/prompts")
+                .uri("/v1/admin/prompts")
                 .header("Authorization", "Bearer " + virtualKey)
                 .retrieve().toEntity(String.class);
         assertThat(list.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(list.getBody()).contains("authorization_error");
     }
 
+    @Test
+    void legacy_console_paths_are_no_longer_served() {
+        ResponseEntity<String> list = restClient.get().uri("/v1/prompts")
+                .header("Authorization", "Bearer " + MASTER_KEY)
+                .retrieve().toEntity(String.class);
+        assertThat(list.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
     private ResponseEntity<String> create(String name, String content, List<String> variables) {
         return restClient.post()
-                .uri("/v1/prompts")
+                .uri("/v1/admin/prompts")
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("name", name, "content", content, "variables", variables))
@@ -141,7 +149,7 @@ class PromptManagementIntegrationTest {
 
     private ResponseEntity<String> createVersion(String name, String content, List<String> variables) {
         return restClient.post()
-                .uri("/v1/prompts/" + name + "/versions")
+                .uri("/v1/admin/prompts/" + name + "/versions")
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("content", content, "variables", variables))
@@ -150,7 +158,7 @@ class PromptManagementIntegrationTest {
 
     private ResponseEntity<String> publish(String name, int version) {
         return restClient.post()
-                .uri("/v1/prompts/" + name + "/publish")
+                .uri("/v1/admin/prompts/" + name + "/publish")
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("version", version))
@@ -158,14 +166,14 @@ class PromptManagementIntegrationTest {
     }
 
     private ResponseEntity<String> get(String name, Integer version) {
-        String uri = "/v1/prompts/" + name + (version == null ? "" : "?version=" + version);
+        String uri = "/v1/admin/prompts/" + name + (version == null ? "" : "?version=" + version);
         return restClient.get().uri(uri)
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .retrieve().toEntity(String.class);
     }
 
     private ResponseEntity<String> versions(String name) {
-        return restClient.get().uri("/v1/prompts/" + name + "/versions")
+        return restClient.get().uri("/v1/admin/prompts/" + name + "/versions")
                 .header("Authorization", "Bearer " + MASTER_KEY)
                 .retrieve().toEntity(String.class);
     }

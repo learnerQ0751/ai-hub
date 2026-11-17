@@ -36,7 +36,7 @@ public class AuditLogController {
      * @param offset   偏移
      * @return 分页
      */
-    @GetMapping(path = "/v1/audit-logs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/v1/admin/audit-logs", produces = MediaType.APPLICATION_JSON_VALUE)
     public AuditLogPageResDTO query(
             @RequestParam(name = "tenant_id", required = false) String tenantId,
             @RequestParam(name = "action", required = false) String action,

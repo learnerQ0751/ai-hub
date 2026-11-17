@@ -197,22 +197,22 @@ class ControlPlaneIdempotencyTest {
         String body = "{\"name\":\"" + name + "\",\"content\":\"User: hi {{name}}\","
                 + "\"variables\":[\"name\"]}";
 
-        ResponseEntity<String> first = post("/v1/prompts", body);
-        ResponseEntity<String> second = post("/v1/prompts", body);
+        ResponseEntity<String> first = post("/v1/admin/prompts", body);
+        ResponseEntity<String> second = post("/v1/admin/prompts", body);
         assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(readJson(second).path("version").asInt()).isEqualTo(1);
-        assertThat(readJson(get("/v1/prompts/" + name + "/versions")).path("versions"))
+        assertThat(readJson(get("/v1/admin/prompts/" + name + "/versions")).path("versions"))
                 .hasSize(1);
         assertThat(auditCount("default", "PROMPT_CREATE", name)).isEqualTo(1);
 
-        ResponseEntity<String> different = post("/v1/prompts",
+        ResponseEntity<String> different = post("/v1/admin/prompts",
                 "{\"name\":\"" + name + "\",\"content\":\"User: other\",\"variables\":[]}");
         assertThat(different.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 
-        assertThat(post("/v1/prompts/" + name + "/publish", "{\"version\":1}").getStatusCode())
+        assertThat(post("/v1/admin/prompts/" + name + "/publish", "{\"version\":1}").getStatusCode())
                 .isEqualTo(HttpStatus.OK);
-        assertThat(post("/v1/prompts/" + name + "/publish", "{\"version\":1}").getStatusCode())
+        assertThat(post("/v1/admin/prompts/" + name + "/publish", "{\"version\":1}").getStatusCode())
                 .isEqualTo(HttpStatus.OK);
         assertThat(auditCount("default", "PROMPT_PUBLISH", name)).isEqualTo(1);
     }
@@ -272,22 +272,22 @@ class ControlPlaneIdempotencyTest {
     @Test
     void idempotency_key_replays_prompt_version_creation() {
         String name = "idem_ver_" + suffix().replace("-", "");
-        assertThat(post("/v1/prompts", "{\"name\":\"" + name
+        assertThat(post("/v1/admin/prompts", "{\"name\":\"" + name
                 + "\",\"content\":\"User: v1\",\"variables\":[]}").getStatusCode())
                 .isEqualTo(HttpStatus.CREATED);
         String header = "ver-" + UUID.randomUUID();
         String body = "{\"content\":\"User: v2\",\"variables\":[]}";
 
-        ResponseEntity<String> first = postWithIdempotency("/v1/prompts/" + name + "/versions",
+        ResponseEntity<String> first = postWithIdempotency("/v1/admin/prompts/" + name + "/versions",
                 body, header);
-        ResponseEntity<String> second = postWithIdempotency("/v1/prompts/" + name + "/versions",
+        ResponseEntity<String> second = postWithIdempotency("/v1/admin/prompts/" + name + "/versions",
                 body, header);
 
         assertThat(first.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(second.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(readJson(second).path("version").asInt())
                 .isEqualTo(readJson(first).path("version").asInt());
-        assertThat(readJson(get("/v1/prompts/" + name + "/versions")).path("versions"))
+        assertThat(readJson(get("/v1/admin/prompts/" + name + "/versions")).path("versions"))
                 .hasSize(2);
     }
 

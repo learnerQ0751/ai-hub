@@ -18,7 +18,7 @@ export interface AuditLogPage {
   has_more: boolean;
 }
 
-/** GET /v1/audit-logs 的冻结参数（§4.7）；action 精确匹配，target 模糊匹配，时间为 ISO-8601。 */
+/** GET /v1/admin/audit-logs 的冻结参数（§4.7）；action 精确匹配，target 模糊匹配，时间为 ISO-8601。 */
 export interface AuditListQuery {
   tenant_id?: string;
   action?: string;

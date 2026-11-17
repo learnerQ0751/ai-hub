@@ -261,7 +261,7 @@ export default function PromptsPage({ initialDemoMode }: PromptsPageProps) {
       <PageHeader
         title="Prompt 模板"
         section="能力目录"
-        description="模板版本历史与发布回滚；数据来自 console /v1/prompts（契约 §4.4），列表只含每个模板的最新发布版本。"
+        description="模板版本历史与发布回滚；数据来自 console /v1/admin/prompts（契约 §4.4），列表只含每个模板的最新发布版本。"
         extra={
           <Button icon={<ReloadOutlined />} onClick={() => void promptsQuery.refetch()}>
             刷新
@@ -347,7 +347,7 @@ export default function PromptsPage({ initialDemoMode }: PromptsPageProps) {
               </Button>
             ) : (
               <span className="muted" style={{ fontSize: 12 }}>
-                列表只返回已发布模板；可先通过 POST /v1/prompts 创建并发布。
+                列表只返回已发布模板；可先通过 POST /v1/admin/prompts 创建并发布。
               </span>
             )}
           </Empty>

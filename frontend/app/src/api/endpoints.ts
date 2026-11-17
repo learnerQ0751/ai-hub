@@ -82,11 +82,11 @@ export const endpoints = {
   },
   prompts: {
     /** §4.4：列表只返回每个模板的最新发布版本；tenant_id 可选。 */
-    list: '/v1/prompts',
-    create: '/v1/prompts',
-    detail: (name: string) => `/v1/prompts/${encodeURIComponent(name)}`,
-    versions: (name: string) => `/v1/prompts/${encodeURIComponent(name)}/versions`,
-    publish: (name: string) => `/v1/prompts/${encodeURIComponent(name)}/publish`,
+    list: '/v1/admin/prompts',
+    create: '/v1/admin/prompts',
+    detail: (name: string) => `/v1/admin/prompts/${encodeURIComponent(name)}`,
+    versions: (name: string) => `/v1/admin/prompts/${encodeURIComponent(name)}/versions`,
+    publish: (name: string) => `/v1/admin/prompts/${encodeURIComponent(name)}/publish`,
   },
   logs: {
     /** §4.2 / §4.7：tenant_id、project_id、model、key_id、status、from、to、limit、offset。 */
@@ -94,6 +94,6 @@ export const endpoints = {
   },
   audit: {
     /** §4.6 / §4.7：tenant_id、action、target、from、to、limit、offset。 */
-    list: '/v1/audit-logs',
+    list: '/v1/admin/audit-logs',
   },
 } as const;
