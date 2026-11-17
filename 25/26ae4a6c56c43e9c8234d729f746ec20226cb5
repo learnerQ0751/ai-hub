@@ -1,0 +1,80 @@
+ai-hub-api/src/main/java/com/qtua/aihub/api/AdminService.java
+  h_db524743a0da6f 10,36-54
+ai-hub-api/src/main/java/com/qtua/aihub/api/RagDocumentService.java
+  h_db524743a0da6f 3,36-46
+ai-hub-api/src/main/java/com/qtua/aihub/api/TraceService.java
+  h_db524743a0da6f 3,18-33
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminProjectPageResDTO.java
+  h_db524743a0da6f 1-24
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminProjectResDTO.java
+  h_db524743a0da6f 1-18
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagChunkPageResDTO.java
+  h_db524743a0da6f 1-24
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagChunkResDTO.java
+  h_db524743a0da6f 1-27
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/TraceListResDTO.java
+  h_db524743a0da6f 1-24
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/TraceSummaryResDTO.java
+  h_db524743a0da6f 1-25
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/AdminController.java
+  h_db524743a0da6f 11,66-94
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/RagDocumentController.java
+  h_db524743a0da6f 4,79-98
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/TraceController.java
+  h_db524743a0da6f 4,9,31-57
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagDocumentCore.java
+  h_db524743a0da6f 217-231
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/ProjectMapper.java
+  h_db524743a0da6f 1-31
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/RagChunkMapper.java
+  h_db524743a0da6f 44-59
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/TraceEventMapper.java
+  h_db524743a0da6f 4,8,31-52
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/ProjectDO.java
+  h_db524743a0da6f 1-55
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/TraceSummaryDO.java
+  h_db524743a0da6f 1-84
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/ProjectMapper.xml
+  h_db524743a0da6f 1-45
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/RagChunkMapper.xml
+  h_db524743a0da6f 61-72
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/TraceEventMapper.xml
+  h_db524743a0da6f 40-85
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ProjectBO.java
+  h_db524743a0da6f 1-16
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/TraceSummaryBO.java
+  h_db524743a0da6f 1-19
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/rag/RagChunkManager.java
+  h_db524743a0da6f 73-89
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/tenant/ProjectManager.java
+  h_db524743a0da6f 1-47
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/trace/TraceEventManager.java
+  h_db524743a0da6f 9,11,16,75-101
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/AdminServiceImpl.java
+  h_db524743a0da6f 13-14,26,28,64,75,82,88,105-125,432-436,464-475
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/TraceServiceImpl.java
+  h_db524743a0da6f 5,7,12,18-19,32-34,67-136
+ai-hub-service/src/main/java/com/qtua/aihub/service/shared/RagDocumentServiceImpl.java
+  h_db524743a0da6f 5-6,19,163-187,238-244
+ai-hub-tests/src/test/java/com/qtua/aihub/ConsoleGapEndpointsIntegrationTest.java
+  h_db524743a0da6f 1-283
+ai-workflow/STATUS.md
+  h_db524743a0da6f 6,48,62,73-76,104,107,134-135,141,243,265
+ai-workflow/acceptance/REQ-5.5.md
+  h_db524743a0da6f 1-68
+ai-workflow/records/REQ-5.5.md
+  h_db524743a0da6f 1-77
+docs/API-PATHS.md
+  h_db524743a0da6f 3-4,106,115-117,157,161-166,171,176-180,192-194,219-236,280,282-288,290
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2526ae4a6c56c43e9c8234d729f746ec20226cb5",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
