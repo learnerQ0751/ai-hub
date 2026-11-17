@@ -26,12 +26,14 @@
 | v_usage_daily | 用量/成本实时聚合视图：usage_date / tenant_id / project_id / model_alias / key_id / requests / prompt_tokens / completion_tokens / total_tokens / cost | 直接从 call_logs 聚合；与逐条日志同口径 | active | REQ-4.3 |
 | trace_events | 全链路分段事件：trace_id（=request_id）/ tenant_id / project_id / key_id / segment（gateway/model/rag/mcp/answer）/ name / status / latency_ms / payload（JSONB 摘要）/ created_at | 弱关联 call_logs（trace_id）；按 trace_id 聚合成一次请求轨迹 | active | REQ-4.2 |
 | idempotency_keys | 控制面幂等键：idempotency_key（唯一）/ request_hash（SHA-256(method+path+body)）/ response_status / response_content_type / response_body / created_at / updated_at | 独立表；同键同请求重放首次响应，重启不失效 | active | REQ-5.2 |
+| admin_sessions | 控制台管理员会话：token_hash（SHA-256，唯一）/ username / created_at / expires_at | 独立表；明文令牌只存在于 httpOnly cookie | active | 控制台会话（2026-11-17） |
+| admin_login_attempts | 控制台登录失败计数：username（主键）/ failed_count / locked_until / updated_at | 独立表；连续失败锁定，登录成功清零 | active | 控制台会话（2026-11-17） |
 
 ### 网关与鉴权
 
 | 表 | 用途 | 关键关系 | 状态 | 引入需求 |
 |---|---|---|---|---|
-| api_keys | 虚拟 Key：SHA-256 哈希、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend、tenant_id / project_id（绑定租户与项目，V10） | 1:N call_logs（key_id）；绑定 tenant/project | active | REQ-1.3 / REQ-1.4 / REQ-4.1 |
+| api_keys | 虚拟 Key：SHA-256 哈希、alias（管理台别名，V15）、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend、tenant_id / project_id（绑定租户与项目，V10） | 1:N call_logs（key_id）；绑定 tenant/project | active | REQ-1.3 / REQ-1.4 / REQ-4.1 |
 | call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias / call_type（CHAT/MCP/PROMPT/MEMORY/RAG/EMBEDDING）/ target_name / tenant_id / project_id / trace_id（V10） | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5 / REQ-1.4 / REQ-1.6 / REQ-2.3 / REQ-3.5 / REQ-3.1 / REQ-3.7 |
 
 ### MCP 与 Prompt

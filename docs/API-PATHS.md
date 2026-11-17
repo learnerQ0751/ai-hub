@@ -1,6 +1,7 @@
 # ai-hub 接口路径表（前端对接用）
 
-> 版本：REQ-5.1~5.4，**契约冻结 2026-11-17**。数据面与控制面拆为两个应用，管理台只连 console。
+> 版本：REQ-5.1~5.4，**契约冻结 2026-11-17**；同日增补控制台会话端点与字段级修订（additive）。
+> 数据面与控制面拆为两个应用，管理台只连 console。
 > 契约与 4.4 保持一致：管理端点路径不迁移，隔离手段是「console 只认 admin 凭证」。
 
 ## 0. 契约冻结声明（2026-11-17）
@@ -22,8 +23,8 @@
 | 8 | 控制面端点（§4）与可选 `Idempotency-Key` 语义（§5） | 已实现，已冻结 |
 | 9 | 统一错误体与错误码（§6） | 已实现，已冻结 |
 | 10 | 现有分页与筛选参数（§3、§4.7 所列） | 已实现，已冻结 |
-| 11 | §7.2 字段级修订清单 | 方向已冻结，未实现 |
-| 12 | §7.1 端点缺口 | 仅登记，不冻结 |
+| 11 | §7.2 字段级修订清单 | 已实现（2026-11-17），见 §4.1/§4.2/§4.4 |
+| 12 | §7.1 端点缺口 | 控制台会话端点已实现（§4.8）；其余仍登记 |
 
 ### 0.2 冻结后的变更纪律
 
@@ -37,7 +38,7 @@
 | 应用 | 默认端口 | 职责 | 鉴权 |
 |---|---|---|---|
 | `ai-hub-gateway`（数据面） | 18080 | 聊天、嵌入、模型列表、MCP 调用、Prompt 运行时、RAG 检索/生成、记忆 | 虚拟 Key（`Authorization: Bearer sk-...`）；master key 一律 403 |
-| `ai-hub-console`（控制面） | 18081 | Key 管理、模型注册、MCP 注册、Prompt 模板/发布、RAG 文档接入、用量/审计/Trace 查询 | admin 凭证（`Authorization: Bearer $GATEWAY_MASTER_KEY`）；虚拟 Key 一律 403 |
+| `ai-hub-console`（控制面） | 18081 | Key 管理、模型注册、MCP 注册、Prompt 模板/发布、RAG 文档接入、用量/审计/Trace 查询 | admin 凭证（`Authorization: Bearer $GATEWAY_MASTER_KEY`）或管理员会话 cookie（§4.8）；虚拟 Key 一律 403 |
 
 健康检查：两应用均提供 `GET /actuator/health`（免鉴权，容器探针使用）。
 
@@ -103,6 +104,12 @@
 | GET | `/v1/admin/keys?tenant_id=` |
 | POST | `/v1/admin/keys/{keyHash}/block`、`/unblock` |
 
+`GET /v1/admin/keys` 返回字段（2026-11-17 补齐）：
+`key_hash`、`alias`、`models`、`spend`、`max_budget`、`budget_duration`、`rpm_limit`、
+`tpm_limit`、`metadata`、`blocked`、`tenant_id`、`project_id`、`expires_at`、`created_at`。
+缺数据返回 `null` 或空集合，不报错。筛选：`status=active|blocked|expired`、
+`model=<别名>`（白名单包含该别名）。`POST /key/generate` 新增可选 `alias`（≤128 字符）。
+
 ### 4.2 模型与日志
 
 | 方法 | 路径 |
@@ -112,6 +119,10 @@
 | POST | `/v1/admin/models/{alias}/deployments` |
 | GET | `/v1/admin/logs` |
 | POST | `/v1/admin/project-authorizations` |
+
+`GET /v1/admin/models?tenant_id=&status=ACTIVE|DISABLED`（2026-11-17 补齐）返回
+`description`、`input_price_per_million`、`output_price_per_million`（按主部署上游模型取价，
+未配置价格时为 `null`）、`created_at`、`updated_at`；筛选参数均为可选。
 
 ### 4.3 MCP 注册表
 
@@ -129,6 +140,9 @@
 | GET/POST | `/v1/prompts` |
 | GET | `/v1/prompts/{name}`、`/v1/prompts/{name}/versions` |
 | POST | `/v1/prompts/{name}/versions`、`/v1/prompts/{name}/publish` |
+
+`GET /v1/prompts/{name}`、`GET /v1/prompts/{name}/versions`、`POST /v1/prompts/{name}/publish`
+均接受可选 `tenant_id` 查询参数（master 可为指定租户读取/发布，2026-11-17 补齐）。
 
 ### 4.5 RAG 文档
 
@@ -150,15 +164,36 @@
 
 | 端点 | 参数 |
 |---|---|
-| `GET /v1/admin/keys` | 可选 `tenant_id`、`project_id`；`limit`（默认 50）、`offset`（默认 0） |
+| `GET /v1/admin/keys` | 可选 `tenant_id`、`project_id`、`status`（active/blocked/expired）、`model`；`limit`（默认 50）、`offset`（默认 0） |
 | `GET /v1/admin/logs` | 可选 `tenant_id`、`project_id`、`model`、`key_id`、`status`、`from`、`to`；`limit`（默认 50）、`offset`（默认 0） |
 | `GET /v1/usage`、`/v1/usage/export` | 可选 `from`、`to`、`tenant_id`、`project_id`、`model`、`key_id` |
 | `GET /v1/audit-logs` | 可选 `tenant_id`、`action`、`target`、`from`、`to`；`limit`（默认 50）、`offset`（默认 0） |
 | `GET /v1/prompts` | 可选 `tenant_id` |
+| `GET /v1/admin/models` | 可选 `tenant_id`、`status`（ACTIVE/DISABLED） |
 | `GET /v1/rag/documents` | 必填 `project_id`；可选 `limit` |
 | `GET /v1/mcp/tools`（gateway） | 可选 `server_id`、`tenant_id` |
 
 参数名与默认值已冻结；新增筛选参数属 additive 变更，须登记后实施。
+
+### 4.8 控制台会话（2026-11-17 实现）
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/v1/admin/session` | 登录，body `{"username","password"}`；成功 200，返回 `{"username","expires_at"}` 并下发 cookie；失败 401；连续失败达阈值返回 429 |
+| GET | `/v1/admin/session` | 会话探测，返回 `{"username","expires_at"}`；未登录/过期 401 |
+| DELETE | `/v1/admin/session` | 退出，204，响应清空 cookie（幂等） |
+
+- 登录成功下发：`Set-Cookie: <cookie-name>=...; HttpOnly; SameSite=Lax; Path=/v1/admin; Max-Age=<timeout>`；
+  `Secure` 由配置 `console.session.cookie-secure` 控制（默认 `true`，本地 http 演示可关闭）。
+- 响应体永不包含会话令牌；cookie 限 `/v1/admin` 路径，数据面请求不会携带。
+- `/v1/admin/**`（除会话端点）接受 master key 或有效会话 cookie；两者都不满足返回 401；
+  携带非 master 的 Bearer 仍返回 403（虚拟 Key 不可越权）。
+- 账号密码来自配置，密码只存 PBKDF2-SHA256 哈希；连续 5 次失败锁定 30 秒（均可配置）。
+- 配置项：`console.session.enabled`、`username`、`password-hash`、`cookie-name`、
+  `cookie-secure`、`timeout`、`max-failed-attempts`、`lock-duration`。
+- 密码哈希生成：`scripts/hash-console-password.ps1 -Password '<明文>'`。
+- 会话令牌只存 SHA-256 摘要（`admin_sessions`），失败计数落库（`admin_login_attempts`），
+  多实例共享、重启不丢失。
 
 ## 5. 幂等请求头（REQ-5.2，可选，已冻结）
 
@@ -195,38 +230,36 @@ Idempotency-Key: <1-128 位字母/数字/._:->
 | 404 | `not_found` | 当前应用未提供该路径（跨面访问） |
 | 409 | `idempotency_error` | 幂等键冲突或同键请求仍在处理 |
 | 409 | `conflict_error` | 同名资源已存在且配置不同（如 MCP Server） |
+| 429 | `rate_limit_error` | 数据面限流，或控制台登录连续失败被临时锁定（§4.8） |
 
 错误体结构与上表错误码已冻结（2026-11-17）；新增错误码须登记并说明语义。
 
-## 7. 未实现条目（已登记，本期不动手）
+## 7. 已登记遗留与实现状态
 
-> 本节条目不属于已生效契约：§7.1 只登记端点缺口，路径与字段待实现时另行冻结；
-> §7.2 的字段清单已定（2026-11-17），但代码尚未实现，客户端必须容忍字段缺失。
+> 本节保留登记信息与实现状态；已实现条目同时写入 §4，未实现条目仍不构成生效契约。
 
-### 7.1 端点缺口（仅登记）
+### 7.1 端点缺口（登记）
 
-| 缺口 | 用途 | 拟定归属 |
-|---|---|---|
-| 项目列表 | 管理台选择租户下的项目 | console |
-| 文档切片列表 | 按 `doc_id` 分页查看切片 | console |
-| 单 Key 查询 | 按 `key_hash` 查询 Key 详情 | console |
-| Trace 列表 | 按租户/时间分页列出 trace | console |
-| 控制台会话端点 | 登录 / 会话探测 / 退出；后端下发 httpOnly + Secure + SameSite=Lax 会话 cookie，前端不接触 token | console |
+| 缺口 | 用途 | 拟定归属 | 状态 |
+|---|---|---|---|
+| 项目列表 | 管理台选择租户下的项目 | console | 未实现 |
+| 文档切片列表 | 按 `doc_id` 分页查看切片 | console | 未实现 |
+| 单 Key 查询 | 按 `key_hash` 查询 Key 详情 | console | 未实现 |
+| Trace 列表 | 按租户/时间分页列出 trace | console | 未实现 |
+| 控制台会话端点 | 登录 / 会话探测 / 退出 | console | 已实现（2026-11-17），见 §4.8 |
 
-以上端点均未实现（当前访问返回 404），本期不动手；路径与字段留待实现需求时冻结。
+除会话端点外，其余端点仍未实现（当前访问返回 404），路径与字段待实现时冻结。
 
-### 7.2 字段级修订（方向已冻结，未实现）
+### 7.2 字段级修订（已实现，2026-11-17）
 
 | 目标接口 | 修订 | 用途 | 状态 |
 |---|---|---|---|
-| `GET /v1/admin/keys` | Key 列表补 `alias`、`metadata`、`rpm_limit`、`tpm_limit`、`max_budget`、`budget_duration`；支持按状态与模型筛选 | 管理台 Key 列表免逐条查详情 | 未实现 |
-| `GET /v1/admin/models` | 模型列表补 `description`、价格、更新时间；接收筛选参数 | 模型目录展示与筛选 | 未实现 |
-| `GET /v1/prompts/{name}`、`GET /v1/prompts/{name}/versions`、`POST /v1/prompts/{name}/publish` | 补 `tenant_id` 参数（REQ-5.6；响应已含 `tenant_id`） | master 可为指定租户读取/发布 Prompt | 未实现 |
+| `GET /v1/admin/keys` | Key 列表补 `alias`、`metadata`、`rpm_limit`、`tpm_limit`、`max_budget`、`budget_duration`；支持按状态（active/blocked/expired）与模型筛选 | 管理台 Key 列表免逐条查详情 | 已实现，见 §4.1 |
+| `GET /v1/admin/models` | 模型列表补 `description`、`input_price_per_million`/`output_price_per_million`、`created_at`/`updated_at`；接收 `tenant_id`、`status` 筛选 | 模型目录展示与筛选 | 已实现，见 §4.2 |
+| `GET /v1/prompts/{name}`、`GET /v1/prompts/{name}/versions`、`POST /v1/prompts/{name}/publish` | 补 `tenant_id` 查询参数 | master 可为指定租户读取/发布 Prompt | 已实现，见 §4.4 |
 | `/v1/admin/project-authorizations` 列表 | 维持「后续页面」，不阻塞首版 | 项目授权管理 | 未实现 |
 
-字段名与语义已定，后续实现须另立需求、按本表验收并回填状态。
-
-### 7.3 控制台会话方向（端点未实现）
+### 7.3 控制台会话（已实现，2026-11-17）
 
 管理员账号 + httpOnly 短期会话 cookie（SameSite=Lax），不使用 token 方案；
-master key 保持配置常量，不引入数据库化或有效期。端点为 §7.1 缺口，本期不动手。
+master key 保持配置常量，不引入数据库化或有效期。实现细节与配置见 §4.8。
