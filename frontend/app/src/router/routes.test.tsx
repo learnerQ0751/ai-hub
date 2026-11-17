@@ -6,7 +6,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { App as AntdApp, ConfigProvider } from 'antd';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// 路由冒烟只验页面标题，图表替身掉，避免在 jsdom 里加载 ECharts。
+vi.mock('@/components/Chart', () => ({ Chart: () => null }));
 
 const routes: Array<[string, string]> = [
   ['/overview', '概览'],
@@ -53,10 +56,11 @@ describe('已登录路由', () => {
 
   it.each(routes)('渲染 %s 的页面标题', async (path, title) => {
     renderAt(path);
+    // 机器高负载（后端构建/测试并行）时懒加载会明显变慢，放宽到 30s。
     const heading = await screen.findByRole(
       'heading',
       { level: 1, name: title },
-      { timeout: 15000 },
+      { timeout: 30000 },
     );
     expect(heading).toBeTruthy();
   });

@@ -349,9 +349,12 @@ export default function RagPage() {
                   setProjectId(project.project_id);
                 }}
               >
-                {project.project_id}
+                {project.name || project.project_id}
                 <span className="muted" style={{ marginLeft: 6, fontSize: 12 }}>
-                  Key {project.key_count} · 文档 {project.document_count}
+                  {project.name && project.name !== project.project_id
+                    ? `${project.project_id} · `
+                    : ''}
+                  {project.status === 'ACTIVE' ? '启用' : project.status}
                 </span>
               </Button>
             ))}

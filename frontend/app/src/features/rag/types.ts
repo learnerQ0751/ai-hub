@@ -28,9 +28,11 @@ export interface RagDocumentList {
 export interface RagChunk {
   chunk_id: string;
   doc_id: string;
+  project_id?: string;
   chunk_index: number;
   content: string;
   char_count?: number;
+  source?: string | null;
   index_status?: string;
   created_at?: string;
 }

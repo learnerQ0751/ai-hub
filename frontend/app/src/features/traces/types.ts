@@ -14,16 +14,17 @@ export interface TraceDetail {
   events: TraceEvent[];
 }
 
-/** GET /v1/admin/traces 的列表行（§7.1 已实现）。 */
+/** GET /v1/admin/traces 的列表行（§4.6 / §7.1 冻结口径）。 */
 export interface TraceSummary {
   trace_id: string;
   tenant_id?: string | null;
   project_id?: string | null;
   key_id?: string | null;
-  status: number;
-  latency_ms: number;
+  started_at?: string | null;
+  finished_at?: string | null;
   event_count: number;
-  created_at: string;
+  /** 分段最大状态码；0 表示未记录。 */
+  status: number;
 }
 
 export interface TracePage {
@@ -35,6 +36,8 @@ export interface TracePage {
 export interface TraceListQuery {
   tenant_id?: string;
   project_id?: string;
+  key_id?: string;
+  status?: number;
   from?: string;
   to?: string;
   limit: number;
