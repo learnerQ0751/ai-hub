@@ -401,7 +401,7 @@ sequenceDiagram
 - `min_score` 只作用于向量路，字面命中不因阈值被误杀；元数据过滤两路一致。
 - 降级：任一路异常时另一路单独返回；两路都失败才报错。
 - 开关 `hybrid-enabled=false` 时完全回到三期路径（向量 + 规则重排，`reranked=true`）。
-- 对外契约：`/v1/rag/search` 命中新增上述四个字段（additive），路径与鉴权不变；契约待 5.4 后冻结。
+- 对外契约：`/v1/rag/search` 命中新增上述四个字段（additive），路径与鉴权不变；契约已于 2026-11-17 冻结（见 `docs/API-PATHS.md` §0）。
 
 ### 3.15 RAG 生成与引用溯源（REQ-3.4）
 

@@ -96,7 +96,7 @@ regression: "原检索/回答/租户隔离用例保留；min_score 与 rerank �
 - `/v1/rag/search` 命中新增 4 个字段（additive）：`match_type`、`vector_score`、
   `keyword_score`、`rrf_score`；`score` 语义不变（向量相似度）。
 - 默认开启混合检索：排序以 RRF 为准，`reranked=false`（规则重排让位）；关闭开关后恢复三期排序与 `reranked`。
-- 契约待 5.4 后冻结。
+- 契约已于 2026-11-17 随第五期统一冻结（见 `docs/API-PATHS.md` §0）。
 
 ## 5. 决策
 
@@ -131,4 +131,4 @@ regression: "原检索/回答/租户隔离用例保留；min_score 与 rerank �
 - 词项是 bigram/英文词启发式，未接专业中文分词；同义/错字仍靠向量路。
 - 两路候选上限相同（candidateLimit），极端情况下字面路只取到部分高覆盖结果。
 - 混合模式下规则重排不再生效；如需两者叠加，需要另立需求评估。
-- 契约待 5.4 后冻结；本需求未改 `/docs/API-PATHS.md` 的路径与鉴权，只补了命中字段说明。
+- 契约已于 2026-11-17 冻结（见 `docs/API-PATHS.md` §0）；本需求未改 `/docs/API-PATHS.md` 的路径与鉴权，只补了命中字段说明。
