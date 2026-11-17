@@ -1,0 +1,79 @@
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/RagChunkMapper.java
+  s_0b21f4571628b4::t_123a3203176856 62-75
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/rag/RagChunkManager.java
+  s_0b21f4571628b4::t_6a55c60de45e3c 101-118
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/RagSearchHitResDTO.java
+  s_95aaebf77cebf8::t_38c5ef8f166014 8-21,30-43
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/RagProperties.java
+  s_8b33dbee17e429::t_0f82cde532dbd9 38-42,572-581,653-692
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagLexicalReranker.java
+  s_8b33dbee17e429::t_8caa909fa9a4a8 93-100
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagRetrievedChunk.java
+  s_8b33dbee17e429::t_3f0edde366ea8a 6-8,10-21,25-36
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagHybridRetrievalTest.java
+  s_09ab81f3a7658e::t_b2ebd65cc47bc9 1-169
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagRetrievalCoreTest.java
+  s_8b33dbee17e429::t_67e4faf6ce0599 51-52
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/RagChunkMapper.xml
+  s_8b33dbee17e429::t_b0862930d51539 84-100
+ai-hub-service/src/main/java/com/qtua/aihub/service/RagSearchServiceImpl.java
+  s_8b33dbee17e429::t_904421b6dae18f 246-249,272-273
+ai-hub-start/src/main/resources/application-common.yml
+  s_8b33dbee17e429::t_d71069eb1a36e3 158-164
+ai-hub-tests/src/test/java/com/qtua/aihub/RagHybridDisabledIntegrationTest.java
+  s_8b33dbee17e429::t_3e45898184e0ca 1-131
+ai-hub-tests/src/test/java/com/qtua/aihub/RagSearchIntegrationTest.java
+  s_8b33dbee17e429::t_660de7b745cc4e 141,143-148,151-153,196,204,206-230
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagRetrievalCore.java
+  s_8b33dbee17e429::t_4aca1ffc5f3084 17,19-20,25,30-34,44-49,63-64,84-221,228-269,329-330,344-350
+ai-workflow/DESIGN.md
+  s_8b33dbee17e429::t_a222bbff6219e4 393-405
+ai-workflow/STATUS.md
+  s_8b33dbee17e429::t_f48e26276ff84b 6,46,232,252
+ai-workflow/acceptance/REQ-5.3.md
+  s_8b33dbee17e429::t_12940a582ce786 1-75
+ai-workflow/records/REQ-5.3.md
+  s_8b33dbee17e429::t_2cebbdef59b921 1-134
+docs/API-PATHS.md
+  s_8b33dbee17e429::t_e957b3c13a31a9 39-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2e29b6d002c222ac12101d848fa21fb0c5a8cdd1",
+  "prompts": {},
+  "sessions": {
+    "s_09ab81f3a7658e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a71e7e9b-5549-4f57-a650-8857866250d6",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_0b21f4571628b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38ac2ffa-138d-4580-be67-bf463080b97c",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_8b33dbee17e429": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b688c2d0-38ee-4c46-a9dd-804e9a35773d",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_95aaebf77cebf8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2e527153-6844-4de4-bdac-662e4256cb17",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
