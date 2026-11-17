@@ -1,0 +1,24 @@
+scripts/mcp-mock-server.js
+  h_db524743a0da6f 1-57
+scripts/qa-matrix-core.ps1
+  h_db524743a0da6f 1-225
+scripts/qa-matrix-ops.ps1
+  h_db524743a0da6f 1-186
+scripts/qa-mcp-reprobe.ps1
+  h_db524743a0da6f 1-89
+scripts/qa-restart-persistence.ps1
+  h_db524743a0da6f 1-99
+scripts/qa-start.ps1
+  h_db524743a0da6f 9-12,63-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f63f70c73b452f393d2896372d814f3ffe23e47d",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
