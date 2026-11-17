@@ -1,0 +1,43 @@
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/RagProperties.java
+  s_410631ed5c35c6::t_07b74b09b48888 44,706-707,731-738
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagContextAssembler.java
+  s_410631ed5c35c6::t_0b45ff3ed20ee3 1-155
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagContextSegment.java
+  s_410631ed5c35c6::t_80b63cd9c5af70 1-33
+ai-hub-core/src/main/java/com/qtua/aihub/core/rag/RagPromptBuilder.java
+  s_410631ed5c35c6::t_2aabbecff732f0 12-15,22,29-30,37,47-62,66,68,71-73,75-83,90-141,144-160
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagContextAssemblerTest.java
+  s_410631ed5c35c6::t_1d3a71f2593da6 1-110
+ai-hub-core/src/test/java/com/qtua/aihub/core/rag/RagPromptBuilderTest.java
+  s_410631ed5c35c6::t_058f7b2095fa69 71-98,104-108
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/RagChunkMapper.java
+  s_410631ed5c35c6::t_32373ec146d0d1 76-91
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/RagChunkMapper.xml
+  s_410631ed5c35c6::t_7e9aaa0bf13d9c 101-112
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/rag/RagChunkManager.java
+  s_410631ed5c35c6::t_71903ec9de322a 101-119
+ai-hub-service/src/main/java/com/qtua/aihub/service/RagAnswerServiceImpl.java
+  s_410631ed5c35c6::t_71e8d2fa096a6e 23,28-29,78,84,86-91,96,99-100,106-112,118,124,159-161,223-236
+ai-hub-service/src/test/java/com/qtua/aihub/service/RagAnswerServiceTest.java
+  s_410631ed5c35c6::t_5e38fc2a9f5ff9 18,20,56,58,97-116
+ai-hub-start/src/main/resources/application-common.yml
+  s_410631ed5c35c6::t_16596e36f9f5cb 169-170
+ai-hub-tests/src/test/java/com/qtua/aihub/RagAnswerIntegrationTest.java
+  s_410631ed5c35c6::t_d58b41e06f5974 143-177
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "57bb4764f00f6f64f25fe867c7e2685105be49f6",
+  "prompts": {},
+  "sessions": {
+    "s_410631ed5c35c6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "10269f78-0582-43ef-9b6e-82bd94652eea",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
