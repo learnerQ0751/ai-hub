@@ -1,0 +1,269 @@
+ai-hub-api/src/main/java/com/qtua/aihub/api/ConsoleSessionService.java
+  s_3bd3380625c08b::t_d4d214750d4960 1-44
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/auth/ConsoleSessionAuthDTO.java
+  s_3bd3380625c08b::t_a1decaa024459f 1-15
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/ConsoleLoginReqDTO.java
+  s_3bd3380625c08b::t_c020e7e73fb4d4 1-10
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/ConsoleSessionResDTO.java
+  s_3bd3380625c08b::t_e0bb851cc4fd43 1-13
+ai-hub-common/src/main/java/com/qtua/aihub/common/config/ConsoleSessionProperties.java
+  s_f3c26bd811a2ca::t_5d218befdbcbf5 1-130
+ai-hub-common/src/main/java/com/qtua/aihub/common/crypto/Pbkdf2PasswordHasher.java
+  s_f3c26bd811a2ca::t_95b1cc980ca53d 1-89
+ai-hub-common/src/main/java/com/qtua/aihub/common/exception/ChatCompletionException.java
+  s_3bd3380625c08b::t_67b41448bafb0b 190-229
+ai-hub-common/src/test/java/com/qtua/aihub/common/crypto/Pbkdf2PasswordHasherTest.java
+  s_3bd3380625c08b::t_f84b27d7c15dd0 1-37
+ai-hub-console/src/main/java/com/qtua/aihub/console/ConsoleComponentScan.java
+  s_3bd3380625c08b::t_4239196ae6053e 22
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/ConsoleSessionController.java
+  s_3bd3380625c08b::t_fea21b6c69eefc 1-117
+ai-hub-console/src/main/java/com/qtua/aihub/console/filter/AdminAuthFilter.java
+  s_3bd3380625c08b::t_d2e9b5c6125407 4,6,13,23,34-35,37,45,49-50,55-58,60-62,65-66,70,77-79,103-107,132-145
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/AdminLoginAttemptMapper.java
+  s_f3c26bd811a2ca::t_43f7bb48612687 1-45
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/AdminSessionMapper.java
+  s_3bd3380625c08b::t_7fd2fc289108bd 1-46
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/AdminLoginAttemptDO.java
+  s_f3c26bd811a2ca::t_ecfe88577e861b 1-46
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/AdminSessionDO.java
+  s_3bd3380625c08b::t_91643a14ee7542 1-57
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/AdminLoginAttemptMapper.xml
+  s_f3c26bd811a2ca::t_e99b039fdefc47 1-37
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/AdminSessionMapper.xml
+  s_3bd3380625c08b::t_f4e712368f95b9 1-34
+ai-hub-dal/src/main/resources/db/admin-session-schema.sql
+  s_f3c26bd811a2ca::t_834ece3990885f 1-16
+ai-hub-dal/src/main/resources/db/migration/V16__admin_sessions.sql
+  s_3bd3380625c08b::t_15131bb5ce3c57 1-26
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/AdminLoginAttemptBO.java
+  s_3bd3380625c08b::t_602873e679eea4 1-13
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/AdminSessionBO.java
+  s_3bd3380625c08b::t_37f31b9fc1fcd4 1-12
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/session/AdminLoginAttemptManager.java
+  s_3bd3380625c08b::t_ba58ee920f1498 1-75
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/session/AdminSessionManager.java
+  s_3bd3380625c08b::t_e4b19d3329458c 1-110
+ai-hub-service/src/main/java/com/qtua/aihub/service/console/ConsoleSessionServiceImpl.java
+  s_3bd3380625c08b::t_8955a7c752a913 1-150
+ai-hub-start/src/main/resources/application-local.yml.example
+  s_3bd3380625c08b::t_59262de811807f 26-37
+ai-hub-tests/src/test/java/com/qtua/aihub/ConsoleSessionIntegrationTest.java
+  s_3bd3380625c08b::t_8c9c2ca6bfb584 1-172
+ai-hub-tests/src/test/resources/application-test.yml
+  s_f3c26bd811a2ca::t_4a8fdac17d9a0c 30
+config/spotbugs-exclude.xml
+  s_3bd3380625c08b::t_8845b4c8f90f69 582-606
+scripts/hash-console-password.ps1
+  s_3bd3380625c08b::t_ec1ba230e407fa 1-31
+ai-hub-api/src/main/java/com/qtua/aihub/api/AdminService.java
+  s_3bd3380625c08b::t_4655a1b6f764d7 27-28,33-34,67-68,71
+ai-hub-api/src/main/java/com/qtua/aihub/api/PromptService.java
+  s_3bd3380625c08b::t_e4b80ac2a9d8a4 36-38,41,46-47,50,63-65,68
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/req/KeyGenerateReqDTO.java
+  s_3bd3380625c08b::t_a0d882b500aa65 24,35-36,54-64
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminKeyResDTO.java
+  s_3bd3380625c08b::t_67463d74628b30 6-7,9,15-28,30-31,34-37,49-50
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/AdminModelResDTO.java
+  s_3bd3380625c08b::t_333971628b4346 5,12-21,24-30
+ai-hub-api/src/main/java/com/qtua/aihub/api/model/res/KeyGenerateResDTO.java
+  s_3bd3380625c08b::t_193c301a0cb154 29,43-44,54-65
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/AdminController.java
+  s_3bd3380625c08b::t_5c343e440cfd84 49-50,59-60,63,122-123,127-130
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/PromptController.java
+  s_3bd3380625c08b::t_59c24829cf1b7b 81-83,88-90,96-97,102-105,111-113,120,122
+ai-hub-console/src/test/java/com/qtua/aihub/console/controller/KeyControllerTest.java
+  s_3bd3380625c08b::t_9224ed6d96957b 3,10,58-63
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/mapper/ApiKeyMapper.java
+  s_f3c26bd811a2ca::t_febf11bbcda8a3 56,60-62,69-71
+ai-hub-dal/src/main/java/com/qtua/aihub/dal/model/ApiKeyDO.java
+  s_3bd3380625c08b::t_cd2ad2f6c5f2af 17-18,54-61
+ai-hub-dal/src/main/resources/com/qtua/aihub/dal/mapper/ApiKeyMapper.xml
+  s_3bd3380625c08b::t_044b33c8f233a0 9,27,30-31,42,57,68-82
+ai-hub-dal/src/main/resources/db/api-keys-schema.sql
+  s_3bd3380625c08b::t_7e897cd0368c0d 6
+ai-hub-dal/src/main/resources/db/migration/V15__api_key_alias.sql
+  s_f3c26bd811a2ca::t_4918050c2cd0be 1-4
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/ApiKeyManager.java
+  s_f3c26bd811a2ca::t_2dbf259deba6c2 54,96-98,103-106,114
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/catalog/ModelCatalogManager.java
+  s_3bd3380625c08b::t_1f1f29d583c796 297-298
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ApiKeyBO.java
+  s_f3c26bd811a2ca::t_6cbcd379a00759 19,52,78-104,106,127-130
+ai-hub-manager/src/main/java/com/qtua/aihub/manager/model/ModelAliasAdminBO.java
+  s_3bd3380625c08b::t_e6cf9c9634081c 3,15-16,21
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/AdminServiceImpl.java
+  s_3bd3380625c08b::t_f3248d04af1f04 17-18,66,71-74,76-77,83,90,94-95,99,144-153,425-429,441-463,476-485
+ai-hub-service/src/main/java/com/qtua/aihub/service/admin/PromptServiceImpl.java
+  s_3bd3380625c08b::t_5322bc51be37c8 176-178,182-183,185,189,197-198,202-204,229-231,236-238,241,243-244,249-251
+ai-hub-service/src/main/java/com/qtua/aihub/service/shared/KeyServiceImpl.java
+  s_3bd3380625c08b::t_0f5764d1ded0f2 53,96-97,110-128
+ai-hub-tests/src/test/java/com/qtua/aihub/AdminIntegrationTest.java
+  s_3bd3380625c08b::t_325e9a10673e66 61-62,145-210,240-255
+ai-hub-tests/src/test/java/com/qtua/aihub/PromptTenantFilterIntegrationTest.java
+  s_3bd3380625c08b::t_53da85c963066a 1-91
+ai-workflow/docs/DATA-MODEL.md
+  s_3bd3380625c08b::t_24d813e25706e8 29-30,36
+docs/API-PATHS.md
+  s_3bd3380625c08b::t_606ccf2b36516b 5,27-28,42,109-114,128-131,149-151,185,190,199-218,272,276,278,292,296-298,301,304
+frontend/app/.gitignore
+  s_684fe97a89e3ca::t_9f645076fe4d6d 2
+frontend/app/.prettierrc.json
+  s_f3c26bd811a2ca::t_1b8f828271ada1 6-7
+frontend/app/README.md
+  s_f3c26bd811a2ca::t_b8f7853f3cf874 3,23-25,29-37
+frontend/app/eslint.config.js
+  s_f3c26bd811a2ca::t_6fccdf29e95201 31-37
+frontend/app/scripts/capture-board.mjs
+  s_6b84c8f0f216b8::t_4cdaddc5308082 1-176
+frontend/app/src/api/endpoints.test.ts
+  s_6b84c8f0f216b8::t_63a4ab4a429bf2 1-50
+frontend/app/src/api/endpoints.ts
+  s_6b84c8f0f216b8::t_ecec260ee12780 2-4,8-22,30-31,35-44,47-50,53-54,57-77
+frontend/app/src/features/audit/api.test.ts
+  s_6b84c8f0f216b8::t_daf82423247004 1-48
+frontend/app/src/features/audit/api.ts
+  s_6b84c8f0f216b8::t_878b136d774760 1-11
+frontend/app/src/features/audit/types.test.ts
+  s_6b84c8f0f216b8::t_1d59f3dd659a93 1-14
+frontend/app/src/features/audit/types.ts
+  s_6b84c8f0f216b8::t_bb47d1da1e9cf9 1-63
+frontend/app/src/features/keys/api.test.ts
+  s_f3c26bd811a2ca::t_6b0b8f3ebef05c 1-42
+frontend/app/src/features/keys/api.ts
+  s_f3c26bd811a2ca::t_76bfb6e0b37218 1-79
+frontend/app/src/features/keys/fixtures.ts
+  s_942e33353d80bf::t_1e9ab4914cff20 1-138
+frontend/app/src/features/keys/types.test.ts
+  s_942e33353d80bf::t_8f731ddd12adb3 1-46
+frontend/app/src/features/keys/types.ts
+  s_942e33353d80bf::t_299740b0de75ba 1-113
+frontend/app/src/features/logs/api.test.ts
+  s_6b84c8f0f216b8::t_d78784bac3218d 1-99
+frontend/app/src/features/logs/api.ts
+  s_6b84c8f0f216b8::t_59e2994cffde53 1-29
+frontend/app/src/features/logs/types.test.ts
+  s_6b84c8f0f216b8::t_fe9c3bc7f90a11 1-19
+frontend/app/src/features/logs/types.ts
+  s_6b84c8f0f216b8::t_8684f6b0527553 1-81
+frontend/app/src/features/models/api.ts
+  s_f3c26bd811a2ca::t_406e20d9919e02 1-35
+frontend/app/src/features/models/fixtures.ts
+  s_f3c26bd811a2ca::t_e29fe3d6382d54 1-152
+frontend/app/src/features/models/types.test.ts
+  s_f3c26bd811a2ca::t_c10592af0e6bfc 1-39
+frontend/app/src/features/models/types.ts
+  s_942e33353d80bf::t_9fe4ce90ae762c 1-82
+frontend/app/src/features/prompts/api.test.ts
+  s_6b84c8f0f216b8::t_96af30c5ed43ed 1-59
+frontend/app/src/features/prompts/api.ts
+  s_6b84c8f0f216b8::t_46ee6617e310e1 1-45
+frontend/app/src/features/prompts/types.test.ts
+  s_6b84c8f0f216b8::t_a189335a340fb7 1-12
+frontend/app/src/features/prompts/types.ts
+  s_6b84c8f0f216b8::t_fcf1d86dabd94d 1-43
+frontend/app/src/features/shared/format.ts
+  s_f3c26bd811a2ca::t_e945cffe6fca2c 1-29
+frontend/app/src/features/shared/mock.ts
+  s_f3c26bd811a2ca::t_96263ef30e3579 1-13
+frontend/app/src/layouts/AppShell.tsx
+  s_0be49fcf3c677b::t_91ab7b4678c9df 26-28,170-172
+frontend/app/src/pages/audit/AuditPage.tsx
+  s_0be49fcf3c677b::t_c7affde46f134e 1-23,25-31,33-408
+frontend/app/src/pages/board/AuditPreviewPage.tsx
+  s_6b84c8f0f216b8::t_a6585e9cb06fea 1-8
+frontend/app/src/pages/board/BoardPage.tsx
+  s_6b84c8f0f216b8::t_a3da5a58de3939 1-2,28-36,40-42,48-49,52,56-60,63-64,68-71,86,102-103,116-132,134
+frontend/app/src/pages/board/KeysPreviewPage.tsx
+  s_f3c26bd811a2ca::t_63197a2574c5d5 1-14
+frontend/app/src/pages/board/LogsPreviewPage.tsx
+  s_6b84c8f0f216b8::t_97e80019d73fe8 1-8
+frontend/app/src/pages/board/ModelsPreviewPage.tsx
+  s_f3c26bd811a2ca::t_84d29e29f8e417 1-14
+frontend/app/src/pages/board/PromptsPreviewPage.tsx
+  s_6b84c8f0f216b8::t_bd4e1bef4ed398 1-8
+frontend/app/src/pages/board/previewMode.ts
+  s_6b84c8f0f216b8::t_035d9a4beb44d9 1-8
+frontend/app/src/pages/keys/KeysPage.tsx
+  s_942e33353d80bf::t_d78c16d414fb7e 1-253,256-535
+frontend/app/src/pages/logs/LogsPage.tsx
+  s_008a949877c6b4::t_d54c6bb58a1736 1-547
+frontend/app/src/pages/models/ModelsPage.tsx
+  s_f3c26bd811a2ca::t_cd0534e61a20c7 1-216,219-446
+frontend/app/src/pages/prompts/PromptsPage.tsx
+  s_6b84c8f0f216b8::t_c3bef41680b65f 1-28,30-31,33-499
+frontend/app/src/router/index.tsx
+  s_0be49fcf3c677b::t_8493c8f699ff0e 23-37,50-56,59-81
+frontend/app/src/styles/global.css
+  s_6b84c8f0f216b8::t_02983b2edf2c91 387-654
+frontend/app/vite.config.ts
+  s_6b84c8f0f216b8::t_e7e320ac56dd0a 5-12,24-27
+frontend/app/vitest.config.ts
+  s_008a949877c6b4::t_3f74c06cf9327f 14-16
+frontend/board/README.md
+  s_6b84c8f0f216b8::t_bd61a541e1f3ab 3,12,18,25-29,35-50,55-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a17abfe8a5c656d9b9657bbc2b9c557471bae2d1",
+  "prompts": {},
+  "sessions": {
+    "s_008a949877c6b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7200b039-440d-4065-9707-511dc400569e",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_0be49fcf3c677b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7e098df0-074d-493d-b55e-9fbbb10ec293",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_3bd3380625c08b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a0953591-ae0d-4ef4-96a9-9bf7c8490cf9",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_684fe97a89e3ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0faa3828-b0a7-4fdc-b9cb-5bbc68cb040e",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_6b84c8f0f216b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7303fefa-15bf-45ac-879e-9b1f413f6a5f",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_942e33353d80bf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cfd18a2c-edd6-4fda-837e-1ab46b0d4fb3",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    },
+    "s_f3c26bd811a2ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ab29280d-303a-462f-ab8b-5791cea187a9",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
