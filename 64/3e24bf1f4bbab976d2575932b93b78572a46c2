@@ -1,0 +1,23 @@
+ai-workflow/STATUS.md
+  s_410631ed5c35c6::t_e30b8ff79214e7 6,47
+ai-workflow/records/REQ-5.4.md
+  s_410631ed5c35c6::t_fd16d63b3888da 7
+docs/API-PATHS.md
+  s_410631ed5c35c6::t_f2fb583bc633d2 150-151,158-169,171-172
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "643e24bf1f4bbab976d2575932b93b78572a46c2",
+  "prompts": {},
+  "sessions": {
+    "s_410631ed5c35c6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "10269f78-0582-43ef-9b6e-82bd94652eea",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
