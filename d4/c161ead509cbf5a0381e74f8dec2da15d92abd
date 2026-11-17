@@ -1,0 +1,18 @@
+qa/verification-7.1-backend-v1.2.md
+  h_db524743a0da6f 1-156
+qa/verification-matrix.md
+  h_db524743a0da6f 246-280
+scripts/qa-matrix-gap71.ps1
+  h_db524743a0da6f 1-246
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d4c161ead509cbf5a0381e74f8dec2da15d92abd",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
