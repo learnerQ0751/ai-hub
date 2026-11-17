@@ -1,0 +1,58 @@
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/McpServerController.java
+  h_db524743a0da6f 49,61,72,83,94
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/RagDocumentController.java
+  h_db524743a0da6f 49,72,88,106,120
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/TraceController.java
+  h_db524743a0da6f 44,64
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/UsageController.java
+  h_db524743a0da6f 44,66
+ai-hub-tests/src/test/java/com/qtua/aihub/ConsoleGapEndpointsIntegrationTest.java
+  h_db524743a0da6f 146,163,169,173,177,196,213,218,222,226,259
+ai-hub-tests/src/test/java/com/qtua/aihub/ControlPlaneIdempotencyTest.java
+  h_db524743a0da6f 183-184,191,233,307
+ai-hub-tests/src/test/java/com/qtua/aihub/McpRegistryIntegrationTest.java
+  h_db524743a0da6f 93,136,138,140,151,181,191,199,221
+ai-hub-tests/src/test/java/com/qtua/aihub/RagDocumentIntegrationTest.java
+  h_db524743a0da6f 247,257,266
+ai-hub-tests/src/test/java/com/qtua/aihub/UsageIntegrationTest.java
+  h_db524743a0da6f 82,95,101,108
+ai-workflow/DESIGN.md
+  h_db524743a0da6f 57-60
+ai-workflow/STATUS.md
+  h_db524743a0da6f 6,61,67-71,80-90,94-97,243
+docs/API-PATHS.md
+  h_db524743a0da6f 6-8,37,53-57,142-145,167-170,172,182-184,187-188,190,201,205-207,299,301
+frontend/README.md
+  h_db524743a0da6f 112-113,125
+frontend/app/src/api/endpoints.test.ts
+  h_db524743a0da6f 17-23,38-39,42,47-48
+frontend/app/src/api/endpoints.ts
+  h_db524743a0da6f 56-59,66-67,70-71,77-81
+frontend/app/src/features/mcp/api.ts
+  h_db524743a0da6f 21
+frontend/app/src/features/rag/api.ts
+  h_db524743a0da6f 5,12
+frontend/app/src/features/rag/types.ts
+  h_db524743a0da6f 27
+frontend/app/src/features/traces/types.ts
+  h_db524743a0da6f 17
+frontend/app/src/features/usage/types.ts
+  h_db524743a0da6f 1
+frontend/app/src/pages/mcp/McpServersPage.tsx
+  h_db524743a0da6f 288
+frontend/app/src/pages/rag/RagPage.tsx
+  h_db524743a0da6f 267
+frontend/app/src/pages/usage/UsagePage.tsx
+  h_db524743a0da6f 196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a00c0fb1c0f54b982a63d8ffd93e892d39b470dd",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
