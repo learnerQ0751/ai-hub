@@ -1,0 +1,14 @@
+docs/API-PATHS.md
+  h_db524743a0da6f 128-141
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ebcf3ef49e6c74b01ea5c4a5d54c905faa3ade18",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
