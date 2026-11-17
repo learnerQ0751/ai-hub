@@ -1,0 +1,21 @@
+ai-workflow/docs/DATA-MODEL.md
+  s_3bd3380625c08b::t_24d813e25706e8 29-30,36
+docs/API-PATHS.md
+  s_3bd3380625c08b::t_606ccf2b36516b 3-4,26-27,41,107-112,123-126,144-146,167,172,178-197,233,237,239,241,243-249,251,253,257-259,262,265
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ceaa8265719651d271c9f3dab89df4f8f75fbf7f",
+  "prompts": {},
+  "sessions": {
+    "s_3bd3380625c08b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a0953591-ae0d-4ef4-96a9-9bf7c8490cf9",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
