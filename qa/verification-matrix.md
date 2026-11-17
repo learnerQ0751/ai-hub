@@ -124,7 +124,15 @@
 
 ## 4. 当前阻塞项（按严重度）
 
-1. **main 89f334b 缺 `frontend/app/src/pages/logs/LogsPage.tsx`**：`src/router/index.tsx` 静态引用该文件，`tsc -b` 失败、SPA 整体无法加载。所有前端用例被它挡住。
+1. **`LogsPage.tsx` 被 `.gitignore` 规则吞掉（2026-11-17 根因订正）**：不是漏提交。
+   `frontend/app/.gitignore` 第 2 行的 `logs` 规则匹配任意层级 `logs` 目录，`src/pages/logs/` 整个目录被静默忽略。
+   实测：`git check-ignore -v frontend/app/src/pages/logs/LogsPage.tsx` 输出
+   `frontend/app/.gitignore:2:logs`，`git ls-files frontend/app/src/pages/logs/` 为空。
+   Q 已将该行改为 `/logs`；文件由小页修改后统一提交。两条 E2E 用例保持 `fixme`，等通知后再解除。
+
+> **文件缺失排查顺序（写进每次交付检查）**：先 `git ls-files <dir>` 看是否被跟踪，再
+> `git check-ignore -v <path>` 看是否被忽略规则命中，最后 `Test-Path` 看盘上是否存在；
+> 三条都查完才允许下「漏提交」或「文件不存在」的结论。
 2. 除 MCP 页外，其余页面均为占位组件；MCP 页数据走 mock。
 3. §7.2 字段（Key alias/rpm/tpm/预算周期、模型 description/价格/更新时间）未实现，C-01/D-01/C-02 无法验收。
 4. §7.1 端点（控制台会话、项目列表、切片列表、单 Key 详情、Trace 列表）未实现，A-01~A-05 无法验收。
