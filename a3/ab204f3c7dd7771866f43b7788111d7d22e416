@@ -1,0 +1,21 @@
+frontend/e2e/.gitignore
+  s_0c9981482ac934::t_1a1d01bec2d031 1-4
+frontend/e2e/package.json
+  s_0c9981482ac934::t_4768a991779634 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a3ab204f3c7dd7771866f43b7788111d7d22e416",
+  "prompts": {},
+  "sessions": {
+    "s_0c9981482ac934": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1f71a89a-3f1d-43e1-8b6b-652d854a5622",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
