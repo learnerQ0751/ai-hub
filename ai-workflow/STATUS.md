@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-17 12:29
+**最后更新**：2026-11-17 18:38
 
 ## 需求进度
 
@@ -45,6 +45,7 @@
 | REQ-5.2 | 控制面幂等与拆分配置收口 | 已完成（待主人验收） | additive | 待验收（2026-11-17，实现与自检完成）（6/6） | REQ-5.1 | 7160b8e |
 | REQ-5.3 | BL-1 混合检索（向量 + 字面 RRF） | 已完成（待主人验收） | additive | 待验收（2026-11-17，实现与自检完成）（6/6） | REQ-3.3、REQ-3.7、REQ-4.1 | 2e29b6d |
 | REQ-5.4 | BL-3 切片顺序还原与上下文扩展 | 已完成（待主人验收） | extension | 待验收（2026-11-17，实现与自检完成）（6/6） | REQ-3.1、REQ-3.3、REQ-3.4、REQ-3.10、REQ-4.1 | 57bb476 |
+| REQ-5.5 | 第五期总验收材料与控制台端点补齐 | 已完成（待主人验收） | additive | 待验收（2026-11-17，实现与自检完成）（9/9） | REQ-5.1、REQ-5.2、REQ-5.3、REQ-5.4 | b2f72c6（会话与 §7.2 字段入基线）、ae6a5a4（§7.1 四端点） |
 
 ## 接口清单（来自 Controller）
 
@@ -58,6 +59,7 @@
 | POST | /key/unblock | KeyController#unblock | REQ-1.3 |
 | GET | /models | ModelController#listModels | REQ-1.2 |
 | GET | /v1/admin/keys | AdminController#listKeys | — |
+| GET | /v1/admin/keys/{keyHash} | AdminController#getKey | — |
 | POST | /v1/admin/keys/{keyHash}/block | AdminController#block | — |
 | POST | /v1/admin/keys/{keyHash}/unblock | AdminController#unblock | — |
 | GET | /v1/admin/logs | AdminController#listLogs | — |
@@ -68,6 +70,10 @@
 | PUT | /v1/admin/models/{alias} | AdminController#updateModel | — |
 | POST | /v1/admin/models/{alias}/deployments | AdminController#upsertDeployment | — |
 | POST | /v1/admin/project-authorizations | AdminController#authorize | — |
+| GET | /v1/admin/projects | AdminController#listProjects | — |
+| DELETE | /v1/admin/session | ConsoleSessionController#logout | — |
+| GET | /v1/admin/session | ConsoleSessionController#current | — |
+| POST | /v1/admin/session | ConsoleSessionController#login | — |
 | GET | /v1/audit-logs | AuditLogController#query | REQ-4.5 |
 | POST | /v1/chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3, REQ-2.8 |
 | POST | /v1/embeddings | EmbeddingController#embed | REQ-3.7 |
@@ -95,8 +101,10 @@
 | GET | /v1/rag/documents | RagDocumentController#list | REQ-3.1, REQ-3.2 |
 | POST | /v1/rag/documents | RagDocumentController#upload | REQ-3.1, REQ-3.2 |
 | DELETE | /v1/rag/documents/{docId} | RagDocumentController#remove | REQ-3.1, REQ-3.2 |
+| GET | /v1/rag/documents/{docId}/chunks | RagDocumentController#listChunks | — |
 | POST | /v1/rag/documents/{docId}/reindex | RagDocumentController#reindex | REQ-3.2 |
 | POST | /v1/rag/search | RagSearchController#search | REQ-3.3 |
+| GET | /v1/traces | TraceController#list | REQ-4.2 |
 | GET | /v1/traces/{traceId} | TraceController#get | REQ-4.2 |
 | GET | /v1/usage | UsageController#query | REQ-4.3 |
 | GET | /v1/usage/export | UsageController#export | REQ-4.3 |
@@ -123,12 +131,14 @@
 | v_usage_daily | 用量/成本实时聚合视图：usage_date / tenant_id / project_id / model_alias / key_id / requests / prompt_tokens / completion_tokens / total_tokens / cost | 直接从 call_logs 聚合；与逐条日志同口径 | active | REQ-4.3 | — |
 | trace_events | 全链路分段事件：trace_id（=request_id）/ tenant_id / project_id / key_id / segment（gateway/model/rag/mcp/answer）/ name / status / latency_ms / payload（JSONB 摘要）/ created_at | 弱关联 call_logs（trace_id）；按 trace_id 聚合成一次请求轨迹 | active | REQ-4.2 | ✓ |
 | idempotency_keys | 控制面幂等键：idempotency_key（唯一）/ request_hash（SHA-256(method+path+body)）/ response_status / response_content_type / response_body / created_at / updated_at | 独立表；同键同请求重放首次响应，重启不失效 | active | REQ-5.2 | ✓ |
+| admin_sessions | 控制台管理员会话：token_hash（SHA-256，唯一）/ username / created_at / expires_at | 独立表；明文令牌只存在于 httpOnly cookie | active | 控制台会话（2026-11-17） | ✓ |
+| admin_login_attempts | 控制台登录失败计数：username（主键）/ failed_count / locked_until / updated_at | 独立表；连续失败锁定，登录成功清零 | active | 控制台会话（2026-11-17） | ✓ |
 
 ### 网关与鉴权
 
 | 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
 |---|---|---|---|---|---|
-| api_keys | 虚拟 Key：SHA-256 哈希、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend、tenant_id / project_id（绑定租户与项目，V10） | 1:N call_logs（key_id）；绑定 tenant/project | active | REQ-1.3, REQ-1.5, REQ-4.1, REQ-1.3 / REQ-1.4 / REQ-4.1 | ✓ |
+| api_keys | 虚拟 Key：SHA-256 哈希、alias（管理台别名，V15）、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend、tenant_id / project_id（绑定租户与项目，V10） | 1:N call_logs（key_id）；绑定 tenant/project | active | REQ-1.3, REQ-1.5, REQ-4.1, REQ-1.3 / REQ-1.4 / REQ-4.1 | ✓ |
 | call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias / call_type（CHAT/MCP/PROMPT/MEMORY/RAG/EMBEDDING）/ target_name / tenant_id / project_id / trace_id（V10） | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5, REQ-2.3, REQ-4.1, REQ-1.5 / REQ-1.4 / REQ-1.6 / REQ-2.3 / REQ-3.5 / REQ-3.1 / REQ-3.7 | ✓ |
 
 ### MCP 与 Prompt
@@ -230,7 +240,7 @@
 
 ## 测试
 
-- 496 个 @Test / 88 个测试类
+- 513 个 @Test / 92 个测试类
 
 ## 下一步
 
@@ -252,6 +262,7 @@
 - 验收 REQ-5.2 控制面幂等与拆分配置收口 → 打开 `acceptance/REQ-5.2.md`
 - 验收 REQ-5.3 BL-1 混合检索（向量 + 字面 RRF） → 打开 `acceptance/REQ-5.3.md`
 - 验收 REQ-5.4 BL-3 切片顺序还原与上下文扩展 → 打开 `acceptance/REQ-5.4.md`
+- 验收 REQ-5.5 第五期总验收材料与控制台端点补齐 → 打开 `acceptance/REQ-5.5.md`
 
 <!-- STATUS:GENERATED:END -->
 
