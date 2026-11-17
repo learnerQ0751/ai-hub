@@ -1,0 +1,30 @@
+frontend/app/src/features/projects/api.test.ts
+  h_db524743a0da6f 1-55
+frontend/app/src/features/projects/types.ts
+  h_db524743a0da6f 1,5-8,20
+frontend/app/src/features/rag/api.test.ts
+  h_db524743a0da6f 1-49
+frontend/app/src/features/rag/types.ts
+  h_db524743a0da6f 31,35
+frontend/app/src/features/traces/api.test.ts
+  h_db524743a0da6f 1-61
+frontend/app/src/features/traces/types.ts
+  h_db524743a0da6f 17,23-24,26-27,39-40
+frontend/app/src/pages/rag/RagPage.tsx
+  h_db524743a0da6f 352,354-357
+frontend/app/src/router/routes.test.tsx
+  h_db524743a0da6f 9-12,59,63
+frontend/docs/screens/verify-summary.json
+  h_db524743a0da6f 11-12,24-25,37-38,51,56,59,61-63,65-69,80-81,94,105-109,114,119-121,123-125,137,148,151-152,154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6ee936aa8d0585da233cf9b2d0cb7024be5dbe2c",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
