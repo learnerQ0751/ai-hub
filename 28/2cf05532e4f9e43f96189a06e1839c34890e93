@@ -1,0 +1,16 @@
+frontend/e2e/tests/v15-ui.spec.ts
+  h_db524743a0da6f 1-636
+qa/verification-matrix.md
+  h_db524743a0da6f 12-14,425-479
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "282cf05532e4f9e43f96189a06e1839c34890e93",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
