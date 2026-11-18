@@ -1,0 +1,16 @@
+ai-hub-console/src/main/java/com/qtua/aihub/console/controller/AdminController.java
+  h_db524743a0da6f 4,7,14,30-31,37,43,45,47,72-86
+ai-hub-tests/src/test/java/com/qtua/aihub/ConsoleSessionIntegrationTest.java
+  h_db524743a0da6f 127-150,161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "37a60d302cf4e890ddea657acb8246353bc02091",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
