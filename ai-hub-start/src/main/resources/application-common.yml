@@ -48,7 +48,18 @@ gateway:
     retention-days: ${GATEWAY_AUDIT_RETENTION_DAYS:365}
   model-list: {}
   pricing:
-    models: {}
+    # 按上游真实模型名配置每 1M tokens 单价；接入其他供应商时按价目覆盖
+    models:
+      deepseek-chat:
+        input-per-million: 0.27
+        output-per-million: 1.10
+      deepseek-reasoner:
+        input-per-million: 0.55
+        output-per-million: 2.19
+      # 演示/本地代理上游（别名 chat-default），按 deepseek-chat 口径估算
+      deepseek-flash:
+        input-per-million: 0.27
+        output-per-million: 1.10
   rate-limit:
     enabled: true
     fail-open: true
