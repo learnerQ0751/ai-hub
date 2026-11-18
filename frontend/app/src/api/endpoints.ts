@@ -39,6 +39,8 @@ export const endpoints = {
   },
   keys: {
     list: '/v1/admin/keys',
+    /** 新建 Key；响应中明文只返回一次。 */
+    create: '/v1/admin/keys',
     detail: (keyHash: string) => `/v1/admin/keys/${encodeURIComponent(keyHash)}`,
     block: (keyHash: string) => `/v1/admin/keys/${encodeURIComponent(keyHash)}/block`,
     unblock: (keyHash: string) => `/v1/admin/keys/${encodeURIComponent(keyHash)}/unblock`,

@@ -119,8 +119,8 @@ export default function BoardPage() {
           <>
             <br />
             这三页接真实 console
-            接口（/v1/admin/prompts、/v1/admin/logs、/v1/admin/audit-logs）；正常态是真实响应，加载 / 空 /
-            失败由上方状态开关演示。
+            接口（/v1/admin/prompts、/v1/admin/logs、/v1/admin/audit-logs）；正常态是真实响应，加载
+            / 空 / 失败由上方状态开关演示。
             <br />
             日志与审计的筛选、分页全部带查询参数打到后端，客户端不做截断式假分页。
           </>

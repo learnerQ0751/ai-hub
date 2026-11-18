@@ -41,6 +41,36 @@ export interface KeyListQuery {
   offset?: number;
 }
 
+/** POST /v1/admin/keys 请求体；字段名对齐后端 KeyGenerateReqDTO。 */
+export interface GenerateKeyInput {
+  alias?: string;
+  tenant_id?: string;
+  project_id?: string;
+  models?: string[];
+  duration?: string;
+  rpm_limit?: number;
+  tpm_limit?: number;
+  max_budget?: number;
+  budget_duration?: string;
+}
+
+/** POST /v1/admin/keys 响应；`key` 是唯一一次返回的明文。 */
+export interface GeneratedKey {
+  key: string;
+  models: string[];
+  spend: number;
+  metadata?: Record<string, unknown> | null;
+  expires?: string | null;
+  max_budget?: number | null;
+  budget_duration?: string | null;
+  rpm_limit?: number | null;
+  tpm_limit?: number | null;
+  blocked: boolean;
+  tenant_id?: string | null;
+  project_id?: string | null;
+  alias?: string | null;
+}
+
 export interface KeyFilters {
   keyword?: string;
   tenantId?: string;

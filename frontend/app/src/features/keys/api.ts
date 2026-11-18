@@ -1,7 +1,13 @@
 import { endpoints, withQuery } from '@/api/endpoints';
 import { request } from '@/api/http';
 import { ADMIN_KEYS } from '@/features/keys/fixtures';
-import type { AdminKey, AdminKeyPage, KeyListQuery } from '@/features/keys/types';
+import type {
+  AdminKey,
+  AdminKeyPage,
+  GenerateKeyInput,
+  GeneratedKey,
+  KeyListQuery,
+} from '@/features/keys/types';
 import type { MockMode } from '@/features/shared/mock';
 import { delay, pending } from '@/features/shared/mock';
 
@@ -58,6 +64,14 @@ export async function fetchKeys(
       (!query.project_id || key.project_id === query.project_id),
   );
   return pageOf(matched.map(clone), limit, offset);
+}
+
+/** 新建虚拟 Key；响应中的明文只返回这一次，前端不得持久化。 */
+export async function generateKey(input: GenerateKeyInput): Promise<GeneratedKey> {
+  return request<GeneratedKey>(endpoints.keys.create, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
 }
 
 export async function setKeyBlocked(keyHash: string, blocked: boolean): Promise<AdminKey> {

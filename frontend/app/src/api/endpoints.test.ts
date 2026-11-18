@@ -4,6 +4,7 @@ import { endpoints, withQuery } from './endpoints';
 describe('endpoints', () => {
   it('matches the frozen console contract for keys and models', () => {
     expect(endpoints.keys.list).toBe('/v1/admin/keys');
+    expect(endpoints.keys.create).toBe('/v1/admin/keys');
     expect(endpoints.keys.block('abc')).toBe('/v1/admin/keys/abc/block');
     expect(endpoints.keys.unblock('abc')).toBe('/v1/admin/keys/abc/unblock');
     expect(endpoints.models.list).toBe('/v1/admin/models');

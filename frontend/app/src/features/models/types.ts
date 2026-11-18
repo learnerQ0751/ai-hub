@@ -76,7 +76,7 @@ export function formatPrice(model: AdminModel): string {
     return '未配置';
   }
   const part = (value?: number | null) =>
-    value === undefined || value === null ? '—' : value.toFixed(2);
+    value === undefined || value === null ? '未配置' : value.toFixed(2);
   return `入 ${part(input)} / 出 ${part(output)}`;
 }
 

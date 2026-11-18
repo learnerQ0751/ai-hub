@@ -1,5 +1,5 @@
 import { PageHeader } from '@/components/PageHeader';
-import { fetchKeys, setKeyBlocked } from '@/features/keys/api';
+import { fetchKeys, generateKey, setKeyBlocked } from '@/features/keys/api';
 import {
   filterKeys,
   formatBudget,
@@ -10,20 +10,25 @@ import {
   keyName,
   keyStatus,
 } from '@/features/keys/types';
-import type { AdminKey, KeyStatus } from '@/features/keys/types';
+import type { AdminKey, GeneratedKey, KeyStatus } from '@/features/keys/types';
 import type { MockMode } from '@/features/shared/mock';
 import { MOCK_MODE_OPTIONS } from '@/features/shared/mock';
 import { formatNumber } from '@/features/shared/format';
 import { useIsNarrow } from '@/hooks/useIsNarrow';
-import { EyeOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { EyeOutlined, PlusOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Alert,
   App,
   Button,
+  Checkbox,
   Descriptions,
   Drawer,
   Empty,
+  Form,
   Input,
+  InputNumber,
+  Modal,
   Popconfirm,
   Select,
   Skeleton,
@@ -31,6 +36,7 @@ import {
   Table,
   Tag,
   Tooltip,
+  Typography,
 } from 'antd';
 import type { TableProps } from 'antd';
 import { useMemo, useState } from 'react';
@@ -40,6 +46,30 @@ const statusOptions: { value: KeyStatus; label: string }[] = [
   { value: 'BLOCKED', label: '已封禁' },
   { value: 'EXPIRED', label: '已过期' },
 ];
+
+const durationOptions = [
+  { value: '1h', label: '1 小时' },
+  { value: '1d', label: '1 天' },
+  { value: '7d', label: '7 天' },
+  { value: '30d', label: '30 天' },
+];
+
+const budgetDurationOptions = [
+  { value: 'daily', label: '每天' },
+  { value: 'monthly', label: '每月' },
+];
+
+interface CreateKeyFormValues {
+  alias?: string;
+  tenant_id?: string;
+  project_id?: string;
+  models?: string[];
+  duration?: string;
+  rpm_limit?: number;
+  tpm_limit?: number;
+  max_budget?: number;
+  budget_duration?: string;
+}
 
 function StatusText({ status }: { status: KeyStatus }) {
   return (
@@ -108,6 +138,10 @@ export default function KeysPage({
   const [model, setModel] = useState<string | undefined>();
   const [mockMode, setMockMode] = useState<MockMode>(initialMockMode);
   const [detail, setDetail] = useState<AdminKey | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createdKey, setCreatedKey] = useState<GeneratedKey | null>(null);
+  const [keySaved, setKeySaved] = useState(false);
+  const [form] = Form.useForm<CreateKeyFormValues>();
   const pageSize = 20;
   const [page, setPage] = useState(1);
 
@@ -137,6 +171,35 @@ export default function KeysPage({
     },
     onError: (cause: Error) => message.error(cause.message),
   });
+
+  const createMutation = useMutation({
+    mutationFn: (values: CreateKeyFormValues) =>
+      generateKey({
+        alias: values.alias?.trim() || undefined,
+        tenant_id: values.tenant_id?.trim() || undefined,
+        project_id: values.project_id?.trim() || undefined,
+        models: values.models?.filter(Boolean),
+        duration: values.duration,
+        rpm_limit: values.rpm_limit ?? undefined,
+        tpm_limit: values.tpm_limit ?? undefined,
+        max_budget: values.max_budget ?? undefined,
+        budget_duration: values.budget_duration,
+      }),
+    onSuccess: (created) => {
+      form.resetFields();
+      setCreateOpen(false);
+      setKeySaved(false);
+      setCreatedKey(created);
+      setPage(1);
+      void queryClient.invalidateQueries({ queryKey: ['keys', 'list'] });
+    },
+    onError: (cause: Error) => message.error(cause.message),
+  });
+
+  const closeCreatedKey = () => {
+    setCreatedKey(null);
+    setKeySaved(false);
+  };
 
   const keys = useMemo(() => keysQuery.data?.items ?? [], [keysQuery.data]);
 
@@ -268,9 +331,14 @@ export default function KeysPage({
         section="访问控制"
         description="租户与项目下的调用凭证、模型白名单、限流与预算；数据来自 console /v1/admin/keys，筛选与分页由服务端执行。"
         extra={
-          <Button icon={<ReloadOutlined />} onClick={() => void keysQuery.refetch()}>
-            刷新
-          </Button>
+          <Space size={8}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+              新建 Key
+            </Button>
+            <Button icon={<ReloadOutlined />} onClick={() => void keysQuery.refetch()}>
+              刷新
+            </Button>
+          </Space>
         }
       />
 
@@ -429,18 +497,29 @@ export default function KeysPage({
             columns={columns}
             dataSource={filteredKeys}
             scroll={{ x: 1240 }}
-            pagination={{
-              current: page,
-              pageSize,
-              showSizeChanger: false,
-              total:
-                (page - 1) * pageSize + keys.length + (keysQuery.data?.has_more ? pageSize : 0),
-              onChange: setPage,
-              showTotal: () => (keysQuery.data?.has_more ? '还有下一页' : '已到末页'),
-            }}
+            pagination={false}
           />
         </div>
       )}
+
+      {!keysQuery.isError && !keysQuery.isLoading && filteredKeys.length > 0 ? (
+        <div className="console-pager">
+          <span className="console-pager-info">
+            第 {page} 页 · 本页 {filteredKeys.length} 条 ·{' '}
+            {keysQuery.data?.has_more ? '还有下一页' : '已到末页'}
+          </span>
+          <Button size="small" disabled={page === 1} onClick={() => setPage((value) => value - 1)}>
+            上一页
+          </Button>
+          <Button
+            size="small"
+            disabled={!keysQuery.data?.has_more}
+            onClick={() => setPage((value) => value + 1)}
+          >
+            下一页
+          </Button>
+        </div>
+      ) : null}
 
       <Drawer
         title={detail ? keyName(detail) : '虚拟 Key'}
@@ -559,6 +638,118 @@ export default function KeysPage({
           </>
         ) : null}
       </Drawer>
+
+      <Modal
+        title="新建虚拟 Key"
+        open={createOpen}
+        onCancel={() => {
+          setCreateOpen(false);
+          form.resetFields();
+        }}
+        onOk={() => form.submit()}
+        okText="创建 Key"
+        cancelText="取消"
+        confirmLoading={createMutation.isPending}
+        destroyOnHidden
+        width={560}
+      >
+        <Form<CreateKeyFormValues>
+          form={form}
+          layout="vertical"
+          requiredMark="optional"
+          onFinish={(values) => createMutation.mutate(values)}
+        >
+          <Form.Item
+            name="alias"
+            label="别名"
+            rules={[{ max: 128, message: '别名不能超过 128 个字符' }]}
+          >
+            <Input placeholder="例如 console-demo，可留空" />
+          </Form.Item>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Form.Item name="tenant_id" label="租户" style={{ flex: 1 }}>
+              <Input placeholder="例如 platform，可留空" />
+            </Form.Item>
+            <Form.Item name="project_id" label="项目" style={{ flex: 1 }}>
+              <Input placeholder="例如 console-demo，可留空" />
+            </Form.Item>
+          </div>
+          <Form.Item name="models" label="模型白名单" extra="留空表示不限制模型">
+            <Select
+              mode="tags"
+              placeholder="输入模型别名后回车，例如 chat"
+              options={models.map((value) => ({ value, label: value }))}
+              tokenSeparators={[',']}
+            />
+          </Form.Item>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Form.Item name="duration" label="有效期" style={{ flex: 1 }}>
+              <Select allowClear placeholder="不过期" options={durationOptions} />
+            </Form.Item>
+            <Form.Item name="budget_duration" label="预算周期" style={{ flex: 1 }}>
+              <Select allowClear placeholder="不启用" options={budgetDurationOptions} />
+            </Form.Item>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <Form.Item name="rpm_limit" label="RPM 上限" style={{ flex: 1 }}>
+              <InputNumber min={0} style={{ width: '100%' }} placeholder="不限" />
+            </Form.Item>
+            <Form.Item name="tpm_limit" label="TPM 上限" style={{ flex: 1 }}>
+              <InputNumber min={0} style={{ width: '100%' }} placeholder="不限" />
+            </Form.Item>
+            <Form.Item name="max_budget" label="预算上限" style={{ flex: 1 }}>
+              <InputNumber min={0} style={{ width: '100%' }} placeholder="不限" />
+            </Form.Item>
+          </div>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="虚拟 Key 已创建"
+        open={Boolean(createdKey)}
+        onCancel={closeCreatedKey}
+        closable={keySaved}
+        maskClosable={false}
+        keyboard={false}
+        footer={
+          <Button type="primary" disabled={!keySaved} onClick={closeCreatedKey}>
+            完成
+          </Button>
+        }
+        width={560}
+      >
+        {createdKey ? (
+          <>
+            <Alert
+              type="warning"
+              showIcon
+              message="明文 Key 只显示这一次"
+              description="关闭本窗口后无法再次查看。请立即复制并保存到安全位置；列表和详情都只保留哈希。"
+              style={{ marginBottom: 16 }}
+            />
+            <Typography.Paragraph
+              className="mono"
+              copyable={{ text: createdKey.key, tooltips: ['复制', '已复制'] }}
+              style={{
+                padding: '10px 12px',
+                border: '1px solid var(--color-border)',
+                borderRadius: 3,
+                background: 'var(--color-surface-muted, #fafafa)',
+                wordBreak: 'break-all',
+              }}
+            >
+              {createdKey.key}
+            </Typography.Paragraph>
+            <div className="muted" style={{ fontSize: 12, marginBottom: 16 }}>
+              别名：{createdKey.alias ?? '未设置'} · 租户：{createdKey.tenant_id ?? '默认'} · 项目：
+              {createdKey.project_id ?? '默认'}
+            </div>
+            <Checkbox checked={keySaved} onChange={(event) => setKeySaved(event.target.checked)}>
+              我已妥善保存这个 Key，关闭后不再显示
+            </Checkbox>
+          </>
+        ) : null}
+      </Modal>
     </>
   );
 }

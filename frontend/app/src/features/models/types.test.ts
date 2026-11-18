@@ -26,8 +26,15 @@ describe('formatPrice', () => {
     expect(formatPrice(ADMIN_MODELS[0])).toBe('入 0.27 / 出 1.10');
   });
 
-  it('handles missing and partial prices', () => {
-    expect(formatPrice(ADMIN_MODELS[2])).toBe('入 0.50 / 出 —');
+  it('renders 未配置 for a missing side instead of a blank cell', () => {
+    expect(formatPrice(ADMIN_MODELS[2])).toBe('入 0.50 / 出 未配置');
+    expect(
+      formatPrice({
+        ...ADMIN_MODELS[0],
+        input_price_per_million: null,
+        output_price_per_million: null,
+      }),
+    ).toBe('未配置');
     expect(
       formatPrice({
         ...ADMIN_MODELS[0],

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchKeys, setKeyBlocked } from './api';
+import { fetchKeys, generateKey, setKeyBlocked } from './api';
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -59,6 +59,48 @@ describe('keys api', () => {
 
     await setKeyBlocked('abc', false);
     expect(fetchMock.mock.calls[1][0]).toContain('/v1/admin/keys/abc/unblock');
+  });
+
+  it('creates a key through POST /v1/admin/keys and returns the one-time plaintext', async () => {
+    const created = {
+      key: 'sk-once-only-abc',
+      models: ['chat'],
+      spend: 0,
+      blocked: false,
+      alias: 'demo',
+      tenant_id: 'platform',
+      project_id: 'console-demo',
+    };
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse(created));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await generateKey({
+      alias: 'demo',
+      tenant_id: 'platform',
+      project_id: 'console-demo',
+      models: ['chat'],
+      duration: '7d',
+      rpm_limit: 60,
+      tpm_limit: 10000,
+      max_budget: 5,
+      budget_duration: 'monthly',
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/v1/admin/keys');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(String(init.body))).toEqual({
+      alias: 'demo',
+      tenant_id: 'platform',
+      project_id: 'console-demo',
+      models: ['chat'],
+      duration: '7d',
+      rpm_limit: 60,
+      tpm_limit: 10000,
+      max_budget: 5,
+      budget_duration: 'monthly',
+    });
+    expect(result.key).toBe('sk-once-only-abc');
   });
 
   it('keeps the loading/empty/error demo states', async () => {
