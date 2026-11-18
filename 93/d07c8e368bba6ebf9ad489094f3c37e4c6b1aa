@@ -1,0 +1,26 @@
+frontend/app/src/api/http.test.ts
+  h_db524743a0da6f 45-95
+frontend/app/src/api/http.ts
+  h_db524743a0da6f 32-42,68-69,76-87
+frontend/app/src/features/models/api.test.ts
+  h_db524743a0da6f 1-101
+frontend/app/src/features/models/api.ts
+  h_db524743a0da6f 2,4,45-78
+frontend/app/src/features/models/form.test.ts
+  h_db524743a0da6f 1-117
+frontend/app/src/features/models/form.ts
+  h_db524743a0da6f 1-122
+frontend/app/src/pages/models/ModelsPage.tsx
+  h_db524743a0da6f 2-4,17-26,31,33-35,46-48,89-90,98-100,109-162,213-235,304,306,321-328,415-421,457,469,550-685
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "93d07c8e368bba6ebf9ad489094f3c37e4c6b1aa",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
