@@ -148,9 +148,10 @@ foreach ($cmd in @('java', 'mvn', 'node', 'npm', 'docker')) {
     }
 }
 
-try {
-    docker info | Out-Null
-} catch {
+# 走 cmd 吞掉 stderr：PowerShell 5.1 在 ErrorActionPreference=Stop 下会把
+# docker 写入 stderr 的提示当成致命错误。
+cmd /c "docker info >nul 2>&1"
+if ($LASTEXITCODE -ne 0) {
     throw 'Docker 未运行：请先启动 Docker Desktop。'
 }
 
@@ -158,8 +159,14 @@ try {
 Write-Step '启动 Postgres(pgvector) 与 Redis（docker compose）...'
 Push-Location $RepoRoot
 try {
-    docker compose -f docker-compose.yml up -d postgres redis
-    if ($LASTEXITCODE -ne 0) { throw 'docker compose 启动 Postgres/Redis 失败。' }
+    cmd /c "docker compose -f docker-compose.yml up -d postgres redis >nul 2>&1"
+    if ($LASTEXITCODE -ne 0) {
+        # 同名容器可能由别的 compose 项目（别的 worktree）创建，端口在监听就直接复用。
+        if ($null -eq (Get-PortOwner 5432) -or $null -eq (Get-PortOwner 6379)) {
+            throw 'docker compose 启动 Postgres/Redis 失败。'
+        }
+        Write-Step '检测到已有 Postgres/Redis 容器在运行（非本 compose 项目），直接复用。'
+    }
 } finally {
     Pop-Location
 }

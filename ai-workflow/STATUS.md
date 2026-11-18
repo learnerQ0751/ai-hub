@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-17 20:31
+**最后更新**：2026-11-18 15:25
 
 ## 需求进度
 
@@ -39,13 +39,13 @@
 | REQ-4.1 | 多租户贯穿与隔离 | 已完成（待主人验收） | extension | 待验收（2026-11-16，实现与自检完成）（10/10） | REQ-1.3、REQ-2.1、REQ-2.4、REQ-3.1~3.5 | 38c5d39 |
 | REQ-4.2 | 全链路 Trace | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-1.5、REQ-2.3、REQ-3.4、REQ-4.1 | 674031f |
 | REQ-4.3 | 成本与用量统计 | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-1.5、REQ-4.1 | c6ef262 |
-| REQ-4.4 | 管理端（模型/Key/Prompt/MCP/日志） | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（9/9） | REQ-4.1、REQ-4.3、REQ-4.5（审计在 4.5 接入） | f333e7d |
+| REQ-4.4 | 管理端（模型/Key/Prompt/MCP/日志） | 已完成（待主人验收） | additive | 待验收（2026-11-16 实现与自检完成；2026-11-18 管理台页面联调复核通过，见 §5）（9/9） | REQ-4.1、REQ-4.3、REQ-4.5（审计在 4.5 接入） | f333e7d |
 | REQ-4.5 | 审计日志 + 项目总验收 | 已完成（待主人验收） | additive | 待验收（2026-11-16，实现与自检完成）（12/14） | REQ-4.1~4.4 | a5954a9 |
 | REQ-5.1 | 数据面 / 控制面拆分 | 已完成（待主人验收） | breaking | 待验收（2026-11-16，实现与自检完成）（6/6） | REQ-4.1 ~ REQ-4.5 | a3882e5 |
 | REQ-5.2 | 控制面幂等与拆分配置收口 | 已完成（待主人验收） | additive | 待验收（2026-11-17，实现与自检完成）（6/6） | REQ-5.1 | 7160b8e |
 | REQ-5.3 | BL-1 混合检索（向量 + 字面 RRF） | 已完成（待主人验收） | additive | 待验收（2026-11-17，实现与自检完成）（6/6） | REQ-3.3、REQ-3.7、REQ-4.1 | 2e29b6d |
 | REQ-5.4 | BL-3 切片顺序还原与上下文扩展 | 已完成（待主人验收） | extension | 待验收（2026-11-17，实现与自检完成）（6/6） | REQ-3.1、REQ-3.3、REQ-3.4、REQ-3.10、REQ-4.1 | 57bb476 |
-| REQ-5.5 | 第五期总验收材料与控制台端点补齐 | 已完成（待主人验收） | additive | 待验收（2026-11-17，实现与自检完成）（9/9） | REQ-5.1、REQ-5.2、REQ-5.3、REQ-5.4 | b2f72c6（会话与 §7.2 字段入基线）、ae6a5a4（§7.1 四端点） |
+| REQ-5.5 | 第五期总验收材料与控制台端点补齐 | 已完成（待主人验收） | additive | 待验收（2026-11-17 实现与自检完成；2026-11-18 收口复验通过，见 §5）（9/9） | REQ-5.1、REQ-5.2、REQ-5.3、REQ-5.4 | b2f72c6（会话与 §7.2 字段入基线）、ae6a5a4（§7.1 四端点） |
 
 ## 接口清单（来自 Controller）
 
@@ -60,6 +60,7 @@
 | GET | /models | ModelController#listModels | REQ-1.2 |
 | GET | /v1/admin/audit-logs | AuditLogController#query | — |
 | GET | /v1/admin/keys | AdminController#listKeys | — |
+| POST | /v1/admin/keys | AdminController#createKey | — |
 | GET | /v1/admin/keys/{keyHash} | AdminController#getKey | — |
 | POST | /v1/admin/keys/{keyHash}/block | AdminController#block | — |
 | POST | /v1/admin/keys/{keyHash}/unblock | AdminController#unblock | — |
@@ -240,7 +241,7 @@
 
 ## 测试
 
-- 516 个 @Test / 92 个测试类
+- 519 个 @Test / 92 个测试类
 
 ## 下一步
 
