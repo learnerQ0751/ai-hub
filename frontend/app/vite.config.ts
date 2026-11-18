@@ -26,7 +26,6 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/v1': { target: consoleProxyTarget, changeOrigin: false, headers: proxyHeaders },
-      '/key': { target: consoleProxyTarget, changeOrigin: false, headers: proxyHeaders },
       '/actuator': { target: consoleProxyTarget, changeOrigin: false },
       '/__gateway': {
         target: gatewayProxyTarget,
