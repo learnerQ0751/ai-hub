@@ -1,6 +1,12 @@
 import { endpoints } from '@/api/endpoints';
 import { request } from '@/api/http';
+import { normalizeMcpStatus } from '@/features/mcp/types';
 import type { McpRuntimeStats, McpServer, McpTransport } from '@/features/mcp/types';
+
+/** 后端 status 为 ACTIVE/DOWN，入前端前统一成展示枚举。 */
+function adaptServer(server: McpServer): McpServer {
+  return { ...server, status: normalizeMcpStatus(server.status) };
+}
 
 export type McpMockMode = 'ok' | 'empty' | 'error' | 'loading';
 
@@ -31,7 +37,8 @@ export async function fetchMcpServers(mode: McpMockMode = 'ok'): Promise<McpServ
     await delay();
     return [];
   }
-  return request<McpServer[]>(endpoints.mcpServers.list, { method: 'GET' });
+  const servers = await request<McpServer[]>(endpoints.mcpServers.list, { method: 'GET' });
+  return servers.map(adaptServer);
 }
 
 export async function fetchMcpRuntimeStats(mode: McpMockMode = 'ok'): Promise<McpRuntimeStats> {
@@ -49,11 +56,14 @@ export async function fetchMcpRuntimeStats(mode: McpMockMode = 'ok'): Promise<Mc
 }
 
 export async function reprobeMcpServer(serverId: string): Promise<McpServer> {
-  return request<McpServer>(endpoints.mcpServers.reprobe(serverId), { method: 'POST' });
+  const server = await request<McpServer>(endpoints.mcpServers.reprobe(serverId), {
+    method: 'POST',
+  });
+  return adaptServer(server);
 }
 
 export async function registerMcpServer(input: RegisterMcpServerInput): Promise<McpServer> {
-  return request<McpServer>(endpoints.mcpServers.create, {
+  const server = await request<McpServer>(endpoints.mcpServers.create, {
     method: 'POST',
     body: JSON.stringify({
       name: input.name,
@@ -65,6 +75,7 @@ export async function registerMcpServer(input: RegisterMcpServerInput): Promise<
       description: input.description,
     }),
   });
+  return adaptServer(server);
 }
 
 export async function removeMcpServer(serverId: string): Promise<void> {

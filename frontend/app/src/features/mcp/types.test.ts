@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { MCP_SERVERS } from './fixtures';
-import { filterMcpServers } from './types';
+import { filterMcpServers, normalizeMcpStatus } from './types';
+
+describe('normalizeMcpStatus', () => {
+  it('maps backend ACTIVE to UP and DOWN to DOWN', () => {
+    expect(normalizeMcpStatus('ACTIVE')).toBe('UP');
+    expect(normalizeMcpStatus('DOWN')).toBe('DOWN');
+    expect(normalizeMcpStatus('active')).toBe('UP');
+  });
+
+  it('falls back to UNKNOWN for missing or unrecognised values', () => {
+    expect(normalizeMcpStatus(undefined)).toBe('UNKNOWN');
+    expect(normalizeMcpStatus('WHATEVER')).toBe('UNKNOWN');
+  });
+});
 
 describe('filterMcpServers', () => {
   it('returns every server when no filter is set', () => {

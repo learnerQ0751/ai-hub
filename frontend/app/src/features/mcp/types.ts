@@ -31,6 +31,20 @@ export interface McpServerFilters {
   transport?: McpTransport;
 }
 
+/** 后端 McpServerResDTO 用 ACTIVE/DOWN，前端展示枚举为 UP/DOWN/UNKNOWN。 */
+export function normalizeMcpStatus(value?: string): McpServerStatus {
+  switch (value?.toUpperCase()) {
+    case 'UP':
+    case 'ACTIVE':
+      return 'UP';
+    case 'DOWN':
+    case 'ERROR':
+      return 'DOWN';
+    default:
+      return 'UNKNOWN';
+  }
+}
+
 export const MCP_STATUS_LABEL: Record<McpServerStatus, string> = {
   UP: '健康',
   DOWN: '异常',
