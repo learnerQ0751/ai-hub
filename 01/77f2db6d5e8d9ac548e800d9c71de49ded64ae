@@ -1,0 +1,44 @@
+frontend/e2e/tests/phase5.spec.ts
+  h_db524743a0da6f 27,46-68,75,85,110-146,164,166-171,173-174,177-180,182,185-192,197-198,208-212,216-217,219-221,223-242,244,249,261-270,272-273,275-282,284-342
+qa/verification-7.1-backend-v1.2.md
+  h_db524743a0da6f 1-156
+qa/verification-matrix.md
+  h_db524743a0da6f 7-12,187-422
+scripts/hash-console-password.ps1
+  h_db524743a0da6f 1-31
+scripts/qa-contract-admin.ps1
+  h_db524743a0da6f 1-98
+scripts/qa-e2e-seed-admin.ps1
+  h_db524743a0da6f 1-75
+scripts/qa-e2e-seed.ps1
+  h_db524743a0da6f 44-46
+scripts/qa-matrix-core.ps1
+  h_db524743a0da6f 97,109-110
+scripts/qa-matrix-gap71.ps1
+  h_db524743a0da6f 1-246
+scripts/qa-matrix-ops.ps1
+  h_db524743a0da6f 41,45,49,53,58,62,66,127,131,134,143,163,174
+scripts/qa-matrix-session.ps1
+  h_db524743a0da6f 74
+scripts/qa-mcp-reprobe.ps1
+  h_db524743a0da6f 57,62,67,72,76,78
+scripts/qa-p9-check.ps1
+  h_db524743a0da6f 1-89
+scripts/qa-phase5-52-54.ps1
+  h_db524743a0da6f 46,104
+scripts/qa-smoke.ps1
+  h_db524743a0da6f 99
+scripts/start-local.ps1
+  h_db524743a0da6f 1-331
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0177f2db6d5e8d9ac548e800d9c71de49ded64ae",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
