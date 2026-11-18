@@ -1,0 +1,35 @@
+frontend/app/src/pages/board/BoardPage.tsx
+  s_0b21f4571628b4::t_25eb35e6a3b96a 122-123
+frontend/app/src/api/endpoints.test.ts
+  s_0b21f4571628b4::t_5f7df61d02d0b0 7
+frontend/app/src/api/endpoints.ts
+  s_0b21f4571628b4::t_0498dfb611f691 42-43
+frontend/app/src/features/keys/api.test.ts
+  s_0b21f4571628b4::t_77d2cd73d83601 2,64-105
+frontend/app/src/features/keys/api.ts
+  s_0b21f4571628b4::t_d0ba68caa78f52 4-10,69-76
+frontend/app/src/features/keys/types.ts
+  s_0b21f4571628b4::t_71fd057b6e8d08 44-73
+frontend/app/src/features/models/types.test.ts
+  s_0b21f4571628b4::t_9a4ba1177a0263 29-37
+frontend/app/src/features/models/types.ts
+  s_0b21f4571628b4::t_242da58e64f6d3 79
+frontend/app/src/pages/keys/KeysPage.tsx
+  s_0b21f4571628b4::t_2b1a681c431485 2,13,18,21,24,28,30-31,39,50-73,141-144,175-203,334-341,500,505-523,641-752
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9a19b68d945300baa04af8fe786fcafb6c76ff54",
+  "prompts": {},
+  "sessions": {
+    "s_0b21f4571628b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38ac2ffa-138d-4580-be67-bf463080b97c",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
