@@ -1,0 +1,16 @@
+frontend/app/src/features/rag/api.test.ts
+  h_db524743a0da6f 44
+frontend/app/src/features/traces/api.test.ts
+  h_db524743a0da6f 15,37,58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "221e39c40e7f2b6229ef1cd7dac836395bdf7a6b",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
