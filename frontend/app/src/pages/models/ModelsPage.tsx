@@ -1,5 +1,7 @@
 import { PageHeader } from '@/components/PageHeader';
-import { fetchModels } from '@/features/models/api';
+import { createModel, deleteModel, fetchModels, updateModel } from '@/features/models/api';
+import { emptyModelForm, toAliasPayload, toModelFormValues } from '@/features/models/form';
+import type { ModelFormValues } from '@/features/models/form';
 import {
   filterModels,
   formatDateTime,
@@ -11,14 +13,26 @@ import type { AdminDeployment, AdminModel, ModelStatus } from '@/features/models
 import type { MockMode } from '@/features/shared/mock';
 import { MOCK_MODE_OPTIONS } from '@/features/shared/mock';
 import { useIsNarrow } from '@/hooks/useIsNarrow';
-import { EyeOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
 import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  App,
   Button,
   Descriptions,
   Drawer,
   Empty,
+  Form,
   Input,
+  InputNumber,
+  Modal,
+  Popconfirm,
   Select,
   Skeleton,
   Space,
@@ -28,6 +42,9 @@ import {
 } from 'antd';
 import type { TableProps } from 'antd';
 import { useMemo, useState } from 'react';
+
+const ALIAS_RULE = /^[A-Za-z0-9._-]{1,128}$/;
+const DEPLOYMENT_KEY_RULE = /^[A-Za-z0-9._#-]{1,64}$/;
 
 const statusOptions: { value: ModelStatus; label: string }[] = [
   { value: 'ACTIVE', label: '启用' },
@@ -69,6 +86,8 @@ export default function ModelsPage({
   initialMockMode = 'ok',
   hideMockControl = false,
 }: ModelsPageProps) {
+  const { message } = App.useApp();
+  const queryClient = useQueryClient();
   const isNarrow = useIsNarrow();
 
   const [search, setSearch] = useState('');
@@ -76,6 +95,9 @@ export default function ModelsPage({
   const [status, setStatus] = useState<ModelStatus | undefined>();
   const [mockMode, setMockMode] = useState<MockMode>(initialMockMode);
   const [detail, setDetail] = useState<AdminModel | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<AdminModel | null>(null);
+  const [form] = Form.useForm<ModelFormValues>();
 
   const modelsQuery = useQuery({
     queryKey: ['models', 'list', mockMode, tenant, status],
@@ -83,6 +105,60 @@ export default function ModelsPage({
     retry: false,
     placeholderData: (previous) => previous,
   });
+
+  const invalidateModels = () => void queryClient.invalidateQueries({ queryKey: ['models'] });
+
+  const saveMutation = useMutation({
+    mutationFn: (values: ModelFormValues) => {
+      const payload = toAliasPayload(values);
+      return editing ? updateModel(editing.alias, payload) : createModel(payload);
+    },
+    onSuccess: (saved) => {
+      message.success(
+        editing ? `已更新模型别名：${saved.alias}` : `已创建模型别名：${saved.alias}`,
+      );
+      setFormOpen(false);
+      setEditing(null);
+      form.resetFields();
+      invalidateModels();
+    },
+    onError: (cause: Error) => message.error(cause.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (alias: string) => deleteModel(alias),
+    onSuccess: (_result, alias) => {
+      message.success(`已删除模型别名：${alias}`);
+      if (detail?.alias === alias) {
+        setDetail(null);
+      }
+      invalidateModels();
+    },
+    onError: (cause: Error) => message.error(cause.message),
+  });
+
+  const openCreate = () => {
+    setEditing(null);
+    form.resetFields();
+    form.setFieldsValue(emptyModelForm());
+    setFormOpen(true);
+  };
+
+  const openEdit = (model: AdminModel) => {
+    setEditing(model);
+    form.resetFields();
+    form.setFieldsValue(toModelFormValues(model));
+    setFormOpen(true);
+  };
+
+  const closeForm = () => {
+    setFormOpen(false);
+    setEditing(null);
+    form.resetFields();
+  };
+
+  const isDeleting = (alias: string) =>
+    deleteMutation.isPending && deleteMutation.variables === alias;
 
   const models = useMemo(() => modelsQuery.data ?? [], [modelsQuery.data]);
 
@@ -133,6 +209,29 @@ export default function ModelsPage({
       render: (value: string) => <span className="mono">{value}</span>,
     },
   ];
+
+  const renderActions = (record: AdminModel) => (
+    <Space size={4} wrap>
+      <Button size="small" icon={<EyeOutlined />} onClick={() => setDetail(record)}>
+        详情
+      </Button>
+      <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(record)}>
+        编辑
+      </Button>
+      <Popconfirm
+        title={`删除模型别名「${record.alias}」？`}
+        description="删除后使用该别名的 Key 白名单与调用会立即失效，不可撤销。"
+        okText="删除"
+        cancelText="取消"
+        okButtonProps={{ danger: true }}
+        onConfirm={() => deleteMutation.mutate(record.alias)}
+      >
+        <Button size="small" danger icon={<DeleteOutlined />} loading={isDeleting(record.alias)}>
+          删除
+        </Button>
+      </Popconfirm>
+    </Space>
+  );
 
   const columns: TableProps<AdminModel>['columns'] = [
     {
@@ -202,13 +301,9 @@ export default function ModelsPage({
     {
       title: '操作',
       key: 'actions',
-      width: 88,
+      width: 236,
       fixed: 'right',
-      render: (_value, record) => (
-        <Button size="small" icon={<EyeOutlined />} onClick={() => setDetail(record)}>
-          详情
-        </Button>
-      ),
+      render: (_value, record) => renderActions(record),
     },
   ];
 
@@ -223,9 +318,14 @@ export default function ModelsPage({
         section="访问控制"
         description="对外模型别名、描述、价格、fallback 顺序与上游部署实例；数据来自 console /v1/admin/models。"
         extra={
-          <Button icon={<ReloadOutlined />} onClick={() => void modelsQuery.refetch()}>
-            刷新
-          </Button>
+          <Space size={8}>
+            <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+              新建模型
+            </Button>
+            <Button icon={<ReloadOutlined />} onClick={() => void modelsQuery.refetch()}>
+              刷新
+            </Button>
+          </Space>
         }
       />
 
@@ -312,7 +412,13 @@ export default function ModelsPage({
             image={Empty.PRESENTED_IMAGE_SIMPLE}
             description={hasFilters ? '没有匹配的模型别名' : '还没有注册模型别名'}
           >
-            {hasFilters ? <Button onClick={clearFilters}>清除筛选</Button> : null}
+            {hasFilters ? (
+              <Button onClick={clearFilters}>清除筛选</Button>
+            ) : (
+              <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
+                添加第一个模型
+              </Button>
+            )}
           </Empty>
         </div>
       ) : isNarrow ? (
@@ -348,11 +454,7 @@ export default function ModelsPage({
                   <dd className="num">{formatDateTime(model.updated_at)}</dd>
                 </div>
               </dl>
-              <div className="console-card-actions">
-                <Button size="small" icon={<EyeOutlined />} onClick={() => setDetail(model)}>
-                  详情
-                </Button>
-              </div>
+              <div className="console-card-actions">{renderActions(model)}</div>
             </article>
           ))}
           <div className="console-cards-count">共 {filteredModels.length} 个模型别名</div>
@@ -364,7 +466,7 @@ export default function ModelsPage({
             size="middle"
             columns={columns}
             dataSource={filteredModels}
-            scroll={{ x: 1080 }}
+            scroll={{ x: 1160 }}
             pagination={{
               pageSize: 8,
               showSizeChanger: false,
@@ -445,6 +547,142 @@ export default function ModelsPage({
           </>
         ) : null}
       </Drawer>
+
+      <Modal
+        title={editing ? `编辑模型别名：${editing.alias}` : '新建模型别名'}
+        open={formOpen}
+        onCancel={closeForm}
+        onOk={() => form.submit()}
+        okText={editing ? '保存修改' : '创建模型'}
+        cancelText="取消"
+        confirmLoading={saveMutation.isPending}
+        width={640}
+      >
+        <Form<ModelFormValues>
+          form={form}
+          layout="vertical"
+          onFinish={(values) => saveMutation.mutate(values)}
+        >
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Form.Item
+              name="alias"
+              label="模型别名"
+              style={{ flex: '1 1 200px' }}
+              extra={editing ? '别名创建后不可修改' : '对外暴露的名字，例如 chat、qwen-plus'}
+              rules={[
+                { required: true, message: '请填写模型别名' },
+                {
+                  pattern: ALIAS_RULE,
+                  message: '只能包含字母、数字、点、下划线或中划线，最长 128 位',
+                },
+              ]}
+            >
+              <Input placeholder="例如 chat" disabled={Boolean(editing)} className="mono" />
+            </Form.Item>
+            <Form.Item
+              name="tenant_id"
+              label="租户"
+              style={{ flex: '1 1 200px' }}
+              extra="留空表示全局别名"
+            >
+              <Input placeholder="例如 platform" className="mono" />
+            </Form.Item>
+          </div>
+          <Form.Item
+            name="description"
+            label="描述"
+            rules={[{ max: 512, message: '描述最长 512 字符' }]}
+          >
+            <Input.TextArea rows={2} placeholder="这个别名给谁用、指向什么能力" />
+          </Form.Item>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Form.Item name="status" label="状态" style={{ flex: '0 0 120px' }}>
+              <Select options={statusOptions} />
+            </Form.Item>
+            <Form.Item
+              name="fallbacks"
+              label="Fallback 链"
+              style={{ flex: '1 1 260px' }}
+              extra="主部署不可用时按顺序尝试，留空表示无 fallback"
+            >
+              <Select
+                mode="tags"
+                placeholder="输入别名后回车，例如 chat-backup"
+                tokenSeparators={[',']}
+                options={models
+                  .filter((model) => model.alias !== editing?.alias)
+                  .map((model) => ({ value: model.alias, label: model.alias }))}
+              />
+            </Form.Item>
+          </div>
+
+          <Typography.Title level={5} style={{ marginTop: 8 }}>
+            部署实例
+          </Typography.Title>
+          <p className="muted" style={{ marginTop: 0, marginBottom: 16, fontSize: 12 }}>
+            填写上游地址与上游模型才会创建部署，两项留空则只登记别名。价格不在别名上配置：由主部署的上游模型按价格表推导，未配置时显示「未配置」
+            {editing ? `（当前 ${formatPrice(editing)}）` : ''}。
+          </p>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Form.Item name="api_base" label="上游地址" style={{ flex: '2 1 260px' }}>
+              <Input placeholder="https://…/v1（OpenAI 兼容）" className="mono" />
+            </Form.Item>
+            <Form.Item
+              name="upstream_model"
+              label="上游模型"
+              style={{ flex: '1 1 160px' }}
+              extra="决定价格取值"
+            >
+              <Input placeholder="例如 qwen-plus" className="mono" />
+            </Form.Item>
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Form.Item
+              name="api_key"
+              label="上游密钥"
+              style={{ flex: '3 1 240px' }}
+              extra={editing ? '留空表示沿用已保存的密钥' : '只写不回显'}
+            >
+              <Input.Password placeholder="sk-…" autoComplete="new-password" />
+            </Form.Item>
+            <Form.Item
+              name="deployment_key"
+              label="部署键"
+              style={{ flex: '1 1 160px' }}
+              extra="留空自动生成 别名#0"
+              rules={[
+                {
+                  pattern: DEPLOYMENT_KEY_RULE,
+                  message: '只能包含字母、数字、点、下划线、# 或中划线，最长 64 位',
+                },
+              ]}
+            >
+              <Input placeholder="例如 chat#0" className="mono" />
+            </Form.Item>
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Form.Item
+              name="weight"
+              label="权重"
+              style={{ flex: '1 1 140px' }}
+              extra="同类部署的分配比例"
+            >
+              <InputNumber min={1} style={{ width: '100%' }} placeholder="1" />
+            </Form.Item>
+            <Form.Item
+              name="priority"
+              label="优先级"
+              style={{ flex: '1 1 140px' }}
+              extra="数值越小越先用"
+            >
+              <InputNumber min={0} style={{ width: '100%' }} placeholder="0" />
+            </Form.Item>
+            <Form.Item name="deployment_status" label="部署状态" style={{ flex: '1 1 140px' }}>
+              <Select options={statusOptions} />
+            </Form.Item>
+          </div>
+        </Form>
+      </Modal>
     </>
   );
 }

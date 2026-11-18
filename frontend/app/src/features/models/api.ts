@@ -1,6 +1,7 @@
 import { endpoints, withQuery } from '@/api/endpoints';
-import { request } from '@/api/http';
+import { ApiError, request } from '@/api/http';
 import { ADMIN_MODELS } from '@/features/models/fixtures';
+import type { AliasUpsertPayload } from '@/features/models/form';
 import type { AdminModel } from '@/features/models/types';
 import type { MockMode } from '@/features/shared/mock';
 import { delay, pending } from '@/features/shared/mock';
@@ -40,4 +41,38 @@ export async function fetchModels(
     fallbacks: [...model.fallbacks],
     deployments: model.deployments.map((deployment) => ({ ...deployment })),
   }));
+}
+
+/** 409 conflict_error 转成页面能直接展示的中文结论，其余错误原样抛出。 */
+function rethrowConflict(cause: unknown, alias: string): never {
+  if (cause instanceof ApiError && cause.status === 409) {
+    throw new ApiError(409, `同名模型已存在：${alias}`);
+  }
+  throw cause;
+}
+
+export async function createModel(payload: AliasUpsertPayload): Promise<AdminModel> {
+  try {
+    return await request<AdminModel>(endpoints.models.create, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  } catch (cause) {
+    rethrowConflict(cause, payload.alias);
+  }
+}
+
+export async function updateModel(alias: string, payload: AliasUpsertPayload): Promise<AdminModel> {
+  try {
+    return await request<AdminModel>(endpoints.models.update(alias), {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  } catch (cause) {
+    rethrowConflict(cause, alias);
+  }
+}
+
+export async function deleteModel(alias: string): Promise<void> {
+  await request<void>(endpoints.models.remove(alias), { method: 'DELETE' });
 }

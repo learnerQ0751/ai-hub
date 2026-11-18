@@ -42,6 +42,57 @@ describe('http 出口', () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
+  it('非 2xx 透传服务端错误体中的 message 与状态码', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse(
+          {
+            error: {
+              message: "模型别名 'chat' 已存在且配置不同，请使用更新接口",
+              type: 'invalid_request_error',
+              param: 'alias',
+              code: 'conflict_error',
+            },
+          },
+          409,
+        ),
+      ),
+    );
+
+    await expect(request('/v1/admin/models')).rejects.toMatchObject({
+      status: 409,
+      message: "模型别名 'chat' 已存在且配置不同，请使用更新接口",
+    });
+  });
+
+  it('错误体不是 JSON 时回退为通用中文提示', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Bad Gateway', { status: 502 })));
+
+    await expect(request('/v1/admin/models')).rejects.toMatchObject({
+      status: 502,
+      message: '请求失败（HTTP 502）',
+    });
+  });
+
+  it('2xx 响应体不是 JSON 时给出中文错误，而不是裸 SyntaxError', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('<html>login</html>', { status: 200 })),
+    );
+
+    await expect(request('/v1/admin/models')).rejects.toMatchObject({
+      status: 200,
+      message: '响应格式不正确，请稍后重试',
+    });
+  });
+
+  it('2xx 空响应体按成功返回 undefined（DELETE 无响应体）', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
+
+    await expect(request('/v1/admin/models/chat', { method: 'DELETE' })).resolves.toBeUndefined();
+  });
+
   it('网络不可达返回 status 0 与中文提示', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('failed to fetch')));
 

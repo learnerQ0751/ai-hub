@@ -29,6 +29,17 @@ export function handleApiError(error: unknown): void {
   }
 }
 
+/** 后端错误体为 { error: { message, type, param, code } }；读不到就返回 null。 */
+async function readErrorMessage(response: Response): Promise<string | null> {
+  try {
+    const body = (await response.json()) as { error?: { message?: unknown } };
+    const message = body?.error?.message;
+    return typeof message === 'string' && message.trim() ? message : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   // FormData 由浏览器自动生成 multipart 边界，手动设置 Content-Type 会破坏上传。
@@ -54,12 +65,24 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new ApiError(response.status, `请求失败（HTTP ${response.status}）`);
+    const message = await readErrorMessage(response);
+    throw new ApiError(response.status, message ?? `请求失败（HTTP ${response.status}）`);
   }
 
   if (response.status === 204) {
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  // DELETE 等端点成功时可能返回空响应体，不能直接按 JSON 解析。
+  const text = await response.text();
+  if (!text) {
+    return undefined as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    // 反代把 200 变成登录页 HTML 之类的情况，避免把 SyntaxError 抛给页面。
+    throw new ApiError(response.status, '响应格式不正确，请稍后重试');
+  }
 }
