@@ -1,14 +1,17 @@
 package com.qtua.aihub.console.controller;
 
 import com.qtua.aihub.api.AdminService;
+import com.qtua.aihub.api.KeyService;
 import com.qtua.aihub.api.model.req.AliasUpsertReqDTO;
 import com.qtua.aihub.api.model.req.DeploymentUpsertReqDTO;
+import com.qtua.aihub.api.model.req.KeyGenerateReqDTO;
 import com.qtua.aihub.api.model.req.ProjectAuthorizationReqDTO;
 import com.qtua.aihub.api.model.res.AdminKeyPageResDTO;
 import com.qtua.aihub.api.model.res.AdminKeyResDTO;
 import com.qtua.aihub.api.model.res.AdminLogPageResDTO;
 import com.qtua.aihub.api.model.res.AdminModelResDTO;
 import com.qtua.aihub.api.model.res.AdminProjectPageResDTO;
+import com.qtua.aihub.api.model.res.KeyGenerateResDTO;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,21 +27,24 @@ import java.util.List;
 /**
  * 管理端入口（REQ-4.4）。
  *
- * <p>所有 `/v1/admin/**` 仅 master key 可访问（AuthFilter 对虚拟 Key 返回 403）；
- * 响应不包含明文 Key 与上游 api-key。</p>
+ * <p>所有 `/v1/admin/**` 需 master key 或控制台会话 cookie（AuthFilter 对虚拟 Key 返回 403）；
+ * 响应不包含明文 Key（新建时的一次性明文除外）与上游 api-key。</p>
  */
 @RestController
 public class AdminController {
 
     private final AdminService adminService;
+    private final KeyService keyService;
 
     /**
      * 构造控制器。
      *
      * @param adminService 管理服务
+     * @param keyService   虚拟 Key 服务
      */
-    public AdminController(AdminService adminService) {
+    public AdminController(AdminService adminService, KeyService keyService) {
         this.adminService = adminService;
+        this.keyService = keyService;
     }
 
     /**
@@ -61,6 +67,21 @@ public class AdminController {
             @RequestParam(name = "limit", defaultValue = "50") int limit,
             @RequestParam(name = "offset", defaultValue = "0") int offset) {
         return adminService.listKeys(tenantId, projectId, status, model, limit, offset);
+    }
+
+    /**
+     * 新建虚拟 Key（控制台会话可访问）。
+     *
+     * <p>明文只在本次响应返回一次，之后仅能按 key_hash 查询掩码视图。</p>
+     *
+     * @param reqDTO 生成参数
+     * @return 含一次性明文 Key 的响应
+     */
+    @PostMapping(path = "/v1/admin/keys",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public KeyGenerateResDTO createKey(@RequestBody KeyGenerateReqDTO reqDTO) {
+        return keyService.generate(reqDTO);
     }
 
     /**

@@ -124,6 +124,30 @@ class ConsoleSessionIntegrationTest {
 
     @Test
     @Order(5)
+    void session_cookie_can_create_virtual_key() {
+        ResponseEntity<String> login = login(PASSWORD);
+        String cookie = cookieValue(login.getHeaders().getFirst(HttpHeaders.SET_COOKIE));
+        String body = "{\"alias\":\"console-created\",\"models\":[\"chat-default\"],"
+                + "\"tenant_id\":\"default\",\"project_id\":\"default\"}";
+
+        ResponseEntity<String> created = restClient.post().uri("/v1/admin/keys")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.COOKIE, COOKIE_NAME + "=" + cookie)
+                .body(body)
+                .retrieve().toEntity(String.class);
+
+        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(created.getBody()).contains("\"key\"").contains("console-created");
+
+        ResponseEntity<String> anonymous = restClient.post().uri("/v1/admin/keys")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve().toEntity(String.class);
+        assertThat(anonymous.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @Order(6)
     void wrong_password_is_401_and_success_resets_failures() {
         ResponseEntity<String> wrong = login("wrong-password");
         assertThat(wrong.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -134,7 +158,7 @@ class ConsoleSessionIntegrationTest {
     }
 
     @Test
-    @Order(6)
+    @Order(7)
     void five_failures_lock_account_with_429() throws InterruptedException {
         for (int attempt = 1; attempt <= 4; attempt++) {
             assertThat(login("wrong-" + attempt).getStatusCode())
