@@ -1,0 +1,18 @@
+frontend/app/src/features/mcp/api.ts
+  h_db524743a0da6f 3,6-10,40-41,59-62,66,78
+frontend/app/src/features/mcp/types.test.ts
+  h_db524743a0da6f 3-16
+frontend/app/src/features/mcp/types.ts
+  h_db524743a0da6f 34-47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "bcacb3882d136fa3b1ccf406d247c629dc84f036",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
