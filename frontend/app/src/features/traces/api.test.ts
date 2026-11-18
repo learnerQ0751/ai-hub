@@ -12,7 +12,7 @@ afterEach(() => {
 });
 
 describe('traces api', () => {
-  it('把冻结的筛选与分页参数打到 /v1/traces', async () => {
+  it('把冻结的筛选与分页参数打到 /v1/admin/traces', async () => {
     const page = { items: [], count: 0, has_more: false };
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse(page));
     vi.stubGlobal('fetch', fetchMock);
@@ -34,7 +34,7 @@ describe('traces api', () => {
     parsed.searchParams.forEach((value, key) => {
       query[key] = value;
     });
-    expect(parsed.pathname).toBe('/v1/traces');
+    expect(parsed.pathname).toBe('/v1/admin/traces');
     expect(query).toEqual({
       tenant_id: 'qa',
       project_id: 'kb',
@@ -55,7 +55,7 @@ describe('traces api', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await fetchTrace('tr-1');
-    expect(fetchMock.mock.calls[0][0]).toContain('/v1/traces/tr-1');
+    expect(fetchMock.mock.calls[0][0]).toContain('/v1/admin/traces/tr-1');
     expect(result).toEqual(detail);
   });
 });

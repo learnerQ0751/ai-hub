@@ -41,7 +41,7 @@ describe('rag chunks api', () => {
     parsed.searchParams.forEach((value, key) => {
       query[key] = value;
     });
-    expect(parsed.pathname).toBe('/v1/rag/documents/doc%2F1/chunks');
+    expect(parsed.pathname).toBe('/v1/admin/rag/documents/doc%2F1/chunks');
     expect(query).toEqual({ project_id: 'demo', limit: '20', offset: '40' });
     expect(init.method).toBe('GET');
     expect(result).toEqual(page);
