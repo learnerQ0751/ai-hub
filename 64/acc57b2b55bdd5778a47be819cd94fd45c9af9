@@ -1,0 +1,14 @@
+ai-hub-start/src/main/resources/application-common.yml
+  h_db524743a0da6f 51-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "64acc57b2b55bdd5778a47be819cd94fd45c9af9",
+  "prompts": {},
+  "humans": {
+    "h_db524743a0da6f": {
+      "author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
