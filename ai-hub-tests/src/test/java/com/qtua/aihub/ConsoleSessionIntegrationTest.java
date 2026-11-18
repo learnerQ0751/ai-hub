@@ -1,5 +1,7 @@
 package com.qtua.aihub;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qtua.aihub.console.ConsoleApplication;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -16,6 +18,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.client.RestClient;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -148,6 +154,58 @@ class ConsoleSessionIntegrationTest {
 
     @Test
     @Order(6)
+    void master_key_bearer_can_create_virtual_key() {
+        String body = "{\"alias\":\"master-created\",\"models\":[\"chat-default\"],"
+                + "\"tenant_id\":\"default\",\"project_id\":\"default\"}";
+
+        ResponseEntity<String> created = restClient.post().uri("/v1/admin/keys")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + MASTER_KEY)
+                .body(body)
+                .retrieve().toEntity(String.class);
+
+        assertThat(created.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(created.getBody()).contains("\"key\"").contains("master-created");
+    }
+
+    @Test
+    @Order(7)
+    void admin_keys_response_matches_key_generate_fields() throws Exception {
+        String body = "{\"alias\":\"parity-check\",\"models\":[\"chat-default\"],"
+                + "\"tenant_id\":\"default\",\"project_id\":\"default\"}";
+        ResponseEntity<String> login = login(PASSWORD);
+        String cookie = cookieValue(login.getHeaders().getFirst(HttpHeaders.SET_COOKIE));
+
+        ResponseEntity<String> legacy = restClient.post().uri("/key/generate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + MASTER_KEY)
+                .body(body)
+                .retrieve().toEntity(String.class);
+        ResponseEntity<String> admin = restClient.post().uri("/v1/admin/keys")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header(HttpHeaders.COOKIE, COOKIE_NAME + "=" + cookie)
+                .body(body)
+                .retrieve().toEntity(String.class);
+
+        assertThat(legacy.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(admin.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> legacyFields = mapper.readValue(legacy.getBody(),
+                new TypeReference<LinkedHashMap<String, Object>>() { });
+        Map<String, Object> adminFields = mapper.readValue(admin.getBody(),
+                new TypeReference<LinkedHashMap<String, Object>>() { });
+
+        assertThat(adminFields.keySet()).containsExactlyInAnyOrderElementsOf(legacyFields.keySet());
+        assertThat(adminFields.get("alias")).isEqualTo("parity-check");
+        assertThat(adminFields.get("models")).isEqualTo(List.of("chat-default"));
+        assertThat(adminFields.get("tenant_id")).isEqualTo("default");
+        assertThat(adminFields.get("project_id")).isEqualTo("default");
+        assertThat(adminFields.get("key")).isNotEqualTo(legacyFields.get("key"));
+    }
+
+    @Test
+    @Order(8)
     void wrong_password_is_401_and_success_resets_failures() {
         ResponseEntity<String> wrong = login("wrong-password");
         assertThat(wrong.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -158,7 +216,7 @@ class ConsoleSessionIntegrationTest {
     }
 
     @Test
-    @Order(7)
+    @Order(9)
     void five_failures_lock_account_with_429() throws InterruptedException {
         for (int attempt = 1; attempt <= 4; attempt++) {
             assertThat(login("wrong-" + attempt).getStatusCode())

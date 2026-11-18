@@ -109,6 +109,7 @@
 | GET | `/key/info?key=` |
 | POST | `/key/block`、`/key/unblock` |
 | GET | `/v1/admin/keys?tenant_id=` |
+| POST | `/v1/admin/keys` |
 | GET | `/v1/admin/keys/{keyHash}` |
 | POST | `/v1/admin/keys/{keyHash}/block`、`/unblock` |
 
@@ -117,6 +118,10 @@
 `tpm_limit`、`metadata`、`blocked`、`tenant_id`、`project_id`、`expires_at`、`created_at`。
 缺数据返回 `null` 或空集合，不报错。筛选：`status=active|blocked|expired`、
 `model=<别名>`（白名单包含该别名）。`POST /key/generate` 新增可选 `alias`（≤128 字符）。
+
+`POST /v1/admin/keys`（2026-11-18）复用 `KeyService.generate`，请求体与响应体与
+`/key/generate` 完全一致（明文 Key 只返回一次）；供控制台会话 cookie 调用，`/key/generate`
+保留给 CLI/API。
 
 `GET /v1/admin/keys/{keyHash}`（§7.1，2026-11-17）返回单个 Key，字段与列表项完全一致；
 不存在返回 404 `not_found_error`。
