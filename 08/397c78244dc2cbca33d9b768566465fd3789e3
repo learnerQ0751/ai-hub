@@ -1,0 +1,23 @@
+frontend/README.md
+  s_0b87fe529c19be::t_102a046f053be1 106
+frontend/app/.env.development
+  s_0b87fe529c19be::t_b5b7366b9cbc61 1-4
+scripts/start-local.ps1
+  s_0b87fe529c19be::t_1311d1c4e25d3d 294,297-299
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "08397c78244dc2cbca33d9b768566465fd3789e3",
+  "prompts": {},
+  "sessions": {
+    "s_0b87fe529c19be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8d3e8ac-1ebc-42e2-8727-f78ddf4be085",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
