@@ -1,0 +1,19 @@
+frontend/e2e/tests/v15-ui.spec.ts
+  s_0b87fe529c19be::t_6b1a804d3898a3 453-455
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fd66dfd8dc6263bfe9ea75e393661a736eaacb0c",
+  "prompts": {},
+  "sessions": {
+    "s_0b87fe529c19be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8d3e8ac-1ebc-42e2-8727-f78ddf4be085",
+        "model": "unknown"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
