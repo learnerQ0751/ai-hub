@@ -103,7 +103,7 @@ frontend/
 | 环境变量 | 作用 | 不设时的行为 |
 |---|---|---|
 | `VITE_API_BASE_URL` | console（控制面）基址，例如 `https://aihub.example.com` | 空 = 同源，`/v1/**` 由反代转发到 console |
-| `VITE_GATEWAY_BASE_URL` | gateway（数据面）基址，用于 Playground 与系统页健康检查 | 空 = 同源；系统页不再单独探测 gateway，Playground 走同源 `/v1` |
+| `VITE_GATEWAY_BASE_URL` | gateway（数据面）基址，用于 Playground 与系统页健康检查 | 空 = 同源，**本地开发不可用**：Vite 把 `/v1` 代理到 console，Playground 的虚拟 Key 会被控制面拒绝（403）。本地须设 `/__gateway`（`.env.development` 与 `start-local.ps1` 已配置） |
 | `VITE_USE_MOCK_SESSION` | 仅 dev 生效；生产构建永远走真实 cookie 会话 | — |
 
 部署注意：

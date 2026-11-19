@@ -291,9 +291,12 @@ if ($frontendProbe.Ok) {
             Pop-Location
         }
     }
-    Write-Step "启动前端 Vite（端口 $FrontendPort，直连 console $ConsolePort）..."
+    Write-Step "启动前端 Vite（端口 $FrontendPort，console $ConsolePort / gateway $GatewayPort）..."
     $env:VITE_USE_MOCK_SESSION = 'false'
     $env:CONSOLE_PROXY_TARGET = "http://127.0.0.1:$ConsolePort"
+    # Playground 必须打数据面：Vite 把 /v1 代理给 console，数据面请求走 /__gateway 前缀。
+    $env:VITE_GATEWAY_BASE_URL = '/__gateway'
+    $env:GATEWAY_PROXY_TARGET = "http://127.0.0.1:$GatewayPort"
     $out = Join-Path $RunDir "frontend-$FrontendPort.out.log"
     $err = Join-Path $RunDir "frontend-$FrontendPort.err.log"
     $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList @('/c', "npm run dev -- --port $FrontendPort --strictPort") `
