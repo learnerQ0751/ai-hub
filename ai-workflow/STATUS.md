@@ -3,7 +3,7 @@
 <!-- STATUS:GENERATED:START -->
 > 本区块由 `ai-workflow/scripts/status.ps1` 生成；手工备注写在下方。
 
-**最后更新**：2026-11-18 15:25
+**最后更新**：2026-11-23 17:04
 
 ## 需求进度
 
@@ -51,13 +51,13 @@
 
 | 方法 | 路径 | Handler | 涉及需求 |
 |---|---|---|---|
-| POST | /chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3, REQ-2.8 |
-| POST | /embeddings | EmbeddingController#embed | REQ-3.7 |
-| POST | /key/block | KeyController#block | REQ-1.3 |
-| POST | /key/generate | KeyController#generate | REQ-1.3 |
-| GET | /key/info | KeyController#info | REQ-1.3, REQ-1.5 |
-| POST | /key/unblock | KeyController#unblock | REQ-1.3 |
-| GET | /models | ModelController#listModels | REQ-1.2 |
+| POST | /chat/completions | ChatCompletionController#chat | — |
+| POST | /embeddings | EmbeddingController#embed | — |
+| POST | /key/block | KeyController#block | — |
+| POST | /key/generate | KeyController#generate | — |
+| GET | /key/info | KeyController#info | — |
+| POST | /key/unblock | KeyController#unblock | — |
+| GET | /models | ModelController#listModels | — |
 | GET | /v1/admin/audit-logs | AuditLogController#query | — |
 | GET | /v1/admin/keys | AdminController#listKeys | — |
 | POST | /v1/admin/keys | AdminController#createKey | — |
@@ -96,19 +96,19 @@
 | GET | /v1/admin/traces/{traceId} | TraceController#get | — |
 | GET | /v1/admin/usage | UsageController#query | — |
 | GET | /v1/admin/usage/export | UsageController#export | — |
-| POST | /v1/chat/completions | ChatCompletionController#chat | REQ-1.1, REQ-1.2, REQ-1.3, REQ-2.8 |
-| POST | /v1/embeddings | EmbeddingController#embed | REQ-3.7 |
-| GET | /v1/mcp/tools | McpToolController#list | REQ-2.2, REQ-2.3 |
-| POST | /v1/mcp/tools/{toolName}:call | McpCallController#call | REQ-2.3 |
-| POST | /v1/mcp/tools/refresh | McpToolController#refresh | REQ-2.2 |
-| POST | /v1/memory/clear | MemoryController#clear | REQ-3.5 |
-| POST | /v1/memory/recall | MemoryController#recall | REQ-3.5 |
-| POST | /v1/memory/save | MemoryController#save | REQ-3.5 |
-| GET | /v1/models | ModelController#listModels | REQ-1.2 |
-| POST | /v1/prompts/{name}/chat | PromptRuntimeController#chat | REQ-2.5 |
-| POST | /v1/prompts/{name}/render | PromptRuntimeController#render | REQ-2.5 |
-| POST | /v1/rag/answer | RagAnswerController#answer | REQ-3.4 |
-| POST | /v1/rag/search | RagSearchController#search | REQ-3.3 |
+| POST | /v1/chat/completions | ChatCompletionController#chat | — |
+| POST | /v1/embeddings | EmbeddingController#embed | — |
+| GET | /v1/mcp/tools | McpToolController#list | — |
+| POST | /v1/mcp/tools/{toolName}:call | McpCallController#call | — |
+| POST | /v1/mcp/tools/refresh | McpToolController#refresh | — |
+| POST | /v1/memory/clear | MemoryController#clear | — |
+| POST | /v1/memory/recall | MemoryController#recall | — |
+| POST | /v1/memory/save | MemoryController#save | — |
+| GET | /v1/models | ModelController#listModels | — |
+| POST | /v1/prompts/{name}/chat | PromptRuntimeController#chat | — |
+| POST | /v1/prompts/{name}/render | PromptRuntimeController#render | — |
+| POST | /v1/rag/answer | RagAnswerController#answer | — |
+| POST | /v1/rag/search | RagSearchController#search | — |
 
 ## 数据表速查（语义来自 docs/DATA-MODEL.md，DDL 校验）
 
@@ -128,7 +128,7 @@
 
 | 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
 |---|---|---|---|---|---|
-| audit_logs | 审计：tenant_id / actor（master 或 Key 哈希）/ action / target / before_state（JSONB 脱敏）/ after_state / trace_id / created_at；只追加，PG 触发器拒绝 UPDATE/DELETE | 弱关联 trace_events（trace_id）与 api_keys/prompt_templates/mcp_servers（target） | active | REQ-3.5, REQ-4.5, REQ-4.5 | ✓ |
+| audit_logs | 审计：tenant_id / actor（master 或 Key 哈希）/ action / target / before_state（JSONB 脱敏）/ after_state / trace_id / created_at；只追加，PG 触发器拒绝 UPDATE/DELETE | 弱关联 trace_events（trace_id）与 api_keys/prompt_templates/mcp_servers（target） | active | REQ-4.5 | ✓ |
 | v_usage_daily | 用量/成本实时聚合视图：usage_date / tenant_id / project_id / model_alias / key_id / requests / prompt_tokens / completion_tokens / total_tokens / cost | 直接从 call_logs 聚合；与逐条日志同口径 | active | REQ-4.3 | — |
 | trace_events | 全链路分段事件：trace_id（=request_id）/ tenant_id / project_id / key_id / segment（gateway/model/rag/mcp/answer）/ name / status / latency_ms / payload（JSONB 摘要）/ created_at | 弱关联 call_logs（trace_id）；按 trace_id 聚合成一次请求轨迹 | active | REQ-4.2 | ✓ |
 | idempotency_keys | 控制面幂等键：idempotency_key（唯一）/ request_hash（SHA-256(method+path+body)）/ response_status / response_content_type / response_body / created_at / updated_at | 独立表；同键同请求重放首次响应，重启不失效 | active | REQ-5.2 | ✓ |
@@ -139,15 +139,15 @@
 
 | 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
 |---|---|---|---|---|---|
-| api_keys | 虚拟 Key：SHA-256 哈希、alias（管理台别名，V15）、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend、tenant_id / project_id（绑定租户与项目，V10） | 1:N call_logs（key_id）；绑定 tenant/project | active | REQ-1.3, REQ-1.5, REQ-4.1, REQ-1.3 / REQ-1.4 / REQ-4.1 | ✓ |
-| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias / call_type（CHAT/MCP/PROMPT/MEMORY/RAG/EMBEDDING）/ target_name / tenant_id / project_id / trace_id（V10） | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5, REQ-2.3, REQ-4.1, REQ-1.5 / REQ-1.4 / REQ-1.6 / REQ-2.3 / REQ-3.5 / REQ-3.1 / REQ-3.7 | ✓ |
+| api_keys | 虚拟 Key：SHA-256 哈希、alias（管理台别名，V15）、模型白名单、封禁、预算/限流字段（max_budget、budget_duration、rpm/tpm）、spend、tenant_id / project_id（绑定租户与项目，V10） | 1:N call_logs（key_id）；绑定 tenant/project | active | REQ-1.3, REQ-1.4, REQ-4.1 | ✓ |
+| call_logs | 调用日志与 Token 计量：request_id / key_id / model_alias / deployment_model / usage / cost / latency / status / error_type / retry_count / fallback_used / served_alias / call_type（CHAT/MCP/PROMPT/MEMORY/RAG/EMBEDDING）/ target_name / tenant_id / project_id / trace_id（V10） | N:1 api_keys（key_id，弱关联；master 调用为 NULL） | active | REQ-1.5, REQ-1.4, REQ-1.6, REQ-2.3, REQ-3.5, REQ-3.1, REQ-3.7 | ✓ |
 
 ### MCP 与 Prompt
 
 | 表 | 用途 | 关键关系 | 状态 | 涉及需求 | DDL |
 |---|---|---|---|---|---|
 | mcp_servers | MCP Server 注册：server_id（UUID）/ name（租户内唯一、禁 "__"）/ transport / endpoint / command / args / status（ACTIVE/DOWN）/ last_health_at / metadata（description、lastError） | 独立配置类表；工具目录为运行时缓存（REQ-2.2） | active | REQ-2.1 | ✓ |
-| prompt_templates | Prompt 模板与版本：name / version / content / variables / status（DRAFT/PUBLISHED/ARCHIVED）/ tenant_id | 租户内同 name 多版本（tenant_id+name+version 唯一） | active | REQ-2.4, REQ-2.4 / REQ-4.1 | ✓ |
+| prompt_templates | Prompt 模板与版本：name / version / content / variables / status（DRAFT/PUBLISHED/ARCHIVED）/ tenant_id | 租户内同 name 多版本（tenant_id+name+version 唯一） | active | REQ-2.4, REQ-4.1 | ✓ |
 
 ### RAG 与记忆
 
@@ -155,9 +155,9 @@
 |---|---|---|---|---|---|
 | memories | 记忆：memory_id（UUID）/ tenant_id / project_id / user_id / session_id / memory_type（SESSION/USER）/ content / metadata（JSONB）/ expires_at；TTL 查询时过滤 | 按 tenant + project + user（+ session）逻辑分组，无强外键；用户级记忆可跨项目共享（配置开启） | active | REQ-3.5 | ✓ |
 | memory_audit_logs | 物理删除审计：audit_id / 作用域 / operation（CLEAR）/ deleted_count / memory_ids（JSONB，最多 1000 条）/ operator_key / reason | 与 memories 通过 audit_id 独立；保存删除快照，不做外键 | active | REQ-3.5 | ✓ |
-| rag_documents | 文档元数据：doc_id / project_id / source / content_type / size_bytes / content_hash / raw_content（BYTEA 原始文件）/ tenant_id / chunk_count / index_status（PENDING/PROCESSING/READY/FAILED）/ embedding_model / embedding_dimension / embedding_duration_ms / embedding_cost（按 embedding 模型单价计算；本地/确定性为 0）/ error_message | 文档 1:N rag_chunks（doc_id 逻辑关联）；租户+项目内 content_hash 唯一 | active | REQ-3.1, REQ-3.2, REQ-3.1 / REQ-3.2 / REQ-3.7 / REQ-4.1 | ✓ |
-| rag_chunks | 切片：chunk_id（doc_id-序号）/ doc_id / tenant_id / project_id / chunk_index / content / char_count / source / index_status / embedding_model / embedding_dimension / error_message | N:1 rag_documents（doc_id 逻辑关联）；向量在 rag_vectors（REQ-3.2） | active | REQ-3.1, REQ-3.2, REQ-3.1 / REQ-3.2 | ✓ |
-| rag_vectors | 切片向量：chunk_id / doc_id / tenant_id / project_id / embedding_model / embedding_dimension / embedding vector(1024)；低维模型零填充；HNSW cosine 索引（V9，REQ-3.7） | 1:1 rag_chunks（chunk_id 唯一）；按 tenant_id + project_id + 模型版本隔离 | active | REQ-3.2, REQ-3.7, REQ-3.2 / REQ-3.7 / REQ-4.1 | ✓ |
+| rag_documents | 文档元数据：doc_id / project_id / source / content_type / size_bytes / content_hash / raw_content（BYTEA 原始文件）/ tenant_id / chunk_count / index_status（PENDING/PROCESSING/READY/FAILED）/ embedding_model / embedding_dimension / embedding_duration_ms / embedding_cost（按 embedding 模型单价计算；本地/确定性为 0）/ error_message | 文档 1:N rag_chunks（doc_id 逻辑关联）；租户+项目内 content_hash 唯一 | active | REQ-3.1, REQ-3.2, REQ-3.7, REQ-4.1 | ✓ |
+| rag_chunks | 切片：chunk_id（doc_id-序号）/ doc_id / tenant_id / project_id / chunk_index / content / char_count / source / index_status / embedding_model / embedding_dimension / error_message | N:1 rag_documents（doc_id 逻辑关联）；向量在 rag_vectors（REQ-3.2） | active | REQ-3.1, REQ-3.2 | ✓ |
+| rag_vectors | 切片向量：chunk_id / doc_id / tenant_id / project_id / embedding_model / embedding_dimension / embedding vector(1024)；低维模型零填充；HNSW cosine 索引（V9，REQ-3.7） | 1:1 rag_chunks（chunk_id 唯一）；按 tenant_id + project_id + 模型版本隔离 | active | REQ-3.2, REQ-3.7, REQ-4.1 | ✓ |
 
 ## 配置（application.yml 顶层键）
 

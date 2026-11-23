@@ -35,34 +35,13 @@ curl -s -X POST localhost:18080/v1/rag/search \
 3. 核心文件（4 分钟）：`RagRetrievalCore`、`RagChunkMapper.xml#searchKeyword`、
    `RagSearchHitResDTO`、`RagHybridRetrievalTest`
 
-## 3. 实现要点与参考答案
+## 3. 实现要点
 
 ### 3.1 三条关键实现要点
 
 1. **两路都下推租户/项目**：字面 SQL 直接带 `tenant_id + project_id`，编排层再复核切片字段。
 2. **RRF 只用名次**：两路分数量纲不同也能融合；`k` 与两路权重可配，便于调排序。
 3. **降级在编排层**：任一路异常只记 WARN，另一路继续；两路都失败才抛出。
-
-### 3.2 自测题与参考答案
-
-1. 为什么 `min_score` 不能作用于字面路？
-2. 为什么字面路选 LIKE 而不是上 pg_trgm？
-3. 为什么混合模式不再叠加规则重排？
-4. 两路都返回同一 chunk 时怎么处理？
-5. 开关关闭后为什么要保证完全不调用字面 SQL？
-
-### 参考答案
-
-1. 字面分是词项覆盖率，与向量余弦不可比；套用阈值会误杀精确命中。
-2. 不引入扩展、H2 兼容、当前语料量小；性能不足时再评估 trigram + GIN。
-3. 三重排序难以解释，验收也难定位；RRF 已覆盖两路融合，规则重排留给回退路径。
-4. 按 `chunk_id` 去重，两路名次都计入 RRF，`match_type=both`。
-5. 回退语义必须与三期完全一致，包括不产生字面查询的额外开销。
-
-### 3.3 亲手改口子（可选）
-
-- 把 `rrf-keyword-weight` 调成 0，重跑 `RagHybridRetrievalTest`，
-  观察排序退化为向量序；再恢复。
 
 ## 4. 回归影响
 

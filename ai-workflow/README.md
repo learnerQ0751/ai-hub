@@ -55,7 +55,7 @@ ai-workflow/
 ├── README.md                 # 本文件（入口导航）
 ├── STATUS.md                 # ★ 人：当前状态（脚本生成）
 ├── DESIGN.md                 # ★ 人：设计基线
-├── acceptance/               # ★ 人：验收文档
+├── acceptance/               # ★ 人：验收卡（≤30 行：标准/怎么验/三分钟看懂/限制）
 │   ├── REQ-*.md
 │   └── assets/               # 设计活图（design.drawio + design.svg）
 ├── docs/                     # 规范、流程与数据模型（AI 必读，人按需查）
@@ -64,11 +64,10 @@ ai-workflow/
 │   ├── PROJECT.md
 │   ├── DATA-MODEL.md
 │   └── ATTRIBUTION.md
-├── records/                  # 需求档案（人机共读）
+├── records/                  # 需求档案（agent 向：意图/边界/契约/决策/坑）
 ├── requirements/INDEX.md     # 需求索引（状态/依赖/验收路径）
 ├── templates/                # REQ / ACCEPTANCE / PROJECT 模板
 ├── scripts/status.ps1        # 生成 STATUS
 ├── adapters/{claude,cursor,generic}/
-├── install.ps1
-└── REFERENCE/legacy-standards/   # 历史规则库，默认不加载
+└── install.ps1
 ```

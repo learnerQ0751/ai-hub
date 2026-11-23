@@ -53,15 +53,6 @@
 | rag_chunks | 切片：chunk_id（doc_id-序号）/ doc_id / tenant_id / project_id / chunk_index / content / char_count / source / index_status / embedding_model / embedding_dimension / error_message | N:1 rag_documents（doc_id 逻辑关联）；向量在 rag_vectors（REQ-3.2） | active | REQ-3.1 / REQ-3.2 |
 | rag_vectors | 切片向量：chunk_id / doc_id / tenant_id / project_id / embedding_model / embedding_dimension / embedding vector(1024)；低维模型零填充；HNSW cosine 索引（V9，REQ-3.7） | 1:1 rag_chunks（chunk_id 唯一）；按 tenant_id + project_id + 模型版本隔离 | active | REQ-3.2 / REQ-3.7 / REQ-4.1 |
 
-## 规划表（planned，仅供设计参考，不进入 STATUS）
-
-
-### 治理
-
-| 表 | 用途 | 关键关系 | 状态 | 引入需求 |
-|---|---|---|---|---|
-| audit_logs | 审计：actor / action / target / before-after（脱敏）/ trace_id | 弱关联 api_keys / prompt_templates / mcp_servers | planned | REQ-4.5 |
-
 ## 关系总览（当前）
 
 - `api_keys` 1:N `call_logs`：通过 `call_logs.key_id` 逻辑关联（弱关联，不建外键；master 调用 key_id 为 NULL）。
@@ -75,65 +66,118 @@
 
 ## ER 图
 
-- 当前 9 张表：本文件用 Mermaid `erDiagram` 维护速查图（当前真源）。
-- 三期毕业验收已合并 RAG/记忆表；drawio/svg 统一导出随第 4 期架构图更新，届时在此引用。
+- 当前 21 张表 + 1 个视图，见下方 Mermaid `erDiagram`（本文件为唯一真源）。
+- 图中只画关系与主键，字段明细以「当前表」区的用途列和 Flyway DDL 为准，避免两处漂移。
 
 ```mermaid
 erDiagram
+    tenants ||--o{ projects : "tenant_id"
+    tenants ||--o{ api_keys : "tenant_id"
+    projects ||--o{ api_keys : "tenant_id + project_id"
+    projects ||--o{ project_authorizations : "source_project_id"
+    projects ||--o{ model_aliases : "tenant_id（空=全局）"
+    model_aliases ||--o{ model_alias_deployments : "alias_id"
+    model_deployments ||--o{ model_alias_deployments : "deployment_id"
+    api_keys ||--o{ model_alias_keys : "key_hash"
+    model_aliases ||--o{ model_alias_keys : "alias_id"
     api_keys ||--o{ call_logs : "key_id（弱关联）"
-    memories ||--o{ memory_audit_logs : "按删除快照记录"
+    call_logs ||--o{ trace_events : "trace_id（弱关联）"
+    projects ||--o{ rag_documents : "tenant_id + project_id"
     rag_documents ||--o{ rag_chunks : "doc_id（弱关联）"
     rag_chunks ||--|| rag_vectors : "chunk_id（弱关联）"
+    projects ||--o{ memories : "tenant_id + project_id（逻辑）"
+    projects ||--o{ prompt_templates : "tenant_id"
+
+    tenants {
+        string tenant_id PK
+        string name
+    }
+    projects {
+        string tenant_id PK
+        string project_id PK
+        string name
+    }
+    project_authorizations {
+        string source_project_id PK
+        string target_project_id PK
+        string resource_type PK
+    }
+    model_aliases {
+        bigint alias_id PK
+        string alias
+        string tenant_id
+    }
+    model_deployments {
+        bigint deployment_id PK
+        string deployment_key
+    }
+    model_alias_deployments {
+        bigint alias_id PK
+        bigint deployment_id PK
+    }
     api_keys {
         string key_hash PK
-        jsonb models
+        string tenant_id
+        string project_id
+    }
+    model_alias_keys {
+        bigint alias_id PK
+        string key_hash PK
     }
     call_logs {
-        string request_id
-        string key_id FK
-        string call_type
-        string target_name
+        string request_id PK
+        string key_id
+        string trace_id
+    }
+    trace_events {
+        bigint event_id PK
+        string trace_id
     }
     mcp_servers {
         string server_id PK
         string name
     }
     prompt_templates {
-        string name
-        int version
+        string tenant_id PK
+        string name PK
+        int version PK
     }
     memories {
         string memory_id PK
         string tenant_id
         string project_id
-        string user_id
-        string session_id
-        string memory_type
-        timestamp expires_at
     }
     memory_audit_logs {
         string audit_id PK
         string operation
-        int deleted_count
-        jsonb memory_ids
     }
     rag_documents {
         string doc_id PK
+        string tenant_id
         string project_id
-        string content_hash
-        string index_status
     }
     rag_chunks {
         string chunk_id PK
-        string doc_id FK
-        int chunk_index
-        string index_status
+        string doc_id
     }
     rag_vectors {
         string chunk_id PK
-        string doc_id
-        string project_id
         string embedding_model
-        int embedding_dimension
+    }
+    audit_logs {
+        bigint audit_id PK
+        string tenant_id
+        string trace_id
+    }
+    idempotency_keys {
+        string idempotency_key PK
+    }
+    admin_sessions {
+        string token_hash PK
+    }
+    admin_login_attempts {
+        string username PK
     }
 ```
+
+> `v_usage_daily` 是 `call_logs` 的实时聚合视图，不参与实体关系。

@@ -35,7 +35,7 @@ curl -X POST http://localhost:18080/v1/chat/completions \
 
 > 本次增量：聊天补全链路（Client → AuthFilter → Controller → Service → Core → Integration → 上游）：别名双向改写、统一错误体。 全局设计说明见 `../DESIGN.md`。
 
-## 4. 实现要点与参考答案（按需阅读）
+## 4. 实现要点（按需阅读）
 
 ### 4.1 三条关键实现要点
 
@@ -50,27 +50,6 @@ curl -X POST http://localhost:18080/v1/chat/completions \
 响应再回写别名；统一错误体和请求 ID；分层上 Controller/Service/Core/Integration 各司其职，
 为后续路由、Key、限流、计量提供地基。
 ```
-
-### 4.3 自测题与参考答案
-
-1. 一次请求从进入 Filter 到返回，经过哪些环节？每层分别负责什么？
-2. 为什么请求要改写 `model`、响应要回写？如果只做一半会发生什么？
-3. 上游返回 400 时，网关应该透传还是转换？当前实现是哪种？
-4. `stream=true` 为什么现在返回 400？拒绝发生在哪一层？
-5. 新增一个模型别名需要改哪些文件？需要重启吗？
-
-### 参考答案
-
-1. RequestIdFilter 生成/透传 request_id → AuthFilter 鉴权 → Controller 解析原始 JSON → Service 校验 model/messages/stream、DTO↔BO → Core 选部署、别名改写 → Integration HTTP 调上游 → 响应 model 回写别名 → 返回原始 JSON。
-2. 上游只认真实模型名，请求不改写会 400；响应不回写会让客户端看到上游模型名，破坏对外别名契约。只做一半分别导致调用失败或语义泄露。
-3. 转换而非透传：integration 捕获上游异常，401 转 `auth_error`，其余转 `upstream_error`（502），避免把上游内部细节透给客户端。
-4. 本期未实现 SSE；Service 的 `rejectStreaming` 检测 `stream=true` 直接返回 400（`param=stream`）。
-5. 改 `application-local.yml` 的 `gateway.model-list` 增加别名/部署；当前 `YamlModelCatalog` 启动时映射，**需要重启**（后续迁 DB + 缓存失效可解决）。
-
-### 4.4 亲手改的口子（可选）
-
-- 任务：把 `application.yml` 的 `server.port` 从 18080 改为 18081，重启后用 curl 验证 `GET /models`。
-- 验证方法：`mvn -pl ai-hub-start -am package -DskipTests` → 启动 → curl 18081。
 
 ## 5. 回归影响
 

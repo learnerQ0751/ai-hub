@@ -36,7 +36,7 @@ curl http://localhost:18080/v1/traces/$TRACE -H "Authorization: Bearer $KEY"
 2. `records/REQ-4.2.md` §1-3（3 分钟）
 3. 核心文件（5 分钟）：`TraceRecorderImpl`、`TraceIntegrationTest`、`V11__trace_events.sql`
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -52,23 +52,3 @@ curl http://localhost:18080/v1/traces/$TRACE -H "Authorization: Bearer $KEY"
 采样按 trace 哈希做，保证一次请求的段要么全留要么全丢；写入失败只记日志，不影响业务。
 ```
 
-### 3.3 自测题与参考答案
-
-1. 为什么 trace_id 不单独再生成一个？
-2. 为什么按 trace 采样而不是按事件采样？
-3. payload 里为什么不能放 prompt 正文？
-4. 队列满时怎么办？
-5. 如何把 Trace 接到 OpenTelemetry？
-
-### 参考答案
-
-1. 现有 request_id 已贯通 Filter/日志/调用日志，复用可减少一个 ID 体系和关联成本。
-2. 逐事件随机会把同一次请求的段采样成残缺轨迹，无法排障。
-3. 正文可能含用户隐私/密钥，trace 是长期保留的排障数据，应只存摘要。
-4. 退回调用线程同步写入，宁可多花一点时间也不丢排障数据。
-5. 实现 `TraceRecorder` 端口，在 `record` 中创建/结束 OTel span，业务代码不变。
-
-## 4. 亲手改口子（可选）
-
-- 把 `gateway.trace.sample-rate` 改为 0，验证不再产生新事件。
-- 用另一个租户的 Key 查同一 trace_id，验证 404。

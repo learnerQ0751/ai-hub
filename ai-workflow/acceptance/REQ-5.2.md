@@ -41,7 +41,7 @@ curl -s -X POST localhost:18081/key/block -H "Authorization: Bearer $MASTER" \
 3. 核心文件（4 分钟）：`IdempotencyFilter`、`IdempotencyKeyManager`、`V14__idempotency_keys.sql`、
    `AdminServiceImpl`（校验/差异判定）、`ControlPlaneIdempotencyTest`
 
-## 3. 实现要点与参考答案
+## 3. 实现要点
 
 ### 3.1 三条关键实现要点
 
@@ -50,28 +50,6 @@ curl -s -X POST localhost:18081/key/block -H "Authorization: Bearer $MASTER" \
    并发不会 500，重试收敛。
 3. **持久化幂等键**：V14 + console 过滤器，按 method+path+body 指纹重放首次响应，
    重启后仍有效；失败释放键允许重试。
-
-### 3.2 自测题与参考答案
-
-1. 为什么 Key 封禁不需要幂等键？
-2. 为什么创建模型要先校验全部部署再写别名？
-3. 为什么幂等键要落库而不是放内存？
-4. 为什么同一个幂等键配不同请求要返回 409？
-5. 为什么 RAG 文档接入不需要幂等键？
-
-### 参考答案
-
-1. 它是对已有资源的条件状态更新，重复执行自然收敛；审计按变化去重。
-2. 别名与部署是两张表，先写别名再校验会在失败时留下半写；先校验可保证失败无副作用。
-3. 重启后内存丢失会让重放变成二次执行，重复创建 Key/版本。
-4. 同键代表「同一个操作」；请求不同说明客户端复用键，必须拒绝而不是猜测意图。
-5. 接入按内容哈希去重，重复上传返回既有文档，本身已幂等。
-
-### 3.3 亲手改口子（可选）
-
-- 去掉 `ApiKeyMapper.updateBlocked` 的 `AND blocked <> ?`，重跑
-  `ControlPlaneIdempotencyTest#key_block_and_unblock_are_idempotent_and_audited_once`，
-  观察审计变为 2 条；恢复。
 
 ## 4. 回归影响
 

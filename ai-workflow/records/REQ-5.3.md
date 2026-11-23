@@ -1,8 +1,8 @@
-﻿# REQ-5.3：BL-1 混合检索（向量 + 字面 RRF）
+# REQ-5.3：BL-1 混合检索（向量 + 字面 RRF）
 
 - 日期：2026-11-17
 - 状态：已完成（待主人验收）
-- 关联规格（知识库 2.0）：`E:\AIWorkbench\workbench\tasks\2026-11-16_ai-hub第五期规划\outputs\20-项目7-第5期-优化与拆分.md` REQ-5.3
+- 关联规格：见 `docs/PROJECT.md`「外部文档源」；第 5 期需求卡 REQ-5.3
 - 依赖需求：REQ-3.3、REQ-3.7、REQ-4.1
 - 提交：2e29b6d
 

@@ -39,7 +39,7 @@ mvn -pl ai-hub-integration,ai-hub-tests -am test -Dtest='*Streaming*,*Stream*'
 2. `records/REQ-1.7.md` §1-3 人向说明（3 分钟）
 3. `DESIGN.md` 流式链路增量 + 核心文件 `ChatCompletionController` / `UpstreamClient`（5 分钟）
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.0 先看懂流式（"订阅"是什么）
 
@@ -98,27 +98,6 @@ sequenceDiagram
 流结束时解析末块 usage 做一次计价和结算，写一条调用日志。
 如果客户端中途断开，就取消上游订阅释放连接；流开始后的错误没法改状态码，就发 error 事件结束。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么流式请求不能在 Filter 的同步链路里直接结算？
-2. 为什么要在请求里注入 `stream_options.include_usage=true`？
-3. 流式调用中客户端断开，网关需要做哪些清理？
-4. 流已经开始后上游报错，为什么不能返回 502？
-5. 流式与非流式在限流、预算、日志上的行为差异是什么？
-
-### 参考答案
-
-1. Filter 在 Controller 返回时同步链路就结束了，而流还在异步写；此时 usage 尚未产生，必须等流结束回调再结算。
-2. 流式响应默认可能不返回 usage；没有 usage 就无法按实际 Token 计费，只能记 0 成本，预算与成本看板失真。
-3. 取消上游 Flux 订阅（释放 HTTP 连接）、结束 SseEmitter、按已产生用量结算或释放预占、写最终日志，避免线程/连接泄漏。
-4. SSE 响应的 HTTP 状态码在首个数据块发送时就已确定，之后无法修改；只能用协议内的 error 事件传达。
-5. 限流/预算预占仍在请求前；日志与结算延迟到流结束；usage 取末块；断开时按已发生用量（若有）或释放预占处理。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把流式请求的 `stream_options.include_usage` 去掉，观察日志中的 usage/cost 变化。
-- 验证方法：修改 `OpenAiProtocolAdapter` 的流式改写分支，重跑 `StreamingIntegrationTest`。
 
 ## 4. 回归影响
 

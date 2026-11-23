@@ -26,7 +26,7 @@ curl -X POST http://localhost:18080/mcp \
 2. `records/REQ-2.7.md` §1-3
 3. 核心文件：`McpServerEndpoint.java`（toolsListResult / toolsCallResult）
 
-## 3. 实现要点与参考答案
+## 3. 实现要点
 
 ### 3.1 三条关键实现要点
 
@@ -41,23 +41,6 @@ curl -X POST http://localhost:18080/mcp \
 动态聚合到 tools/list；Agent 只配一个 /mcp 地址就能看到并使用全部工具资产。
 调用时按工具名路由：平台工具内部执行，聚合工具经代理到上游 Server。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 工具目录过期时 tools/list 会怎样？
-2. 聚合工具与平台工具会重名吗？
-3. 聚合工具执行失败如何返回？
-
-### 参考答案
-
-1. `list()` 会触发刷新（TTL 60s），拿到最新快照。
-2. 不会：平台工具无 `__`；Server 名禁止 `__`，聚合名必含 `__`。
-3. 经 McpCallService 统一映射为 JSON-RPC error（NotFound/Timeout 等中文 message）。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：给聚合工具名增加可配置分隔符（当前 `__`）。
-- 验证方法：改配置后 listTools 名称随之变化，调用仍可路由。
 
 ## 4. 回归影响
 

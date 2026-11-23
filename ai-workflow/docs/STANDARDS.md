@@ -15,7 +15,7 @@
 
 ## 2. 分层架构（MUST）
 
-### 2.1 六层结构（参考监管报送 / Drip 技术栈）
+### 2.1 六层结构（企业级分层参考）
 
 | 层 | 职责 | 允许依赖 | 禁止 |
 |---|---|---|---|
@@ -53,7 +53,7 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 
 ### 2.4 多模块结构（MUST）
 
-- 中大型 Java 项目按监管报送（data-submission）模式采用 **Maven 多模块**，模块即层：`start / service / core / manager / integration / dal / common`；对外契约单独 `api`；集成测试与架构校验放 `tests`。
+- 中大型 Java 项目按上述分层采用 **Maven 多模块**，模块即层：`start / service / core / manager / integration / dal / common`；对外契约单独 `api`；集成测试与架构校验放 `tests`。
 - 模块依赖方向固定：`start → service → core → manager/integration/api → dal → common`；禁止反向依赖与模块循环，ArchUnit 检查。
 - 模块内包结构：`com.<company>.<project>.<layer>`；feature 子包（如 `core/routing`）只允许在层内。
 - `api` 放 Service 接口 + ReqDTO/ResDTO；`service` 放 ServiceImpl；`core` 类用 `@Component`（`@Service` 归 service 层）。
@@ -321,7 +321,7 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 
 - 标准网关路径：`/系统名/service/方法名`。
 - 代码路径与网关当前生效路径不一致时：文档同时给出，实际调用以网关为准；切换完成后同步更新。
-- 所有接口按项目约定使用 `POST` / `application/json`（监管报送网关当前全部 POST）。
+- 同一项目内 HTTP 方法与内容类型保持统一；具体约定写在该项目的 `docs/PROJECT.md`，本文件不假定。
 - 对外接口只暴露稳定别名/编码，不暴露上游供应商细节。
 
 ### 4.5 校验与序列化
@@ -417,9 +417,7 @@ Spring Boot 新项目可映射为：`Controller/api → Service → Core/Domain 
 
 ## 11. 参考来源与历史规则
 
-- 监管报送编码规约（data-submission-standards，17 节）
 - 阿里巴巴 Java 开发手册（黄山版）
 - 数据库研发规范
 - 金融科技开发技术规范（技术红线）
-- 监管报送接口文档（02-接口文档（对外版））——请求/响应/错误码完整示例
-- `ai-workflow/REFERENCE/legacy-standards/`：历史 45 条 YAML 规则库，仅供查阅，默认不加载
+- 外部公司/项目规约：随项目在 `docs/PROJECT.md` 指定，不写进本通用文件

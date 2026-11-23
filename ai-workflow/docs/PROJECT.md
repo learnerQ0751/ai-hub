@@ -4,7 +4,7 @@
 
 ## 基本信息
 
-- 技术栈基线（与 `E:\learing_demo\ai-coder-help` 对齐）：
+- 技术栈基线（与本项目既有工程一脉相承，不引自其他仓库）：
   - Java 21 / Maven
   - Spring Boot **4.1.1**
   - Spring MVC + RestClient/WebClient（网关转发保持原始 JSON，不经过 LangChain4j 归一化）
@@ -18,13 +18,13 @@
 - 包名：`com.qtua.aihub`
 - 模型目录端口：`common/catalog`（`ModelCatalog`/`ModelDeployment`），YAML 实现 `manager/catalog/YamlModelCatalog`；业务层禁止直接依赖 `GatewayProperties`
 - 默认端口：`18080`（本机 8080 被其他服务占用）
-- 当前进度：第 1 期 REQ-1.1 ~ REQ-1.7 全部完成并验收；下一步第 2 期 MCP 与 Prompt 中心（REQ-2.1 起）
+- 当前进度不写在这里：以 `ai-workflow/STATUS.md`（脚本生成）为准，避免两处不同步
 - 验收入口：每个需求的人向验收文档在 `ai-workflow/acceptance/REQ-x.y.md`；全局状态看 `ai-workflow/STATUS.md`，设计基线看 `ai-workflow/DESIGN.md`
 - 数据模型与表速查：`ai-workflow/docs/DATA-MODEL.md`（STATUS 的「数据表速查」由此生成）
 
 ## IDE / 运行
 
-- 推荐 **IntelliJ IDEA**：打开 `E:\pro\ai-hub`（或 `pom.xml`）作为 Maven 项目，Project SDK 选 JDK 21。
+- 推荐 **IntelliJ IDEA**：打开仓库根目录（`pom.xml` 所在处的克隆路径）作为 Maven 项目，Project SDK 选 JDK 21。
 - Claude Code 插件从项目根目录启动；读取根目录 `CLAUDE.md` → `ai-workflow/`。
 - Maven 使用本机 settings.xml；终端运行 `mvn -Pquality verify`。
 - 本地运行：`mvn -pl ai-hub-gateway,ai-hub-console -am package -DskipTests` 后先执行
@@ -32,7 +32,7 @@
   `ai-hub-gateway/target/ai-hub-gateway-*-exec.jar`。
 - `.vscode/settings.json` 是 Cursor 兼容配置，IDEA 不使用。
 
-## 模块结构（覆盖通用 §2，对齐监管报送 data-submission）
+## 模块结构（覆盖通用 §2）
 
 **Maven 多模块（11 个模块，REQ-5.1 数据面/控制面拆分）**：
 
@@ -82,7 +82,7 @@ ai-hub（父 POM）
 
 ## 质量债务与待办
 
-- [x] 单模块包分层 → Maven 多模块（9 模块，对齐监管报送；REQ-5.1 起 11 模块）
+- [x] 单模块包分层 → Maven 多模块（9 模块；REQ-5.1 起 11 模块）
 - [x] 数据面/控制面拆分：双启动包、鉴权物理隔离、Flyway 只由 console 执行（REQ-5.1）
 - [x] `SmoothWeightedSelector` 替换为无状态 `WeightedRandomSelector`
 - [x] 补类/方法/关键行注释
@@ -125,6 +125,8 @@ Checkstyle + SpotBugs（每模块）+ ArchUnit（层依赖/无环）+ JaCoCo 聚
 - master key 占位：`sk-local-master-key`（仅本地）。
 
 ## 外部文档源（可选）
+
+> 全仓唯一的绝对路径登记处。需求记录、验收卡一律写「见 PROJECT.md 外部文档源」，不复制路径。
 
 - 需求文档根（知识库 2.0 活目录）：`E:\AIWorkbench\workbench\tasks\2026-11-16_ai-hub第五期规划`
 - 第 5 期需求卡：`outputs\20-项目7-第5期-优化与拆分.md`；拆分设计：`outputs\15-网关治理解耦设计.md`

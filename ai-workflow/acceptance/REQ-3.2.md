@@ -46,7 +46,7 @@ curl -X POST -H "Authorization: Bearer sk-local-master-key" \
 2. `records/REQ-3.2.md` §1-3 人向说明（3 分钟）
 3. 核心文件（5 分钟）：`RagIndexCore`、`PgVectorStore`、`LangChain4jEmbeddingModel`
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -63,27 +63,6 @@ RAG 的向量层做了两层抽象：EmbeddingModel 和 VectorStore，默认实�
 隔离，换模型时走 reindex：先删旧向量再按新模型重建，并给调用方 reindex_required 提示。
 线程池用显式参数的 ThreadPoolExecutor、Bean 销毁时关闭；索引是请求内同步完成，多实例无本地状态。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么要把 EmbeddingModel 和 VectorStore 抽象出来？
-2. 索引状态机怎么设计？失败后如何恢复？
-3. 切换 embedding 模型为什么必须重建索引？如何提示调用方？
-4. pgvector 索引为什么选 HNSW + cosine？
-5. 多实例部署下索引流程有什么风险？当前实现如何规避？
-
-### 参考答案
-
-1. 避免绑定单一供应商/存储：本地模型可换云端 API，pgvector 可换其他向量库；测试可用确定性实现与内存存储，不依赖外部服务。
-2. PENDING → PROCESSING → READY/FAILED，状态与错误落库；异常时 markFailed 记录错误摘要；`reindex` 先删旧向量再重建，恢复 READY。
-3. 不同模型的向量空间与维度不同，混用会导致检索失真；切换后文档列表返回 `reindex_required=true`，重建后置 false，向量按 `embedding_model` 标识隔离。
-4. HNSW 查询快、适合本项目规模；cosine 适合归一化文本嵌入；project_id/模型过滤条件下推 SQL，保证租户隔离。
-5. 当前索引是请求内同步完成，无后台线程/调度，天然多实例安全；若未来异步化，需要 DB 状态 + 乐观锁/选举避免重复执行。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把 `gateway.rag.embedding.batch-size` 从默认值改为 8，观察分批调用变化。
-- 验证方法：重启后上传较长文档，看日志中 `embedAll` 调用次数与每批条数是否符合预期。
 
 ## 4. 回归影响
 

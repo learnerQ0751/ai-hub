@@ -2,7 +2,7 @@
 
 - 日期：2026-11-17
 - 状态：已完成（待主人验收）
-- 关联规格（知识库 2.0）：`E:\AIWorkbench\workbench\tasks\2026-11-16_ai-hub第五期规划\outputs\20-项目7-第5期-优化与拆分.md` REQ-5.4
+- 关联规格：见 `docs/PROJECT.md`「外部文档源」；第 5 期需求卡 REQ-5.4
 - 依赖需求：REQ-3.1、REQ-3.3、REQ-3.4、REQ-3.10、REQ-4.1
 - 提交：57bb476
 

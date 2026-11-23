@@ -52,7 +52,7 @@ curl -X POST http://localhost:18080/v1/memory/recall -H "Authorization: Bearer $
 3. 核心文件（5 分钟）：`common/tenant/TenantScopeGuard`、`start/filter/AuthFilter`、
    `db/migration/V10__tenancy_and_model_catalog.sql`
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -73,24 +73,3 @@ curl -X POST http://localhost:18080/v1/memory/recall -H "Authorization: Bearer $
 实例也迁到库里，管理端改完多实例立即可见。
 ```
 
-### 3.3 自测题与参考答案
-
-1. 为什么不能信请求体里的 `tenant_id/project_id`？
-2. 虚拟 Key 和 master key 的租户语义有什么区别？
-3. 跨项目记忆为什么用授权表而不是全局开关？
-4. ThreadLocal 上下文为什么必须在 finally 清理？
-5. 向量检索的租户过滤应该放在排序前还是排序后？
-
-### 参考答案
-
-1. 请求体是调用方可控输入；只信 Key 绑定才能保证“知道别人 tenant 也读不到”。
-2. master 是管理身份，可显式指定租户；虚拟 Key 只能在自己的绑定/授权范围内活动。
-3. 开关只能表达“允许跨”，无法表达“谁能跨到谁”；授权表可审计、可撤销、按项目粒度。
-4. Web 容器线程复用；不清理会让下一个请求读到上一个租户的上下文，造成串租户。
-5. 必须先过滤再排序：先排序再过滤会改变 topK 语义，也可能把别的租户数据带进计算路径。
-
-## 4. 亲手改口子（可选）
-
-- 把 `TenantScopeGuard.DEFAULT_TENANT` 改成别的值，观察未绑定 Key/默认租户数据的表现。
-- 在 `project_authorizations` 插入一条反向授权，验证 B 项目 Key 可读 A 项目记忆。
-- 把 `gateway.secret-key` 置空后重启，观察上游凭证弱编码 WARN（生产禁止）。

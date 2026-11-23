@@ -28,7 +28,7 @@ curl -X POST http://localhost:18080/v1/chat/completions \
 2. `records/REQ-2.8.md` §1-3
 3. 核心文件：`ChatMcpServiceImpl.java`、`ChatCompletionController.java`（hasMcpTools 分流）
 
-## 3. 实现要点与参考答案
+## 3. 实现要点
 
 ### 3.1 三条关键实现要点
 
@@ -43,23 +43,6 @@ curl -X POST http://localhost:18080/v1/chat/completions \
 模型决定调用哪个工具后，网关执行 MCP 工具并把结果回填，继续对话直到模型给出最终回答。
 用法上和 OpenAI function calling 完全一致，只是工具来自中台注册的 MCP 资产。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么循环上限是 3 轮？
-2. 工具执行会计费吗？
-3. 流式 + mcp 如何工作（形态 A）？
-
-### 参考答案
-
-1. 防模型死循环；超出返回最后一轮结果。
-2. 工具执行 cost=0（MCP 口径）；LLM 各轮 usage 累计计费。
-3. 网关把 mcp 声明展开为 function tools 后 SSE 透传；模型输出的 tool_calls 由客户端执行，客户端把结果作为下一轮请求（Claude Code 模式）。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把循环上限改为可配置（`gateway.mcp.max-tool-rounds`）。
-- 验证方法：调大后多轮工具调用可见。
 
 ## 4. 回归影响
 

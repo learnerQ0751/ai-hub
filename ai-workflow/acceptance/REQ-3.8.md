@@ -1,4 +1,4 @@
-﻿# REQ-3.8 验收：计费与边界补强
+# REQ-3.8 验收：计费与边界补强
 
 - 状态：待验收（2026-11-12，实现与自检完成）
 - 验收人：主人
@@ -45,7 +45,7 @@ curl -X POST http://localhost:18080/v1/rag/answer \
 2. `records/REQ-3.8.md` §1-3 人向说明（3 分钟）
 3. 核心文件（5 分钟）：`GatewayGovernanceService`、`RagChunkSettings`、`RagDocumentServiceImpl`
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -65,30 +65,6 @@ RAG answer 的 prompt 由检索结果动态拼装，入口无法按 messages 预
 累计 spend。检索/文档仍保持 RPM-only，但 embedding 成本会记录。chunk 大小按 embedding 模型窗口
 乘 0.8 推导并校验，上传限制按文件类型配置，multipart 只是硬边界。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么 RAG answer 不能像 chat 一样在入口预占 TPM/预算？
-2. 事后预算校验如何处理“响应已经成功”的事实？
-3. chunk 800 字在 all-minilm（256 token）下有什么问题？如何修复？
-4. 上传类型限制与 multipart 上限是什么关系？
-5. 检索接口保持 RPM-only，embedding 成本还能看到吗？
-
-### 参考答案
-
-1. prompt 由检索命中动态拼装，入口拿不到最终 messages；只能先做 RPM 防滥用，事后按真实 usage 结算。
-2. 不能回滚响应；`chargeAfterwards` 先检查上限再无条件累计实际成本，保证后续请求看到真实 spend，
-   超限时在 `call_logs.error_type` 记录 `budget_exceeded` 供观测。
-3. 800 字中文≈800 token，超过 256 token 窗口会被供应商截断，召回语义丢失；按窗口×0.8 推导得到
-   204 字，或切换到 8192 token 的 v3。
-4. multipart 是框架硬上限（防打爆），类型限制是业务上限（按扩展名精确拒绝），前者必须 ≥ 最大类型值。
-5. 可以；Controller 回填查询 embedding 用量，治理层把成本写入 `call_logs.cost`，但不做预算扣减。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把 `gateway.rag.chunk.overflow-policy` 改为 `fail`，并把 `max-chars` 设为 5000，
-  重启观察启动失败；再改回 `warn` 观察 WARNING。
-- 验证方法：查看启动日志中的 `chunk maxChars=... exceeds ...` 信息。
 
 ## 4. 回归影响
 

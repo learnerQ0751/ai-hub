@@ -46,7 +46,7 @@ curl "http://localhost:18080/v1/rag/documents?project_id=p-demo" \
 2. `records/REQ-3.10.md` §1-3 人向说明（3 分钟）
 3. 核心文件（5 分钟）：`RagIndexCore`、`RagChunkMapper.xml`
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -64,31 +64,6 @@ curl "http://localhost:18080/v1/rag/documents?project_id=p-demo" \
 批量大小，页内再按供应商上限拆批，向量化后 upsert，游标推进到本页最后一条。这样内存占用是一页
 而不是全文；失败重试仍然按批进行，重试耗尽整篇标记 FAILED，可以 reindex 幂等重跑。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么用 `chunk_index` 游标而不是 `LIMIT offset, n`？
-2. 分页大小与 embedding batch-size 是什么关系？
-3. 最后一页不足 pageSize 时为什么要提前结束？
-4. 分页后如何判断文档“没有可索引切片”？
-5. 分页过程中某一批失败，已经 upsert 的页怎么办？
-
-### 参考答案
-
-1. `chunk_index` 在文档内单调唯一，游标分页每页都要扫描的行数与页大小相关；offset 在深页要
-   跳过前面所有行，成本随偏移增长。
-2. 默认 pageSize = embedding batch-size，页内正好一次批量调用；若显式配置更大的 pageSize，
-   页内仍按 batch-size 拆批，避免超过供应商单次上限并保持重试粒度。
-3. 说明已经读到末尾，再查一次必然为空；提前结束可减少一次数据库往返。
-4. 用 `countByDocId` 走索引判空，避免为判空加载全部正文；为 0 时置 FAILED。
-5. 已 upsert 的向量保留（按 chunk_id 幂等）；整篇置 FAILED 后可 reindex，reindex 先删旧向量
-   再从头分页重建。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把 `gateway.rag.index.page-size` 改为 1，上传一段会产生多个切片的文档，观察索引日志与
-  数据库查询次数（或开启 MyBatis SQL 日志）确认每页 1 条；再改回 0。
-- 验证方法：日志 `rag index ready: ... chunks=N` 与 SQL 日志中的 `LIMIT 1`。
 
 ## 4. 回归影响
 

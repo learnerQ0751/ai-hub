@@ -41,7 +41,7 @@ mvn -pl ai-hub-core,ai-hub-integration,ai-hub-tests -am test -Dtest='*Resilience
 2. `records/REQ-1.6.md` §1-3 人向说明（3 分钟）
 3. `DESIGN.md` 容错链路增量 + 核心文件 `ChatCompletionCore` / `RedisDeploymentCooldownStore`（5 分钟）
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.0 先看懂容错链路（一句话 + 一张图）
 
@@ -94,28 +94,6 @@ flowchart TD
 只对超时、5xx、401、429 这些部署级错误重试，4xx 直接返回；最终只按成功调用计费一次，
 日志里记录 retry_count、fallback_used 和最终服务别名，可以还原整条降级路径。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么「重试」不能简单理解为同一个部署多打几次？
-   1. 上游 401 为什么可以触发 fallback，而上游 400 不行？
-
-2. 冷却状态为什么必须放 Redis，放本地 Map 会怎样？
-3. 一次请求经历主部署失败、备部署成功，应该记几条日志、计几次费？
-4. 如果所有部署都在冷却，网关应该怎么做？
-
-### 参考答案
-
-1. 同一部署重试只适合瞬时故障（超时/5xx）；部署本身配置错误（key 错）时重试同一部署无意义，必须切换部署或别名。请求内排除失败部署，才能让 priority 主备真正生效。
-2. 401 通常是该部署的 api-key 配置错误，换一个部署或别名可能成功；400 是请求参数问题，换部署仍然会失败，重试只会放大上游压力。
-3. 冷却与失败计数是跨请求、跨实例状态；放本地 Map 各实例判断不一致，故障部署仍会被其他实例打爆，且实例重启后冷却丢失。
-4. 1 条日志、1 次计费；按最终成功的部署和 usage 计费，日志记录 retry_count=1、fallback_used/served_alias 还原路径。中间失败尝试只影响冷却计数，不产生费用。
-5. 采用 fail-open：忽略冷却按全量候选选择并告警。冷却的目的是避让而非熔断全站；若全部部署都故障，请求也只能尽力尝试。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把 `gateway.resilience.allowed-fails` 调为 1、`cooldown-seconds` 调为 10，连续调用观察第二次请求是否绕开故障部署、10 秒后是否恢复。
-- 验证方法：运行 `mvn -pl ai-hub-tests -am test -Dtest=ResilienceIntegrationTest`，或本地双部署配置后重复 curl 并查日志。
 
 ## 4. 回归影响
 

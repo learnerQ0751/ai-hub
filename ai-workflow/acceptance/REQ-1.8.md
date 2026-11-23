@@ -41,7 +41,7 @@ curl -s -X POST http://localhost:18080/v1/chat/completions \
 2. `records/REQ-1.8.md` §1-3（3 分钟）
 3. 核心文件 `ChatCompletionException` / `ErrorResponse` / `GatewayExceptionHandler`（5 分钟）
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.0 文案语言边界
 
@@ -67,27 +67,6 @@ flowchart LR
 这样既让中文用户直接看懂，也不破坏 OpenAI SDK 的兼容性；
 文案集中维护，避免各接口各自写一套。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么不能把 `error.type` 也改成中文？
-2. 错误 message 中文化后，日志是否也要跟着改？为什么？
-3. 同一个错误（如未知模型）在多个调用点出现，如何避免文案不一致？
-4. 中文化后如何验证没有破坏 OpenAI SDK 兼容性？
-5. 哪些中文文案需要保留英文技术名词？
-
-### 参考答案
-
-1. `type`/`param`/`code` 是客户端按值分支的协议契约，改成中文会破坏 SDK 与已有调用方；语言只影响人读的 message。
-2. 日志面向运维检索，保持英文即可；message 中文已能满足用户排障，二者职责不同。
-3. 把常规错误收敛到 `ChatCompletionException` 工厂方法；调用点只传必要参数（字段名/状态码），不各自拼整句文案。
-4. 回归测试断言 type/param/code/HTTP 状态码不变，只改 message；用 OpenAI SDK 或 curl 验证错误体结构。
-5. API Key、Redis、SSE、JSON、Token、HTTP 状态码等专有名词保留原文，避免歧义。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把 `ChatCompletionException.invalidModel` 的 message 改成英文，跑 `ChatCompletionExceptionTest` 观察失败；再改回中文。
-- 验证方法：`mvn -pl ai-hub-common -am test -Dtest=ChatCompletionExceptionTest`。
 
 ## 4. 回归影响
 

@@ -30,7 +30,7 @@ curl -X POST http://localhost:18080/mcp \
 2. `records/REQ-2.6.md` §1-3 人向说明（3 分钟）
 3. `DESIGN.md` 架构图本次增量标注 + 核心文件 ≤3（5 分钟）
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -46,27 +46,6 @@ initialize/tools/list/tools/call，工具是 chat_completion、list_models、pro
 关键点：所有工具复用已有 Service，所以 REST 和 MCP 双路径结果天然一致；
 测试直接用 LangChain4j 官方 MCP 客户端跑通发现和调用；治理统一走同一个 Filter。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么不用 MCP Server SDK？
-2. MCP 响应为什么用 JSON 而不是 SSE？
-3. MCP 路径的治理为什么只做 RPM、cost=0？
-4. 如何保证 REST/MCP 双路径一致？
-5. LangChain4j 客户端测试解决了什么问题？
-
-### 参考答案
-
-1. 只需 3 个工具，原生 JSON-RPC 实现简单直接；引 SDK 会带来新的 Web 栈/依赖面。
-2. Streamable HTTP 规范允许 application/json；实现简单，LangChain4j 客户端实测可用。
-3. MCP 层不解析嵌套 arguments 的 model/usage，深度成本计量留 4.x；RPM 防滥用，日志保留可追踪性。
-4. 双路径共用同一 Service/Core，不存在第二套业务逻辑。
-5. 验证真实 MCP 客户端协议兼容性（initialize/会话/工具发现/调用），而非仅自测自造请求。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把 MCP 治理升级为识别 chat_completion 的 model 并走完整 chat 计量。
-- 验证方法：MCP chat 调用日志出现 usage 与 cost。
 
 ## 4. 回归影响
 

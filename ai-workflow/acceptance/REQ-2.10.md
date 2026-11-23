@@ -28,7 +28,7 @@ curl http://localhost:18080/v1/mcp/runtime/stats -H "Authorization: Bearer sk-lo
 2. `records/REQ-2.10.md` §1-3
 3. 核心文件：`McpHttpClientFactory`、`McpIoExecutor`、`StdioProcessRegistry`、`McpServerProbe`
 
-## 3. 实现要点与参考答案
+## 3. 实现要点
 
 ### 3.1 三条关键实现要点
 
@@ -44,25 +44,6 @@ stdio 读用专用线程池；子进程崩溃场景靠 PID + parentPid 记录在
 探活用短连接；统计端点暴露活跃子进程与进行中请求。
 进程崩溃时 OS 关闭 socket，连接不会泄漏；机器崩溃时对端靠 keepalive/空闲超时回收。
 ```
-
-### 3.3 自测题与参考答案
-
-1. JVM 被 kill -9 后，stdio 子进程怎么办？
-2. 为什么孤儿清理要校验 parentPid？
-3. 为什么探活要用短连接？
-4. HTTP 连接池的 maxIdleTime 为什么设 30s？
-
-### 参考答案
-
-1. shutdown hook 不执行；下次启动扫描 PID 记录，杀掉父进程已死的孤儿；多数 MCP server 也会因 stdin EOF 退出。
-2. 多实例同机/滚动重启时，另一个实例的子进程父进程仍存活，不能误杀。
-3. 探活低频，池化收益低；短连接避免复用被服务端 keep-alive 关闭的旧连接。
-4. 短于服务端 keep-alive（Tomcat 约 60s），防止拿到已被对端关闭的连接。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把连接池参数（64/30s/5min）改为配置项。
-- 验证方法：改配置后 `/v1/mcp/runtime/stats` 与连接行为符合预期。
 
 ## 4. 回归影响
 

@@ -57,7 +57,7 @@ curl -X POST http://localhost:18080/v1/rag/documents \
 2. `records/REQ-3.9.md` §1-3 人向说明（3 分钟）
 3. 核心文件（5 分钟）：`DocumentTextExtractor`、`DocxTextParser`、`XlsxTextParser`
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -76,33 +76,6 @@ curl -X POST http://localhost:18080/v1/rag/documents \
 加密 OOXML 是 OLE2 容器，单独识别后给出中文提示。解析输出还有字符上限与 fail/truncate 策略，
 避免一个上传把内存或切分链路打满。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么 ZIP 预检要读中央目录，而不是直接流式解压？
-2. 加密 docx 为什么不能只按 ZIP 检测？
-3. docx 表格为什么不能直接用 `getText()`？
-4. xlsx 公式单元格直接取值会怎样？本期怎么处理？
-5. 解析超限为什么默认 `fail` 而不是 `truncate`？
-
-### 参考答案
-
-1. 流式遍历会实际解压条目，zip 炸弹在预检阶段就能消耗 CPU；中央目录只含条目名与声明大小，
-   可不解压完成条目数/大小校验。声明大小可伪造，所以仍需 POI 实际解压限制兜底。
-2. 加密 OOXML 被包在 OLE2 复合文档里，不是 ZIP；只按 ZIP 检测会落到「不是有效 docx」，
-   用户拿不到「先解除密码」的正确指引。
-3. `getText()` 的行/单元格分隔不可控，合并单元格会重复文本；逐行逐单元格遍历能控制制表符、
-   换行与嵌套表格深度，输出更稳定。
-4. 公式单元格直接 `getStringCellValue()` 会抛异常；本期用 `DataFormatter` 取缓存显示值，
-   无缓存时回退公式文本。
-5. 知识库要的是完整可信的内容；截断会造成「上传成功但内容缺失」的隐性质量问题。确有需要时
-   显式配置 `truncate`，并保留 WARN 与截断标记。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把 `gateway.rag.parse.limit-policy` 改为 `truncate`，把 `max-chars` 改为 100，
-  上传一段长文本，观察响应与 WARN 日志中的截断标记；再改回 `fail` 观察 400。
-- 验证方法：查看 `document text truncated: extension=..., maxChars=100` 日志与文档列表状态。
 
 ## 4. 回归影响
 

@@ -38,7 +38,7 @@ curl -s -o /dev/null -w "%{http_code}\n" "localhost:18081/v1/admin/keys?tenant_i
 3. 核心文件（4 分钟）：`GatewayApplication`、`ConsoleApplication`、`AuthFilter`、
    `AdminAuthFilter`、`GatewayIsolationTest`、`ConsoleIsolationTest`
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -47,27 +47,6 @@ curl -s -o /dev/null -w "%{http_code}\n" "localhost:18081/v1/admin/keys?tenant_i
 2. **鉴权不共用**：gateway 的 `AuthFilter` 遇 master key 直接 403；
    console 的 `AdminAuthFilter` 遇虚拟 Key 直接 403；两套 Filter 互不加载。
 3. **Flyway 单归属**：console 开、gateway 关；部署顺序 console healthy → gateway。
-
-### 3.2 自测题与参考答案
-
-1. 为什么不能两个应用都开 Flyway？
-2. 为什么管理端点路径不改成 `/v1/admin/**`？
-3. 为什么 `RagDocumentService` 在 shared 而不是 admin？
-4. 停掉 console 后，gateway 的聊天为什么还能工作？
-5. 为什么测试不让一个类同时启动两个应用？
-
-### 参考答案
-
-1. 两端同时迁移会竞争 `flyway_schema_history` 与 DDL 锁；迁移是全局单写者。
-2. 4.4 契约冻结；路径变更会破坏前端与验收基线。隔离靠凭证，不靠前缀。
-3. 数据面 MCP 工具 `ingest_document` 复用该实现；HTTP 接入端点仍只在 console。
-4. gateway 只在请求路径读 DB/本地缓存，不回调 console；Key/配置均直接读库。
-5. 会翻倍上下文与启动时间，且掩盖隔离缺陷；跨面数据用共享 Bean 造更可控。
-
-### 3.3 亲手改口子（可选）
-
-- 把 `GatewayComponentScan` 的排除正则删掉，重跑 `GatewayIsolationTest`，
-  观察 `AdminService` 被装进数据面导致断言失败；再恢复。
 
 ## 4. 回归影响
 

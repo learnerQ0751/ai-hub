@@ -1,4 +1,4 @@
-﻿# REQ-3.7 验收：Embedding 一等能力（阿里 text-embedding-v3）
+# REQ-3.7 验收：Embedding 一等能力（阿里 text-embedding-v3）
 
 - 状态：待验收（2026-11-12，实现与自检完成）
 - 验收人：主人
@@ -63,7 +63,7 @@ curl -X POST http://localhost:18080/v1/embeddings \
 3. 核心文件（5 分钟）：`RemoteEmbeddingModel`、`ConfigurableEmbeddingModelProvider`、
    `GatewayGovernanceService`（EMBEDDING 分支）
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -89,32 +89,6 @@ OpenAI 兼容地址；默认阿里 text-embedding-v3（8192 token，批量 10）
 直接复用网关的限流/预算/计价/日志治理，call_type=EMBEDDING。RAG 索引把成本写文档，
 检索/回答把查询 embedding 成本写 call_logs；pgvector 列固定 1024 维，低维模型零填充兼容。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么 embedding 模型目录要保留旧单模型字段？
-2. 阿里 v3 的批量与窗口限制是什么？代码如何落实？
-3. 供应商没有返回 usage 时如何计量？为什么这样估算？
-4. 为什么向量列固定 1024 维还能支持 384 维模型？
-5. `/v1/embeddings` 如何复用治理而不复制限流/预算逻辑？
-
-### 参考答案
-
-1. 测试/离线环境仍可使用确定性模型，历史配置无需迁移；新目录为空时回退旧字段，保证加法演进。
-2. 官方限制：单次最多 10 条、单条 8192 token；`max-batch-size=10` 拆批，`max-input-tokens`
-   在调用前校验，chunk 参数按其 0.8 推导。
-3. 用 `EmbeddingTokenEstimator`：CJK 1 字≈1 token，其他 4 字符≈1 token 向上取整；对中文保守，
-   不会低估成本与窗口占用。
-4. cosine 距离对零填充不变；`PgVectorStore` 写入与查询都把向量补齐到 1024，实际维度仍记录在
-   `embedding_dimension`，因此 384/512/768/1024 可共存。
-5. Filter 统一识别路径与 callType，Service 只解析别名与估算输入 token，治理服务复用同一套
-   Guard/计价/日志；新增接口只需在 `CallTypes` 与 Filter 提取处扩展。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把 `gateway.rag.embedding.models.text-embedding-v3.input-per-million` 从 `0.5`
-  改为 `0.6`，重启后调用 `/v1/embeddings` 观察 `call_logs.cost` 变化。
-- 验证方法：用虚拟 Key 发起请求，查询 `call_logs` 的 `usage` 与 `cost`，确认按新单价计算。
 
 ## 4. 回归影响
 

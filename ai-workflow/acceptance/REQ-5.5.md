@@ -73,7 +73,7 @@ curl -s "localhost:18081/v1/traces?tenant_id=default&limit=5" -H "Authorization:
 
 - 代码：`main` = `bcacb38`（本地，未 push）；本轮新增 `93d07c8`（模型页 CRUD）、
   `bcacb38`（MCP 健康状态枚举归一），此前 `37a60d3`/`8654553`（`POST /v1/admin/keys` 与用例）。
-- 三端全部由 `E:\pro\ai-hub-main` 工作树启动（`scripts/start-local.ps1`），jar 由 main 现场打包：
+- 三端全部由 仓库根目录工作树启动（`scripts/start-local.ps1`），jar 由 main 现场打包：
   前端 `http://127.0.0.1:5175`、console `18081`、gateway `18080`。
 - 登录：`admin / admin123`（脚本默认，可 `-AdminPassword` 覆盖；本地 http 下 cookie 免 Secure）。
 

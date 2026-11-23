@@ -42,7 +42,7 @@ curl -X DELETE http://localhost:18080/v1/mcp/servers/{serverId} -H "Authorizatio
 2. `records/REQ-2.1.md` §1-3 人向说明（3 分钟）
 3. `DESIGN.md` 架构图本次增量标注 + 核心文件 ≤3（5 分钟）
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -60,27 +60,6 @@ MCP 集群需要注册表：上游 Agent 和网关都要知道有哪些 MCP Serv
 和 LiteLLM 的差异：LiteLLM 注册不探活、且一个不可达 Server 会让整个 MCP 列表 500；
 我把故障隔离到单条记录，列表永远可用。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么注册要同步探活？失败为什么还允许注册？
-2. stdio 探活为什么要用单行 JSON？
-3. 为什么探活入参单独定义 McpProbeTarget，而不是直接用 McpServerBO？
-4. endpoint 掩码在哪一层做？为什么不入库前掩码？
-5. 多实例部署时启动加载并行探活会有什么问题？
-
-### 参考答案
-
-1. 同步探活让注册响应直接给出真实状态，用户无需再查；失败允许注册是为了"登记意图"不丢失（Server 可能稍后恢复），错误可通过 `reprobe` 修正。
-2. stdio 传输以换行分帧；多行 JSON 会被对端按行截断解析失败（真实链路踩过：Python mock 严格解析 → 超时）。
-3. ArchUnit 分层约束：integration 不得依赖 manager；探活只需要连接信息，用 common 的领域对象最合适。
-4. 在 service 的 DTO 转换时做；DB 保存原始值（探活需要真实 endpoint），只在对外视图脱敏。
-5. 每个实例都会探活一次并写同一 DB，只是重复开销，无一致性风险（状态是"最近一次探活结果"的覆盖写）。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把探活超时从 3s 改为可配置（如 `gateway.mcp.probe-timeout`）。
-- 验证方法：注册一个 sleep 5s 的 mock Server，默认 3s 超时 DOWN；调大配置后重探变 ACTIVE。
 
 ## 4. 回归影响
 

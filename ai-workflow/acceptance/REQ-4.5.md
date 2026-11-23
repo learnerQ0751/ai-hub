@@ -31,29 +31,13 @@ curl "http://localhost:18080/v1/audit-logs?tenant_id=tenant-a&limit=20" \
 2. `records/REQ-4.5.md` §1-3（2 分钟）
 3. 核心文件（3 分钟）：`AuditRecorderImpl`、`V13__audit_logs.sql`、`AuditLogIntegrationTest`
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
 1. **只追加**：Mapper 无 update/delete；PG 触发器 `BEFORE UPDATE OR DELETE` 直接报错。
 2. **脱敏快照**：before/after 只放业务标识/状态，不放密钥与正文。
 3. **trace 关联**：审计记录带 `trace_id`，可跳到 `GET /v1/traces/{trace_id}` 看完整链路。
-
-### 3.2 自测题与参考答案
-
-1. 为什么应用层没有 update/delete 还不够？
-2. 审计写失败为什么不让业务失败？
-3. 审计里为什么不能放完整实体？
-4. 保留周期为什么不做自动清理？
-5. 如何证明「审计不可篡改」？
-
-### 参考答案
-
-1. 新代码/直连数据库仍可能修改，DB 触发器是最后一道闸。
-2. 封禁等治理动作不能因为日志失败而失效；失败记 ERROR 供补录。
-3. 实体可能含密钥/隐私，长期保留会放大泄露面；只存变更需要的标识与状态。
-4. 删除本身是高风险动作，应走合规流程；本期只提供配置位。
-5. 应用层无写口 + PG 触发器 + 测试断言无 update/delete 方法。
 
 ## 4. 项目 7 总验收材料
 

@@ -261,7 +261,7 @@ foreach ($r in $records) {
 
 function Related-Reqs {
     param([string]$PathOrTable, $Mapping)
-    $hits = @($Mapping | Where-Object { -not [string]::IsNullOrWhiteSpace($_.Item) -and $_.Item -like "*$PathOrTable*" } | ForEach-Object { $_.Req } | Sort-Object -Unique)
+    $hits = @($Mapping | Where-Object { -not [string]::IsNullOrWhiteSpace($_.Item) -and ($_.Item.Trim() -eq $PathOrTable) } | ForEach-Object { $_.Req } | Sort-Object -Unique)
     if ($hits.Count -eq 0) { '—' } else { ($hits -join ', ') }
 }
 
@@ -318,7 +318,10 @@ if ($dataModel.Count -eq 0) {
         foreach ($r in $g.Rows) {
             $knownTables += $r.Table
             $hasDdl = if ($tables -contains $r.Table) { '✓' } else { '—' }
-            $related = @(@(Related-Reqs $r.Table $allTables) + @($r.Req)) | Where-Object { (-not [string]::IsNullOrWhiteSpace($_)) -and ($_ -ne '—') } | Select-Object -Unique
+            $related = @((@((Related-Reqs $r.Table $allTables)) -split '[,/]') + (@($r.Req) -split '[,/]')) |
+                ForEach-Object { $_.Trim() } |
+                Where-Object { (-not [string]::IsNullOrWhiteSpace($_)) -and ($_ -ne '—') } |
+                Select-Object -Unique
             $reqText = if ($related.Count -gt 0) { $related -join ', ' } else { '—' }
             $lines.Add("| $($r.Table) | $($r.Purpose) | $($r.Relation) | $($r.Status) | $reqText | $hasDdl |")
         }

@@ -50,7 +50,7 @@ curl -X DELETE -H "Authorization: Bearer sk-local-master-key" \
 2. `records/REQ-3.1.md` §1-3 人向说明（3 分钟）
 3. 核心文件（5 分钟）：`RagDocumentServiceImpl`、`RagChunker`、`RagDocumentCore`
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.1 三条关键实现要点
 
@@ -70,29 +70,6 @@ curl -X DELETE -H "Authorization: Bearer sk-local-master-key" \
 删除时在同一事务里级联切片和向量。治理复用网关统一 Filter，只走 RPM，日志记录 RAG 调用，
 成本为 0，不复制限流逻辑。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么 hash 唯一性按 `project_id + content_hash` 而不是全局？
-2. 解析失败为什么还要落一条 FAILED 文档？
-3. 段落优先切分与定长切分如何组合？
-4. multipart 上传为什么不能走治理 Filter 的请求体缓存？
-5. 删除文档时如何保证切片/向量不残留？
-
-### 参考答案
-
-1. 同一份文件在不同项目可能有不同生命周期与权限；按项目隔离去重既避免跨项目误覆盖，也保证项目内幂等。
-2. 需求要求保留原始文件；落 FAILED 文档让文件可查询、可删除、可用同文件重新上传自动替换重试，且不产生切片。
-3. 先按空行拆段落，短段落贪心打包到 max-chars；单个段落超长时按窗口切分，窗口步长 = max-chars - overlap，
-   相邻切片保留上下文重叠。
-4. 文件体积大，缓存整段请求体会占内存；RAG 治理只需要操作名做 RPM 与日志，因此直接放行原始请求。
-5. 删除在事务内先 `VectorStore.deleteByDocument`（pgvector 与文档同库同事务），再按 doc_id 删切片、删文档；
-   内存实现先删向量，DB 失败时重试 reindex 可恢复。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把 `gateway.rag.chunk.max-chars` 调小（如 200），重新上传同一文档并开启 `override=true`，观察切片数变化。
-- 验证方法：`GET /v1/rag/documents?project_id=...` 的 `chunk_count` 变化；`rag_chunks.content` 抽样。
 
 ## 4. 回归影响
 

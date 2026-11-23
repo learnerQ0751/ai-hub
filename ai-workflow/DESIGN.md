@@ -69,8 +69,8 @@ flowchart LR
 - 表速查（按业务域、用途、关键关系、状态）见 `docs/DATA-MODEL.md`；`STATUS.md` 自动生成同名区块并与 DDL 校验（只显示当前已建表）。
 - DDL 由 Flyway 管理：`ai-hub-dal/src/main/resources/db/migration/Vn__*.sql`，应用启动自动迁移（Spring Boot 4 需 `spring-boot-starter-flyway`）；测试 H2 仍用 `spring.sql.init`（Flyway 测试禁用）。
 - 本地依赖容器：`postgres:16`（5432，db/user/pass=aihub）+ `redis:7.2`（6379）；Docker Hub 不可达时使用本地已有镜像。
-- 当前已实现：`api_keys`（REQ-1.3）、`call_logs`（REQ-1.5，含 call_type/target_name，REQ-3.5 增加 MEMORY、REQ-3.1 增加 RAG、REQ-3.7 增加 EMBEDDING）、`mcp_servers`（REQ-2.1）、`prompt_templates`（REQ-2.4）、`memories` / `memory_audit_logs`（REQ-3.5）、`rag_documents` / `rag_chunks`（REQ-3.1）、`rag_vectors`（REQ-3.2，V9 放宽为 vector(1024) + 低维零填充）；规划：`audit_logs`。
-- ER 图：`docs/DATA-MODEL.md` 使用 Mermaid erDiagram 速查；第 3 期毕业时与 RAG 表合并输出 `acceptance/assets/data-model.drawio|svg`。
+- 表清单与 ER 图只在 `docs/DATA-MODEL.md` 维护，本文件不复制，避免两处漂移。
+- 新增/改表：先写 `Vn__*.sql`，再同步 DATA-MODEL，最后由 `scripts/status.ps1` 重新生成 STATUS 并做 DDL 校验。
 
 ## 3. 核心运行时链路
 

@@ -43,7 +43,7 @@ curl "http://localhost:18080/key/info?key=<虚拟 Key>" \
 2. `records/REQ-1.4.md` §1-3 人向说明（3 分钟）
 3. `DESIGN.md` 链路增量 + 核心文件 `RedisRateLimiter` / `ChatCompletionCore` / `KeyServiceImpl`（5 分钟）
 
-## 3. 实现要点与参考答案（按需阅读）
+## 3. 实现要点（按需阅读）
 
 ### 3.0 先看懂限流与预算
 
@@ -78,27 +78,6 @@ flowchart TD
 请求前预占、响应后结算，金额用整数 micro 单位避免浮点误差。多实例共享 Redis 计数一致，
 Redis 故障默认 fail-open 并告警。
 ```
-
-### 3.3 自测题与参考答案
-
-1. 为什么 tpm 要"预占 + 结算"，而不是直接按实际 usage 记录？
-2. 滑动窗口用 ZSET 实现时，member 里为什么要带 token 数？如何避免重复计数？
-3. 预算的周期 key 如何设计？为什么不用定时任务清零？
-4. Redis 故障时为什么默认 fail-open？什么场景应该 fail-closed？
-5. 两个实例同时请求时，如何保证 rpm 不超发？
-
-### 参考答案
-
-1. 请求前不知道输出 token；不预占就无法在调用前拦截，只能事后发现超限。预占用 max_tokens 上限保证不超发，结算按实际 usage 保证统计准确。
-2. ZSET 的 score 存时间戳，member 需要携带本次 token 数（如 `requestId|tokens`），统计时遍历窗口求和；结算时先删除旧的预占 member 再加入实际 member，用 requestId 保证幂等。
-3. daily key 用 `yyyyMMdd`、monthly 用 `yyyyMM`，带 TTL（如 2 天/32 天）；跨期自然换 key，无需定时清零，也不会因任务失败导致数据错乱。
-4. 限流是保护上游/成本，不是业务正确性；Redis 故障时放行可避免整体不可用（fail-open）。金融/安全场景或预算硬约束可配置 fail-closed。
-5. 用 Redis Lua 脚本把"清理窗口 + 统计 + 判断 + 写入"放在一次原子执行中，多实例共享同一 key，天然串行。
-
-### 3.4 亲手改的口子（可选）
-
-- 任务：把 `gateway.rate-limit.fail-open` 改为 `false`，停掉 Redis，重跑限流集成测试，观察请求是被放行还是拒绝。
-- 验证方法：`mvn -pl ai-hub-tests -am test -Dtest=RateLimitIntegrationTest`。
 
 ## 4. 回归影响
 

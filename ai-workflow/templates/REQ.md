@@ -4,60 +4,40 @@
 - 状态：进行中 / 已完成 / 暂停
 - 关联规格：`specs/NNN-<feature>/`（如有）
 - 依赖需求：REQ-x.y（无则写“无”）
-- 需求来源：外部需求卡章节（或“口述需求”）
 - 提交：<sha>
+
+> agent 向文档。只写代码和 git 读不出来的东西：意图、边界、判断依据、坑。
+> 模块/接口/表的枚举由 `scripts/status.ps1` 扫描生成，不在本文件重复。
 
 ## 1. 是什么
 
-（人话 3-5 行：这个需求解决什么问题、给谁用）
+（人话 3-5 行：解决什么问题、给谁用、为什么现在做）
 
-## 2. 有什么用
+## 2. 边界
 
-- 业务价值：
-- 对应参照行为（LiteLLM B-xx）：
-- 面试叙事点：
+- 做：
+- 不做（明确排除，防止后续被当成遗漏）：
+- 与既有行为的兼容关系：additive / extension / breaking
+- 能力归属：business / cross-cutting（横切治理必须接口无关、新增接口自动复用，见 STANDARDS §2.6）
+- 多实例与资源影响：见 §8
 
 ## 3. 怎么实现的
 
 - 分层落点：
 - 核心类（≤3）：
-- 请求链路（Mermaid；简单流程图/时序图，禁止 ASCII 箭头文本；跨系统复杂总图用 draw.io 并附 svg）：
+- 链路（Mermaid；禁止 ASCII 箭头文本）：
 
 ```mermaid
 
 ```
 
-## 4. 影响面
+## 4. 对外契约变更
 
-> 实现前填写；分级门禁依据：`additive` 自动通过，`extension` / `breaking` 必须用户确认后动手。
+> 只有路径、字段、错误码这类对外契约才写在这里；没有就写“无”。
 
-```yaml
-capability:
-  type: business            # business | cross-cutting（横切治理：认证/限流/预算/计价/计量/日志/追踪/幂等）
-  entry_point: ""           # Filter / Interceptor / AOP / Service / Core
-  interface_agnostic: false # 横切治理必须 true：新增接口自动复用，不允许复制
-modules:
-  add: []
-  change: []
-interfaces:
-  add: []
-  change: []
-  remove: []
-tables:
-  add: []
-  change: []
-config: []
-depends_on: []
-nfr:                    # 涉及连接/线程/进程/缓存时必填（STANDARDS §2.7）
-  resources: []         # 连接池/线程池/子进程/文件句柄等
-  failure_modes: []     # 正常 / 超时异常 / 进程崩溃 / 机器崩溃 的处理
-  metrics: []           # 指标归属：业务计数→Redis/DB；本地资源→每实例指标
-compat: additive        # additive | extension | breaking
-gate: auto              # auto | confirm
-regression: []
-```
+- 
 
-## 5. 关键决策
+## 5. 关键判断
 
 | 决策 | 理由 | 日期 |
 |---|---|---|
@@ -65,7 +45,7 @@ regression: []
 
 ## 6. 执行摘要
 
-> 每会话 1-2 行 + commit；详细过程留在对话、plan/tasks 与提交历史，不在此复制。
+> 每会话 1-2 行 + commit；详细过程留在对话与提交历史。
 
 ### YYYY-MM-DD
 
@@ -78,10 +58,10 @@ regression: []
 - 踩了什么坑：
 - 下次改进：
 
-## 8. 多实例检查
+## 8. 资源与多实例检查
 
-- [ ] 是否有可变成员变量？是否线程安全、跨实例一致？
-- [ ] 计数器/限流/预算/冷却是否在 Redis/数据库？
-- [ ] 锁是否分布式？是否有超时、防死锁、幂等？
-- [ ] 定时任务是否只执行一次？
-- [ ] 本地缓存是否可容忍过期/不一致？
+> 涉及连接/线程/子进程/缓存时必答，其余写“不涉及”。
+
+- 资源与释放路径：
+- 失败模式（正常 / 超时 / 进程崩溃 / 机器崩溃）：
+- 可变成员变量、限流预算、锁、定时任务的归属：
