@@ -1,0 +1,89 @@
+ai-workflow/acceptance/REQ-1.1.md
+  s_0c221ac45f0e7b::t_c7363f7ec861aa 38
+ai-workflow/acceptance/REQ-1.2.md
+  s_0c221ac45f0e7b::t_4a799b0d8eb6fd 35
+ai-workflow/acceptance/REQ-1.3.md
+  s_0c221ac45f0e7b::t_b852e8279b51eb 38
+ai-workflow/acceptance/REQ-1.4.md
+  s_0c221ac45f0e7b::t_d65e866e7f2f5f 46
+ai-workflow/acceptance/REQ-1.5.md
+  s_0c221ac45f0e7b::t_89f2798ad2bb08 49
+ai-workflow/acceptance/REQ-1.6.md
+  s_0c221ac45f0e7b::t_d721ac9bc96f19 44
+ai-workflow/acceptance/REQ-1.7.md
+  s_0c221ac45f0e7b::t_9203c3328e6ff6 42
+ai-workflow/acceptance/REQ-1.8.md
+  s_0c221ac45f0e7b::t_3f938e9dc949bb 44
+ai-workflow/acceptance/REQ-2.1.md
+  s_0c221ac45f0e7b::t_74e060b490f55d 45
+ai-workflow/acceptance/REQ-2.10.md
+  s_0c221ac45f0e7b::t_328280f92a0560 31
+ai-workflow/acceptance/REQ-2.2.md
+  s_0c221ac45f0e7b::t_3ebce4a6537ef0 36
+ai-workflow/acceptance/REQ-2.3.md
+  s_0c221ac45f0e7b::t_8b9655470266a2 36
+ai-workflow/acceptance/REQ-2.4.md
+  s_0c221ac45f0e7b::t_513b082a9e9c14 40
+ai-workflow/acceptance/REQ-2.5.md
+  s_0c221ac45f0e7b::t_9ceef1786acdb6 36
+ai-workflow/acceptance/REQ-2.6.md
+  s_0c221ac45f0e7b::t_029990e89ab4fc 33
+ai-workflow/acceptance/REQ-2.7.md
+  s_0c221ac45f0e7b::t_7631f4628ed81f 29
+ai-workflow/acceptance/REQ-2.8.md
+  s_0c221ac45f0e7b::t_2f625d13bbcc86 31
+ai-workflow/acceptance/REQ-3.1.md
+  s_0c221ac45f0e7b::t_c7c6fe666ee6e7 53
+ai-workflow/acceptance/REQ-3.10.md
+  s_0c221ac45f0e7b::t_9bbf780a1f56f6 49
+ai-workflow/acceptance/REQ-3.2.md
+  s_0c221ac45f0e7b::t_65af9288afb0c5 49
+ai-workflow/acceptance/REQ-3.3.md
+  s_0c221ac45f0e7b::t_15b03e13e1f398 63
+ai-workflow/acceptance/REQ-3.4.md
+  s_0c221ac45f0e7b::t_ce0fe254d474cc 63
+ai-workflow/acceptance/REQ-3.5.md
+  s_0c221ac45f0e7b::t_2ee6fc31756651 53
+ai-workflow/acceptance/REQ-3.6.md
+  s_0c221ac45f0e7b::t_0a22e9846ff49c 77
+ai-workflow/acceptance/REQ-3.7.md
+  s_0c221ac45f0e7b::t_cc738d0a6a3088 1,66
+ai-workflow/acceptance/REQ-3.8.md
+  s_0c221ac45f0e7b::t_fdc00b8cb36fcf 1,48
+ai-workflow/acceptance/REQ-3.9.md
+  s_0c221ac45f0e7b::t_6b63a2e975f80a 60
+ai-workflow/acceptance/REQ-4.1.md
+  s_0c221ac45f0e7b::t_f61e5f2e124d20 55
+ai-workflow/acceptance/REQ-4.2.md
+  s_0c221ac45f0e7b::t_d9cf2ef0350e51 39
+ai-workflow/acceptance/REQ-4.3.md
+  s_0c221ac45f0e7b::t_4ff24a8db87b87 38
+ai-workflow/acceptance/REQ-4.4.md
+  s_0c221ac45f0e7b::t_ea1c581505e1d4 44
+ai-workflow/acceptance/REQ-4.5.md
+  s_0c221ac45f0e7b::t_acee0b1c613965 34
+ai-workflow/acceptance/REQ-5.1.md
+  s_0c221ac45f0e7b::t_48268e1cbb52e8 41
+ai-workflow/acceptance/REQ-5.2.md
+  s_0c221ac45f0e7b::t_af54c91b0d522d 44
+ai-workflow/acceptance/REQ-5.3.md
+  s_0c221ac45f0e7b::t_1e2897b39b8429 38
+ai-workflow/acceptance/REQ-5.4.md
+  s_0c221ac45f0e7b::t_20c161c09abae0 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d736014cc8380ac57f194bc1c05bcced37433ca3",
+  "prompts": {},
+  "sessions": {
+    "s_0c221ac45f0e7b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4dc952c-a682-4c37-bc3e-476ea30cf3e4",
+        "model": "deepseek-flash"
+      },
+      "human_author": "qtua <121070966+learnerQ0751@users.noreply.github.com>"
+    }
+  }
+}
